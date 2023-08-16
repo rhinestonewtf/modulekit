@@ -8,7 +8,6 @@ import "./utils/safe-base/RhinestoneUtil.sol";
 
 import {MockPlugin} from "./mocks/MockPlugin.sol";
 
-
 /// @title ExampleTestSafeBase
 /// @author zeroknots
 
@@ -31,5 +30,10 @@ contract ExampleTestSafeBase is AccountFactory, Test {
     function testAddPlugin() public {
         MockPlugin plugin = new MockPlugin();
         smartAccount.addPlugin(address(plugin));
+
+        smartAccount.exec4337({
+            target: address(plugin),
+            callData: abi.encodeWithSelector(MockPlugin.pluginFeature.selector)
+        });
     }
 }
