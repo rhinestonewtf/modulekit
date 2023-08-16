@@ -4,3 +4,5 @@ ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 safe-contracts/=lib/safe-contracts/
 lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin/openzeppelin-contracts-upgradeable/contracts/
+@openzeppelin/contracts/=lib/openzeppelin/openzeppelin-contracts/contracts/
