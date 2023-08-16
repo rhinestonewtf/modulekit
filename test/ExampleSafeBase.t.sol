@@ -13,7 +13,6 @@ import {MockPlugin} from "./mocks/MockPlugin.sol";
 /// @author zeroknots
 
 contract ExampleTestSafeBase is AccountFactory, Test {
-    event PluginEnabled(address indexed account, address indexed plugin, bool allowRootAccess);
     using RhinestoneUtil for AccountInstance;
 
     AccountInstance smartAccount;
@@ -23,7 +22,7 @@ contract ExampleTestSafeBase is AccountFactory, Test {
         vm.deal(smartAccount.account, 10 ether);
     }
 
-    function testCreateAccount() public {
+    function testSendEth() public {
         address receiver = makeAddr("receiver");
         smartAccount.exec4337({target: receiver, value: 10 gwei, callData: ""});
         assertEq(receiver.balance, 10 gwei, "Receiver should have 10 gwei");
