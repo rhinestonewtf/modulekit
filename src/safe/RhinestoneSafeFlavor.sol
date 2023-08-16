@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Rhinestone4337} from "../core/Rhinestone4337.sol";
+import {Rhinestone4337} from "../account/core/Rhinestone4337.sol";
 import {Ownable} from "solady/auth/Ownable.sol";
 
-import "../interfaces/ISafe.sol";
+import "./ISafe.sol";
 
 contract RhinestoneSafeFlavor is Rhinestone4337 {
     constructor(address entryPoint, address registry, address trustedAuthority)

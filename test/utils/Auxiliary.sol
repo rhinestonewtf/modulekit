@@ -3,10 +3,10 @@
 pragma solidity ^0.8.19;
 
 import {EntryPoint} from "@aa/core/EntryPoint.sol";
-import "../../src/interfaces/IRhinestone4337.sol";
-import "../../src/interfaces/IBootstrap.sol";
-import "../../src/interfaces/IProtocolFactory.sol";
-import "../../src/interfaces/IRegistry.sol";
+import "../../../src/account/IRhinestone4337.sol";
+import "../../src/auxiliary/interfaces/IBootstrap.sol";
+import "../../src/auxiliary/interfaces/IProtocolFactory.sol";
+import "../../src/auxiliary/interfaces/IRegistry.sol";
 
 struct Auxiliary {
     EntryPoint entrypoint;

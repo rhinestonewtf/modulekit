@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import {AccountInstance} from "./IAccountFactory.sol";
+import {AccountInstance} from "./AccountFactory.sol";
 
 library RhinestoneUtil {
     function exec4337(
