@@ -11,8 +11,6 @@ import "../../../src/safe/RhinestoneSafeFlavor.sol";
 
 import "./SafeSetup.sol";
 
-import "forge-std/console2.sol";
-
 struct AccountInstance {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -41,9 +39,9 @@ contract AccountFactory is AuxiliaryFactory {
         safeSingleton = new Safe();
 
         rhinestoneManager = new RhinestoneSafeFlavor(
-          address(entrypoint),
-          address(mockRegistry),
-          defaultAttester
+            address(entrypoint),
+            address(mockRegistry),
+            defaultAttester
         );
 
         safeBootstrap = new Bootstrap();

@@ -75,4 +75,18 @@ library RhinestoneUtil {
         }
         return (size > 0);
     }
+
+    function getUserOpHash(
+        AccountInstance memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        uint8 operation // {0: Call, 1: DelegateCall}
+    ) internal returns (bytes32) {
+        bytes memory data = ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
+        bytes memory initCode = isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+        return userOpHash;
+    }
 }
