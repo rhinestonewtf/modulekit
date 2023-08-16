@@ -2,4 +2,5 @@ account-abstraction/=lib/account-abstraction/contracts/
 @aa/=lib/account-abstraction/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
+safe-contracts/=lib/safe-contracts/
 lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/

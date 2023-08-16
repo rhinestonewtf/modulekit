@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import {EntryPoint} from "@aa/core/EntryPoint.sol";
+import {SafeProxyFactory} from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+
 import "../../src/interfaces/ISafe.sol";
 import "../../src/interfaces/IRhinestone4337.sol";
 
 struct AccountInstance {
     address account;
     IRhinestone4337 rhinestoneManager;
-    RhinestoneAuxiliary aux;
+    Auxiliary aux;
     bytes32 salt;
 }
 
