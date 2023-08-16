@@ -51,6 +51,7 @@ contract AuxiliaryFactory {
 
     function makeAuxiliary(IRhinestone4337 _rhinestoneManger, IBootstrap _bootstrap)
         internal
+        view
         returns (Auxiliary memory aux)
     {
         aux = Auxiliary({

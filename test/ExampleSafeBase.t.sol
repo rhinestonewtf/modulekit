@@ -15,9 +15,19 @@ contract ExampleTestSafeBase is AccountFactory, Test {
     AccountInstance smartAccount;
 
     function setUp() public {
-        super.init();
-        smartAccount = newInstance();
+        smartAccount = newInstance("1");
+        vm.deal(smartAccount.account, 10 ether);
     }
 
-    function testSendEther() public {}
+    function testCreateAccount() public {
+        address receiver = makeAddr("receiver");
+        smartAccount.exec4337({target: receiver, value: 10 gwei, callData: ""});
+        assertEq(receiver.balance, 10 gwei, "Receiver should have 10 gwei");
+    }
+
+    function testAddPlugin() public {
+        address plugin = makeAddr("plugin");
+
+        smartAccount.addPlugin(plugin);
+    }
 }

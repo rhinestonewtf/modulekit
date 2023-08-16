@@ -11,6 +11,8 @@ import "../../../src/safe/RhinestoneSafeFlavor.sol";
 
 import "./SafeSetup.sol";
 
+import "forge-std/console2.sol";
+
 struct AccountInstance {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -31,19 +33,38 @@ contract AccountFactory is AuxiliaryFactory {
     SafeProxyFactory internal safeFactory;
     Safe internal safeSingleton;
 
+    bool initialzed;
+
     function init() internal override {
         super.init();
+        safeFactory = new SafeProxyFactory();
+        safeSingleton = new Safe();
 
         rhinestoneManager = new RhinestoneSafeFlavor(
-          address(mockRegistry),
           address(entrypoint),
+          address(mockRegistry),
           defaultAttester
         );
 
         safeBootstrap = new Bootstrap();
+        initialzed = true;
     }
 
-    function newInstance() internal returns (AccountInstance memory env) {}
+    function newInstance(bytes32 _salt) internal returns (AccountInstance memory instance) {
+        if (!initialzed) init();
+
+        Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
+
+        instance = AccountInstance({
+            account: getAccountAddress(env, _salt),
+            rhinestoneManager: IRhinestone4337(
+                payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), _salt))
+                ),
+            aux: env,
+            salt: _salt,
+            accountFlavor: AccountFlavor({accountFactory: safeFactory, accountSingleton: ISafe(address(safeSingleton))})
+        });
+    }
 
     function getAccountAddress(Auxiliary memory env, bytes32 _salt) public returns (address payable) {
         // Get initializer

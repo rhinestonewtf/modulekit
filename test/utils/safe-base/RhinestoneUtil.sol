@@ -7,6 +7,13 @@ import "./SafeSetup.sol";
 import "./ERC4337Helpers.sol";
 
 library RhinestoneUtil {
+    function exec4337(AccountInstance memory instance, address target, uint256 value, bytes memory callData)
+        internal
+        returns (bool, bytes memory)
+    {
+        return exec4337(instance, target, value, callData, 0, bytes(""));
+    }
+
     function exec4337(
         AccountInstance memory instance,
         address target,
@@ -14,14 +21,14 @@ library RhinestoneUtil {
         bytes memory callData,
         uint8 operation, // {0: Call, 1: DelegateCall}
         bytes memory signature
-    ) internal {
+    ) internal returns (bool, bytes memory) {
         bytes memory data = ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
 
         if (signature.length == 0) {
             // TODO: generate default signature
             signature = bytes("");
         }
-        exec4337(instance, data);
+        return exec4337(instance, data);
     }
 
     function exec4337(AccountInstance memory instance, bytes memory callData) internal returns (bool, bytes memory) {
@@ -43,7 +50,15 @@ library RhinestoneUtil {
 
     function addRecovery(AccountInstance memory instance, address recovery) internal returns (bool) {}
 
-    function addPlugin(AccountInstance memory instance, address plugin) internal returns (bool) {}
+    function addPlugin(AccountInstance memory instance, address plugin) internal returns (bool) {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.enablePlugin.selector, plugin)
+        });
+        return success;
+    }
 
     function isDeployed(AccountInstance memory instance) internal view returns (bool) {
         address _addr = address(instance.account);
