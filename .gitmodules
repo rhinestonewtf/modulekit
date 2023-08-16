@@ -13,3 +13,6 @@
 [submodule "lib/sentinellist"]
 	path = lib/sentinellist
 	url = https://github.com/zeroknots/sentinellist
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/Vectorized/solady
