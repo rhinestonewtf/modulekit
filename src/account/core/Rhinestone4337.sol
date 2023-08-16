@@ -1,23 +1,15 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import "@gnosis.pm/handler/HandlerContext.sol";
-import {CompatibilityFallbackHandler} from "@gnosis.pm/handler/CompatibilityFallbackHandler.sol";
 import "@aa/interfaces/UserOperation.sol";
 
-import {IAuthorizationModule} from "../validators/IAuthorizationModule.sol";
-// import { ModuleManager } from "./ModuleManager.sol";
-// import { ValidatorManager } from "./ValidatorManager.sol";
-// import { Ownable } from "solady/auth/Ownable.sol";
-// import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
 
 import {RhinestoneAdmin} from "./RhinestoneAdmin.sol";
-import {SignatureLib} from "../lib/SignatureLib.sol";
-
-import "forge-std/console2.sol";
+import {SelectValidatorLib} from "../lib/SelectValidatorLib.sol";
 
 abstract contract Rhinestone4337 is RhinestoneAdmin {
-    using SignatureLib for UserOperation;
+    using SelectValidatorLib for UserOperation;
 
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
@@ -50,8 +42,6 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
         returns (uint256)
     {
         address payable safeAddress = payable(userOp.sender);
-
-        console2.log("ACCOUNT");
 
         // The entryPoint address is appended to the calldata in `HandlerContext` contract
         // Because of this, the relayer may be manipulate the entryPoint address, therefore we have to verify that
@@ -128,7 +118,7 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
         // check if selected validator is enabled
         require(isEnabledValidator(validator), "Validator not enabled");
 
-        uint256 ret = IAuthorizationModule(validator).validateUserOp(userOp, userOpHash);
+        uint256 ret = IValidatorModule(validator).validateUserOp(userOp, userOpHash);
         require(ret == 0, "Invalid signature");
     }
 

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import {IBootstrap, InitialModule} from "../interfaces/IBootstrap.sol";
-import {IProtocolFactory} from "../interfaces/IProtocolFactory.sol";
+import {IBootstrap, InitialModule} from "../auxiliary/interfaces/IBootstrap.sol";
+import {IProtocolFactory} from "../auxiliary/interfaces/IProtocolFactory.sol";
 
-contract SafeRhinestoneBootstrap is IBootstrap {
+contract Bootstrap is IBootstrap {
     address internal SENTINEL_ADDRESS = address(0x1);
 
     function initialize(InitialModule[] calldata modules, bytes32 cloneSalt, address proxyFactory, address owner)

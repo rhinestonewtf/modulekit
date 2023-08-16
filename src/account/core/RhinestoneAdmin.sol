@@ -13,18 +13,18 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 //////////////////////////////////////////////////////////////*/
 
 import {ModuleManager} from "./ModuleManager.sol";
-import {IRhinestoneAdmin} from "../interfaces/IRhinestoneAdmin.sol";
+import {IRhinestone4337} from "../IRhinestone4337.sol";
 import {ValidatorManager} from "./ValidatorManager.sol";
-import {IValidator} from "../modules/ValidatorBase.sol";
+import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
 import {RegistryAdapter} from "./RegistryAdapter.sol";
 
-/// @title RhinestoneAdmin
+/// @title Rhinestone4337
 /// @author zeroknots
 
 abstract contract RhinestoneAdmin is
     Ownable,
     Initializable,
-    IRhinestoneAdmin,
+    IRhinestone4337,
     ModuleManager,
     ValidatorManager,
     RegistryAdapter
@@ -63,7 +63,7 @@ abstract contract RhinestoneAdmin is
     }
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function clones(address pluginImpl, bytes32 salt) external view override returns (address) {
         return pluginImplToClones[pluginImpl][salt];
@@ -73,14 +73,14 @@ abstract contract RhinestoneAdmin is
                               MANAGE PLUGINS
     //////////////////////////////////////////////////////////////*/
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function enablePlugin(address plugin, bool allowRootAccess) external onlyOwner {
         _enablePlugin(plugin, allowRootAccess);
     }
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function enablePluginClone(address plugin, bool allowRootAccess, bytes32 salt) external override onlyOwner {
         address clone = _clonePlugin(plugin, salt);
@@ -88,7 +88,7 @@ abstract contract RhinestoneAdmin is
     }
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function enablePluginCloneInit(address plugin, bool allowRootAccess, bytes calldata initCallData, bytes32 salt)
         external
@@ -100,7 +100,7 @@ abstract contract RhinestoneAdmin is
     }
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function disablePlugin(address prevPlugin, address plugin) external onlyOwner {
         _disablePlugin(prevPlugin, plugin);
@@ -110,7 +110,7 @@ abstract contract RhinestoneAdmin is
                               MANAGE VALIDATORS
     //////////////////////////////////////////////////////////////*/
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function addValidator(address validator) external onlyOwner {
         _addValidator(validator);
@@ -123,14 +123,14 @@ abstract contract RhinestoneAdmin is
     // TODO: add default validator
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function removeValidator(address prevValidator, address validator) external onlyOwner {
         _removeValidator(prevValidator, validator);
     }
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function addRecovery(address validator, address recovery) external onlyOwner {
         _setRecovery(validator, recovery);
@@ -140,7 +140,7 @@ abstract contract RhinestoneAdmin is
                               RECOVERY
     //////////////////////////////////////////////////////////////*/
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function setDefaultRecovery(address recovery) external onlyOwner {
         // this sets the default recovery module
@@ -148,7 +148,7 @@ abstract contract RhinestoneAdmin is
     }
 
     /**
-     * @inheritdoc IRhinestoneAdmin
+     * @inheritdoc IRhinestone4337
      */
     function recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) external {
         // RECOVER SHOULD BE EXTERNAL
@@ -157,7 +157,7 @@ abstract contract RhinestoneAdmin is
         // require(status.approved && !status.executed, "Unexpected status");
         // hashes[executionHash].executed = true;
         address recoveryModule = getRecovery(validator);
-        IValidator(validator).recoverValidator(recoveryModule, recoveryProof, recoveryData);
+        IValidatorModule(validator).recoverValidator(recoveryModule, recoveryProof, recoveryData);
     }
 
     /*//////////////////////////////////////////////////////////////

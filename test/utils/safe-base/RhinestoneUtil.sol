@@ -3,6 +3,8 @@
 pragma solidity ^0.8.19;
 
 import {AccountInstance} from "./AccountFactory.sol";
+import "./SafeSetup.sol";
+import "./ERC4337Helpers.sol";
 
 library RhinestoneUtil {
     function exec4337(
@@ -34,7 +36,7 @@ library RhinestoneUtil {
         userOps[0] = userOp;
 
         // send userOps to 4337 entrypoint
-        instance.entrypoint.handleOps(userOps, payable(address(0x69)));
+        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
     function addValidator(AccountInstance memory instance, address validator) internal returns (bool) {}

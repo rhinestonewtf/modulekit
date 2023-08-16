@@ -3,6 +3,7 @@
 pragma solidity ^0.8.19;
 
 import {AccountInstance} from "./AccountFactory.sol";
+import "@aa/interfaces/UserOperation.sol";
 
 library ERC4337Wrappers {
     function getSafe4337TxCalldata(
@@ -16,7 +17,7 @@ library ERC4337Wrappers {
         address sender = address(instance.account);
 
         // Get nonce from Entrypoint
-        uint256 nonce = instance.entrypoint.getNonce(sender, 0);
+        uint256 nonce = instance.aux.entrypoint.getNonce(sender, 0);
 
         return abi.encodeWithSignature(
             "checkAndExecTransactionFromModule(address,address,uint256,bytes,uint8,uint256)",
@@ -40,7 +41,7 @@ library ERC4337Wrappers {
         // bytes memory initCode = isDeployed(smartAccount) ? bytes("") : safeInitCode(instance);
 
         // Get nonce from Entrypoint
-        uint256 nonce = instance.entrypoint.getNonce(smartAccount, 0);
+        uint256 nonce = instance.aux.entrypoint.getNonce(smartAccount, 0);
 
         UserOperation memory userOp = UserOperation({
             sender: smartAccount,

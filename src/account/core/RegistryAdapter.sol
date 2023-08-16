@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IRSQuery} from "../interfaces/IRSQuery.sol";
+import {IRegistry} from "../../auxiliary/interfaces/IRegistry.sol";
 /// @title RegistryAdapter
 /// @author zeroknots
 
 abstract contract RegistryAdapter {
     // Instance of the IRSQuery contract
-    IRSQuery registry;
+    IRegistry registry;
 
     // Address of the trusted authority
     address trustedAuthority;
@@ -15,7 +15,7 @@ abstract contract RegistryAdapter {
     error PluginNotPermitted(address plugin, uint48 listedAt, uint48 flaggedAt);
 
     function _initializeRegistryAdapter(address _registry, address _trustedAuthority) internal {
-        registry = IRSQuery(_registry);
+        registry = IRegistry(_registry);
         trustedAuthority = _trustedAuthority;
     }
 

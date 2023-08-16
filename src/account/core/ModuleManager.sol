@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import "../interfaces/ISafeProtocol.sol";
-import {IRSQuery} from "../interfaces/IRSQuery.sol";
-import {IAvatarExecutor} from "../interfaces/IAvatarExecutor.sol";
-import {ICloneFactory} from "../interfaces/ICloneFactory.sol";
+import "../../auxiliary/interfaces/ISafeProtocol.sol";
+import {IProtocolFactory} from "../../auxiliary/interfaces/IProtocolFactory.sol";
 
 import {MinimalProxyUtil} from "../lib/MinimalProxyUtil.sol";
 
 import "forge-std/console2.sol";
 
-abstract contract ModuleManager is IAvatarExecutor {
-    // Instance of the ICloneFactory contract
-    ICloneFactory cloneFactory;
+abstract contract ModuleManager {
+    // Instance of the IProtocolFactory contract
+    IProtocolFactory cloneFactory;
 
     // Sentinel value used to denote the start/end of a linked list of plugins
     address internal constant SENTINEL_PLUGINS = address(0x1);
@@ -41,7 +39,7 @@ abstract contract ModuleManager is IAvatarExecutor {
      *
      */
     function _initializeModuleManager(address _cloneFactory) internal {
-        cloneFactory = ICloneFactory(_cloneFactory);
+        cloneFactory = IProtocolFactory(_cloneFactory);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -161,9 +159,6 @@ abstract contract ModuleManager is IAvatarExecutor {
                               PLUGIN EXECUTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /**
-     * @inheritdoc IAvatarExecutor
-     */
     function executeTransaction(SafeTransaction calldata transaction)
         external
         onlyPluginOrClone(msg.sender)

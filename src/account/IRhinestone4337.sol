@@ -1,10 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "./ISafeProtocol.sol";
+import "../auxiliary/interfaces/ISafeProtocol.sol";
 import "@aa/interfaces/UserOperation.sol";
 
 interface IRhinestone4337 {
+    /*//////////////////////////////////////////////////////////////
+                            INIT
+    //////////////////////////////////////////////////////////////*/
+
+    function initialize(
+        address _owner,
+        address _defaultValidator,
+        address _defaultRecovery,
+        address _registry,
+        address _trustedAuthority,
+        address _cloneFactory
+    ) external;
+
     /*//////////////////////////////////////////////////////////////
                             ERC 4337
     //////////////////////////////////////////////////////////////*/

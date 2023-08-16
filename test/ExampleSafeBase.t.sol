@@ -14,8 +14,9 @@ contract ExampleTestSafeBase is AccountFactory, Test {
 
     AccountInstance smartAccount;
 
-    function setup() public {
-        smartAccount = AccountFactory.createAccount();
+    function setUp() public {
+        super.init();
+        smartAccount = newInstance();
     }
 
     function testSendEther() public {}

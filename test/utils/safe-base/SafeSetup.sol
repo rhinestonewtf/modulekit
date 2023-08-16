@@ -1,19 +1,24 @@
 // SPDX-License-Identifier: MIT
 
 import {Auxiliary, AuxiliaryLib} from "../Auxiliary.sol";
+import {AccountInstance} from "./AccountFactory.sol";
+import "safe-contracts/contracts/Safe.sol";
 import {InitialModule} from "../../../src/auxiliary/interfaces/IBootstrap.sol";
+
+import {IRhinestone4337} from "../../../src/account/IRhinestone4337.sol";
+import {IBootstrap} from "../../../src/auxiliary/interfaces/IBootstrap.sol";
 
 pragma solidity ^0.8.19;
 
 library SafeHelpers {
     function safeInitCode(AccountInstance memory instance) internal returns (bytes memory) {
         return abi.encodePacked(
-            instance.env.safeProxyFactory,
+            instance.accountFlavor.accountFactory,
             abi.encodeWithSelector(
-                instance.env.safeProxyFactory.createProxyWithNonce.selector,
-                address(instance.env.safeSingleton),
-                getSafeInitializer(instance.env, instance.safeSalt),
-                instance.safeSalt
+                instance.accountFlavor.accountFactory.createProxyWithNonce.selector,
+                address(instance.accountFlavor.accountSingleton),
+                getSafeInitializer(instance.aux, instance.salt),
+                instance.salt
             )
         );
     }
@@ -25,28 +30,28 @@ library SafeHelpers {
         // Get proxy address of safe ERC4337 module
 
         address safe4337ModuleCloneAddress =
-            AuxiliaryLib.getModuleCloneAddress(env, address(env.rhinestoneManagerSingleton), salt);
+            AuxiliaryLib.getModuleCloneAddress(env, address(env.rhinestoneManager), salt);
 
         InitialModule[] memory modules = new InitialModule[](1);
 
         // Add ERC4337 module on Safe deployment
         modules[0] = InitialModule({
-            moduleAddress: address(env.rhinestoneManagerSingleton),
+            moduleAddress: address(env.rhinestoneManager),
             salt: salt,
             initializer: abi.encodeWithSelector(
-                RhinestoneAdmin.initialize.selector,
+                IRhinestone4337.initialize.selector,
                 address(0),
                 env.validator,
                 env.recovery,
                 env.registry,
                 address(0x696969696969),
-                env.rhinestoneProtocol
+                env.rhinestoneFactory
                 )
         });
 
         // Calldata sent to init4337Safe
         bytes memory initModuleCalldata =
-            abi.encodeWithSelector(Init4337Safe.initialize.selector, modules, salt, env.rhinestoneProtocol, safeOwner);
+            abi.encodeWithSelector(IBootstrap.initialize.selector, modules, salt, env.rhinestoneFactory, safeOwner);
 
         // Initial owners of Safe
         address[] memory owners = new address[](1);
@@ -55,7 +60,7 @@ library SafeHelpers {
             Safe.setup.selector,
             owners, // owners
             1, // threshold
-            address(env.init4337Safe), // init module
+            address(env.rhinestoneBootstrap), // init module
             initModuleCalldata, // init module calldata
             safe4337ModuleCloneAddress, // fallbackHandler
             address(0), // payment token
