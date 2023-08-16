@@ -10,3 +10,6 @@
 [submodule "lib/openzeppelin"]
 	path = lib/openzeppelin
 	url = https://github.com/zeroknots/openzeppelin
+[submodule "lib/sentinellist"]
+	path = lib/sentinellist
+	url = https://github.com/zeroknots/sentinellist
