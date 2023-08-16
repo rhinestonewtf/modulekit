@@ -6,10 +6,14 @@ import "forge-std/Test.sol";
 import "./utils/safe-base/AccountFactory.sol";
 import "./utils/safe-base/RhinestoneUtil.sol";
 
+import {MockPlugin} from "./mocks/MockPlugin.sol";
+
+
 /// @title ExampleTestSafeBase
 /// @author zeroknots
 
 contract ExampleTestSafeBase is AccountFactory, Test {
+    event PluginEnabled(address indexed account, address indexed plugin, bool allowRootAccess);
     using RhinestoneUtil for AccountInstance;
 
     AccountInstance smartAccount;
@@ -26,8 +30,7 @@ contract ExampleTestSafeBase is AccountFactory, Test {
     }
 
     function testAddPlugin() public {
-        address plugin = makeAddr("plugin");
-
-        smartAccount.addPlugin(plugin);
+        MockPlugin plugin = new MockPlugin();
+        smartAccount.addPlugin(address(plugin));
     }
 }

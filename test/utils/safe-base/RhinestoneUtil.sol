@@ -7,6 +7,13 @@ import "./SafeSetup.sol";
 import "./ERC4337Helpers.sol";
 
 library RhinestoneUtil {
+    function exec4337(AccountInstance memory instance, address target, bytes memory callData)
+        internal
+        returns (bool, bytes memory)
+    {
+        return exec4337(instance, target, 0, callData);
+    }
+
     function exec4337(AccountInstance memory instance, address target, uint256 value, bytes memory callData)
         internal
         returns (bool, bytes memory)
@@ -55,7 +62,7 @@ library RhinestoneUtil {
             instance: instance,
             target: address(instance.rhinestoneManager),
             value: 0,
-            callData: abi.encodeWithSelector(instance.rhinestoneManager.enablePlugin.selector, plugin)
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.enablePlugin.selector, plugin, false)
         });
         return success;
     }
