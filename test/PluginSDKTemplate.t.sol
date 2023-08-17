@@ -8,9 +8,9 @@ import "../src/test/mocks/MockPlugin.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 
 contract PluginTest is Test, RhinestoneSDK {
-    using RhinestoneSDKLib for AccountInstance;
+    using RhinestoneSDKLib for AccountInstance; // <-- library that wraps smart account actions for easier testing
 
-    AccountInstance instance;
+    AccountInstance instance; // <-- this is a rhinestone smart account instance
 
     MockPlugin plugin;
 
