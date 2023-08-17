@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import {Auxiliary, AuxiliaryLib} from "../Auxiliary.sol";
-import {AccountInstance} from "./AccountFactory.sol";
+import {AccountInstance} from "./RhinestoneSDK.sol";
 import "safe-contracts/contracts/Safe.sol";
 import {InitialModule} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
 

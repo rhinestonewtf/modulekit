@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import "../../auxiliary/interfaces/IPluginBase.sol";
+import "../../modules/plugin/IPluginBase.sol";
 import "../../auxiliary/interfaces/IModuleManager.sol";
 import {IProtocolFactory} from "../../auxiliary/interfaces/IProtocolFactory.sol";
 

@@ -50,7 +50,7 @@ interface IPluginBase {
     function requiresRootAccess() external view returns (bool requiresRootAccess);
 }
 
-import "./IModuleManager.sol";
+import "../../auxiliary/interfaces/IModuleManager.sol";
 
 library ModuleExecLib {
     function exec(IModuleManager manager, address account, PluginAction memory action) internal {
