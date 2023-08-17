@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ISafeProtocolPlugin} from "../../src/auxiliary/interfaces//ISafeProtocol.sol";
+import {IPluginBase} from "../../src/auxiliary/interfaces/IPluginBase.sol";
 
-contract MockPlugin is ISafeProtocolPlugin {
+contract MockPlugin is IPluginBase {
     function pluginFeature() external pure returns (uint256) {
         return 1337;
     }

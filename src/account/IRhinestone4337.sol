@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../auxiliary/interfaces/ISafeProtocol.sol";
+import "../auxiliary/interfaces/IPluginBase.sol";
 import "@aa/interfaces/UserOperation.sol";
 
 interface IRhinestone4337 {

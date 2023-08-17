@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.19;
 
-import "../../auxiliary/interfaces/ISafeProtocol.sol";
+import "../../auxiliary/interfaces/IPluginBase.sol";
 import {IProtocolFactory} from "../../auxiliary/interfaces/IProtocolFactory.sol";
 
 import {MinimalProxyUtil} from "../lib/MinimalProxyUtil.sol";
@@ -159,7 +159,7 @@ abstract contract ModuleManager {
                               PLUGIN EXECUTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function executeTransaction(SafeTransaction calldata transaction)
+    function executeTransaction(PluginTransaction calldata transaction)
         external
         onlyPluginOrClone(msg.sender)
         returns (bytes[] memory data)
@@ -170,7 +170,7 @@ abstract contract ModuleManager {
 
         // Loop through all the actions in the transaction
         for (uint256 i; i < length; ++i) {
-            SafeProtocolAction calldata safeProtocolAction = transaction.actions[i];
+            PluginAction calldata safeProtocolAction = transaction.actions[i];
 
             // revert if plugin is calling a transaction on avatar or manager
             _rejectCalltoAccountOrManager({to: safeProtocolAction.to});
@@ -188,15 +188,15 @@ abstract contract ModuleManager {
         }
     }
 
-    function executeRootAction(SafeRootAccess calldata rootAccess)
+    function executeRootAction(PluginRootAccess calldata rootAccess)
         external
         onlyPluginOrClone(msg.sender)
         returns (bytes memory data)
     {
-        SafeProtocolAction calldata transaction = rootAccess.action;
+        PluginAction calldata transaction = rootAccess.action;
 
         // Check if the plugin contract requires root access and if it has been granted root access
-        if (!ISafeProtocolPlugin(msg.sender).requiresRootAccess() || !enabledPlugins[msg.sender].rootAddressGranted) {
+        if (!IPluginBase(msg.sender).requiresRootAccess() || !enabledPlugins[msg.sender].rootAddressGranted) {
             revert PluginRequiresRootAccess(msg.sender);
         }
 
@@ -217,7 +217,7 @@ abstract contract ModuleManager {
     //////////////////////////////////////////////////////////////*/
     /**
      * @notice Called by a Safe to enable a plugin on a Safe. To be called by a safe.
-     * @param plugin ISafeProtocolPlugin A plugin that has to be enabled
+     * @param plugin IPluginBase A plugin that has to be enabled
      * @param allowRootAccess Bool indicating whether root access to be allowed.
      */
     function _enablePlugin(address plugin, bool allowRootAccess)
@@ -232,12 +232,12 @@ abstract contract ModuleManager {
             revert PluginAlreadyEnabled(msg.sender, plugin);
         }
 
-        bool requiresRootAccess = ISafeProtocolPlugin(plugin).requiresRootAccess();
+        bool requiresRootAccess = IPluginBase(plugin).requiresRootAccess();
         if (allowRootAccess != requiresRootAccess) {
             revert PluginAccessMismatch(plugin, requiresRootAccess, allowRootAccess);
         }
 
-        // bool grantsPluginAccess = ISafeProtocolPlugin(plugin).grantsPluginAccess();
+        // bool grantsPluginAccess = IPluginBase(plugin).grantsPluginAccess();
 
         if (senderSentinelPlugin.nextPluginPointer == address(0)) {
             senderSentinelPlugin.rootAddressGranted = false;

@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.18;
 
-struct SafeProtocolAction {
+struct PluginAction {
     address payable to;
     uint256 value;
     bytes data;
 }
 
-struct SafeTransaction {
-    SafeProtocolAction[] actions;
+struct PluginTransaction {
+    PluginAction[] actions;
     uint256 nonce;
     bytes32 metadataHash;
 }
 
-struct SafeRootAccess {
-    SafeProtocolAction action;
+struct PluginRootAccess {
+    PluginAction action;
     uint256 nonce;
     bytes32 metadataHash;
 }
@@ -22,7 +22,7 @@ struct SafeRootAccess {
 /**
  * @title ISafeProtocolPlugin - An interface that a Safe plugin should implement
  */
-interface ISafeProtocolPlugin {
+interface IPluginBase {
     /**
      * @notice A funtion that returns name of the plugin
      * @return name string name of the plugin
