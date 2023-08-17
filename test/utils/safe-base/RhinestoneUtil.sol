@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import {AccountInstance} from "./AccountFactory.sol";
 import "./SafeSetup.sol";
 import "./ERC4337Helpers.sol";
+import "../../../src/auxiliary/interfaces/IModuleManager.sol";
 
 library RhinestoneUtil {
     function exec4337(AccountInstance memory instance, address target, bytes memory callData)

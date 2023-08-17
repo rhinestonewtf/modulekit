@@ -5,9 +5,11 @@ import "forge-std/Test.sol";
 
 import "./utils/safe-base/AccountFactory.sol";
 import "./utils/safe-base/RhinestoneUtil.sol";
+import "../src/auxiliary/interfaces/IModuleManager.sol";
 
 import "../src/modules/plugin/TemplatePlugin.sol";
-import "solady/test/uitls/MockERC20.sol";
+import "solmate/test/utils/mocks/MockERC20.sol";
+import "forge-std/interfaces/IERC20.sol";
 /// @title ExampleTestSafeBase
 /// @author zeroknots
 
@@ -28,9 +30,20 @@ contract ExampleTestSafeBase is AccountFactory, Test {
     }
 
     function testAddPlugin() public {
+        MockERC20 token = new MockERC20("","",18);
+        token.mint(smartAccount.account, 100 ether);
+        address receiver = makeAddr("receiver");
+
         TemplatePlugin plugin = new TemplatePlugin();
         smartAccount.addPlugin(address(plugin));
 
-        smartAccount.exec4337({target: address(plugin), callData: abi.encodeWithSelector(TemplatePlugin.exec.selector)});
+        console2.log("calling 4337");
+        smartAccount.exec4337({
+            target: address(plugin),
+            callData: abi.encodeWithSelector(
+                TemplatePlugin.exec.selector, smartAccount.rhinestoneManager, IERC20(address(token)), receiver, 10
+                )
+        });
+        assertEq(token.balanceOf(receiver), 10, "Receiver should have 10");
     }
 }
