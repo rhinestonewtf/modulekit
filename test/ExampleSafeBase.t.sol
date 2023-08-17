@@ -41,7 +41,12 @@ contract ExampleTestSafeBase is AccountFactory, Test {
         smartAccount.exec4337({
             target: address(plugin),
             callData: abi.encodeWithSelector(
-                TemplatePlugin.exec.selector, smartAccount.rhinestoneManager, IERC20(address(token)), receiver, 10
+                TemplatePlugin.exec.selector,
+                smartAccount.rhinestoneManager,
+                smartAccount.account,
+                IERC20(address(token)),
+                receiver,
+                10
                 )
         });
         assertEq(token.balanceOf(receiver), 10, "Receiver should have 10");

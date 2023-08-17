@@ -49,3 +49,21 @@ interface IPluginBase {
      */
     function requiresRootAccess() external view returns (bool requiresRootAccess);
 }
+
+import "./IModuleManager.sol";
+
+library ModuleExecLib {
+    function exec(IModuleManager manager, address account, PluginAction memory action) internal {
+        PluginAction[] memory actions = new PluginAction[](1);
+        actions[0] = action;
+
+        PluginTransaction memory transaction = PluginTransaction({actions: actions, nonce: 0, metadataHash: ""});
+
+        manager.executeTransaction(transaction);
+    }
+
+    function exec(IModuleManager manager, address account, address target, bytes memory callData) internal {
+        PluginAction memory action = PluginAction({to: payable(target), value: 0, data: callData});
+        exec(manager, account, action);
+    }
+}
