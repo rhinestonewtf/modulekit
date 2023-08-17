@@ -20,7 +20,7 @@ struct PluginRootAccess {
 }
 
 /**
- * @title ISafeProtocolPlugin - An interface that a Safe plugin should implement
+ * @title IPluginBase - An interface that a Safe plugin should implement
  */
 interface IPluginBase {
     /**
@@ -50,7 +50,9 @@ interface IPluginBase {
     function requiresRootAccess() external view returns (bool requiresRootAccess);
 }
 
-import "../../auxiliary/interfaces/IModuleManager.sol";
+interface IModuleManager {
+    function executeTransaction(PluginTransaction calldata transaction) external returns (bytes[] memory data);
+}
 
 library ModuleExecLib {
     function exec(IModuleManager manager, address account, PluginAction memory action) internal {

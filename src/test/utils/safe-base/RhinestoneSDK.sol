@@ -81,7 +81,7 @@ contract RhinestoneSDK is AuxiliaryFactory {
 
 import {SafeHelpers} from "./SafeSetup.sol";
 import {ERC4337Wrappers} from "./ERC4337Helpers.sol";
-import "../../../contracts/auxiliary/interfaces/IModuleManager.sol";
+import {IModuleManager} from "../../../contracts/modules/plugin/IPluginBase.sol";
 
 library RhinestoneSDKLib {
     function exec4337(AccountInstance memory instance, address target, bytes memory callData)

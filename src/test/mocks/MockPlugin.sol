@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import "../../contracts/modules/plugin/IPluginBase.sol";
-import "../../contracts/auxiliary/interfaces/IModuleManager.sol";
 import "forge-std/interfaces/IERC20.sol";
 
 /// @author zeroknots
