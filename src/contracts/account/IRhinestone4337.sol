@@ -22,6 +22,10 @@ interface IRhinestone4337 {
                             ERC 4337
     //////////////////////////////////////////////////////////////*/
 
+    function getPluginsPaginated(address start, uint256 pageSize)
+        external
+        returns (address[] memory array, address next);
+
     function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 requiredPrefund)
         external
         returns (uint256);

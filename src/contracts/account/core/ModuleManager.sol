@@ -334,8 +334,9 @@ abstract contract ModuleManager is IModuleManager {
      * @return next Start of the next page.
      */
     function getPluginsPaginated(address start, uint256 pageSize)
-        external
+        public
         view
+        virtual
         returns (address[] memory array, address next)
     {
         if (pageSize == 0) {

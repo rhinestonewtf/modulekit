@@ -9,6 +9,8 @@ import "../Auxiliary.sol";
 import "../../../contracts/safe/ISafe.sol";
 import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
+import "forge-std/console2.sol";
+
 struct AccountInstance {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -128,9 +130,28 @@ library RhinestoneSDKLib {
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
-    function addValidator(AccountInstance memory instance, address validator) internal returns (bool) {}
+    function addValidator(AccountInstance memory instance, address validator) internal returns (bool) {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.addValidator.selector, validator)
+        });
+        return success;
+    }
 
-    function addRecovery(AccountInstance memory instance, address recovery) internal returns (bool) {}
+    function addRecovery(AccountInstance memory instance, address validator, address recovery)
+        internal
+        returns (bool)
+    {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.addRecovery.selector, validator, recovery)
+        });
+        return success;
+    }
 
     function addPlugin(AccountInstance memory instance, address plugin) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
@@ -138,6 +159,24 @@ library RhinestoneSDKLib {
             target: address(instance.rhinestoneManager),
             value: 0,
             callData: abi.encodeWithSelector(instance.rhinestoneManager.enablePlugin.selector, plugin, false)
+        });
+        return success;
+    }
+
+    function removePlugin(AccountInstance memory instance, address plugin) internal returns (bool) {
+        // get previous plugin in sentinel list
+        address previous;
+
+        (address[] memory array, address next) = instance.rhinestoneManager.getPluginsPaginated(address(0x1), 100);
+
+        if (array.length == 1) previous = address(0x0);
+        else previous = array[array.length - 2];
+
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.disablePlugin.selector, previous, plugin)
         });
         return success;
     }

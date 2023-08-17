@@ -39,7 +39,7 @@ contract PluginTest is Test, RhinestoneSDK {
         assertEq(receiver.balance, 10 gwei, "Receiver should have 10 gwei");
     }
 
-    function testMocklugin() public {
+    function testMockPlugin() public {
         // add plugin to smart account
         instance.addPlugin(address(plugin));
 
@@ -52,5 +52,9 @@ contract PluginTest is Test, RhinestoneSDK {
         });
 
         assertEq(token.balanceOf(receiver), 10, "Receiver should have 10");
+
+        MockPlugin plugin2 = new MockPlugin();
+        instance.addPlugin(address(plugin2));
+        instance.removePlugin(address(plugin));
     }
 }
