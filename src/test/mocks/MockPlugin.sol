@@ -10,10 +10,10 @@ import "forge-std/interfaces/IERC20.sol";
 contract MockPlugin is IPluginBase {
     using ModuleExecLib for IModuleManager;
 
-    function exec(IModuleManager manager, address account, IERC20 token, address receiver, uint256 amount) external {
+    function exec(IModuleManager manager, address account, address token, address receiver, uint256 amount) external {
         manager.exec({
             account: account,
-            target: address(token),
+            target: token,
             callData: abi.encodeWithSelector(IERC20.transfer.selector, receiver, amount)
         });
     }
