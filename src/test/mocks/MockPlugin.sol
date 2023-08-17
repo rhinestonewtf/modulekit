@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IPluginBase} from "../../src/auxiliary/interfaces/IPluginBase.sol";
+import {IPluginBase} from "../../contracts/auxiliary/interfaces/IPluginBase.sol";
 
 contract MockPlugin is IPluginBase {
     function pluginFeature() external pure returns (uint256) {

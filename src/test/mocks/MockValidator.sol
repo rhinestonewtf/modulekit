@@ -2,7 +2,7 @@
 pragma solidity >=0.8.17;
 
 import {UserOperation} from "@aa/interfaces/UserOperation.sol";
-import {BaseValidator} from "../../src/modules/validators/BaseValidator.sol";
+import {BaseValidator} from "../../contracts/modules/validators/BaseValidator.sol";
 
 contract MockValidator is BaseValidator {
     /**

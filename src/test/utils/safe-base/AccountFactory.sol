@@ -6,8 +6,8 @@ import "safe-contracts/contracts/Safe.sol";
 import "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
 import "../Auxiliary.sol";
-import "../../../src/safe/ISafe.sol";
-import "../../../src/safe/RhinestoneSafeFlavor.sol";
+import "../../../contracts/safe/ISafe.sol";
+import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
 import "./SafeSetup.sol";
 

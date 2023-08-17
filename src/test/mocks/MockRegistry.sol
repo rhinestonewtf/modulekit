@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IRegistry} from "../../src/auxiliary/interfaces/IRegistry.sol";
+import {IRegistry} from "../../contracts/auxiliary/interfaces/IRegistry.sol";
 
 /// @title MockRegistry
 /// @author zeroknots

@@ -3,11 +3,11 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import "./utils/safe-base/AccountFactory.sol";
-import "./utils/safe-base/RhinestoneUtil.sol";
-import "../src/auxiliary/interfaces/IModuleManager.sol";
+import "../src/test/utils/safe-base/AccountFactory.sol";
+import "../src/test/utils/safe-base/RhinestoneUtil.sol";
+import "../src/contracts/auxiliary/interfaces/IModuleManager.sol";
 
-import "../src/modules/plugin/TemplatePlugin.sol";
+import "../src/contracts/modules/plugin/TemplatePlugin.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 import "forge-std/interfaces/IERC20.sol";
 /// @title ExampleTestSafeBase

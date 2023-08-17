@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import {IProtocolFactory} from "../../src/auxiliary/interfaces/IProtocolFactory.sol";
+import {IProtocolFactory} from "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
 
 /// @title MockProtocol
 /// @author zeroknots

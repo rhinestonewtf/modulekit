@@ -3,13 +3,13 @@
 pragma solidity ^0.8.19;
 
 import {EntryPoint} from "@aa/core/EntryPoint.sol";
-import "../../../src/account/IRhinestone4337.sol";
-import "../../src/auxiliary/interfaces/IBootstrap.sol";
-import "../../src/safe/Bootstrap.sol";
-import "../../src/auxiliary/interfaces/IProtocolFactory.sol";
-import "../../src/auxiliary/interfaces/IRegistry.sol";
-import "../../src/modules/validators//IValidatorModule.sol";
-import "../../src/modules/recovery/IRecoveryModule.sol";
+import "../../contracts/account/IRhinestone4337.sol";
+import "../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import "../../contracts/safe/Bootstrap.sol";
+import "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
+import "../../contracts/auxiliary/interfaces/IRegistry.sol";
+import "../../contracts/modules/validators//IValidatorModule.sol";
+import "../../contracts/modules/recovery/IRecoveryModule.sol";
 
 import {MockValidator} from "../mocks/MockValidator.sol";
 import {MockRecovery} from "../mocks/MockRecovery.sol";
