@@ -6,8 +6,8 @@ import "forge-std/Test.sol";
 import "./utils/safe-base/AccountFactory.sol";
 import "./utils/safe-base/RhinestoneUtil.sol";
 
-import {MockPlugin} from "./mocks/MockPlugin.sol";
-
+import "../src/modules/plugin/TemplatePlugin.sol";
+import "solady/test/uitls/MockERC20.sol";
 /// @title ExampleTestSafeBase
 /// @author zeroknots
 
@@ -28,12 +28,9 @@ contract ExampleTestSafeBase is AccountFactory, Test {
     }
 
     function testAddPlugin() public {
-        MockPlugin plugin = new MockPlugin();
+        TemplatePlugin plugin = new TemplatePlugin();
         smartAccount.addPlugin(address(plugin));
 
-        smartAccount.exec4337({
-            target: address(plugin),
-            callData: abi.encodeWithSelector(MockPlugin.pluginFeature.selector)
-        });
+        smartAccount.exec4337({target: address(plugin), callData: abi.encodeWithSelector(TemplatePlugin.exec.selector)});
     }
 }

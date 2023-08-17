@@ -2,13 +2,14 @@
 pragma solidity ^0.8.19;
 
 import "../../auxiliary/interfaces/IPluginBase.sol";
+import "../../auxiliary/interfaces/IModuleManager.sol";
 import {IProtocolFactory} from "../../auxiliary/interfaces/IProtocolFactory.sol";
 
 import {MinimalProxyUtil} from "../lib/MinimalProxyUtil.sol";
 
 import "forge-std/console2.sol";
 
-abstract contract ModuleManager {
+abstract contract ModuleManager is IModuleManager {
     // Instance of the IProtocolFactory contract
     IProtocolFactory cloneFactory;
 
