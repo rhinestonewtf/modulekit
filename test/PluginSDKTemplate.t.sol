@@ -7,10 +7,8 @@ import "../src/test/utils/safe-base/RhinestoneSDK.sol";
 import "../src/test/mocks/MockPlugin.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 import "forge-std/interfaces/IERC20.sol";
-/// @title FooTest
-/// @author zeroknots
 
-contract FooTest is Test, RhinestoneSDK {
+contract PluginTest is Test, RhinestoneSDK {
     using RhinestoneSDKLib for AccountInstance;
 
     AccountInstance instance;
