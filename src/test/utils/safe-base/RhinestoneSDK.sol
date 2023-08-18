@@ -9,8 +9,6 @@ import "../Auxiliary.sol";
 import "../../../contracts/safe/ISafe.sol";
 import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
-import "forge-std/console2.sol";
-
 struct AccountInstance {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -39,9 +37,9 @@ contract RhinestoneSDK is AuxiliaryFactory {
         safeSingleton = new Safe();
 
         rhinestoneManager = new RhinestoneSafeFlavor(
-          address(entrypoint),
-          address(mockRegistry),
-          defaultAttester
+            address(entrypoint),
+            address(mockRegistry),
+            defaultAttester
         );
 
         safeBootstrap = new Bootstrap();
@@ -179,6 +177,20 @@ library RhinestoneSDKLib {
             callData: abi.encodeWithSelector(instance.rhinestoneManager.disablePlugin.selector, previous, plugin)
         });
         return success;
+    }
+
+    function getUserOpHash(
+        AccountInstance memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        uint8 operation // {0: Call, 1: DelegateCall}
+    ) internal returns (bytes32) {
+        bytes memory data = ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
+        bytes memory initCode = isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+        return userOpHash;
     }
 
     function isDeployed(AccountInstance memory instance) internal view returns (bool) {
