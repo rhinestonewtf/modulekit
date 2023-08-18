@@ -177,9 +177,11 @@ library RhinestoneSDKLib {
         if (array.length == 1) previous = address(0x0);
         else previous = array[array.length - 2];
 
+        emit SDKLOG_RemovePlugin(address(instance.account), plugin, previous);
+
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.aux.pluginManager),
             value: 0,
             callData: abi.encodeWithSelector(instance.aux.pluginManager.disablePlugin.selector, previous, plugin)
         });
@@ -194,4 +196,6 @@ library RhinestoneSDKLib {
         }
         return (size > 0);
     }
+
+    event SDKLOG_RemovePlugin(address account, address plugin, address prevPlugin);
 }

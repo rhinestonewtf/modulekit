@@ -50,8 +50,12 @@ library SafeHelpers {
             requiresClone: true
         });
 
-        modules[1] =
-            InitialModule({moduleAddress: address(env.pluginManager), salt: salt, initializer: "", requiresClone: false});
+        modules[1] = InitialModule({
+            moduleAddress: address(env.pluginManager),
+            salt: salt,
+            initializer: "",
+            requiresClone: false
+        });
 
         // Calldata sent to init4337Safe
         bytes memory initModuleCalldata =

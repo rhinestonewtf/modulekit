@@ -55,7 +55,6 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
         // return pluginImplToClones[pluginImpl][salt];
     }
 
-
     /*//////////////////////////////////////////////////////////////
                               MANAGE VALIDATORS
     //////////////////////////////////////////////////////////////*/

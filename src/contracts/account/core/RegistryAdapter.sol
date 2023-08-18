@@ -6,7 +6,7 @@ import {IRegistry} from "../../auxiliary/interfaces/IRegistry.sol";
 /// @author zeroknots
 
 abstract contract RegistryAdapter {
-    // Instance of the IRSQuery contract
+    // Instance of the IRegistry contract
     IRegistry registry;
 
     // Address of the trusted authority

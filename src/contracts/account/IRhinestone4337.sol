@@ -48,7 +48,6 @@ interface IRhinestone4337 {
      */
     function clones(address pluginImpl, bytes32 salt) external view returns (address clone);
 
-
     /*//////////////////////////////////////////////////////////////
                               MANAGE VALIDATORS
     //////////////////////////////////////////////////////////////*/
