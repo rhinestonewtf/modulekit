@@ -55,51 +55,6 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
         // return pluginImplToClones[pluginImpl][salt];
     }
 
-    /*//////////////////////////////////////////////////////////////
-                              MANAGE PLUGINS
-    //////////////////////////////////////////////////////////////*/
-    /**
-     * @inheritdoc IRhinestone4337
-     */
-    function enablePlugin(address plugin, bool allowRootAccess) external onlyOwner {
-        // _enablePlugin(plugin, allowRootAccess);
-    }
-
-    // function getPluginsPaginated(address start, uint256 pageSize)
-    //     public
-    //     view
-    //     override(IRhinestone4337, ModuleManager)
-    //     returns (address[] memory array, address next)
-    // {
-    //     return super.getPluginsPaginated(start, pageSize);
-    // }
-
-    /**
-     * @inheritdoc IRhinestone4337
-     */
-    function enablePluginClone(address plugin, bool allowRootAccess, bytes32 salt) external override onlyOwner {
-        // address clone = _clonePlugin(plugin, salt);
-        // _enablePlugin(clone, allowRootAccess);
-    }
-
-    /**
-     * @inheritdoc IRhinestone4337
-     */
-    function enablePluginCloneInit(address plugin, bool allowRootAccess, bytes calldata initCallData, bytes32 salt)
-        external
-        override
-        onlyOwner
-    {
-        // address clone = _clonePlugin(plugin, initCallData, salt);
-        // _enablePlugin(clone, allowRootAccess);
-    }
-
-    /**
-     * @inheritdoc IRhinestone4337
-     */
-    function disablePlugin(address prevPlugin, address plugin) external onlyOwner {
-        // _disablePlugin(prevPlugin, plugin);
-    }
 
     /*//////////////////////////////////////////////////////////////
                               MANAGE VALIDATORS
