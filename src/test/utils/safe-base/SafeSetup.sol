@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
 import {Auxiliary, AuxiliaryLib} from "../Auxiliary.sol";
-import {AccountInstance} from "./AccountFactory.sol";
+import {AccountInstance} from "./RhinestoneSDK.sol";
 import "safe-contracts/contracts/Safe.sol";
-import {InitialModule} from "../../../src/auxiliary/interfaces/IBootstrap.sol";
+import {InitialModule} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
 
-import {IRhinestone4337} from "../../../src/account/IRhinestone4337.sol";
-import {IBootstrap} from "../../../src/auxiliary/interfaces/IBootstrap.sol";
+import {IRhinestone4337} from "../../../contracts/account/IRhinestone4337.sol";
+import {IBootstrap} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
 
 pragma solidity ^0.8.19;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../auxiliary/interfaces/ISafeProtocol.sol";
+import "../modules/plugin/IPluginBase.sol";
 import "@aa/interfaces/UserOperation.sol";
 
 interface IRhinestone4337 {
@@ -21,6 +21,10 @@ interface IRhinestone4337 {
     /*//////////////////////////////////////////////////////////////
                             ERC 4337
     //////////////////////////////////////////////////////////////*/
+
+    function getPluginsPaginated(address start, uint256 pageSize)
+        external
+        returns (address[] memory array, address next);
 
     function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 requiredPrefund)
         external

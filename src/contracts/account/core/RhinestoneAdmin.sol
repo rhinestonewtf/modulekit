@@ -79,6 +79,15 @@ abstract contract RhinestoneAdmin is
         _enablePlugin(plugin, allowRootAccess);
     }
 
+    function getPluginsPaginated(address start, uint256 pageSize)
+        public
+        view
+        override(IRhinestone4337, ModuleManager)
+        returns (address[] memory array, address next)
+    {
+        return super.getPluginsPaginated(start, pageSize);
+    }
+
     /**
      * @inheritdoc IRhinestone4337
      */

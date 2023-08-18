@@ -1,28 +1,28 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.18;
 
-struct SafeProtocolAction {
+struct PluginAction {
     address payable to;
     uint256 value;
     bytes data;
 }
 
-struct SafeTransaction {
-    SafeProtocolAction[] actions;
+struct PluginTransaction {
+    PluginAction[] actions;
     uint256 nonce;
     bytes32 metadataHash;
 }
 
-struct SafeRootAccess {
-    SafeProtocolAction action;
+struct PluginRootAccess {
+    PluginAction action;
     uint256 nonce;
     bytes32 metadataHash;
 }
 
 /**
- * @title ISafeProtocolPlugin - An interface that a Safe plugin should implement
+ * @title IPluginBase - An interface that a Safe plugin should implement
  */
-interface ISafeProtocolPlugin {
+interface IPluginBase {
     /**
      * @notice A funtion that returns name of the plugin
      * @return name string name of the plugin
@@ -48,4 +48,24 @@ interface ISafeProtocolPlugin {
      * @return requiresRootAccess True if root access is required, false otherwise.
      */
     function requiresRootAccess() external view returns (bool requiresRootAccess);
+}
+
+interface IModuleManager {
+    function executeTransaction(PluginTransaction calldata transaction) external returns (bytes[] memory data);
+}
+
+library ModuleExecLib {
+    function exec(IModuleManager manager, address account, PluginAction memory action) internal {
+        PluginAction[] memory actions = new PluginAction[](1);
+        actions[0] = action;
+
+        PluginTransaction memory transaction = PluginTransaction({actions: actions, nonce: 0, metadataHash: ""});
+
+        manager.executeTransaction(transaction);
+    }
+
+    function exec(IModuleManager manager, address account, address target, bytes memory callData) internal {
+        PluginAction memory action = PluginAction({to: payable(target), value: 0, data: callData});
+        exec(manager, account, action);
+    }
 }
