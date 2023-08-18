@@ -32,7 +32,7 @@ library SafeHelpers {
         address safe4337ModuleCloneAddress =
             AuxiliaryLib.getModuleCloneAddress(env, address(env.rhinestoneManager), salt);
 
-        InitialModule[] memory modules = new InitialModule[](1);
+        InitialModule[] memory modules = new InitialModule[](2);
 
         // Add ERC4337 module on Safe deployment
         modules[0] = InitialModule({
@@ -46,8 +46,12 @@ library SafeHelpers {
                 env.registry,
                 address(0x696969696969),
                 env.rhinestoneFactory
-                )
+                ),
+            requiresClone: true
         });
+
+        modules[1] =
+            InitialModule({moduleAddress: address(env.pluginManager), salt: salt, initializer: "", requiresClone: false});
 
         // Calldata sent to init4337Safe
         bytes memory initModuleCalldata =

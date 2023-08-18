@@ -12,7 +12,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
                           Rhinestone Components
 //////////////////////////////////////////////////////////////*/
 
-import {ModuleManager} from "./ModuleManager.sol";
 import {IRhinestone4337} from "../IRhinestone4337.sol";
 import {ValidatorManager} from "./ValidatorManager.sol";
 import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
@@ -21,14 +20,7 @@ import {RegistryAdapter} from "./RegistryAdapter.sol";
 /// @title Rhinestone4337
 /// @author zeroknots
 
-abstract contract RhinestoneAdmin is
-    Ownable,
-    Initializable,
-    IRhinestone4337,
-    ModuleManager,
-    ValidatorManager,
-    RegistryAdapter
-{
+abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, ValidatorManager, RegistryAdapter {
     /**
      * @dev Initializes the Rhinestone Admin contract
      *
@@ -48,17 +40,11 @@ abstract contract RhinestoneAdmin is
         address _cloneFactory
     ) external initializer {
         _initializeOwner(msg.sender);
-        _initializeModuleManager(_cloneFactory);
-        _initializeRegistryAdapter(_registry, _trustedAuthority);
         _initializeValidatorManager(_defaultRecovery);
         _addValidator(_defaultValidator);
     }
 
-    function _enforceRegistryCheck(address pluginImpl)
-        internal
-        view
-        override(ModuleManager, RegistryAdapter, ValidatorManager)
-    {
+    function _enforceRegistryCheck(address pluginImpl) internal view override(RegistryAdapter, ValidatorManager) {
         super._enforceRegistryCheck(pluginImpl);
     }
 
@@ -66,7 +52,7 @@ abstract contract RhinestoneAdmin is
      * @inheritdoc IRhinestone4337
      */
     function clones(address pluginImpl, bytes32 salt) external view override returns (address) {
-        return pluginImplToClones[pluginImpl][salt];
+        // return pluginImplToClones[pluginImpl][salt];
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -76,24 +62,24 @@ abstract contract RhinestoneAdmin is
      * @inheritdoc IRhinestone4337
      */
     function enablePlugin(address plugin, bool allowRootAccess) external onlyOwner {
-        _enablePlugin(plugin, allowRootAccess);
+        // _enablePlugin(plugin, allowRootAccess);
     }
 
-    function getPluginsPaginated(address start, uint256 pageSize)
-        public
-        view
-        override(IRhinestone4337, ModuleManager)
-        returns (address[] memory array, address next)
-    {
-        return super.getPluginsPaginated(start, pageSize);
-    }
+    // function getPluginsPaginated(address start, uint256 pageSize)
+    //     public
+    //     view
+    //     override(IRhinestone4337, ModuleManager)
+    //     returns (address[] memory array, address next)
+    // {
+    //     return super.getPluginsPaginated(start, pageSize);
+    // }
 
     /**
      * @inheritdoc IRhinestone4337
      */
     function enablePluginClone(address plugin, bool allowRootAccess, bytes32 salt) external override onlyOwner {
-        address clone = _clonePlugin(plugin, salt);
-        _enablePlugin(clone, allowRootAccess);
+        // address clone = _clonePlugin(plugin, salt);
+        // _enablePlugin(clone, allowRootAccess);
     }
 
     /**
@@ -104,15 +90,15 @@ abstract contract RhinestoneAdmin is
         override
         onlyOwner
     {
-        address clone = _clonePlugin(plugin, initCallData, salt);
-        _enablePlugin(clone, allowRootAccess);
+        // address clone = _clonePlugin(plugin, initCallData, salt);
+        // _enablePlugin(clone, allowRootAccess);
     }
 
     /**
      * @inheritdoc IRhinestone4337
      */
     function disablePlugin(address prevPlugin, address plugin) external onlyOwner {
-        _disablePlugin(prevPlugin, plugin);
+        // _disablePlugin(prevPlugin, plugin);
     }
 
     /*//////////////////////////////////////////////////////////////

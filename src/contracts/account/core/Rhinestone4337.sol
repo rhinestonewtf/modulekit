@@ -31,6 +31,7 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
 
     constructor(address entryPoint, address registry, address trustedAuthority) {
         supportedEntryPoint = entryPoint;
+        _setRegistry(registry);
         emit NewRhinestoneManager(address(this));
     }
 
@@ -137,11 +138,11 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
 
         // check if target is an installed plugin
 
-        if (isPluginEnabled(target)) {
-            _execPlugin(target, value, data);
-        } else {
-            _execTransationOnSmartAccount(smartAccount, target, value, data);
-        }
+        // if (isPluginEnabled(target)) {
+        //     _execPlugin(target, value, data);
+        // } else {
+        _execTransationOnSmartAccount(smartAccount, target, value, data);
+        // }
     }
 
     function validateReplayProtection(UserOperation calldata userOp) internal {
@@ -156,4 +157,9 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
     }
 
     function _prefundEntrypoint(address safe, address entryPoint, uint256 requiredPrefund) internal virtual;
+
+    function _execTransationOnSmartAccount(address account, address to, uint256 value, bytes memory data)
+        internal
+        virtual
+        returns (bool, bytes memory);
 }

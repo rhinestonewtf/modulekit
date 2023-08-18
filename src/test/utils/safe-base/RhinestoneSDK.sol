@@ -7,6 +7,7 @@ import "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
 import "../Auxiliary.sol";
 import "../../../contracts/safe/ISafe.sol";
+import {SafePluginManager} from "../../../contracts/safe/SafePluginManager.sol";
 import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
 import "forge-std/console2.sol";
@@ -35,6 +36,7 @@ contract RhinestoneSDK is AuxiliaryFactory {
 
     function init() internal override {
         super.init();
+        pluginManager = new SafePluginManager(address(mockRegistry));
         safeFactory = new SafeProxyFactory();
         safeSingleton = new Safe();
 
@@ -156,10 +158,12 @@ library RhinestoneSDKLib {
     function addPlugin(AccountInstance memory instance, address plugin) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.aux.pluginManager),
             value: 0,
-            callData: abi.encodeWithSelector(instance.rhinestoneManager.enablePlugin.selector, plugin, false)
+            callData: abi.encodeWithSelector(instance.aux.pluginManager.enablePlugin.selector, plugin, false)
         });
+
+        require(instance.aux.pluginManager.isPluginEnabled(address(instance.account), plugin), "plugin not enabled");
         return success;
     }
 
@@ -167,7 +171,8 @@ library RhinestoneSDKLib {
         // get previous plugin in sentinel list
         address previous;
 
-        (address[] memory array, address next) = instance.rhinestoneManager.getPluginsPaginated(address(0x1), 100);
+        (address[] memory array, address next) =
+            instance.aux.pluginManager.getPluginsPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) previous = address(0x0);
         else previous = array[array.length - 2];
@@ -176,7 +181,7 @@ library RhinestoneSDKLib {
             instance: instance,
             target: address(instance.rhinestoneManager),
             value: 0,
-            callData: abi.encodeWithSelector(instance.rhinestoneManager.disablePlugin.selector, previous, plugin)
+            callData: abi.encodeWithSelector(instance.aux.pluginManager.disablePlugin.selector, previous, plugin)
         });
         return success;
     }

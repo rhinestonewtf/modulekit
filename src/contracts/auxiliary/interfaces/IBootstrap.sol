@@ -5,6 +5,7 @@ struct InitialModule {
     address moduleAddress;
     bytes32 salt;
     bytes initializer;
+    bool requiresClone;
 }
 
 interface IBootstrap {

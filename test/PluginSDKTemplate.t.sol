@@ -47,7 +47,7 @@ contract PluginTest is Test, RhinestoneSDK {
         instance.exec4337({
             target: address(plugin),
             callData: abi.encodeWithSelector(
-                MockPlugin.exec.selector, instance.rhinestoneManager, instance.account, address(token), receiver, 10
+                MockPlugin.exec.selector, instance.aux.pluginManager, instance.account, address(token), receiver, 10
                 )
         });
 

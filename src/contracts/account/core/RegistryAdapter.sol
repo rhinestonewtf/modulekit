@@ -14,13 +14,18 @@ abstract contract RegistryAdapter {
 
     error PluginNotPermitted(address plugin, uint48 listedAt, uint48 flaggedAt);
 
-    function _initializeRegistryAdapter(address _registry, address _trustedAuthority) internal {
+    mapping(address account => address trustedAttester) internal trustedAttester;
+
+    function _setRegistry(address _registry) internal {
         registry = IRegistry(_registry);
-        trustedAuthority = _trustedAuthority;
+    }
+
+    function _setAttester(address account, address attester) internal {
+        trustedAttester[account] = attester;
     }
 
     function _enforceRegistryCheck(address pluginImpl) internal view virtual {
-        (uint48 listedAt, uint48 flaggedAt) = registry.check(pluginImpl, trustedAuthority);
+        (uint48 listedAt, uint48 flaggedAt) = registry.check(pluginImpl, trustedAttester[msg.sender]);
 
         // revert if plugin was ever flagged or was never attested to
         if (listedAt == 0 || flaggedAt != 0) {
