@@ -50,7 +50,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initialzed = true;
     }
 
-    function makeSmartAccount(bytes32 salt) internal returns (RhinestoneAccount memory instance) {
+    function makeRhinestoneAccount(bytes32 salt) internal returns (RhinestoneAccount memory instance) {
         if (!initialzed) init();
 
         Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
