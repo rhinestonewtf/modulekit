@@ -1,13 +1,12 @@
-# module-boilerplate
-Boilerplate for building smart account modules
-
+# moduleKit
+Boilerplate for building smart account modules with Rhinestone ModuleKit
 
 
 
 ## Build a Plugin
 
 
-### Install Rhinestone SDK
+### Install Rhinestone ModuleKit
 
 ```sh
 forge install rhinestonewtf/module-kit
