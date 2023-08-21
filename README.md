@@ -1,112 +1,77 @@
-# moduleKit
-Boilerplate for building smart account modules with Rhinestone ModuleKit
+<img src=".github/logo.png" alt="rhinestone logo" align="right" width="120" height="120" style="border-radius:20px"/>
 
+## rhinestone ModuleKit
 
+**A development kit for building and testing smart account modules.**
 
-## Build a Plugin
+ModuleKit allows you to:
 
+- **Easily build smart account modules** with interfaces for:
+  - Validators
+  - Executors
+  - Recovery modules
+  - Hooks
+- **Unit test** your modules using a dedicated helper library
+- **Integration test** your modules using modular ERC-4337 accounts and a helper library that abstracts away almost all the complexity
 
-### Install Rhinestone ModuleKit
+**Need help getting started with ModuleKit? Check out the [docs][rs-docs]!**
+
+## Installation with Foundry
 
 ```sh
-forge install rhinestonewtf/module-kit
-
+forge install rhinestonewtf/modulekit
 ```
 
+## Features
 
+- [ ] ERC-4337 integration tests
+  - [x] On-chain integration test (EntryPoint -> Account)
+  - [ ] Off-chain integration test (Bundler simulation and rule validation)
+- [ ] Module unit testing library
+- [ ] Different Module types
+  - [x] Validators
+  - [x] Executors
+  - [x] Recovery modules
+  - [ ] Hooks
+- [ ] Different modular accounts
+  - [x] Safe
+  - [ ] Kernel
+  - [ ] Biconomy
+  - [ ] ERC-6900 reference implementation
 
-### Write a Plugin
+## Helper utilities
 
-```solidity
-// ./src/MyPlugin.sol
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+### Building modules
 
-import "module-kit/contracts/modules/plugin/IPluginBase.sol";
-import "forge-std/interfaces/IERC20.sol";
+#### Interfaces
 
-contract MyPlugin is IPluginBase {
-    using ModuleExecLib for IPluginManager; //TODO
+- `IPluginBase`: Interface for Plugins to inherit from.
+- `BaseValidator`: Interface for Validator Modules to inherit from.
+- `IRecoveryModule`: Interface for Recovery Modules to inherit from.
 
-    function exec(IPluginManager manager, address account, address token, address receiver, uint256 amount) external {
-        manager.exec({
-            account: account,
-            target: token,
-            callData: abi.encodeWithSelector(IERC20.transfer.selector, receiver, amount)
-        });
-    }
+### Testing modules
 
-    function name() external view override returns (string memory name) {}
+#### RhinestoneModuleKitLib
 
-    function version() external view override returns (string memory version) {}
+- `function exec4337(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData) internal returns (bool, bytes memory)`: Executes a UserOperation from the account using a `target`, a `value` and an already-encoded `callData`. Can only use use `CALL` from the account and calculates a default signature.
+- `function exec4337(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation, bytes memory signature) internal returns (bool, bytes memory)`: Executes a UserOperation from the account using a `target`, a `value` and an already-encoded `callData`. Can use either `CALL` or `DELEGATECALL` from the account and uses the provided `signature`.
+- `function addValidator(RhinestoneAccount memory instance, address validator) internal returns (bool)`: Adds a validator to the account.
+- `function addRecovery(RhinestoneAccount memory instance, address validator, address recovery) internal returns (bool)`: Adds a recovery module to the account.
+- `function addPlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool)`: Adds a plugin to the account.
+- `function removePlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool)`: Removes a plugin from the account.
+- `function getUserOpHash(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation) internal returns (bytes32)`: Calculates the hash of a UserOperation in order to be signed for a custom signature.
 
-    function metadataProvider() external view override returns (uint256 providerType, bytes memory location) {}
+## Contributing
 
-    function requiresRootAccess() external view override returns (bool requiresRootAccess) {}
-}
-```
+See our [contributing guidelines](./CONTRIBUTING.md).
 
+## Getting Help
 
-### Write a Plugin Test
+First, see if the answer to your question can be found in the [docs][rs-docs].
 
-```solidity
-// ./test/MyPlugin.t.sol
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19; 
+If the answer is not there:
 
+- Open a [discussion](https://github.com/rhinestonewtf/modulekit/discussions/new) with your question, or
+- Open an issue with [the bug](https://github.com//rhinestonewtf/modulekit/issues/new)
 
-import "forge-std/Test.sol";
-import "module-kit/test/utils/safe-base/RhinestoneSDK.sol";
-
-
-contract PluginTest is Test, RhinestoneModuleKit {
-    using RhinestoneModuleKit for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
-
-    RhinestoneAccount instance; // <-- this is a rhinestone smart account instance
-
-    MockPlugin plugin;
-
-    address receiver;
-    MockERC20 token;
-
-    function setUp() public {
-        // setting up receiver address. This is the EOA that this test is sending funds to
-        receiver = makeAddr("receiver");
-
-        // setting up mock plugin and token
-        plugin = new MockPlugin();
-        token = new MockERC20("","",18);
-
-        // create a new rhinestone account instance
-        instance = makeRhinestoneAccount({salt:"1"});
-
-
-        // dealing ether and tokens to newly created smart account
-        vm.deal(instance.account, 10 ether);
-        token.mint(instance.account, 100 ether);
-    }
-
-    function testMockPlugin() public {
-        // add plugin to smart account
-        instance.addPlugin(address(plugin));
-
-        // execute exec() function on plugin and bring it to execution on instance of smart account
-        instance.exec4337({
-            target: address(plugin),
-            callData: abi.encodeWithSelector(
-                MockPlugin.exec.selector, instance.rhinestoneManager, instance.account, address(token), receiver, 10
-                )
-        });
-
-        assertEq(token.balanceOf(receiver), 10, "Receiver should have 10");
-
-    }
-
-    function testSendETH() public {
-        // create empty calldata transactions but with specified value to send funds
-        instance.exec4337({target: receiver, value: 10 gwei, callData: ""});
-        assertEq(receiver.balance, 10 gwei, "Receiver should have 10 gwei");
-    }
-}
-
-```
+[rs-docs]: https://docs.rhinestone.wtf

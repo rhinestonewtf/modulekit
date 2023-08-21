@@ -10,8 +10,6 @@ import "../../../contracts/safe/ISafe.sol";
 import {SafePluginManager} from "../../../contracts/safe/SafePluginManager.sol";
 import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
-import "forge-std/console2.sol";
-
 struct RhinestoneAccount {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -41,9 +39,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         safeSingleton = new Safe();
 
         rhinestoneManager = new RhinestoneSafeFlavor(
-          address(entrypoint),
-          address(mockRegistry),
-          defaultAttester
+            address(entrypoint),
+            address(mockRegistry),
+            defaultAttester
         );
 
         safeBootstrap = new Bootstrap();
@@ -186,6 +184,20 @@ library RhinestoneModuleKitLib {
             callData: abi.encodeWithSelector(instance.aux.pluginManager.disablePlugin.selector, previous, plugin)
         });
         return success;
+    }
+
+    function getUserOpHash(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        uint8 operation // {0: Call, 1: DelegateCall}
+    ) internal returns (bytes32) {
+        bytes memory data = ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
+        bytes memory initCode = isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+        return userOpHash;
     }
 
     function isDeployed(RhinestoneAccount memory instance) internal view returns (bool) {
