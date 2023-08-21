@@ -12,7 +12,7 @@ import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
 import "forge-std/console2.sol";
 
-struct AccountInstance {
+struct RhinestoneAccount {
     address account;
     IRhinestone4337 rhinestoneManager;
     Auxiliary aux;
@@ -25,7 +25,7 @@ struct AccountFlavor {
     ISafe accountSingleton;
 }
 
-contract RhinestoneSDK is AuxiliaryFactory {
+contract RhinestoneModuleKit is AuxiliaryFactory {
     RhinestoneSafeFlavor internal rhinestoneManager;
     Bootstrap internal safeBootstrap;
 
@@ -50,12 +50,12 @@ contract RhinestoneSDK is AuxiliaryFactory {
         initialzed = true;
     }
 
-    function newInstance(bytes32 _salt) internal returns (AccountInstance memory instance) {
+    function newInstance(bytes32 _salt) internal returns (RhinestoneAccount memory instance) {
         if (!initialzed) init();
 
         Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
 
-        instance = AccountInstance({
+        instance = RhinestoneAccount({
             account: getAccountAddress(env, _salt),
             rhinestoneManager: IRhinestone4337(
                 payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), _salt))
@@ -85,15 +85,15 @@ import {SafeHelpers} from "./SafeSetup.sol";
 import {ERC4337Wrappers} from "./ERC4337Helpers.sol";
 import {IModuleManager} from "../../../contracts/modules/plugin/IPluginBase.sol";
 
-library RhinestoneSDKLib {
-    function exec4337(AccountInstance memory instance, address target, bytes memory callData)
+library RhinestoneModuleKitLib {
+    function exec4337(RhinestoneAccount memory instance, address target, bytes memory callData)
         internal
         returns (bool, bytes memory)
     {
         return exec4337(instance, target, 0, callData);
     }
 
-    function exec4337(AccountInstance memory instance, address target, uint256 value, bytes memory callData)
+    function exec4337(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData)
         internal
         returns (bool, bytes memory)
     {
@@ -101,7 +101,7 @@ library RhinestoneSDKLib {
     }
 
     function exec4337(
-        AccountInstance memory instance,
+        RhinestoneAccount memory instance,
         address target,
         uint256 value,
         bytes memory callData,
@@ -117,7 +117,7 @@ library RhinestoneSDKLib {
         return exec4337(instance, data);
     }
 
-    function exec4337(AccountInstance memory instance, bytes memory callData) internal returns (bool, bytes memory) {
+    function exec4337(RhinestoneAccount memory instance, bytes memory callData) internal returns (bool, bytes memory) {
         // prepare ERC4337 UserOperation
 
         bytes memory initCode = isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
@@ -132,7 +132,7 @@ library RhinestoneSDKLib {
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
-    function addValidator(AccountInstance memory instance, address validator) internal returns (bool) {
+    function addValidator(RhinestoneAccount memory instance, address validator) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
             target: address(instance.rhinestoneManager),
@@ -142,7 +142,7 @@ library RhinestoneSDKLib {
         return success;
     }
 
-    function addRecovery(AccountInstance memory instance, address validator, address recovery)
+    function addRecovery(RhinestoneAccount memory instance, address validator, address recovery)
         internal
         returns (bool)
     {
@@ -155,7 +155,7 @@ library RhinestoneSDKLib {
         return success;
     }
 
-    function addPlugin(AccountInstance memory instance, address plugin) internal returns (bool) {
+    function addPlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
             target: address(instance.aux.pluginManager),
@@ -167,7 +167,7 @@ library RhinestoneSDKLib {
         return success;
     }
 
-    function removePlugin(AccountInstance memory instance, address plugin) internal returns (bool) {
+    function removePlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool) {
         // get previous plugin in sentinel list
         address previous;
 
@@ -188,7 +188,7 @@ library RhinestoneSDKLib {
         return success;
     }
 
-    function isDeployed(AccountInstance memory instance) internal view returns (bool) {
+    function isDeployed(RhinestoneAccount memory instance) internal view returns (bool) {
         address _addr = address(instance.account);
         uint32 size;
         assembly {

@@ -2,15 +2,15 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/test/utils/safe-base/RhinestoneSDK.sol";
+import "../src/test/utils/safe-base/RhinestoneModuleKit.sol";
 
 import "../src/test/mocks/MockPlugin.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 
-contract PluginTest is Test, RhinestoneSDK {
-    using RhinestoneSDKLib for AccountInstance; // <-- library that wraps smart account actions for easier testing
+contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
+    using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
 
-    AccountInstance instance; // <-- this is a rhinestone smart account instance
+    RhinestoneAccount instance; // <-- this is a rhinestone smart account instance
 
     MockPlugin plugin;
 
