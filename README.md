@@ -27,7 +27,7 @@ forge install rhinestonewtf/modulekit
 - [ ] ERC-4337 integration tests
   - [x] On-chain integration test (EntryPoint -> Account)
   - [ ] Off-chain integration test (Bundler simulation and spec validation)
-- [ ] Module unit testing library
+- [ ] Unit testing library
 - [ ] Different Module types
   - [x] Validators
   - [x] Executors
