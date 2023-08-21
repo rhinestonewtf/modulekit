@@ -79,7 +79,8 @@ contract PluginTest is Test, RhinestoneModuleKit {
         token = new MockERC20("","",18);
 
         // create a new rhinestone account instance
-        instance = newInstance("1");
+        instance = makeSmartAccount({salt:"1"});
+
 
         // dealing ether and tokens to newly created smart account
         vm.deal(instance.account, 10 ether);

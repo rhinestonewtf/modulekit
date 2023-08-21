@@ -50,18 +50,18 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initialzed = true;
     }
 
-    function newInstance(bytes32 _salt) internal returns (RhinestoneAccount memory instance) {
+    function makeSmartAccount(bytes32 salt) internal returns (RhinestoneAccount memory instance) {
         if (!initialzed) init();
 
         Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
 
         instance = RhinestoneAccount({
-            account: getAccountAddress(env, _salt),
+            account: getAccountAddress(env, salt),
             rhinestoneManager: IRhinestone4337(
-                payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), _salt))
+                payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), salt))
                 ),
             aux: env,
-            salt: _salt,
+            salt: salt,
             accountFlavor: AccountFlavor({accountFactory: safeFactory, accountSingleton: ISafe(address(safeSingleton))})
         });
     }
