@@ -19,7 +19,7 @@ ModuleKit allows you to:
 ## Installation with Foundry
 
 ```sh
-forge install rhinestonewtf/module-kit
+forge install rhinestonewtf/modulekit
 ```
 
 ## Features

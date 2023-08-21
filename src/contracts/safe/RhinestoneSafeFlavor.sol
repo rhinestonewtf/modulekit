@@ -21,7 +21,6 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
 
     function _execTransationOnSmartAccount(address to, uint256 value, bytes memory data)
         internal
-        override
         returns (bool success, bytes memory)
     {
         address safe = _accountAddress();
@@ -30,14 +29,13 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
 
     function _execDelegateCallOnSmartAccount(address to, uint256 value, bytes memory data)
         internal
-        override
         returns (bool success, bytes memory)
     {
         address safe = _accountAddress();
         success = ISafe(safe).execTransactionFromModule(to, value, data, 1);
     }
 
-    function _accountAddress() internal virtual override returns (address) {
+    function _accountAddress() internal virtual returns (address) {
         return owner();
     }
 

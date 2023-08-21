@@ -2,15 +2,15 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/test/utils/safe-base/RhinestoneSDK.sol";
+import "../src/test/utils/safe-base/RhinestoneModuleKit.sol";
 
 import "../src/test/mocks/MockPlugin.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 
-contract PluginTest is Test, RhinestoneSDK {
-    using RhinestoneSDKLib for AccountInstance; // <-- library that wraps smart account actions for easier testing
+contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
+    using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
 
-    AccountInstance instance; // <-- this is a rhinestone smart account instance
+    RhinestoneAccount instance; // <-- this is a rhinestone smart account instance
 
     MockPlugin plugin;
 
@@ -26,7 +26,7 @@ contract PluginTest is Test, RhinestoneSDK {
         token = new MockERC20("","",18);
 
         // create a new rhinestone account instance
-        instance = newInstance("1");
+        instance = makeRhinestoneAccount("1");
 
         // dealing ether and tokens to newly created smart account
         vm.deal(instance.account, 10 ether);
@@ -47,7 +47,7 @@ contract PluginTest is Test, RhinestoneSDK {
         instance.exec4337({
             target: address(plugin),
             callData: abi.encodeWithSelector(
-                MockPlugin.exec.selector, instance.rhinestoneManager, instance.account, address(token), receiver, 10
+                MockPlugin.exec.selector, instance.aux.pluginManager, instance.account, address(token), receiver, 10
                 )
         });
 
