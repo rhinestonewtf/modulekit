@@ -24,6 +24,9 @@ forge install rhinestonewtf/modulekit
 
 ## Features
 
+- [ ] ERC-4337 integration tests
+  - [x] On-chain integration test (EntryPoint -> Account)
+  - [ ] Off-chain integration test (Bundler simulation and rule validation)
 - [ ] Different Module types
   - [x] Validators
   - [x] Executors
@@ -41,17 +44,9 @@ forge install rhinestonewtf/modulekit
 
 - `function warp(uint x) public` Sets the block timestamp to `x`.
 
-- `function difficulty(uint x) public` Sets the block difficulty to `x`.
-
-- `function roll(uint x) public` Sets the block number to `x`.
-
 ### Testing modules
 
 - `function warp(uint x) public` Sets the block timestamp to `x`.
-
-- `function difficulty(uint x) public` Sets the block difficulty to `x`.
-
-- `function roll(uint x) public` Sets the block number to `x`.
 
 ## Contributing
 
@@ -63,7 +58,7 @@ First, see if the answer to your question can be found in the [docs][rs-docs].
 
 If the answer is not there:
 
-- Open a [discussion](https://github.com/rhinestonewtf/module-kit/discussions/new) with your question, or
-- Open an issue with [the bug](https://github.com//rhinestonewtf/module-kit/issues/new)
+- Open a [discussion](https://github.com/rhinestonewtf/modulekit/discussions/new) with your question, or
+- Open an issue with [the bug](https://github.com//rhinestonewtf/modulekit/issues/new)
 
 [rs-docs]: https://docs.rhinestone.wtf
