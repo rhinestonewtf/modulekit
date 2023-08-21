@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 import {Auxiliary, AuxiliaryLib} from "../Auxiliary.sol";
-import {AccountInstance} from "./RhinestoneSDK.sol";
+import {RhinestoneAccount} from "./RhinestoneModuleKit.sol";
 import "safe-contracts/contracts/Safe.sol";
 import {InitialModule} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
 
@@ -11,7 +11,7 @@ import {IBootstrap} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol
 pragma solidity ^0.8.19;
 
 library SafeHelpers {
-    function safeInitCode(AccountInstance memory instance) internal returns (bytes memory) {
+    function safeInitCode(RhinestoneAccount memory instance) internal returns (bytes memory) {
         return abi.encodePacked(
             instance.accountFlavor.accountFactory,
             abi.encodeWithSelector(
@@ -32,7 +32,7 @@ library SafeHelpers {
         address safe4337ModuleCloneAddress =
             AuxiliaryLib.getModuleCloneAddress(env, address(env.rhinestoneManager), salt);
 
-        InitialModule[] memory modules = new InitialModule[](1);
+        InitialModule[] memory modules = new InitialModule[](2);
 
         // Add ERC4337 module on Safe deployment
         modules[0] = InitialModule({
@@ -46,7 +46,15 @@ library SafeHelpers {
                 env.registry,
                 address(0x696969696969),
                 env.rhinestoneFactory
-                )
+                ),
+            requiresClone: true
+        });
+
+        modules[1] = InitialModule({
+            moduleAddress: address(env.pluginManager),
+            salt: salt,
+            initializer: "",
+            requiresClone: false
         });
 
         // Calldata sent to init4337Safe

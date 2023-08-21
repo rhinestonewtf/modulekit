@@ -1,16 +1,15 @@
-# module-boilerplate
-Boilerplate for building smart account modules
-
+# moduleKit
+Boilerplate for building smart account modules with Rhinestone ModuleKit
 
 
 
 ## Build a Plugin
 
 
-### Install Rhinestone SDK
+### Install Rhinestone ModuleKit
 
 ```sh
-forge install rhinestonewtf/rhinestonesdk
+forge install rhinestonewtf/module-kit
 
 ```
 
@@ -23,13 +22,13 @@ forge install rhinestonewtf/rhinestonesdk
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "rhinestonesdk/contracts/modules/plugin/IPluginBase.sol";
+import "module-kit/contracts/modules/plugin/IPluginBase.sol";
 import "forge-std/interfaces/IERC20.sol";
 
 contract MyPlugin is IPluginBase {
-    using ModuleExecLib for IModuleManager;
+    using ModuleExecLib for IPluginManager; //TODO
 
-    function exec(IModuleManager manager, address account, address token, address receiver, uint256 amount) external {
+    function exec(IPluginManager manager, address account, address token, address receiver, uint256 amount) external {
         manager.exec({
             account: account,
             target: token,
@@ -57,13 +56,13 @@ pragma solidity ^0.8.19;
 
 
 import "forge-std/Test.sol";
-import "rhinestonesdk/test/utils/safe-base/RhinestoneSDK.sol";
+import "module-kit/test/utils/safe-base/RhinestoneSDK.sol";
 
 
-contract PluginTest is Test, RhinestoneSDK {
-    using RhinestoneSDKLib for AccountInstance; // <-- library that wraps smart account actions for easier testing
+contract PluginTest is Test, RhinestoneModuleKit {
+    using RhinestoneModuleKit for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
 
-    AccountInstance instance; // <-- this is a rhinestone smart account instance
+    RhinestoneAccount instance; // <-- this is a rhinestone smart account instance
 
     MockPlugin plugin;
 
@@ -79,7 +78,8 @@ contract PluginTest is Test, RhinestoneSDK {
         token = new MockERC20("","",18);
 
         // create a new rhinestone account instance
-        instance = newInstance("1");
+        instance = makeRhinestoneAccount({salt:"1"});
+
 
         // dealing ether and tokens to newly created smart account
         vm.deal(instance.account, 10 ether);

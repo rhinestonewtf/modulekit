@@ -7,9 +7,9 @@ import "forge-std/interfaces/IERC20.sol";
 /// @author zeroknots
 
 contract MockPlugin is IPluginBase {
-    using ModuleExecLib for IModuleManager;
+    using ModuleExecLib for IPluginManager;
 
-    function exec(IModuleManager manager, address account, address token, address receiver, uint256 amount) external {
+    function exec(IPluginManager manager, address account, address token, address receiver, uint256 amount) external {
         manager.exec({
             account: account,
             target: token,

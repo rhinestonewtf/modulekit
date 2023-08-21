@@ -22,9 +22,9 @@ interface IRhinestone4337 {
                             ERC 4337
     //////////////////////////////////////////////////////////////*/
 
-    function getPluginsPaginated(address start, uint256 pageSize)
-        external
-        returns (address[] memory array, address next);
+    // function getPluginsPaginated(address start, uint256 pageSize)
+    //     external
+    //     returns (address[] memory array, address next);
 
     function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 requiredPrefund)
         external
@@ -47,48 +47,6 @@ interface IRhinestone4337 {
      * @return clone Address of the plugin clone
      */
     function clones(address pluginImpl, bytes32 salt) external view returns (address clone);
-
-    /*//////////////////////////////////////////////////////////////
-                              MANAGER PLUGINS
-    //////////////////////////////////////////////////////////////*/
-    /**
-     * @dev Enables a plugin
-     *
-     * @param plugin Address of the plugin
-     * @param allowRootAccess Boolean to allow/disallow root access
-     */
-    function enablePlugin(address plugin, bool allowRootAccess) external;
-
-    /**
-     * @dev Enables a plugin clone
-     *
-     * @param plugin Address of the plugin
-     * @param allowRootAccess Boolean to allow/disallow root access
-     * @param salt Random nonce
-     */
-    function enablePluginClone(address plugin, bool allowRootAccess, bytes32 salt) external;
-
-    /**
-     * @dev Enables and initializes a plugin clone
-     *
-     * @param plugin Address of the plugin
-     * @param allowRootAccess Boolean to allow/disallow root access
-     * @param initCallData Initialization data for the plugin
-     * @param salt Random nonce
-     */
-    function enablePluginCloneInit(address plugin, bool allowRootAccess, bytes calldata initCallData, bytes32 salt)
-        external;
-
-    /**
-     * @dev Disables a plugin
-     *
-     * @notice This function is only callable by the owner.
-     *         NOTE: Use getPluginPagination() to get the previous plugin
-     *
-     * @param prevPlugin Address of the previous plugin
-     * @param plugin Address of the plugin
-     */
-    function disablePlugin(address prevPlugin, address plugin) external;
 
     /*//////////////////////////////////////////////////////////////
                               MANAGE VALIDATORS

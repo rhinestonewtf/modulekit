@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.19;
 
-import {AccountInstance} from "./RhinestoneSDK.sol";
+import {RhinestoneAccount} from "./RhinestoneModuleKit.sol";
 import "@aa/interfaces/UserOperation.sol";
 
 library ERC4337Wrappers {
     function getSafe4337TxCalldata(
-        AccountInstance memory instance,
+        RhinestoneAccount memory instance,
         address target,
         uint256 value,
         bytes memory data,
@@ -30,7 +30,7 @@ library ERC4337Wrappers {
         );
     }
 
-    function getPartialUserOp(AccountInstance memory instance, bytes memory callData, bytes memory initCode)
+    function getPartialUserOp(RhinestoneAccount memory instance, bytes memory callData, bytes memory initCode)
         internal
         returns (UserOperation memory)
     {

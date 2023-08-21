@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 
 import {EntryPoint} from "@aa/core/EntryPoint.sol";
 import "../../contracts/account/IRhinestone4337.sol";
+import {PluginManager} from "../../contracts/account/core/PluginManagerSingleton.sol";
 import "../../contracts/auxiliary/interfaces/IBootstrap.sol";
 import "../../contracts/safe/Bootstrap.sol";
 import "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
@@ -19,6 +20,7 @@ import {MockProtocol} from "../mocks/MockProtocol.sol";
 struct Auxiliary {
     EntryPoint entrypoint;
     IRhinestone4337 rhinestoneManager;
+    PluginManager pluginManager;
     IBootstrap rhinestoneBootstrap;
     IProtocolFactory rhinestoneFactory;
     IValidatorModule validator;
@@ -33,6 +35,7 @@ contract AuxiliaryFactory {
     MockRecovery internal mockRecovery;
     MockRegistry internal mockRegistry;
     MockProtocol internal mockRhinestoneFactory;
+    PluginManager internal pluginManager;
 
     Bootstrap internal bootstrap;
 
@@ -57,6 +60,7 @@ contract AuxiliaryFactory {
         aux = Auxiliary({
             entrypoint: entrypoint,
             rhinestoneManager: _rhinestoneManger,
+            pluginManager: pluginManager,
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: mockRhinestoneFactory,
             validator: mockValidator,
