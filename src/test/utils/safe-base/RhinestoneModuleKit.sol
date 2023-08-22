@@ -7,7 +7,7 @@ import "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
 import "../Auxiliary.sol";
 import "../../../contracts/safe/ISafe.sol";
-import {SafePluginManager} from "../../../contracts/safe/SafePluginManager.sol";
+import {SafeExecutorManager} from "../../../contracts/safe/SafeExecutorManager.sol";
 import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
 struct RhinestoneAccount {
@@ -34,7 +34,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     function init() internal override {
         super.init();
-        pluginManager = new SafePluginManager(address(mockRegistry));
+        executorManager = new SafeExecutorManager(address(mockRegistry));
         safeFactory = new SafeProxyFactory();
         safeSingleton = new Safe();
 
@@ -81,7 +81,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
 import {SafeHelpers} from "./SafeSetup.sol";
 import {ERC4337Wrappers} from "./ERC4337Helpers.sol";
-import {IModuleManager} from "../../../contracts/modules/plugin/IPluginBase.sol";
+import {IModuleManager} from "../../../contracts/modules/executors/IExecutorBase.sol";
 
 library RhinestoneModuleKitLib {
     function exec4337(RhinestoneAccount memory instance, address target, bytes memory callData)
@@ -153,35 +153,37 @@ library RhinestoneModuleKitLib {
         return success;
     }
 
-    function addPlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool) {
+    function addExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.aux.pluginManager),
+            target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(instance.aux.pluginManager.enablePlugin.selector, plugin, false)
+            callData: abi.encodeWithSelector(instance.aux.executorManager.enableExecutor.selector, executor, false)
         });
 
-        require(instance.aux.pluginManager.isPluginEnabled(address(instance.account), plugin), "plugin not enabled");
+        require(
+            instance.aux.executorManager.isExecutorEnabled(address(instance.account), executor), "Executor not enabled"
+        );
         return success;
     }
 
-    function removePlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool) {
-        // get previous plugin in sentinel list
+    function removeExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool) {
+        // get previous executor in sentinel list
         address previous;
 
         (address[] memory array, address next) =
-            instance.aux.pluginManager.getPluginsPaginated(address(0x1), 100, instance.account);
+            instance.aux.executorManager.getExecutorsPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) previous = address(0x0);
         else previous = array[array.length - 2];
 
-        emit SDKLOG_RemovePlugin(address(instance.account), plugin, previous);
+        emit SDKLOG_RemoveExecutor(address(instance.account), executor, previous);
 
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.aux.pluginManager),
+            target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(instance.aux.pluginManager.disablePlugin.selector, previous, plugin)
+            callData: abi.encodeWithSelector(instance.aux.executorManager.disableExecutor.selector, previous, executor)
         });
         return success;
     }
@@ -209,5 +211,5 @@ library RhinestoneModuleKitLib {
         return (size > 0);
     }
 
-    event SDKLOG_RemovePlugin(address account, address plugin, address prevPlugin);
+    event SDKLOG_RemoveExecutor(address account, address executor, address prevExecutor);
 }

@@ -12,7 +12,7 @@ abstract contract RegistryAdapter {
     // Address of the trusted authority
     address trustedAuthority;
 
-    error PluginNotPermitted(address plugin, uint48 listedAt, uint48 flaggedAt);
+    error ExecutorNotPermitted(address executor, uint48 listedAt, uint48 flaggedAt);
 
     mapping(address account => address trustedAttester) internal trustedAttester;
 
@@ -24,12 +24,12 @@ abstract contract RegistryAdapter {
         trustedAttester[account] = attester;
     }
 
-    function _enforceRegistryCheck(address pluginImpl) internal view virtual {
-        (uint48 listedAt, uint48 flaggedAt) = registry.check(pluginImpl, trustedAttester[msg.sender]);
+    function _enforceRegistryCheck(address executorImpl) internal view virtual {
+        (uint48 listedAt, uint48 flaggedAt) = registry.check(executorImpl, trustedAttester[msg.sender]);
 
-        // revert if plugin was ever flagged or was never attested to
+        // revert if executor was ever flagged or was never attested to
         if (listedAt == 0 || flaggedAt != 0) {
-            revert PluginNotPermitted(pluginImpl, listedAt, flaggedAt);
+            revert ExecutorNotPermitted(executorImpl, listedAt, flaggedAt);
         }
     }
 }

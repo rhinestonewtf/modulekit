@@ -1,18 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "forge-std/Test.sol";
-import "../src/test/utils/safe-base/RhinestoneModuleKit.sol";
+import {Test} from "forge-std/Test.sol";
+import {
+    RhinestoneModuleKit,
+    RhinestoneModuleKitLib,
+    RhinestoneAccount
+} from "../src/test/utils/safe-base/RhinestoneModuleKit.sol";
 
-import "../src/test/mocks/MockPlugin.sol";
-import "solmate/test/utils/mocks/MockERC20.sol";
+import {MockExecutor} from "../src/test/mocks/MockExecutor.sol";
+import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
 
 contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
 
     RhinestoneAccount instance; // <-- this is a rhinestone smart account instance
 
-    MockPlugin plugin;
+    MockExecutor executor;
 
     address receiver;
     MockERC20 token;
@@ -21,9 +25,9 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         // setting up receiver address. This is the EOA that this test is sending funds to
         receiver = makeAddr("receiver");
 
-        // setting up mock plugin and token
-        plugin = new MockPlugin();
-        token = new MockERC20("","",18);
+        // setting up mock executor and token
+        executor = new MockExecutor();
+        token = new MockERC20("", "", 18);
 
         // create a new rhinestone account instance
         instance = makeRhinestoneAccount("1");
@@ -39,22 +43,22 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertEq(receiver.balance, 10 gwei, "Receiver should have 10 gwei");
     }
 
-    function testMockPlugin() public {
-        // add plugin to smart account
-        instance.addPlugin(address(plugin));
+    function testMockExecutor() public {
+        // add executor to smart account
+        instance.addExecutor(address(executor));
 
-        // execute exec() function on plugin and bring it to execution on instance of smart account
+        // execute exec() function on executor and bring it to execution on instance of smart account
         instance.exec4337({
-            target: address(plugin),
+            target: address(executor),
             callData: abi.encodeWithSelector(
-                MockPlugin.exec.selector, instance.aux.pluginManager, instance.account, address(token), receiver, 10
+                MockExecutor.exec.selector, instance.aux.executorManager, instance.account, address(token), receiver, 10
                 )
         });
 
         assertEq(token.balanceOf(receiver), 10, "Receiver should have 10");
 
-        MockPlugin plugin2 = new MockPlugin();
-        instance.addPlugin(address(plugin2));
-        instance.removePlugin(address(plugin));
+        MockExecutor executor2 = new MockExecutor();
+        instance.addExecutor(address(executor2));
+        instance.removeExecutor(address(executor));
     }
 }

@@ -136,10 +136,10 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
         require(status.approved && !status.executed, "Unexpected status");
         hashes[executionHash].executed = true;
 
-        // check if target is an installed plugin
+        // check if target is an installed executor
 
-        // if (isPluginEnabled(target)) {
-        //     _execPlugin(target, value, data);
+        // if (isExecutorEnabled(target)) {
+        //     _execExecutor(target, value, data);
         // } else {
         _execTransationOnSmartAccount(smartAccount, target, value, data);
         // }

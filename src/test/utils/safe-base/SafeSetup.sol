@@ -51,7 +51,7 @@ library SafeHelpers {
         });
 
         modules[1] = InitialModule({
-            moduleAddress: address(env.pluginManager),
+            moduleAddress: address(env.executorManager),
             salt: salt,
             initializer: "",
             requiresClone: false

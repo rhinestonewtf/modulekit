@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../contracts/modules/plugin/IPluginBase.sol";
-import "forge-std/interfaces/IERC20.sol";
+import {IExecutorBase, ModuleExecLib, IExecutorManager} from "../../contracts/modules/executors/IExecutorBase.sol";
+import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 /// @author zeroknots
 
-contract MockPlugin is IPluginBase {
-    using ModuleExecLib for IPluginManager;
+contract MockExecutor is IExecutorBase {
+    using ModuleExecLib for IExecutorManager;
 
-    function exec(IPluginManager manager, address account, address token, address receiver, uint256 amount) external {
+    function exec(IExecutorManager manager, address account, address token, address receiver, uint256 amount)
+        external
+    {
         manager.exec({
             account: account,
             target: token,

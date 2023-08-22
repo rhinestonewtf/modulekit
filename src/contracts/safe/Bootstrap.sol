@@ -16,7 +16,7 @@ contract Bootstrap is IBootstrap {
             InitialModule calldata initialModule = modules[i];
             address module;
             if (initialModule.requiresClone) {
-                module = IProtocolFactory(proxyFactory).clonePlugin(initialModule.moduleAddress, initialModule.salt);
+                module = IProtocolFactory(proxyFactory).cloneExecutor(initialModule.moduleAddress, initialModule.salt);
             } else {
                 module = initialModule.moduleAddress;
             }
