@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {PluginManager} from "../account/core/PluginManagerSingleton.sol";
+import {ExecutorManager} from "../account/core/ExecutorManagerSingleton.sol";
 import "./ISafe.sol";
 
-contract SafePluginManager is PluginManager {
+contract SafeExecutorManager is ExecutorManager {
     constructor(address registry) {
         _setRegistry(registry);
     }

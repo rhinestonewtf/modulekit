@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../modules/plugin/IPluginBase.sol";
+import "../modules/executors/IExecutorBase.sol";
 import "@aa/interfaces/UserOperation.sol";
 
 interface IRhinestone4337 {
@@ -22,7 +22,7 @@ interface IRhinestone4337 {
                             ERC 4337
     //////////////////////////////////////////////////////////////*/
 
-    // function getPluginsPaginated(address start, uint256 pageSize)
+    // function getexecutorsPaginated(address start, uint256 pageSize)
     //     external
     //     returns (address[] memory array, address next);
 
@@ -40,13 +40,13 @@ interface IRhinestone4337 {
     ) external;
 
     /**
-     * @dev Gets the clone of a plugin
+     * @dev Gets the clone of a executor
      *
-     * @param pluginImpl Address of the plugin
+     * @param executorImpl Address of the executor
      * @param salt Random nonce
-     * @return clone Address of the plugin clone
+     * @return clone Address of the executor clone
      */
-    function clones(address pluginImpl, bytes32 salt) external view returns (address clone);
+    function clones(address executorImpl, bytes32 salt) external view returns (address clone);
 
     /*//////////////////////////////////////////////////////////////
                               MANAGE VALIDATORS

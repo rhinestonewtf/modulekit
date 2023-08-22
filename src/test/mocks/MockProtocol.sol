@@ -10,7 +10,7 @@ import {IProtocolFactory} from "../../contracts/auxiliary/interfaces/IProtocolFa
 
 contract MockProtocol is IProtocolFactory {
     // TODO: add initializer
-    function clonePlugin(address implementation, bytes32 salt) external returns (address proxy) {
+    function cloneExecutor(address implementation, bytes32 salt) external returns (address proxy) {
         proxy = Clones.predictDeterministicAddress(implementation, salt);
         uint256 codeSize;
         assembly {
@@ -21,7 +21,7 @@ contract MockProtocol is IProtocolFactory {
         }
     }
 
-    function clonePlugin(address implementation, bytes calldata initCallData, bytes32 _userProvidedSalt)
+    function cloneExecutor(address implementation, bytes calldata initCallData, bytes32 _userProvidedSalt)
         external
         returns (address proxy, bytes32 usedSalt)
     {

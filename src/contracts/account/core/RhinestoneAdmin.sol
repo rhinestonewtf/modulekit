@@ -44,15 +44,15 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
         _addValidator(_defaultValidator);
     }
 
-    function _enforceRegistryCheck(address pluginImpl) internal view override(RegistryAdapter, ValidatorManager) {
-        super._enforceRegistryCheck(pluginImpl);
+    function _enforceRegistryCheck(address executorImpl) internal view override(RegistryAdapter, ValidatorManager) {
+        super._enforceRegistryCheck(executorImpl);
     }
 
     /**
      * @inheritdoc IRhinestone4337
      */
-    function clones(address pluginImpl, bytes32 salt) external view override returns (address) {
-        // return pluginImplToClones[pluginImpl][salt];
+    function clones(address executorImpl, bytes32 salt) external view override returns (address) {
+        // return executorImplToClones[executorImpl][salt];
     }
 
     /*//////////////////////////////////////////////////////////////

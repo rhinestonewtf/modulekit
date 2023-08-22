@@ -65,5 +65,5 @@ abstract contract ValidatorManager {
         else recoveryByValidator[validator] = recovery;
     }
 
-    function _enforceRegistryCheck(address pluginImpl) internal view virtual;
+    function _enforceRegistryCheck(address executorImpl) internal view virtual;
 }

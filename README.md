@@ -1,6 +1,6 @@
-<img src=".github/logo.png" alt="rhinestone logo" align="right" width="120" height="120" style="border-radius:20px"/>
+<img src=".github/logo.png" alt="Rhinestone logo" align="right" width="120" height="120" style="border-radius:20px"/>
 
-## rhinestone ModuleKit
+## Rhinestone ModuleKit
 
 **A development kit for building and testing smart account modules.**
 
@@ -45,7 +45,7 @@ forge install rhinestonewtf/modulekit
 
 #### Interfaces
 
-- `IPluginBase`: Interface for Plugins to inherit from.
+- `IExecutorBase`: Interface for Executors to inherit from.
 - `BaseValidator`: Interface for Validator Modules to inherit from.
 - `IRecoveryModule`: Interface for Recovery Modules to inherit from.
 
@@ -57,8 +57,8 @@ forge install rhinestonewtf/modulekit
 - `function exec4337(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation, bytes memory signature) internal returns (bool, bytes memory)`: Executes a UserOperation from the account using a `target`, a `value` and an already-encoded `callData`. Can use either `CALL` or `DELEGATECALL` from the account and uses the provided `signature`.
 - `function addValidator(RhinestoneAccount memory instance, address validator) internal returns (bool)`: Adds a validator to the account.
 - `function addRecovery(RhinestoneAccount memory instance, address validator, address recovery) internal returns (bool)`: Adds a recovery module to the account.
-- `function addPlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool)`: Adds a plugin to the account.
-- `function removePlugin(RhinestoneAccount memory instance, address plugin) internal returns (bool)`: Removes a plugin from the account.
+- `function addExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool)`: Adds a executor to the account.
+- `function removeExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool)`: Removes a executor from the account.
 - `function getUserOpHash(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation) internal returns (bytes32)`: Calculates the hash of a UserOperation in order to be signed for a custom signature.
 
 ## Contributing
