@@ -39,6 +39,7 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
         address _trustedAuthority,
         address _cloneFactory
     ) external initializer {
+        _setRegistry(_registry);
         _initializeOwner(msg.sender);
         _initializeValidatorManager(_defaultRecovery);
         _addValidator(_defaultValidator);
