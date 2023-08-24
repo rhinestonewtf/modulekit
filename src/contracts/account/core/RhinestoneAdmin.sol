@@ -85,6 +85,16 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
         _setRecovery(validator, recovery);
     }
 
+    function forwardCall(address target, bytes calldata callData)
+        external
+        onlyOwner
+        returns (bool success, bytes memory returnData)
+    {
+        (success, returnData) = target.call(callData);
+        if (!success) returnData = bytes("");
+        else returnData = returnData;
+    }
+
     /*//////////////////////////////////////////////////////////////
                               RECOVERY
     //////////////////////////////////////////////////////////////*/

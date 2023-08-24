@@ -75,6 +75,16 @@ interface IRhinestone4337 {
      */
     function addRecovery(address validator, address recovery) external;
 
+    /**
+     * @dev Makes an external call with the manager. this is used to config validators / singletons
+     *
+     * @param target  Address of the target
+     * @param callData Data to send to the target
+     */
+    function forwardCall(address target, bytes calldata callData)
+        external
+        returns (bool success, bytes memory returnData);
+
     /*//////////////////////////////////////////////////////////////
                               RECOVERY
     //////////////////////////////////////////////////////////////*/

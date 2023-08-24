@@ -130,6 +130,18 @@ library RhinestoneModuleKitLib {
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
+    function callViaManager(RhinestoneAccount memory instance, address target, bytes memory callData)
+        internal
+        returns (bool, bytes memory)
+    {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.forwardCall.selector, target, callData)
+        });
+    }
+
     function addValidator(RhinestoneAccount memory instance, address validator) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
