@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
                           Auxillary Contracts
 //////////////////////////////////////////////////////////////*/
 
-import {Ownable} from "solady/auth/Ownable.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /*//////////////////////////////////////////////////////////////

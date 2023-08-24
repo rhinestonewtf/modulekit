@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Rhinestone4337} from "../account/core/Rhinestone4337.sol";
-import {Ownable} from "solady/auth/Ownable.sol";
+import {Ownable} from "solady/src/auth/Ownable.sol";
 
 import "./ISafe.sol";
 
