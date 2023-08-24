@@ -6,7 +6,7 @@ import {UserOperation} from "@aa/interfaces/UserOperation.sol";
 library SelectValidatorLib {
     function decodeSignature(bytes calldata signature) internal returns (address validator) {}
 
-    function decodeValidator(UserOperation calldata userOps) internal returns (address validator) {
+    function decodeValidator(UserOperation calldata userOps) internal pure returns (address validator) {
         bytes memory addressSplice = userOps.signature[0:20];
         assembly {
             validator := mload(add(addressSplice, 20))
