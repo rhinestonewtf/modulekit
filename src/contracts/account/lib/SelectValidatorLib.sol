@@ -13,8 +13,13 @@ library SelectValidatorLib {
         }
     }
 
+    function decodeSignature(UserOperation calldata userOps) internal pure returns (bytes memory signature) {
+        signature = userOps.signature[20:];
+    }
+
     function encodeValidator(bytes memory signature, address chosenValidator)
         internal
+        pure
         returns (bytes memory packedSignature)
     {
         packedSignature = abi.encodePacked(chosenValidator, signature);
