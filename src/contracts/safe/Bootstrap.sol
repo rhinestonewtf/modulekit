@@ -7,21 +7,14 @@ import {IProtocolFactory} from "../auxiliary/interfaces/IProtocolFactory.sol";
 contract Bootstrap is IBootstrap {
     address internal SENTINEL_ADDRESS = address(0x1);
 
-    function initialize(
-        InitialModule[] calldata modules,
-        address proxyFactory,
-        address owner
-    ) external {
+    function initialize(InitialModule[] calldata modules, address proxyFactory, address owner) external {
         // ENABLE MODULES
         uint256 len = modules.length;
-        for (uint256 i = 0; i < len; ) {
+        for (uint256 i = 0; i < len;) {
             InitialModule calldata initialModule = modules[i];
             address module;
             if (initialModule.requiresClone) {
-                module = IProtocolFactory(proxyFactory).cloneExecutor(
-                    initialModule.moduleAddress,
-                    initialModule.salt
-                );
+                module = IProtocolFactory(proxyFactory).cloneExecutor(initialModule.moduleAddress, initialModule.salt);
             } else {
                 module = initialModule.moduleAddress;
             }
@@ -29,9 +22,7 @@ contract Bootstrap is IBootstrap {
                 module.call(initialModule.initializer);
             }
             bytes32 moduleSlot = keccak256(abi.encode(module, 1));
-            bytes32 sentinelModuleSlot = keccak256(
-                abi.encode(SENTINEL_ADDRESS, 1)
-            );
+            bytes32 sentinelModuleSlot = keccak256(abi.encode(SENTINEL_ADDRESS, 1));
             assembly {
                 sstore(moduleSlot, sload(0x00))
                 sstore(sentinelModuleSlot, module)
@@ -51,15 +42,9 @@ contract Bootstrap is IBootstrap {
         bytes32 ownerSlot = keccak256(abi.encode(owner, 2));
         bytes32 sentinelOwnerSlot = keccak256(abi.encode(SENTINEL_ADDRESS, 2));
         assembly {
-            sstore(
-                ownerSlot,
-                0x0000000000000000000000000000000000000000000000000000000000000000
-            )
+            sstore(ownerSlot, 0x0000000000000000000000000000000000000000000000000000000000000000)
             sstore(sentinelOwnerSlot, sload(0x00))
-            sstore(
-                0x0000000000000000000000000000000000000000000000000000000000000003,
-                0x00
-            )
+            sstore(0x0000000000000000000000000000000000000000000000000000000000000003, 0x00)
         }
     }
 }
