@@ -76,16 +76,13 @@ library AuxiliaryLib {
         view
         returns (address)
     {
-        MockProtocol factory = MockProtocol(address(env.rhinestoneFactory));
-
-        return factory.getClone(implementationToClone, salt);
+        return env.rhinestoneFactory.getClone(implementationToClone, salt);
     }
 
     function deployModuleClone(Auxiliary memory env, address implementationToClone, bytes32 salt)
         internal
         returns (address)
     {
-        MockProtocol factory = MockProtocol(address(env.rhinestoneFactory));
-        return factory.cloneExecutor(implementationToClone, salt);
+        return env.rhinestoneFactory.cloneExecutor(implementationToClone, salt);
     }
 }
