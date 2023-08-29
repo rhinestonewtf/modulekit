@@ -59,7 +59,7 @@ library SafeHelpers {
 
         // Calldata sent to init4337Safe
         bytes memory initModuleCalldata =
-            abi.encodeWithSelector(IBootstrap.initialize.selector, modules, salt, env.rhinestoneFactory, safeOwner);
+            abi.encodeWithSelector(IBootstrap.initialize.selector, modules, env.rhinestoneFactory, safeOwner);
 
         // Initial owners of Safe
         address[] memory owners = new address[](1);

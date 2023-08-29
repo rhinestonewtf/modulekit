@@ -7,9 +7,7 @@ import {IProtocolFactory} from "../auxiliary/interfaces/IProtocolFactory.sol";
 contract Bootstrap is IBootstrap {
     address internal SENTINEL_ADDRESS = address(0x1);
 
-    function initialize(InitialModule[] calldata modules, bytes32 cloneSalt, address proxyFactory, address owner)
-        external
-    {
+    function initialize(InitialModule[] calldata modules, address proxyFactory, address owner) external {
         // ENABLE MODULES
         uint256 len = modules.length;
         for (uint256 i = 0; i < len;) {
