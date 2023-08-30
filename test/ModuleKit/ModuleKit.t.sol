@@ -70,6 +70,27 @@ contract ModuleKitUnitTest is Test, RhinestoneModuleKit {
         instance.addValidator(validator3);
         instance.addValidator(validator2);
     }
+
+    function testManageRecovery() public {
+        address validator1 = makeAddr("validator1");
+        address validator2 = makeAddr("validator2");
+        address validator3 = makeAddr("validator3");
+
+        instance.addValidator(validator1);
+        instance.addValidator(validator2);
+        instance.addValidator(validator3);
+
+        address recovery1 = makeAddr("recovery1");
+        address recovery2 = makeAddr("recovery2");
+        address recovery3 = makeAddr("recovery3");
+
+        instance.addRecovery(recovery1, validator1);
+        instance.removeRecovery(validator1);
+
+        // add recovery with validator that doesnt exist
+        instance.removeValidator(validator2);
+        instance.addRecovery(recovery2, validator2);
+    }
 }
 
 contract ExternalContract {

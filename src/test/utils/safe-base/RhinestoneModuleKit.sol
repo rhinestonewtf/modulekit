@@ -184,6 +184,8 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeWithSelector(instance.rhinestoneManager.addRecovery.selector, validator, recovery)
         });
+
+        require(instance.rhinestoneManager.isEnabledRecovery(recovery), "INTERNAL ERROR: recovery should be enabled");
         return success;
     }
 
@@ -194,6 +196,7 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeWithSelector(instance.rhinestoneManager.removeRecovery.selector, validator)
         });
+
         return success;
     }
 
