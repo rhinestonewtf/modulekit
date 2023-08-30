@@ -76,6 +76,13 @@ interface IRhinestone4337 {
     function addRecovery(address validator, address recovery) external;
 
     /**
+     * @dev Removes a recovery module for a validator
+     *
+     * @param validator Address of the validator
+     */
+    function removeRecovery(address validator) external;
+
+    /**
      * @dev Makes an external call with the manager. this is used to config validators / singletons
      *
      * @param target  Address of the target

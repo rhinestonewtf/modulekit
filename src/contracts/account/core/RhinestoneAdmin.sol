@@ -14,7 +14,6 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {IRhinestone4337} from "../IRhinestone4337.sol";
 import {ValidatorManager} from "./ValidatorManager.sol";
-import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
 import {RegistryAdapter} from "./RegistryAdapter.sol";
 
 /// @title Rhinestone4337
@@ -84,6 +83,10 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
      */
     function addRecovery(address validator, address recovery) external onlyOwner {
         _setRecovery(validator, recovery);
+    }
+
+    function removeRecovery(address validator) external onlyOwner {
+        _removeRecovery(validator);
     }
 
     function forwardCall(address target, bytes calldata callData)

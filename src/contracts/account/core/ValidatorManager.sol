@@ -17,6 +17,7 @@ abstract contract ValidatorManager {
     event ValidatorAdded(address indexed validator);
     event ValidatorRemoved(address indexed validator);
     event RecoveryAdded(address indexed validator, address indexed recovery);
+    event RecoveryRemoved(address indexed validator);
     event DefaultRecoverySet(address indexed recovery);
     event DefaultValidatorSet(address indexed validator);
     event TrustedAuthoritySet(address indexed trustedAuthority);
@@ -47,6 +48,7 @@ abstract contract ValidatorManager {
 
     function _removeValidator(address prevValidator, address removeValidator) internal {
         validatorList.pop({prevEntry: prevValidator, popEntry: removeValidator});
+        emit ValidatorRemoved(removeValidator);
     }
 
     function isEnabledValidator(address validator) public view returns (bool enabled) {
@@ -79,6 +81,11 @@ abstract contract ValidatorManager {
         if (validator == address(0)) DEFAULT_RECOVERY = recovery;
         else recoveryByValidator[validator] = recovery;
         emit RecoveryAdded(validator, recovery);
+    }
+
+    function _removeRecovery(address validator) internal {
+        _setRecovery(validator, address(0));
+        emit RecoveryRemoved(validator);
     }
 
     function _recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) internal {
