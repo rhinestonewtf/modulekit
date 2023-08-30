@@ -8,6 +8,8 @@ import "./RegistryAdapter.sol";
 abstract contract ExecutorManager is RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
 
+    event TrustedAttesterSet(address indexed attester);
+
     address internal constant SENTINEL_MODULES = address(0x1);
 
     mapping(address account => mapping(address executor => ExecutorAccessInfo)) public enabledExecutors;
