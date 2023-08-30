@@ -7,6 +7,8 @@ import {Ownable} from "solady/src/auth/Ownable.sol";
 import "./ISafe.sol";
 
 contract RhinestoneSafeFlavor is Rhinestone4337 {
+    error ExecTxOnAccountFailed();
+
     constructor(address entryPoint, address registry, address trustedAuthority)
         Rhinestone4337(entryPoint, registry, trustedAuthority)
     {}
@@ -17,6 +19,7 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
         returns (bool success, bytes memory)
     {
         success = ISafe(safe).execTransactionFromModule(to, value, data, 0);
+        if (!success) revert ExecTxOnAccountFailed();
     }
 
     function _execTransationOnSmartAccount(address to, uint256 value, bytes memory data)
@@ -33,6 +36,7 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
     {
         address safe = _accountAddress();
         success = ISafe(safe).execTransactionFromModule(to, value, data, 1);
+        if (!success) revert ExecTxOnAccountFailed();
     }
 
     function _accountAddress() internal virtual returns (address) {
