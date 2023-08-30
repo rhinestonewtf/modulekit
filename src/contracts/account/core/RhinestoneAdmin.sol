@@ -116,8 +116,7 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
         // ExecutionStatus memory status = hashes[executionHash];
         // require(status.approved && !status.executed, "Unexpected status");
         // hashes[executionHash].executed = true;
-        address recoveryModule = getRecovery(validator);
-        IValidatorModule(validator).recoverValidator(recoveryModule, recoveryProof, recoveryData);
+        _recoverValidator(validator, recoveryProof, recoveryData);
     }
 
     /*//////////////////////////////////////////////////////////////

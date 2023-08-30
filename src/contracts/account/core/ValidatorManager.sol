@@ -3,13 +3,24 @@ pragma solidity ^0.8.19;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SentinelListLib} from "sentinellist/src/SentinelList.sol";
+import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
 
 import "forge-std/console2.sol";
 
 abstract contract ValidatorManager {
     using SentinelListLib for SentinelListLib.SentinelList;
 
-    event EnabledValidator(address validator);
+    /*//////////////////////////////////////////////////////////////
+                            EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    event ValidatorAdded(address indexed validator);
+    event ValidatorRemoved(address indexed validator);
+    event RecoveryAdded(address indexed validator, address indexed recovery);
+    event DefaultRecoverySet(address indexed recovery);
+    event DefaultValidatorSet(address indexed validator);
+    event TrustedAuthoritySet(address indexed trustedAuthority);
+    event ValidatorRecovered(address indexed validator, address indexed recovery);
 
     SentinelListLib.SentinelList internal validatorList;
     address internal DEFAULT_RECOVERY;
@@ -26,7 +37,7 @@ abstract contract ValidatorManager {
     function _addValidator(address validator) internal {
         _enforceRegistryCheck(validator);
         validatorList.push(validator);
-        emit EnabledValidator(validator);
+        emit ValidatorAdded(validator);
     }
 
     function _addValidator(address validator, address recovery) internal {
@@ -63,6 +74,13 @@ abstract contract ValidatorManager {
     function _setRecovery(address validator, address recovery) internal {
         if (validator == address(0)) DEFAULT_RECOVERY = recovery;
         else recoveryByValidator[validator] = recovery;
+        emit RecoveryAdded(validator, recovery);
+    }
+
+    function _recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) internal {
+        address recoveryModule = getRecovery(validator);
+        IValidatorModule(validator).recoverValidator(recoveryModule, recoveryProof, recoveryData);
+        emit ValidatorRecovered(validator, recoveryModule);
     }
 
     function _enforceRegistryCheck(address executorImpl) internal view virtual;
