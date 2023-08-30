@@ -7,9 +7,6 @@
 [submodule "lib/safe-contracts"]
 	path = lib/safe-contracts
 	url = https://github.com/safe-global/safe-contracts
-[submodule "lib/openzeppelin"]
-	path = lib/openzeppelin
-	url = https://github.com/zeroknots/openzeppelin
 [submodule "lib/sentinellist"]
 	path = lib/sentinellist
 	url = https://github.com/zeroknots/sentinellist
@@ -19,3 +16,6 @@
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate
+[submodule "lib/openzeppelin"]
+	path = lib/openzeppelin
+	url = https://github.com/zeroknots/openzeppelin
