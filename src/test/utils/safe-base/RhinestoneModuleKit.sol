@@ -10,6 +10,10 @@ import "../../../contracts/safe/ISafe.sol";
 import {SafeExecutorManager} from "../../../contracts/safe/SafeExecutorManager.sol";
 import "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
+import {SentinelListHelper} from "sentinellist/src/SentinelListHelper.sol";
+
+import "forge-std/console2.sol";
+
 struct RhinestoneAccount {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -149,6 +153,24 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeWithSelector(instance.rhinestoneManager.addValidator.selector, validator)
         });
+        require(instance.rhinestoneManager.isEnabledValidator(validator), "INTERNAL ERROR: valdiator should be enabled");
+        return success;
+    }
+
+    function removeValidator(RhinestoneAccount memory instance, address validator) internal returns (bool) {
+        (address[] memory array, address next) = instance.rhinestoneManager.getValidatorsPaginated(address(0x1), 100);
+
+        address previous = SentinelListHelper.findPrevious(array, validator);
+
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.removeValidator.selector, validator, previous)
+        });
+        require(
+            !instance.rhinestoneManager.isEnabledValidator(validator), "INTERNAL ERROR: valdiator should be disabled"
+        );
         return success;
     }
 
@@ -161,6 +183,16 @@ library RhinestoneModuleKitLib {
             target: address(instance.rhinestoneManager),
             value: 0,
             callData: abi.encodeWithSelector(instance.rhinestoneManager.addRecovery.selector, validator, recovery)
+        });
+        return success;
+    }
+
+    function removeRecovery(RhinestoneAccount memory instance, address validator) internal returns (bool) {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(instance.rhinestoneManager.removeRecovery.selector, validator)
         });
         return success;
     }
@@ -180,16 +212,10 @@ library RhinestoneModuleKitLib {
     }
 
     function removeExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool) {
-        // get previous executor in sentinel list
-        address previous;
-
         (address[] memory array, address next) =
             instance.aux.executorManager.getExecutorsPaginated(address(0x1), 100, instance.account);
 
-        if (array.length == 1) previous = address(0x0);
-        else previous = array[array.length - 2];
-
-        emit SDKLOG_RemoveExecutor(address(instance.account), executor, previous);
+        address previous = SentinelListHelper.findPrevious(array, executor);
 
         (bool success, bytes memory data) = exec4337({
             instance: instance,
@@ -197,6 +223,11 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeWithSelector(instance.aux.executorManager.disableExecutor.selector, previous, executor)
         });
+
+        require(
+            !instance.aux.executorManager.isExecutorEnabled(instance.account, executor),
+            "INTERAL ERROR: Removing Executor"
+        );
         return success;
     }
 
@@ -222,6 +253,4 @@ library RhinestoneModuleKitLib {
         }
         return (size > 0);
     }
-
-    event SDKLOG_RemoveExecutor(address account, address executor, address prevExecutor);
 }

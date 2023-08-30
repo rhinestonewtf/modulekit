@@ -74,8 +74,8 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
     /**
      * @inheritdoc IRhinestone4337
      */
-    function removeValidator(address prevValidator, address validator) external onlyOwner {
-        _removeValidator(prevValidator, validator);
+    function removeValidator(address validator, address prevValidator) external onlyOwner {
+        _removeValidator(validator, prevValidator);
     }
 
     /**
@@ -108,18 +108,6 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
     function setDefaultRecovery(address recovery) external onlyOwner {
         // this sets the default recovery module
         _setRecovery({validator: address(0), recovery: recovery});
-    }
-
-    /**
-     * @inheritdoc IRhinestone4337
-     */
-    function recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) external {
-        // RECOVER SHOULD BE EXTERNAL
-        // bytes32 executionHash = keccak256(abi.encode(validator, recoveryProof, recoveryData));
-        // ExecutionStatus memory status = hashes[executionHash];
-        // require(status.approved && !status.executed, "Unexpected status");
-        // hashes[executionHash].executed = true;
-        _recoverValidator(validator, recoveryProof, recoveryData);
     }
 
     /*//////////////////////////////////////////////////////////////

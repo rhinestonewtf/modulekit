@@ -7,7 +7,9 @@ import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
 
 import "forge-std/console2.sol";
 
-abstract contract ValidatorManager {
+import {IRhinestone4337} from "../IRhinestone4337.sol";
+
+abstract contract ValidatorManager is IRhinestone4337 {
     using SentinelListLib for SentinelListLib.SentinelList;
 
     /*//////////////////////////////////////////////////////////////
@@ -46,9 +48,9 @@ abstract contract ValidatorManager {
         _setRecovery({validator: validator, recovery: recovery});
     }
 
-    function _removeValidator(address prevValidator, address removeValidator) internal {
-        validatorList.pop({prevEntry: prevValidator, popEntry: removeValidator});
-        emit ValidatorRemoved(removeValidator);
+    function _removeValidator(address validator, address prevValidator) internal {
+        validatorList.pop({prevEntry: prevValidator, popEntry: validator});
+        emit ValidatorRemoved(validator);
     }
 
     function isEnabledValidator(address validator) public view returns (bool enabled) {
@@ -59,7 +61,7 @@ abstract contract ValidatorManager {
         enabled = getRecovery(validator) != address(0);
     }
 
-    function getAllValidators(address startInList, uint256 pageSize)
+    function getValidatorsPaginated(address startInList, uint256 pageSize)
         public
         view
         returns (address[] memory, address next)
@@ -88,7 +90,10 @@ abstract contract ValidatorManager {
         emit RecoveryRemoved(validator);
     }
 
-    function _recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) internal {
+    /**
+     * @inheritdoc IRhinestone4337
+     */
+    function recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) public {
         address recoveryModule = getRecovery(validator);
         IValidatorModule(validator).recoverValidator(recoveryModule, recoveryProof, recoveryData);
         emit ValidatorRecovered(validator, recoveryModule);

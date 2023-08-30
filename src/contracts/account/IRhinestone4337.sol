@@ -58,6 +58,12 @@ interface IRhinestone4337 {
      */
     function addValidator(address validator) external;
     function addValidatorAndRecovery(address validator, address recovery) external;
+    function isEnabledValidator(address validator) external view returns (bool enabled);
+
+    function getValidatorsPaginated(address startInList, uint256 pageSize)
+        external
+        view
+        returns (address[] memory, address next);
 
     /**
      * @dev Removes a validator
