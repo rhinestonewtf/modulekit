@@ -53,6 +53,10 @@ abstract contract ValidatorManager {
         enabled = validatorList.contains(validator);
     }
 
+    function isEnabledRecovery(address validator) public view returns (bool enabled) {
+        enabled = getRecovery(validator) != address(0);
+    }
+
     function getAllValidators(address startInList, uint256 pageSize)
         public
         view
