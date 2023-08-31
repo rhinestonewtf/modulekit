@@ -16,6 +16,3 @@
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/transmissions11/solmate
-[submodule "lib/openzeppelin"]
-	path = lib/openzeppelin
-	url = https://github.com/zeroknots/openzeppelin
