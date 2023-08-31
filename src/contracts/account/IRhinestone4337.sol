@@ -88,12 +88,6 @@ interface IRhinestone4337 {
     /*//////////////////////////////////////////////////////////////
                               RECOVERY
     //////////////////////////////////////////////////////////////*/
-    /**
-     * @dev Sets the default recovery module
-     *
-     * @param recovery Address of the recovery module
-     */
-    function setDefaultRecovery(address recovery) external;
 
     /**
      * @dev Recovers a validator
