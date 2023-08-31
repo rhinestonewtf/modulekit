@@ -4,11 +4,12 @@ pragma solidity ^0.8.19;
 import {ISwapRouter} from "./ISwapRouter.sol";
 import {TransferHelper} from "./TransferHelper.sol";
 import "../../executors/IExecutorBase.sol";
+import "forge-std/interfaces/IERC20.sol";
 
 address payable constant swapRouter = payable(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 uint24 constant poolFee = 3000;
 
-function _swapExactInputSingle(address smartAccount, address tokenIn, address tokenOut, uint256 amountIn)
+function _swapExactInputSingle(address smartAccount, IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn)
     view
     returns (ExecutorAction memory action)
 {
@@ -18,8 +19,8 @@ function _swapExactInputSingle(address smartAccount, address tokenIn, address to
     action.data = abi.encodeWithSelector(
         ISwapRouter.exactInputSingle.selector,
         ISwapRouter.ExactInputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
+            tokenIn: address(tokenIn),
+            tokenOut: address(tokenOut),
             fee: poolFee,
             recipient: smartAccount,
             deadline: block.timestamp,
@@ -32,8 +33,8 @@ function _swapExactInputSingle(address smartAccount, address tokenIn, address to
 
 function _swapExactOutputSingle(
     address smartAccount,
-    address tokenIn,
-    address tokenOut,
+    IERC20 tokenIn,
+    IERC20 tokenOut,
     uint256 amountOut,
     uint256 amountInMaximum
 ) view returns (ExecutorAction memory action) {
@@ -41,8 +42,8 @@ function _swapExactOutputSingle(
     action.data = abi.encodeWithSelector(
         ISwapRouter.exactOutputSingle.selector,
         ISwapRouter.ExactOutputSingleParams({
-            tokenIn: tokenIn,
-            tokenOut: tokenOut,
+            tokenIn: address(tokenIn),
+            tokenOut: address(tokenOut),
             fee: poolFee,
             recipient: smartAccount,
             deadline: block.timestamp,
