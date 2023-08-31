@@ -9,4 +9,3 @@ function _payFee(address vault, address token, address amount) view returns (Exe
     action.to = payable(token);
     action.data = abi.encodeWithSelector(IERC20.transfer.selector, vault, amount);
 }
-
