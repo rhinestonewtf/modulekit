@@ -8,7 +8,7 @@ struct DebugData {
     ExecutorTransaction transaction;
 }
 
-contract DebugManagerExecutor is IExecutorManager {
+contract DebugExecutorManager is IExecutorManager {
     DebugData public storeData;
 
     ExecutorTransaction public transaction;
