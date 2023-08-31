@@ -99,13 +99,6 @@ abstract contract RhinestoneAdmin is Ownable, Initializable, IRhinestone4337, Va
     /*//////////////////////////////////////////////////////////////
                               RECOVERY
     //////////////////////////////////////////////////////////////*/
-    /**
-     * @inheritdoc IRhinestone4337
-     */
-    function setDefaultRecovery(address recovery) external onlyOwner {
-        // this sets the default recovery module
-        _setRecovery({validator: address(0), recovery: recovery});
-    }
 
     /**
      * @inheritdoc IRhinestone4337
