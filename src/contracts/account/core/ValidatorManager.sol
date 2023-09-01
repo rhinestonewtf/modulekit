@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {SentinelListLib} from "sentinellist/src/SentinelList.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 
 import "forge-std/console2.sol";
 
@@ -31,18 +31,21 @@ abstract contract ValidatorManager {
 
     function _addValidator(address validator, address recovery) internal {
         _addValidator(validator);
-        _setRecovery({validator: validator, recovery: recovery});
+        _setRecovery({ validator: validator, recovery: recovery });
     }
 
     function _removeValidator(address prevValidator, address removeValidator) internal {
-        validatorList.pop({prevEntry: prevValidator, popEntry: removeValidator});
+        validatorList.pop({ prevEntry: prevValidator, popEntry: removeValidator });
     }
 
     function isEnabledValidator(address validator) public view returns (bool enabled) {
         enabled = validatorList.contains(validator);
     }
 
-    function getAllValidators(address startInList, uint256 pageSize)
+    function getAllValidators(
+        address startInList,
+        uint256 pageSize
+    )
         public
         view
         returns (address[] memory, address next)

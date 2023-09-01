@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ISwapRouter} from "./ISwapRouter.sol";
-import {TransferHelper} from "./TransferHelper.sol";
+import { ISwapRouter } from "./ISwapRouter.sol";
+import { TransferHelper } from "./TransferHelper.sol";
 import "../../executors/IExecutorBase.sol";
 import "forge-std/interfaces/IERC20.sol";
 
 address payable constant swapRouter = payable(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 uint24 constant poolFee = 3000;
 
-function _swapExactInputSingle(address smartAccount, IERC20 tokenIn, IERC20 tokenOut, uint256 amountIn)
+function _swapExactInputSingle(
+    address smartAccount,
+    IERC20 tokenIn,
+    IERC20 tokenOut,
+    uint256 amountIn
+)
     view
     returns (ExecutorAction memory action)
 {
@@ -27,7 +32,7 @@ function _swapExactInputSingle(address smartAccount, IERC20 tokenIn, IERC20 toke
             amountIn: amountIn,
             amountOutMinimum: 0,
             sqrtPriceLimitX96: 0 // DONT RUN THIS IN PROD
-        })
+         })
     );
 }
 
@@ -37,7 +42,10 @@ function _swapExactOutputSingle(
     IERC20 tokenOut,
     uint256 amountOut,
     uint256 amountInMaximum
-) view returns (ExecutorAction memory action) {
+)
+    view
+    returns (ExecutorAction memory action)
+{
     action.to = (swapRouter);
     action.data = abi.encodeWithSelector(
         ISwapRouter.exactOutputSingle.selector,
@@ -50,6 +58,6 @@ function _swapExactOutputSingle(
             amountOut: amountOut,
             amountInMaximum: amountInMaximum,
             sqrtPriceLimitX96: 0 // DONT RUN THIS IN PROD
-        })
+         })
     );
 }

@@ -13,7 +13,10 @@ contract DebugExecutorManager is IExecutorManager {
 
     ExecutorTransaction public transaction;
 
-    function executeTransaction(address account, ExecutorTransaction calldata transaction)
+    function executeTransaction(
+        address account,
+        ExecutorTransaction calldata transaction
+    )
         external
         override
         returns (bytes[] memory data)

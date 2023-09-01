@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.19;
 
-import {EntryPoint} from "@aa/core/EntryPoint.sol";
+import { EntryPoint } from "@aa/core/EntryPoint.sol";
 import "../../contracts/account/IRhinestone4337.sol";
-import {ExecutorManager} from "../../contracts/account/core/ExecutorManagerSingleton.sol";
+import { ExecutorManager } from "../../contracts/account/core/ExecutorManagerSingleton.sol";
 import "../../contracts/auxiliary/interfaces/IBootstrap.sol";
 import "../../contracts/safe/Bootstrap.sol";
 import "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
@@ -12,10 +12,10 @@ import "../../contracts/auxiliary/interfaces/IRegistry.sol";
 import "../../contracts/modules/validators//IValidatorModule.sol";
 import "../../contracts/modules/recovery/IRecoveryModule.sol";
 
-import {MockValidator} from "../mocks/MockValidator.sol";
-import {MockRecovery} from "../mocks/MockRecovery.sol";
-import {MockRegistry} from "../mocks/MockRegistry.sol";
-import {MockProtocol} from "../mocks/MockProtocol.sol";
+import { MockValidator } from "../mocks/MockValidator.sol";
+import { MockRecovery } from "../mocks/MockRecovery.sol";
+import { MockRegistry } from "../mocks/MockRegistry.sol";
+import { MockProtocol } from "../mocks/MockProtocol.sol";
 
 struct Auxiliary {
     EntryPoint entrypoint;
@@ -52,7 +52,10 @@ contract AuxiliaryFactory {
         mockRhinestoneFactory = new MockProtocol();
     }
 
-    function makeAuxiliary(IRhinestone4337 _rhinestoneManger, IBootstrap _bootstrap)
+    function makeAuxiliary(
+        IRhinestone4337 _rhinestoneManger,
+        IBootstrap _bootstrap
+    )
         internal
         view
         returns (Auxiliary memory aux)
@@ -71,7 +74,11 @@ contract AuxiliaryFactory {
 }
 
 library AuxiliaryLib {
-    function getModuleCloneAddress(Auxiliary memory env, address implementationToClone, bytes32 salt)
+    function getModuleCloneAddress(
+        Auxiliary memory env,
+        address implementationToClone,
+        bytes32 salt
+    )
         internal
         view
         returns (address)
@@ -79,7 +86,11 @@ library AuxiliaryLib {
         return env.rhinestoneFactory.getClone(implementationToClone, salt);
     }
 
-    function deployModuleClone(Auxiliary memory env, address implementationToClone, bytes32 salt)
+    function deployModuleClone(
+        Auxiliary memory env,
+        address implementationToClone,
+        bytes32 salt
+    )
         internal
         returns (address)
     {
