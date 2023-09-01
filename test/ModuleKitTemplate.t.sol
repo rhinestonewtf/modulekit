@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Test} from "forge-std/Test.sol";
+import { Test } from "forge-std/Test.sol";
 import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount
 } from "../src/test/utils/safe-base/RhinestoneModuleKit.sol";
 
-import {MockExecutor} from "../src/test/mocks/MockExecutor.sol";
-import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
+import { MockExecutor } from "../src/test/mocks/MockExecutor.sol";
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 
 contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
@@ -39,7 +39,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
 
     function testSendETH() public {
         // create empty calldata transactions but with specified value to send funds
-        instance.exec4337({target: receiver, value: 10 gwei, callData: ""});
+        instance.exec4337({ target: receiver, value: 10 gwei, callData: "" });
         assertEq(receiver.balance, 10 gwei, "Receiver should have 10 gwei");
     }
 
@@ -51,7 +51,12 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         instance.exec4337({
             target: address(executor),
             callData: abi.encodeWithSelector(
-                MockExecutor.exec.selector, instance.aux.executorManager, instance.account, address(token), receiver, 10
+                MockExecutor.exec.selector,
+                instance.aux.executorManager,
+                instance.account,
+                address(token),
+                receiver,
+                10
                 )
         });
 

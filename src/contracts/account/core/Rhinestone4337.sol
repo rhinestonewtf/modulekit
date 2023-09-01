@@ -3,10 +3,10 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@aa/interfaces/UserOperation.sol";
 
-import {IValidatorModule} from "../../modules/validators/IValidatorModule.sol";
+import { IValidatorModule } from "../../modules/validators/IValidatorModule.sol";
 
-import {RhinestoneAdmin} from "./RhinestoneAdmin.sol";
-import {SelectValidatorLib} from "../lib/SelectValidatorLib.sol";
+import { RhinestoneAdmin } from "./RhinestoneAdmin.sol";
+import { SelectValidatorLib } from "../lib/SelectValidatorLib.sol";
 
 abstract contract Rhinestone4337 is RhinestoneAdmin {
     using SelectValidatorLib for UserOperation;
@@ -38,7 +38,11 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
     /// @dev Validates user operation provided by the entry point
     /// @param userOp User operation struct
     /// @param requiredPrefund Required prefund to execute the operation
-    function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 requiredPrefund)
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 requiredPrefund
+    )
         external
         returns (uint256)
     {
@@ -85,7 +89,11 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
         uint256 maxPriorityFeePerGas,
         uint256 callGas,
         address entryPoint
-    ) public view returns (bytes memory) {
+    )
+        public
+        view
+        returns (bytes memory)
+    {
         bytes32 safeOperationHash = keccak256(
             abi.encode(
                 SAFE_OP_TYPEHASH,
@@ -130,8 +138,11 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
         bytes calldata data,
         uint8 operation,
         uint256 nonce
-    ) external {
-        bytes32 executionHash = keccak256(abi.encode(smartAccount, target, value, data, operation, nonce));
+    )
+        external
+    {
+        bytes32 executionHash =
+            keccak256(abi.encode(smartAccount, target, value, data, operation, nonce));
         ExecutionStatus memory status = hashes[executionHash];
         require(status.approved && !status.executed, "Unexpected status");
         hashes[executionHash].executed = true;
@@ -156,9 +167,20 @@ abstract contract Rhinestone4337 is RhinestoneAdmin {
         return keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, block.chainid, this));
     }
 
-    function _prefundEntrypoint(address safe, address entryPoint, uint256 requiredPrefund) internal virtual;
+    function _prefundEntrypoint(
+        address safe,
+        address entryPoint,
+        uint256 requiredPrefund
+    )
+        internal
+        virtual;
 
-    function _execTransationOnSmartAccount(address account, address to, uint256 value, bytes memory data)
+    function _execTransationOnSmartAccount(
+        address account,
+        address to,
+        uint256 value,
+        bytes memory data
+    )
         internal
         virtual
         returns (bool, bytes memory);

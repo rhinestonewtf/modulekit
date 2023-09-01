@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import {IProtocolFactory} from "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
+import { IProtocolFactory } from "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
 
 /// @title MockProtocol
 /// @author zeroknots
@@ -21,7 +21,11 @@ contract MockProtocol is IProtocolFactory {
         }
     }
 
-    function cloneExecutor(address implementation, bytes calldata initCallData, bytes32 _userProvidedSalt)
+    function cloneExecutor(
+        address implementation,
+        bytes calldata initCallData,
+        bytes32 _userProvidedSalt
+    )
         external
         returns (address proxy, bytes32 usedSalt)
     {
@@ -43,7 +47,11 @@ contract MockProtocol is IProtocolFactory {
         proxy = Clones.predictDeterministicAddress(implementation, salt);
     }
 
-    function getClone(address implementation, bytes calldata initCallData, bytes32 _userProvidedSalt)
+    function getClone(
+        address implementation,
+        bytes calldata initCallData,
+        bytes32 _userProvidedSalt
+    )
         external
         view
         returns (address proxy, bytes32 usedSalt)
@@ -52,7 +60,14 @@ contract MockProtocol is IProtocolFactory {
         proxy = Clones.predictDeterministicAddress(implementation, usedSalt);
     }
 
-    function calcSalt(bytes calldata _initCallData, bytes32 _userProvidedSalt) public pure returns (bytes32 salt) {
+    function calcSalt(
+        bytes calldata _initCallData,
+        bytes32 _userProvidedSalt
+    )
+        public
+        pure
+        returns (bytes32 salt)
+    {
         salt = keccak256(abi.encodePacked(_initCallData, _userProvidedSalt));
     }
 }

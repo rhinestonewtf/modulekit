@@ -9,5 +9,10 @@ struct InitialModule {
 }
 
 interface IBootstrap {
-    function initialize(InitialModule[] calldata modules, address proxyFactory, address owner) external;
+    function initialize(
+        InitialModule[] calldata modules,
+        address proxyFactory,
+        address owner
+    )
+        external;
 }

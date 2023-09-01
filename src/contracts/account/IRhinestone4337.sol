@@ -16,7 +16,8 @@ interface IRhinestone4337 {
         address _registry,
         address _trustedAuthority,
         address _cloneFactory
-    ) external;
+    )
+        external;
 
     /*//////////////////////////////////////////////////////////////
                             ERC 4337
@@ -26,7 +27,11 @@ interface IRhinestone4337 {
     //     external
     //     returns (address[] memory array, address next);
 
-    function validateUserOp(UserOperation calldata userOp, bytes32 userOpHash, uint256 requiredPrefund)
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash,
+        uint256 requiredPrefund
+    )
         external
         returns (uint256);
 
@@ -37,7 +42,8 @@ interface IRhinestone4337 {
         bytes calldata data,
         uint8 operation,
         uint256 nonce
-    ) external;
+    )
+        external;
 
     /**
      * @dev Gets the clone of a executor
@@ -81,7 +87,10 @@ interface IRhinestone4337 {
      * @param target  Address of the target
      * @param callData Data to send to the target
      */
-    function forwardCall(address target, bytes calldata callData)
+    function forwardCall(
+        address target,
+        bytes calldata callData
+    )
         external
         returns (bool success, bytes memory returnData);
 
@@ -96,5 +105,10 @@ interface IRhinestone4337 {
      * @param recoveryProof The proof required for recovery
      * @param recoveryData The data required for recovery
      */
-    function recoverValidator(address validator, bytes calldata recoveryProof, bytes calldata recoveryData) external;
+    function recoverValidator(
+        address validator,
+        bytes calldata recoveryProof,
+        bytes calldata recoveryData
+    )
+        external;
 }
