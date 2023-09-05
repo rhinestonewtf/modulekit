@@ -51,3 +51,7 @@ forge install
 -   `function addExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool)`: Adds a executor to the account.
 -   `function removeExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool)`: Removes a executor from the account.
 -   `function getUserOpHash(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation) internal returns (bytes32)`: Calculates the hash of a UserOperation in order to be signed for a custom signature.
+
+
+## Credits
+- [Safe{Core} Protocol](https://github.com/safe-global/safe-core-protocol/): ExecutorManager.sol is heavily insprired by Safe's SafeProtocolManager
