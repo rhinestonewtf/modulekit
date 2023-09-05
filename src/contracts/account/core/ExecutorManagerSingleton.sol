@@ -5,6 +5,15 @@ import {SentinelListLib} from "sentinellist/src/SentinelList.sol";
 import "../../modules/executors/IExecutorBase.sol";
 import "./RegistryAdapter.sol";
 
+/**
+ * @notice ExecutorManager is an abstract contract that manages the executor access and executtion for for a smart account.
+ * It also integrated with the Rhinestone Regsitry to provide access to security attestations for modules during installation or execution.
+ * @dev This contract is meant to be inherited to provide executor management functionality to Safes or other smart accounts.
+ *
+ * Based on the Safe{Core} Protocol:
+ * https://github.com/safe-global/safe-core-protocol-specs/
+ * https://github.com/safe-global/safe-core-protocol/
+ */
 abstract contract ExecutorManager is RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -48,7 +57,7 @@ abstract contract ExecutorManager is RegistryAdapter {
         _setAttester(msg.sender, attester);
     }
     /**
-     * @notice Called by a Safe to enable a executor on a Safe. To be called by a safe.
+     * @notice Called by a Smart Account to enable a executor on a Safe. To be called by a safe.
      * @param executor ISafeProtocolExecutor A executor that has to be enabled
      * @param allowRootAccess Bool indicating whether root access to be allowed.
      */
