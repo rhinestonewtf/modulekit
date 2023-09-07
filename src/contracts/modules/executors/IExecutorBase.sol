@@ -88,6 +88,19 @@ library ModuleExecLib {
     function exec(
         IExecutorManager manager,
         address account,
+        ExecutorAction[] memory actions
+    )
+        internal
+    {
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
+
+        manager.executeTransaction(account, transaction);
+    }
+
+    function exec(
+        IExecutorManager manager,
+        address account,
         address target,
         bytes memory callData
     )
