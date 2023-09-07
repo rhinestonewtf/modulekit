@@ -56,7 +56,15 @@ library Bytecode {
      *
      * Forked from: https://gist.github.com/KardanovIR/fe98661df9338c842b4a30306d507fbd
      */
-    function codeAt(address _addr, uint256 _start, uint256 _end) internal view returns (bytes memory oCode) {
+    function codeAt(
+        address _addr,
+        uint256 _start,
+        uint256 _end
+    )
+        internal
+        view
+        returns (bytes memory oCode)
+    {
         uint256 csize = codeSize(_addr);
         if (csize == 0) return bytes("");
 

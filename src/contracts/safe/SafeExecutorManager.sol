@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ExecutorManager} from "../account/core/ExecutorManagerSingleton.sol";
+import { ExecutorManager } from "../account/core/ExecutorManagerSingleton.sol";
 import "./ISafe.sol";
 
 contract SafeExecutorManager is ExecutorManager {
@@ -9,7 +9,12 @@ contract SafeExecutorManager is ExecutorManager {
         _setRegistry(registry);
     }
 
-    function _execTransationOnSmartAccount(address safe, address to, uint256 value, bytes memory data)
+    function _execTransationOnSmartAccount(
+        address safe,
+        address to,
+        uint256 value,
+        bytes memory data
+    )
         internal
         override
         returns (bool success, bytes memory)

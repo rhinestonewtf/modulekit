@@ -41,7 +41,10 @@ interface IExecutorBase {
      * @return providerType uint256 Type of metadata provider
      * @return location bytes
      */
-    function metadataProvider() external view returns (uint256 providerType, bytes memory location);
+    function metadataProvider()
+        external
+        view
+        returns (uint256 providerType, bytes memory location);
 
     /**
      * @notice A function that indicates if the executor requires root access to a Safe.
@@ -51,33 +54,60 @@ interface IExecutorBase {
 }
 
 interface IModuleManager {
-    function executeTransaction(ExecutorTransaction calldata transaction) external returns (bytes[] memory data);
+    function executeTransaction(ExecutorTransaction calldata transaction)
+        external
+        returns (bytes[] memory data);
 }
 
 interface IExecutorManager {
-    function executeTransaction(address account, ExecutorTransaction calldata transaction)
+    function executeTransaction(
+        address account,
+        ExecutorTransaction calldata transaction
+    )
         external
         returns (bytes[] memory data);
 }
 
 library ModuleExecLib {
-    function exec(IExecutorManager manager, address account, ExecutorAction memory action) internal {
+    function exec(
+        IExecutorManager manager,
+        address account,
+        ExecutorAction memory action
+    )
+        internal
+    {
         ExecutorAction[] memory actions = new ExecutorAction[](1);
         actions[0] = action;
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({actions: actions, nonce: 0, metadataHash: ""});
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
 
         manager.executeTransaction(account, transaction);
     }
 
-    function exec(IExecutorManager manager, address account, ExecutorAction[] memory actions) internal {
-        ExecutorTransaction memory transaction = ExecutorTransaction({actions: actions, nonce: 0, metadataHash: ""});
+    function exec(
+        IExecutorManager manager,
+        address account,
+        ExecutorAction[] memory actions
+    )
+        internal
+    {
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
 
         manager.executeTransaction(account, transaction);
     }
 
-    function exec(IExecutorManager manager, address account, address target, bytes memory callData) internal {
-        ExecutorAction memory action = ExecutorAction({to: payable(target), value: 0, data: callData});
+    function exec(
+        IExecutorManager manager,
+        address account,
+        address target,
+        bytes memory callData
+    )
+        internal
+    {
+        ExecutorAction memory action =
+            ExecutorAction({ to: payable(target), value: 0, data: callData });
         exec(manager, account, action);
     }
 }

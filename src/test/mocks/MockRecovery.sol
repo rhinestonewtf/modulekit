@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IRecoveryModule} from "../../contracts/modules/recovery/IRecoveryModule.sol";
+import { IRecoveryModule } from "../../contracts/modules/recovery/IRecoveryModule.sol";
 
 /// @title MockRecovery
 /// @author kopy-kat

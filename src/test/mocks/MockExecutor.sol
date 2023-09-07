@@ -1,15 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IExecutorBase, ModuleExecLib, IExecutorManager} from "../../contracts/modules/executors/IExecutorBase.sol";
-import {IERC20} from "forge-std/interfaces/IERC20.sol";
+import {
+    IExecutorBase,
+    ModuleExecLib,
+    IExecutorManager
+} from "../../contracts/modules/executors/IExecutorBase.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 /// @author zeroknots
 
 contract MockExecutor is IExecutorBase {
     using ModuleExecLib for IExecutorManager;
 
-    function exec(IExecutorManager manager, address account, address token, address receiver, uint256 amount)
+    function exec(
+        IExecutorManager manager,
+        address account,
+        address token,
+        address receiver,
+        uint256 amount
+    )
         external
     {
         manager.exec({
@@ -19,11 +29,16 @@ contract MockExecutor is IExecutorBase {
         });
     }
 
-    function name() external view override returns (string memory name) {}
+    function name() external view override returns (string memory name) { }
 
-    function version() external view override returns (string memory version) {}
+    function version() external view override returns (string memory version) { }
 
-    function metadataProvider() external view override returns (uint256 providerType, bytes memory location) {}
+    function metadataProvider()
+        external
+        view
+        override
+        returns (uint256 providerType, bytes memory location)
+    { }
 
-    function requiresRootAccess() external view override returns (bool requiresRootAccess) {}
+    function requiresRootAccess() external view override returns (bool requiresRootAccess) { }
 }

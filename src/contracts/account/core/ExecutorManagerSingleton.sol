@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {SentinelListLib} from "sentinellist/src/SentinelList.sol";
+import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import "../../modules/executors/IExecutorBase.sol";
 import "./RegistryAdapter.sol";
 
@@ -10,7 +10,8 @@ abstract contract ExecutorManager is RegistryAdapter {
 
     address internal constant SENTINEL_MODULES = address(0x1);
 
-    mapping(address account => mapping(address executor => ExecutorAccessInfo)) public enabledExecutors;
+    mapping(address account => mapping(address executor => ExecutorAccessInfo)) public
+        enabledExecutors;
 
     struct ExecutorAccessInfo {
         bool rootAddressGranted;
@@ -18,7 +19,7 @@ abstract contract ExecutorManager is RegistryAdapter {
     }
 
     modifier onlyExecutor(address account) {
-        bool executorEnabled = isExecutorEnabled({account: account, executor: msg.sender});
+        bool executorEnabled = isExecutorEnabled({ account: account, executor: msg.sender });
         if (!executorEnabled) revert ExecutorNotEnabled(msg.sender);
 
         _enforceRegistryCheck(msg.sender);
@@ -53,12 +54,16 @@ abstract contract ExecutorManager is RegistryAdapter {
      * @param allowRootAccess Bool indicating whether root access to be allowed.
      */
 
-    function enableExecutor(address executor, bool allowRootAccess)
+    function enableExecutor(
+        address executor,
+        bool allowRootAccess
+    )
         external
         noZeroOrSentinelExecutor(executor)
         checkRegistry(executor)
     {
-        ExecutorAccessInfo storage senderSentinelExecutor = enabledExecutors[msg.sender][SENTINEL_MODULES];
+        ExecutorAccessInfo storage senderSentinelExecutor =
+            enabledExecutors[msg.sender][SENTINEL_MODULES];
         ExecutorAccessInfo storage senderExecutor = enabledExecutors[msg.sender][executor];
 
         if (senderExecutor.nextExecutorPointer != address(0)) {
@@ -81,7 +86,13 @@ abstract contract ExecutorManager is RegistryAdapter {
      * @param executor Executor to be disabled
      */
 
-    function disableExecutor(address prevExecutor, address executor) external noZeroOrSentinelExecutor(executor) {
+    function disableExecutor(
+        address prevExecutor,
+        address executor
+    )
+        external
+        noZeroOrSentinelExecutor(executor)
+    {
         ExecutorAccessInfo storage prevExecutorInfo = enabledExecutors[msg.sender][prevExecutor];
         ExecutorAccessInfo storage executorInfo = enabledExecutors[msg.sender][executor];
 
@@ -102,10 +113,14 @@ abstract contract ExecutorManager is RegistryAdapter {
      */
 
     function isExecutorEnabled(address account, address executor) public view returns (bool) {
-        return SENTINEL_MODULES != executor && enabledExecutors[account][executor].nextExecutorPointer != address(0);
+        return SENTINEL_MODULES != executor
+            && enabledExecutors[account][executor].nextExecutorPointer != address(0);
     }
 
-    function executeTransaction(address account, ExecutorTransaction calldata transaction)
+    function executeTransaction(
+        address account,
+        ExecutorTransaction calldata transaction
+    )
         external
         onlyExecutor(account)
         returns (bytes[] memory data)
@@ -147,7 +162,11 @@ abstract contract ExecutorManager is RegistryAdapter {
      * @return array Array of executors.
      * @return next Start of the next page.
      */
-    function getExecutorsPaginated(address start, uint256 pageSize, address safe)
+    function getExecutorsPaginated(
+        address start,
+        uint256 pageSize,
+        address safe
+    )
         external
         view
         returns (address[] memory array, address next)
@@ -194,7 +213,12 @@ abstract contract ExecutorManager is RegistryAdapter {
         }
     }
 
-    function _execTransationOnSmartAccount(address account, address to, uint256 value, bytes memory data)
+    function _execTransationOnSmartAccount(
+        address account,
+        address to,
+        uint256 value,
+        bytes memory data
+    )
         internal
         virtual
         returns (bool, bytes memory);

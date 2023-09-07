@@ -1,17 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {Rhinestone4337} from "../account/core/Rhinestone4337.sol";
-import {Ownable} from "solady/src/auth/Ownable.sol";
+import { Rhinestone4337 } from "../account/core/Rhinestone4337.sol";
+import { Ownable } from "solady/src/auth/Ownable.sol";
 
 import "./ISafe.sol";
 
 contract RhinestoneSafeFlavor is Rhinestone4337 {
-    constructor(address entryPoint, address registry, address trustedAuthority)
+    constructor(
+        address entryPoint,
+        address registry,
+        address trustedAuthority
+    )
         Rhinestone4337(entryPoint, registry, trustedAuthority)
-    {}
+    { }
 
-    function _execTransationOnSmartAccount(address safe, address to, uint256 value, bytes memory data)
+    function _execTransationOnSmartAccount(
+        address safe,
+        address to,
+        uint256 value,
+        bytes memory data
+    )
         internal
         override
         returns (bool success, bytes memory)
@@ -19,7 +28,11 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
         success = ISafe(safe).execTransactionFromModule(to, value, data, 0);
     }
 
-    function _execTransationOnSmartAccount(address to, uint256 value, bytes memory data)
+    function _execTransationOnSmartAccount(
+        address to,
+        uint256 value,
+        bytes memory data
+    )
         internal
         returns (bool success, bytes memory)
     {
@@ -27,7 +40,11 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
         return _execTransationOnSmartAccount(safe, to, value, data);
     }
 
-    function _execDelegateCallOnSmartAccount(address to, uint256 value, bytes memory data)
+    function _execDelegateCallOnSmartAccount(
+        address to,
+        uint256 value,
+        bytes memory data
+    )
         internal
         returns (bool success, bytes memory)
     {
@@ -47,9 +64,17 @@ contract RhinestoneSafeFlavor is Rhinestone4337 {
         }
     }
 
-    function _prefundEntrypoint(address safe, address entryPoint, uint256 requiredPrefund) internal virtual override {
+    function _prefundEntrypoint(
+        address safe,
+        address entryPoint,
+        uint256 requiredPrefund
+    )
+        internal
+        virtual
+        override
+    {
         ISafe(safe).execTransactionFromModule(entryPoint, requiredPrefund, "", 0);
     }
 
-    receive() external payable {}
+    receive() external payable { }
 }

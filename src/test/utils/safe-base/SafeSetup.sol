@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 
-import {Auxiliary, AuxiliaryLib} from "../Auxiliary.sol";
-import {RhinestoneAccount} from "./RhinestoneModuleKit.sol";
+import { Auxiliary, AuxiliaryLib } from "../Auxiliary.sol";
+import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import "safe-contracts/contracts/Safe.sol";
-import {InitialModule} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import { InitialModule } from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
 
-import {IRhinestone4337} from "../../../contracts/account/IRhinestone4337.sol";
-import {IBootstrap} from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import { IRhinestone4337 } from "../../../contracts/account/IRhinestone4337.sol";
+import { IBootstrap } from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
 
 pragma solidity ^0.8.19;
 
@@ -58,8 +58,9 @@ library SafeHelpers {
         });
 
         // Calldata sent to init4337Safe
-        bytes memory initModuleCalldata =
-            abi.encodeWithSelector(IBootstrap.initialize.selector, modules, env.rhinestoneFactory, safeOwner);
+        bytes memory initModuleCalldata = abi.encodeWithSelector(
+            IBootstrap.initialize.selector, modules, env.rhinestoneFactory, safeOwner
+        );
 
         // Initial owners of Safe
         address[] memory owners = new address[](1);

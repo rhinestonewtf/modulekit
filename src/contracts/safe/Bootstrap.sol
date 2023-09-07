@@ -1,20 +1,28 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import {IBootstrap, InitialModule} from "../auxiliary/interfaces/IBootstrap.sol";
-import {IProtocolFactory} from "../auxiliary/interfaces/IProtocolFactory.sol";
+import { IBootstrap, InitialModule } from "../auxiliary/interfaces/IBootstrap.sol";
+import { IProtocolFactory } from "../auxiliary/interfaces/IProtocolFactory.sol";
 
 contract Bootstrap is IBootstrap {
     address internal SENTINEL_ADDRESS = address(0x1);
 
-    function initialize(InitialModule[] calldata modules, address proxyFactory, address owner) external {
+    function initialize(
+        InitialModule[] calldata modules,
+        address proxyFactory,
+        address owner
+    )
+        external
+    {
         // ENABLE MODULES
         uint256 len = modules.length;
         for (uint256 i = 0; i < len;) {
             InitialModule calldata initialModule = modules[i];
             address module;
             if (initialModule.requiresClone) {
-                module = IProtocolFactory(proxyFactory).cloneExecutor(initialModule.moduleAddress, initialModule.salt);
+                module = IProtocolFactory(proxyFactory).cloneExecutor(
+                    initialModule.moduleAddress, initialModule.salt
+                );
             } else {
                 module = initialModule.moduleAddress;
             }

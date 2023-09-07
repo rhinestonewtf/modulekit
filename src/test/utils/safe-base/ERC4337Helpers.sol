@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import {RhinestoneAccount} from "./RhinestoneModuleKit.sol";
+import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import "@aa/interfaces/UserOperation.sol";
 
 library ERC4337Wrappers {
@@ -12,7 +12,11 @@ library ERC4337Wrappers {
         uint256 value,
         bytes memory data,
         uint8 operation // {0: Call, 1: DelegateCall}
-    ) internal view returns (bytes memory) {
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
         // Get Safe address
         address sender = address(instance.account);
 
@@ -30,7 +34,11 @@ library ERC4337Wrappers {
         );
     }
 
-    function getPartialUserOp(RhinestoneAccount memory instance, bytes memory callData, bytes memory initCode)
+    function getPartialUserOp(
+        RhinestoneAccount memory instance,
+        bytes memory callData,
+        bytes memory initCode
+    )
         internal
         returns (UserOperation memory)
     {
