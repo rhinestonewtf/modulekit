@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.17;
 
-import { UserOperation } from "@aa/interfaces/UserOperation.sol";
+import "../../interfaces/ERC4337/UserOperation.sol";
 import { BaseValidator } from "../../contracts/modules/validators/BaseValidator.sol";
 
 contract MockValidator is BaseValidator {

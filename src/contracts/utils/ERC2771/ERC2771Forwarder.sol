@@ -3,11 +3,11 @@
 
 pragma solidity ^0.8.19;
 
-import {ERC2771Context} from "./ERC2771Context.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
-import {Nonces} from "./utils/Nonces.sol";
-import {Address} from "./utils/Address.sol";
+import { ERC2771Context } from "./ERC2771Context.sol";
+import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import { Nonces } from "./utils/Nonces.sol";
+import { Address } from "./utils/Address.sol";
 
 /**
  * @dev A forwarder compatible with ERC2771 contracts. See {ERC2771Context}.
@@ -60,10 +60,9 @@ contract ERC2771Forwarder is EIP712, Nonces {
         bytes signature;
     }
 
-    bytes32 internal constant _FORWARD_REQUEST_TYPEHASH =
-        keccak256(
-            "ForwardRequest(address from,address to,uint256 value,uint256 gas,uint256 nonce,uint48 deadline,bytes data)"
-        );
+    bytes32 internal constant _FORWARD_REQUEST_TYPEHASH = keccak256(
+        "ForwardRequest(address from,address to,uint256 value,uint256 gas,uint256 nonce,uint48 deadline,bytes data)"
+    );
 
     /**
      * @dev Emitted when a `ForwardRequest` is executed.
@@ -97,7 +96,7 @@ contract ERC2771Forwarder is EIP712, Nonces {
     /**
      * @dev See {EIP712-constructor}.
      */
-    constructor(string memory name) EIP712(name, "1") {}
+    constructor(string memory name) EIP712(name, "1") { }
 
     /**
      * @dev Returns `true` if a request is valid for a provided `signature` at the current block timestamp.
@@ -109,7 +108,7 @@ contract ERC2771Forwarder is EIP712, Nonces {
      * receiver is provided.
      */
     function verify(ForwardRequestData calldata request) public view virtual returns (bool) {
-        (bool isTrustedForwarder, bool active, bool signerMatch, ) = _validate(request);
+        (bool isTrustedForwarder, bool active, bool signerMatch,) = _validate(request);
         return isTrustedForwarder && active && signerMatch;
     }
 
@@ -162,7 +161,11 @@ contract ERC2771Forwarder is EIP712, Nonces {
     function executeBatch(
         ForwardRequestData[] calldata requests,
         address payable refundReceiver
-    ) public payable virtual {
+    )
+        public
+        payable
+        virtual
+    {
         bool atomic = refundReceiver == address(0);
 
         uint256 requestsValue;
@@ -196,9 +199,12 @@ contract ERC2771Forwarder is EIP712, Nonces {
      * @dev Validates if the provided request can be executed at current block timestamp with
      * the given `request.signature` on behalf of `request.signer`.
      */
-    function _validate(
-        ForwardRequestData calldata request
-    ) internal view virtual returns (bool isTrustedForwarder, bool active, bool signerMatch, address signer) {
+    function _validate(ForwardRequestData calldata request)
+        internal
+        view
+        virtual
+        returns (bool isTrustedForwarder, bool active, bool signerMatch, address signer)
+    {
         (bool isValid, address recovered) = _recoverForwardRequestSigner(request);
 
         return (
@@ -215,10 +221,13 @@ contract ERC2771Forwarder is EIP712, Nonces {
      *
      * NOTE: The signature is considered valid if {ECDSA-tryRecover} indicates no recover error for it.
      */
-    function _recoverForwardRequestSigner(
-        ForwardRequestData calldata request
-    ) internal view virtual returns (bool, address) {
-        (address recovered, ECDSA.RecoverError err, ) = _hashTypedDataV4(
+    function _recoverForwardRequestSigner(ForwardRequestData calldata request)
+        internal
+        view
+        virtual
+        returns (bool, address)
+    {
+        (address recovered, ECDSA.RecoverError err,) = _hashTypedDataV4(
             keccak256(
                 abi.encode(
                     _FORWARD_REQUEST_TYPEHASH,
@@ -254,8 +263,13 @@ contract ERC2771Forwarder is EIP712, Nonces {
     function _execute(
         ForwardRequestData calldata request,
         bool requireValidRequest
-    ) internal virtual returns (bool success) {
-        (bool isTrustedForwarder, bool active, bool signerMatch, address signer) = _validate(request);
+    )
+        internal
+        virtual
+        returns (bool success)
+    {
+        (bool isTrustedForwarder, bool active, bool signerMatch, address signer) =
+            _validate(request);
 
         // Need to explicitly specify if a revert is required since non-reverting is default for
         // batches and reversion is opt-in since it could be useful in some scenarios
@@ -303,7 +317,8 @@ contract ERC2771Forwarder is EIP712, Nonces {
      * {ERC2771Context-isTrustedForwarder} function.
      */
     function _isTrustedByTarget(address target) private view returns (bool) {
-        bytes memory encodedParams = abi.encodeCall(ERC2771Context.isTrustedForwarder, (address(this)));
+        bytes memory encodedParams =
+            abi.encodeCall(ERC2771Context.isTrustedForwarder, (address(this)));
 
         bool success;
         uint256 returnSize;
@@ -315,7 +330,8 @@ contract ERC2771Forwarder is EIP712, Nonces {
             // |-----------|----------|--------------------------------------------------------------------|
             // |           |          |                                                           result ↓ |
             // | 0x00:0x1F | selector | 0x0000000000000000000000000000000000000000000000000000000000000001 |
-            success := staticcall(gas(), target, add(encodedParams, 0x20), mload(encodedParams), 0, 0x20)
+            success :=
+                staticcall(gas(), target, add(encodedParams, 0x20), mload(encodedParams), 0, 0x20)
             returnSize := returndatasize()
             returnValue := mload(0)
         }
@@ -335,7 +351,13 @@ contract ERC2771Forwarder is EIP712, Nonces {
      * IMPORTANT: The `gasLeft` parameter should be measured exactly at the end of the forwarded call.
      * Any gas consumed in between will make room for bypassing this check.
      */
-    function _checkForwardedGas(uint256 gasLeft, ForwardRequestData calldata request) private pure {
+    function _checkForwardedGas(
+        uint256 gasLeft,
+        ForwardRequestData calldata request
+    )
+        private
+        pure
+    {
         // To avoid insufficient gas griefing attacks, as referenced in https://ronan.eth.limo/blog/ethereum-gas-dangers/
         //
         // A malicious relayer can attempt to shrink the gas forwarded so that the underlying call reverts out-of-gas

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.19;
 
 import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
-import "@aa/interfaces/UserOperation.sol";
+import "../../../interfaces/ERC4337/UserOperation.sol";
 
 library ERC4337Wrappers {
     function getSafe4337TxCalldata(

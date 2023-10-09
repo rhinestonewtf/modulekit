@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { UserOperation } from "@aa/interfaces/UserOperation.sol";
+import "../../../interfaces/ERC4337/UserOperation.sol";
 
 library SelectValidatorLib {
     function decodeSignature(bytes calldata signature) internal returns (address validator) { }

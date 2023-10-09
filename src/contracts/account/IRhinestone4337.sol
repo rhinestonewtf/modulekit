@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "../modules/executors/IExecutorBase.sol";
-import "@aa/interfaces/UserOperation.sol";
+import "../../interfaces/ERC4337/UserOperation.sol";
 
 interface IRhinestone4337 {
     /*//////////////////////////////////////////////////////////////
