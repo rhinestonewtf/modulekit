@@ -67,7 +67,15 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         instance.removeExecutor(address(executor));
     }
 
-    function test_AddAndRemoveValidator() public { }
+    function test_AddAndRemoveValidator() public {
+        address newValidator = makeAddr("new validator");
+
+        instance.addValidator(newValidator);
+
+        assertEq(
+            instance.aux.rhinestoneManager.validators(0), newValidator, "Validator should be added"
+        );
+    }
 
     function test_AddAndRemove_Executor() public { }
 }
