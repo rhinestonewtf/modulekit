@@ -2,6 +2,7 @@
 pragma solidity ^0.8.21;
 
 import { IERC7484Registry, RegistryAdapterForSingletons } from "../common/IERC7484Registry.sol";
+import "../common/IERC1271.sol";
 import "../common/erc4337/UserOperation.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import "../modulekit/IValidator.sol";
@@ -194,6 +195,21 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         // } else {
         _execTransationOnSmartAccount(smartAccount, target, value, data);
         // }
+    }
+
+    function isValidSignature(
+        bytes32 dataHash,
+        bytes calldata signature
+    )
+        public
+        view
+        returns (bytes4)
+    {
+        (bytes memory moduleSignature, address validationModule) =
+            abi.decode(signature, (bytes, address));
+
+        require(isEnabledValidator(msg.sender, validationModule), "Validator not enabled");
+        return IERC1271(validationModule).isValidSignature(dataHash, moduleSignature);
     }
 
     // function validateReplayProtection(UserOperation calldata userOp) internal {
