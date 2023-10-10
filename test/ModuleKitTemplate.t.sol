@@ -72,10 +72,13 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
 
         instance.addValidator(newValidator);
 
-        assertEq(
-            instance.aux.rhinestoneManager.validators(0), newValidator, "Validator should be added"
-        );
+        bool enabled = instance.rhinestoneManager.isEnabledValidator(instance.account, newValidator);
+        assertTrue(enabled);
     }
 
-    function test_AddAndRemove_Executor() public { }
+    function test_AddAndRemove_Executor() public {
+        address newExecutor = makeAddr("new Executor");
+
+        instance.addExecutor(newExecutor);
+    }
 }

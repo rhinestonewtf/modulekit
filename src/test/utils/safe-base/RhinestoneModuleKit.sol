@@ -40,6 +40,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     bool initialzed;
 
+    event InstanceCreated(address indexed account);
+
     function init() internal override {
         super.init();
         executorManager = new SafeExecutorManager(IERC7484Registry(address(mockRegistry)));
@@ -69,9 +71,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         instance = RhinestoneAccount({
             account: getAccountAddress(env, salt),
-            rhinestoneManager: IRhinestone4337(
-                payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), salt))
-                ),
+            rhinestoneManager: rhinestoneManager,
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({
@@ -79,6 +79,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 accountSingleton: ISafe(address(safeSingleton))
             })
         });
+
+        emit InstanceCreated(instance.account);
     }
 
     function getAccountAddress(
@@ -205,6 +207,33 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeWithSelector(
                 instance.rhinestoneManager.addValidator.selector, validator
+                )
+        });
+        return success;
+    }
+
+    function removeValidator(
+        RhinestoneAccount memory instance,
+        address validator
+    )
+        internal
+        returns (bool)
+    {
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array, address next) =
+            instance.rhinestoneManager.getValidatorPaginated(address(0x1), 100, instance.account);
+
+        if (array.length == 1) previous = address(0x0);
+        else previous = array[array.length - 2];
+
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(
+                instance.rhinestoneManager.removeValidator.selector, previous, validator
                 )
         });
         return success;

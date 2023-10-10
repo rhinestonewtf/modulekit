@@ -28,8 +28,7 @@ library SafeHelpers {
 
         // Get proxy address of safe ERC4337 module
 
-        address safe4337ModuleCloneAddress =
-            AuxiliaryLib.getModuleCloneAddress(env, address(env.rhinestoneManager), salt);
+        address safe4337ModuleCloneAddress = address(env.rhinestoneManager);
 
         InitialModule[] memory modules = new InitialModule[](2);
 
@@ -37,15 +36,8 @@ library SafeHelpers {
         modules[0] = InitialModule({
             moduleAddress: address(env.rhinestoneManager),
             salt: salt,
-            initializer: abi.encodeWithSelector(
-                IRhinestone4337.initialize.selector,
-                address(0),
-                env.validator,
-                env.registry,
-                address(0x696969696969),
-                env.rhinestoneFactory
-                ),
-            requiresClone: true
+            initializer: abi.encodeWithSelector(IRhinestone4337.init.selector, env.validator),
+            requiresClone: false
         });
 
         modules[1] = InitialModule({

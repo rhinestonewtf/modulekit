@@ -5,19 +5,7 @@ import "../modulekit/IExecutor.sol";
 import "../common/erc4337/UserOperation.sol";
 
 interface IRhinestone4337 {
-    /*//////////////////////////////////////////////////////////////
-                            INIT
-    //////////////////////////////////////////////////////////////*/
-
-    function initialize(
-        address _owner,
-        address _defaultValidator,
-        address _defaultRecovery,
-        address _registry,
-        address _trustedAuthority,
-        address _cloneFactory
-    )
-        external;
+    function init(address validator) external;
 
     /*//////////////////////////////////////////////////////////////
                             ERC 4337
@@ -45,15 +33,6 @@ interface IRhinestone4337 {
     )
         external;
 
-    /**
-     * @dev Gets the clone of a executor
-     *
-     * @param executorImpl Address of the executor
-     * @param salt Random nonce
-     * @return clone Address of the executor clone
-     */
-    function clones(address executorImpl, bytes32 salt) external view returns (address clone);
-
     /*//////////////////////////////////////////////////////////////
                               MANAGE VALIDATORS
     //////////////////////////////////////////////////////////////*/
@@ -63,7 +42,17 @@ interface IRhinestone4337 {
      * @param validator Address of the validator
      */
     function addValidator(address validator) external;
-    function addValidatorAndRecovery(address validator, address recovery) external;
+
+    function getValidatorPaginated(
+        address start,
+        uint256 pageSize,
+        address account
+    )
+        external
+        view
+        returns (address[] memory array, address next);
+
+    function isEnabledValidator(address account, address validator) external view returns (bool);
 
     /**
      * @dev Removes a validator

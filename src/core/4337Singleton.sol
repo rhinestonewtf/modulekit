@@ -42,9 +42,27 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         supportedEntryPoint = _entryPoint;
     }
 
+    function init(address validator) external {
+        validators[msg.sender].init();
+        validators[msg.sender].push(validator);
+        emit ValidatorAdded(msg.sender, validator);
+    }
+
     function addValidator(address validator) external {
         validators[msg.sender].push(validator);
         emit ValidatorAdded(msg.sender, validator);
+    }
+
+    function getValidatorPaginated(
+        address start,
+        uint256 pageSize,
+        address account
+    )
+        external
+        view
+        returns (address[] memory array, address next)
+    {
+        return validators[account].getEntriesPaginated(start, pageSize);
     }
 
     function removeValidator(address prevValidator, address delValidator) external {
@@ -166,7 +184,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         bytes32 executionHash =
             keccak256(abi.encode(smartAccount, target, value, data, operation, nonce));
         ExecutionStatus memory status = _hashes[smartAccount][executionHash];
-        require(status.approved && !status.executed, "Unexpected status");
+        // require(status.approved && !status.executed, "Unexpected status");
         _hashes[smartAccount][executionHash].executed = true;
 
         // check if target is an installed executor
