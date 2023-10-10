@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import {
-    IERC7484Registry, RegistryAdapterForSingletons
-} from "../registryAdapter/RegistryAdapter.sol";
-import "../../common/erc4337/UserOperation.sol";
+import { IERC7484Registry, RegistryAdapterForSingletons } from "../common/IERC7484Registry.sol";
+import "../common/erc4337/UserOperation.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import "../../modulekit/IValidator.sol";
-import "../../common/ERC2771Context.sol";
-import "../../modulekit/lib/ValidatorSelectionLib.sol";
+import "../modulekit/IValidator.sol";
+import "../common/ERC2771Context.sol";
+import "../modulekit/lib/ValidatorSelectionLib.sol";
 
 abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context {
     using SentinelListLib for SentinelListLib.SentinelList;

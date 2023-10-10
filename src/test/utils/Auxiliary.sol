@@ -3,12 +3,12 @@
 pragma solidity ^0.8.19;
 
 import "../etch/EntryPoint.sol";
-import { IRhinestone4337, UserOperation } from "../../core/erc4337Manager/IRhinestone4337.sol";
-import { ExecutorManager } from "../../core/executionManager/ExecutorManager.sol";
+import { IRhinestone4337, UserOperation } from "../../core/IRhinestone4337.sol";
+import { ExecutorManager } from "../../core/ExecutorManager.sol";
 import { IBootstrap } from "../../common/IBootstrap.sol";
 import { Bootstrap } from "./safe-base/BoostrapSafe.sol";
 import { IProtocolFactory } from "../../common/IRhinestoneProtocol.sol";
-import { IERC7484Registry } from "../../common/IERC7484.sol";
+import { IERC7484Registry } from "../../common/IERC7484Registry.sol";
 import { IValidatorModule } from "../../modulekit/IValidator.sol";
 
 import { MockValidator } from "../mocks/MockValidator.sol";

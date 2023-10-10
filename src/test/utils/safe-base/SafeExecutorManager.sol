@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { ExecutorManager } from "../../../core/executionManager/ExecutorManager.sol";
+import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../../../common/ISafe.sol";
 
-import "../../../common/IERC7484.sol";
+import "../../../common/IERC7484Registry.sol";
 
 contract SafeExecutorManager is ExecutorManager {
     constructor(IERC7484Registry registry) ExecutorManager(registry) { }

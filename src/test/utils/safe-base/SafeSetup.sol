@@ -5,7 +5,7 @@ import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import "safe-contracts/contracts/Safe.sol";
 import { IBootstrap, InitialModule } from "../../../common/IBootstrap.sol";
 
-import { IRhinestone4337 } from "../../../core/erc4337Manager/IRhinestone4337.sol";
+import { IRhinestone4337 } from "../../../core/IRhinestone4337.sol";
 
 pragma solidity ^0.8.19;
 

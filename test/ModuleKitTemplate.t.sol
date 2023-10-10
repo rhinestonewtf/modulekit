@@ -66,4 +66,8 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         instance.addExecutor(address(executor2));
         instance.removeExecutor(address(executor));
     }
+
+    function test_AddAndRemoveValidator() public { }
+
+    function test_AddAndRemove_Executor() public { }
 }

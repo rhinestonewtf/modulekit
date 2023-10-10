@@ -6,7 +6,7 @@ import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
 import { ISafe } from "../../../common/ISafe.sol";
-import { IERC7484Registry } from "../../../common/IERC7484.sol";
+import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
 import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
 import { SafeExecutorManager } from "./SafeExecutorManager.sol";
 import {

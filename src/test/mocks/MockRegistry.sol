@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../common/IERC7484.sol";
+import "../../common/IERC7484Registry.sol";
 
 /// @title MockRegistry
 /// @author zeroknots
