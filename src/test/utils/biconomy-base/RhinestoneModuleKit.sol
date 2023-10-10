@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {
-    SMART_ACCOUNT_BYTECODE,
-    SMART_ACCOUNT_FACTORY_BYTECODE,
-    ECDSA_OWNERSHIP_REGISTRY_MODULE_BYTECODE
-} from "../../etch/Biconomy.sol";
-import { ISmartAccountFactory, ISmartAccount } from "./utils/Interfaces.sol";
+import "../../etch/Biconomy.sol";
+// import { ISmartAccountFactory, ISmartAccount } from "./utils/Interfaces.sol";
 
 import {
     Auxiliary,
@@ -28,19 +24,7 @@ import { BiconomyHelpers } from "./BiconomySetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
-
-import "forge-std/Vm.sol";
-import "forge-std/console.sol";
-
-address constant VM_ADDR = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
-
-function getAddr(uint256 pk) pure returns (address) {
-    return Vm(VM_ADDR).addr(pk);
-}
-
-function sign(uint256 pk, bytes32 msgHash) pure returns (uint8 v, bytes32 r, bytes32 s) {
-    return Vm(VM_ADDR).sign(pk, msgHash);
-}
+import "../Vm.sol";
 
 struct Owner {
     address addr;
@@ -74,32 +58,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         super.init();
         executorManager = new SafeExecutorManager(mockRegistry);
 
-        bytes memory accountSingletonArgs = abi.encode(entrypoint);
-        bytes memory accountSingletonBytecode =
-            abi.encodePacked(SMART_ACCOUNT_BYTECODE, accountSingletonArgs);
-        address _accountSingleton;
-        assembly {
-            _accountSingleton :=
-                create(0, add(accountSingletonBytecode, 0x20), mload(accountSingletonBytecode))
-        }
-        accountSingleton = ISmartAccount(_accountSingleton);
-
-        bytes memory factoryArgs = abi.encode(_accountSingleton, address(0x69));
-        bytes memory factoryBytecode = abi.encodePacked(SMART_ACCOUNT_FACTORY_BYTECODE, factoryArgs);
-        address _accountFactory;
-        assembly {
-            _accountFactory := create(0, add(factoryBytecode, 0x20), mload(factoryBytecode))
-        }
-        accountFactory = ISmartAccountFactory(_accountFactory);
-
-        bytes memory initialAuthModuleBytecode =
-            abi.encodePacked(ECDSA_OWNERSHIP_REGISTRY_MODULE_BYTECODE);
-        address _initialAuthModule;
-        assembly {
-            _initialAuthModule :=
-                create(0, add(initialAuthModuleBytecode, 0x20), mload(initialAuthModuleBytecode))
-        }
-        initialAuthModule = _initialAuthModule;
+        accountSingleton = deployAccountSingleton(address(entrypoint));
+        accountFactory = deployAccountFactory(address(accountSingleton));
+        initialAuthModule = deployECDSA();
 
         safeBootstrap = new Bootstrap();
         initialzed = true;
