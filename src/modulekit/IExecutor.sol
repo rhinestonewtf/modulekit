@@ -114,7 +114,7 @@ library ModuleExecLib {
 }
 
 interface ICondition {
-    function check(
+    function checkCondition(
         address account,
         address executor,
         bytes calldata boundries

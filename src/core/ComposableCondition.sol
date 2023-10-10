@@ -40,7 +40,7 @@ contract ComposableConditionManager {
         for (uint256 i; i < length; i++) {
             ConditionConfig calldata condition = conditions[i];
             if (
-                !condition.condition.check({
+                !condition.condition.checkCondition({
                     account: account,
                     executor: msg.sender,
                     boundries: condition.boundriesData
