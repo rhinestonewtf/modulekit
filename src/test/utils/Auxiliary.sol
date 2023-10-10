@@ -14,11 +14,13 @@ import { IValidatorModule } from "../../modulekit/IValidator.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
+import { ComposableConditionManager } from "../../core/ComposableCondition.sol";
 
 struct Auxiliary {
     IEntryPoint entrypoint;
     IRhinestone4337 rhinestoneManager;
     ExecutorManager executorManager;
+    ComposableConditionManager compConditionManager;
     IBootstrap rhinestoneBootstrap;
     IProtocolFactory rhinestoneFactory;
     IValidatorModule validator;
@@ -32,6 +34,7 @@ contract AuxiliaryFactory {
     IERC7484Registry internal mockRegistry;
     MockProtocol internal mockRhinestoneFactory;
     ExecutorManager internal executorManager;
+    ComposableConditionManager internal compConditionManager;
 
     Bootstrap internal bootstrap;
 
@@ -59,6 +62,7 @@ contract AuxiliaryFactory {
             entrypoint: entrypoint,
             rhinestoneManager: IRhinestone4337(_rhinestoneManager),
             executorManager: executorManager,
+            compConditionManager: compConditionManager,
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,

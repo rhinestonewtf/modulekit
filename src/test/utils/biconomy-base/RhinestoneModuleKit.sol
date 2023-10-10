@@ -22,6 +22,7 @@ import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
 import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../safe-base/SafeExecutorManager.sol";
 import "../safe-base/Rhinestone4337SafeFlavour.sol";
+import "../../../core/ComposableCondition.sol";
 
 import { BiconomyHelpers } from "./BiconomySetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.18;
 
-// Copied from Safe Protocol. https://github.com/safe-global/safe-core-protocol/blob/main/contracts/DataTypes.sol
+// using from Safe Protocol. https://github.com/safe-global/safe-core-protocol/blob/main/contracts/DataTypes.sol
 struct ExecutorAction {
     address payable to;
     uint256 value;
@@ -111,4 +111,15 @@ library ModuleExecLib {
             ExecutorAction({ to: payable(target), value: 0, data: callData });
         exec(manager, account, action);
     }
+}
+
+interface ICondition {
+    function check(
+        address account,
+        address executor,
+        bytes calldata boundries
+    )
+        external
+        view
+        returns (bool);
 }

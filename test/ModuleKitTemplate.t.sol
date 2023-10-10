@@ -11,6 +11,8 @@ import {
 import { MockExecutor } from "../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 
+import { ICondition, ConditionConfig } from "../src/core/ComposableCondition.sol";
+
 contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
 
@@ -80,5 +82,15 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         address newExecutor = makeAddr("new Executor");
 
         instance.addExecutor(newExecutor);
+    }
+
+    function test_setCondition() public {
+        ConditionConfig[] memory conditions = new ConditionConfig[](1);
+        conditions[0] = ConditionConfig({
+            boundriesData: hex"1234",
+            condition: ICondition(makeAddr("condition"))
+        });
+
+        instance.setCondition(conditions);
     }
 }
