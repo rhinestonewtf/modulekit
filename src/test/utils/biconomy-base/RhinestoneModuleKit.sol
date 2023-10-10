@@ -284,9 +284,11 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32)
     {
+        bytes memory data =
+            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
         bytes memory initCode =
             isDeployed(instance) ? bytes("") : BiconomyHelpers.accountInitCode(instance);
-        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
         return userOpHash;
     }

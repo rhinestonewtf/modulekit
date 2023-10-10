@@ -152,12 +152,13 @@ library RhinestoneModuleKitLib {
             // TODO: generate default signature
             signature = bytes("");
         }
-        return exec4337(instance, data);
+        return exec4337(instance, data, signature);
     }
 
     function exec4337(
         RhinestoneAccount memory instance,
-        bytes memory callData
+        bytes memory callData,
+        bytes memory signature
     )
         internal
         returns (bool, bytes memory)
@@ -168,7 +169,7 @@ library RhinestoneModuleKitLib {
             isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
         UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
         // mock signature
-        userOp.signature = bytes("");
+        userOp.signature = signature;
 
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
@@ -326,7 +327,7 @@ library RhinestoneModuleKitLib {
             ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
         bytes memory initCode =
             isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
-        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
         return userOpHash;
     }
