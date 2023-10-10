@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../../interfaces/ERC4337/UserOperation.sol";
+import "../common/erc4337/UserOperation.sol";
 
 interface IValidatorModule {
     function validateUserOp(
@@ -10,11 +10,4 @@ interface IValidatorModule {
     )
         external
         returns (uint256);
-
-    function recoverValidator(
-        address recoveryModule,
-        bytes calldata recoveryProof,
-        bytes calldata recoveryData
-    )
-        external;
 }

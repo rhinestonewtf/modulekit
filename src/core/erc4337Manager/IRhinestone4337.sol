@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../modules/executors/IExecutorBase.sol";
-import "../../interfaces/ERC4337/UserOperation.sol";
+import "../../modulekit/IExecutor.sol";
+import "../../common/erc4337/UserOperation.sol";
 
 interface IRhinestone4337 {
     /*//////////////////////////////////////////////////////////////

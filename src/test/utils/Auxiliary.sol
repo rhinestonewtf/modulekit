@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import { EntryPoint } from "@aa/core/EntryPoint.sol";
+import "../etch/EntryPoint.sol";
 import "../../contracts/account/IRhinestone4337.sol";
 import { ExecutorManager } from "../../contracts/account/core/ExecutorManagerSingleton.sol";
 import "../../contracts/auxiliary/interfaces/IBootstrap.sol";
@@ -18,7 +18,7 @@ import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
 
 struct Auxiliary {
-    EntryPoint entrypoint;
+    IEntryPoint entrypoint;
     IRhinestone4337 rhinestoneManager;
     ExecutorManager executorManager;
     IBootstrap rhinestoneBootstrap;
@@ -29,7 +29,7 @@ struct Auxiliary {
 }
 
 contract AuxiliaryFactory {
-    EntryPoint internal entrypoint;
+    IEntryPoint internal entrypoint;
 
     MockValidator internal mockValidator;
     MockRecovery internal mockRecovery;
@@ -45,7 +45,7 @@ contract AuxiliaryFactory {
         defaultAttester = address(0x4242424242);
         bootstrap = new Bootstrap();
 
-        entrypoint = new EntryPoint();
+        entrypoint = etchEntrypoint();
         mockValidator = new MockValidator();
         mockRecovery = new MockRecovery();
         mockRegistry = new MockRegistry();
