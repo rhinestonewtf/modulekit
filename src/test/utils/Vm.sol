@@ -16,3 +16,7 @@ function sign(uint256 pk, bytes32 msgHash) pure returns (uint8 v, bytes32 r, byt
 function etch(address target, bytes memory runtimeBytecode) {
     Vm(VM_ADDR).etch(target, runtimeBytecode);
 }
+
+function label(address _addr, string memory _label) {
+    Vm(VM_ADDR).label(_addr, _label);
+}

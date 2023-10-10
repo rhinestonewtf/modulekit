@@ -85,12 +85,16 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
     }
 
     function test_setCondition() public {
+        address newExecutor = makeAddr("new Executor");
+
+        instance.addExecutor(newExecutor);
+
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] = ConditionConfig({
             boundriesData: hex"1234",
             condition: ICondition(makeAddr("condition"))
         });
 
-        instance.setCondition(conditions);
+        instance.setCondition(newExecutor, conditions);
     }
 }

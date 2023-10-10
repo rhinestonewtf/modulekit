@@ -9,6 +9,7 @@ import { ISafe } from "../../../common/ISafe.sol";
 import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
 import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
 import { SafeExecutorManager } from "./SafeExecutorManager.sol";
+import { ConditionConfig } from "../../../core/ComposableCondition.sol";
 import {
     Auxiliary,
     IRhinestone4337,
@@ -176,22 +177,23 @@ library RhinestoneModuleKitLib {
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
-    function callViaManager(
+    function setCondition(
         RhinestoneAccount memory instance,
-        address target,
-        bytes memory callData
+        address forExecutor,
+        ConditionConfig[] memory conditions
     )
         internal
-        returns (bool, bytes memory)
+        returns (bool)
     {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.aux.compConditionManager),
             value: 0,
             callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.forwardCall.selector, target, callData
+                instance.aux.compConditionManager.setHash.selector, forExecutor, conditions
                 )
         });
+        return success;
     }
 
     function addValidator(

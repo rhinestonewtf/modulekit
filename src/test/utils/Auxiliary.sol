@@ -16,6 +16,8 @@ import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
 import { ComposableConditionManager } from "../../core/ComposableCondition.sol";
 
+import "./Vm.sol";
+
 struct Auxiliary {
     IEntryPoint entrypoint;
     IRhinestone4337 rhinestoneManager;
@@ -43,11 +45,19 @@ contract AuxiliaryFactory {
     function init() internal virtual {
         defaultAttester = address(0x4242424242);
         bootstrap = new Bootstrap();
+        label(address(bootstrap), "bootstrap");
 
         entrypoint = etchEntrypoint();
+        label(address(entrypoint), "entrypoint");
         mockValidator = new MockValidator();
+        label(address(mockValidator), "mockValidator");
         mockRegistry = IERC7484Registry(address(new MockRegistry()));
+        label(address(mockRegistry), "mockRegistry");
         mockRhinestoneFactory = new MockProtocol();
+        label(address(mockRhinestoneFactory), "mockRhinestoneFactory");
+
+        compConditionManager = new ComposableConditionManager();
+        label(address(compConditionManager), "compConditionManager");
     }
 
     function makeAuxiliary(
