@@ -3,10 +3,9 @@
 import { Auxiliary, AuxiliaryLib } from "../Auxiliary.sol";
 import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import "safe-contracts/contracts/Safe.sol";
-import { InitialModule } from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import { IBootstrap, InitialModule } from "../../../common/IBootstrap.sol";
 
-import { IRhinestone4337 } from "../../../contracts/account/IRhinestone4337.sol";
-import { IBootstrap } from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import { IRhinestone4337 } from "../../../core/erc4337Manager/IRhinestone4337.sol";
 
 pragma solidity ^0.8.19;
 

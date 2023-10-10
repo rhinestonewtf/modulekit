@@ -3,17 +3,15 @@
 pragma solidity ^0.8.19;
 
 import "../etch/EntryPoint.sol";
-import "../../contracts/account/IRhinestone4337.sol";
-import { ExecutorManager } from "../../contracts/account/core/ExecutorManagerSingleton.sol";
-import "../../contracts/auxiliary/interfaces/IBootstrap.sol";
-import "../../contracts/safe/Bootstrap.sol";
-import "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
-import "../../contracts/auxiliary/interfaces/IRegistry.sol";
-import "../../contracts/modules/validators//IValidatorModule.sol";
-import "../../contracts/modules/recovery/IRecoveryModule.sol";
+import { IRhinestone4337, UserOperation } from "../../core/erc4337Manager/IRhinestone4337.sol";
+import { ExecutorManager } from "../../core/executionManager/ExecutorManager.sol";
+import { IBootstrap } from "../../common/IBootstrap.sol";
+import { Bootstrap } from "./safe-base/BoostrapSafe.sol";
+import { IProtocolFactory } from "../../common/IRhinestoneProtocol.sol";
+import { IERC7484Registry } from "../../common/IERC7484.sol";
+import { IValidatorModule } from "../../modulekit/IValidator.sol";
 
 import { MockValidator } from "../mocks/MockValidator.sol";
-import { MockRecovery } from "../mocks/MockRecovery.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
 
@@ -25,7 +23,7 @@ struct Auxiliary {
     IProtocolFactory rhinestoneFactory;
     IValidatorModule validator;
     IRecoveryModule recovery;
-    IRegistry registry;
+    IERC7484Registry registry;
 }
 
 contract AuxiliaryFactory {

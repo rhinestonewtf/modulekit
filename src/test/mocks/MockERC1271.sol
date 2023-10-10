@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../contracts/modules/validators/ISignatureValidator.sol";
+import "../../common/IERC1271.sol";
 
-contract ERC1271Yes is ISignatureValidator {
+contract ERC1271Yes is IERC1271 {
     function isValidSignature(
         bytes32,
         bytes memory
@@ -14,11 +14,11 @@ contract ERC1271Yes is ISignatureValidator {
         override
         returns (bytes4)
     {
-        return EIP1271_MAGIC_VALUE;
+        return ERC1271_MAGICVALUE;
     }
 }
 
-contract ERC1271No is ISignatureValidator {
+contract ERC1271No is IERC1271 {
     function isValidSignature(
         bytes32,
         bytes memory

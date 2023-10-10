@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { IRegistry } from "../../contracts/auxiliary/interfaces/IRegistry.sol";
+import "../../common/IERC7484.sol";
 
 /// @title MockRegistry
 /// @author zeroknots
-contract MockRegistry is IRegistry {
+contract MockRegistry is IERC7484Registry {
     function check(
         address executor,
         address trustedAuthority
@@ -13,8 +13,8 @@ contract MockRegistry is IRegistry {
         external
         view
         override
-        returns (uint48, uint48)
+        returns (uint256 listedAt)
     {
-        return (uint48(123_455), uint48(0));
+        return 1337;
     }
 }

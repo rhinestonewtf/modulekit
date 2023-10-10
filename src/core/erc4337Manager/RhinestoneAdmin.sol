@@ -12,10 +12,10 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
                           Rhinestone Components
 //////////////////////////////////////////////////////////////*/
 
-import { IRhinestone4337 } from "../IRhinestone4337.sol";
+import { IRhinestone4337 } from "./IRhinestone4337.sol";
 import { ValidatorManager } from "./ValidatorManager.sol";
-import { IValidatorModule } from "../../modules/validators/IValidatorModule.sol";
-import { RegistryAdapter } from "./RegistryAdapter.sol";
+import { IValidatorModule } from "../../modulekit/IValidator.sol";
+import { RegistryAdapterForSingletons } from "../registryAdapter/RegistryAdapter.sol";
 
 /// @title Rhinestone4337
 /// @author zeroknots

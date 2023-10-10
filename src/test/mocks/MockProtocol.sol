@@ -2,13 +2,12 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import { IProtocolFactory } from "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
 
 /// @title MockProtocol
 /// @author zeroknots
 /// @notice ContractDescription
 
-contract MockProtocol is IProtocolFactory {
+contract MockProtocol {
     // TODO: add initializer
     function cloneExecutor(address implementation, bytes32 salt) external returns (address proxy) {
         proxy = Clones.predictDeterministicAddress(implementation, salt);

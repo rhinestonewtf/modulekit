@@ -2,10 +2,10 @@
 pragma solidity ^0.8.19;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import "../../modules/executors/IExecutorBase.sol";
-import "./RegistryAdapter.sol";
+import "../../modulekit/IExecutor.sol";
+import { RegistryAdapterForSingletons } from "../registryAdapter/RegistryAdapter.sol";
 
-abstract contract ExecutorManager is RegistryAdapter {
+abstract contract ExecutorManager is RegistryAdapterForSingletons {
     using SentinelListLib for SentinelListLib.SentinelList;
 
     address internal constant SENTINEL_MODULES = address(0x1);

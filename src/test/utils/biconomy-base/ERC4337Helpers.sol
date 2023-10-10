@@ -6,32 +6,17 @@ import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import { UserOperation } from "../../../common/erc4337/UserOperation.sol";
 
 library ERC4337Wrappers {
-    function getSafe4337TxCalldata(
+    function getBiconomy4337TxCalldata(
         RhinestoneAccount memory instance,
         address target,
         uint256 value,
-        bytes memory data,
-        uint8 operation // {0: Call, 1: DelegateCall}
+        bytes memory data
     )
         internal
         view
         returns (bytes memory)
     {
-        // Get Safe address
-        address sender = address(instance.account);
-
-        // Get nonce from Entrypoint
-        uint256 nonce = instance.aux.entrypoint.getNonce(sender, 0);
-
-        return abi.encodeWithSignature(
-            "checkAndExecTransactionFromModule(address,address,uint256,bytes,uint8,uint256)",
-            sender,
-            target,
-            value,
-            data,
-            operation,
-            nonce
-        );
+        return abi.encodeWithSignature("execute(address,uint256,bytes)", target, value, data);
     }
 
     function getPartialUserOp(
@@ -42,11 +27,8 @@ library ERC4337Wrappers {
         internal
         returns (UserOperation memory)
     {
-        // Get Safe address
+        // Get account address
         address smartAccount = address(instance.account);
-
-        // // Get Safe initCode if not deployed already
-        // bytes memory initCode = isDeployed(smartAccount) ? bytes("") : safeInitCode(instance);
 
         // Get nonce from Entrypoint
         uint256 nonce = instance.aux.entrypoint.getNonce(smartAccount, 0);

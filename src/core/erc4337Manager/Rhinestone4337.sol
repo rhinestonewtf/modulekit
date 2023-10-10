@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../../../interfaces/ERC4337/UserOperation.sol";
+import "../../common/erc4337/UserOperation.sol";
 
-import { IValidatorModule } from "../../modules/validators/IValidatorModule.sol";
+import { IValidatorModule } from "../../modulekit/IValidator.sol";
 
 import { RhinestoneAdmin } from "./RhinestoneAdmin.sol";
-import { SelectValidatorLib } from "../lib/SelectValidatorLib.sol";
+import { SelectValidatorLib } from "../../modulekit/lib/ValidatorSelectionLib.sol";
 
 abstract contract Rhinestone4337 is RhinestoneAdmin {
     using SelectValidatorLib for UserOperation;

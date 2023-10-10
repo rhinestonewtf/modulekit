@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
 
-import "../src/contracts/modules/lib/signatures/CheckNSignature.sol";
+import "../src/modulekit/lib/CheckNSignatures.sol";
 
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 /// @title CheckNSignaturesTest

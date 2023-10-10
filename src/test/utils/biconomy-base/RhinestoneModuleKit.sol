@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { SafeProxy } from "safe-contracts/contracts/proxies/SafeProxy.sol";
-import { Safe } from "safe-contracts/contracts/Safe.sol";
-import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import {
+    SMART_ACCOUNT_BYTECODE,
+    SMART_ACCOUNT_FACTORY_BYTECODE,
+    ECDSA_OWNERSHIP_REGISTRY_MODULE_BYTECODE
+} from "./utils/Artifacts.sol";
+import { ISmartAccountFactory, ISmartAccount } from "./utils/Interfaces.sol";
 
-import { ISafe } from "../../../common/ISafe.sol";
 import {
     Auxiliary,
     IRhinestone4337,
@@ -14,6 +16,31 @@ import {
     AuxiliaryLib,
     UserOperation
 } from "../Auxiliary.sol";
+// import { SafeExecutorManager } from "../../../contracts/safe/SafeExecutorManager.sol";
+// import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
+
+import { BiconomyHelpers } from "./BiconomySetup.sol";
+import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
+
+import { ECDSA } from "solady/src/utils/ECDSA.sol";
+
+import "forge-std/Vm.sol";
+import "forge-std/console.sol";
+
+address constant VM_ADDR = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
+
+function getAddr(uint256 pk) pure returns (address) {
+    return Vm(VM_ADDR).addr(pk);
+}
+
+function sign(uint256 pk, bytes32 msgHash) pure returns (uint8 v, bytes32 r, bytes32 s) {
+    return Vm(VM_ADDR).sign(pk, msgHash);
+}
+
+struct Owner {
+    address addr;
+    uint256 key;
+}
 
 struct RhinestoneAccount {
     address account;
@@ -21,27 +48,55 @@ struct RhinestoneAccount {
     Auxiliary aux;
     bytes32 salt;
     AccountFlavor accountFlavor;
+    address initialAuthModule;
+    Owner initialOwner;
 }
 
 struct AccountFlavor {
-    SafeProxyFactory accountFactory;
-    ISafe accountSingleton;
+    ISmartAccountFactory accountFactory;
+    ISmartAccount accountSingleton;
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
     RhinestoneSafeFlavor internal rhinestoneManager;
     Bootstrap internal safeBootstrap;
 
-    SafeProxyFactory internal safeFactory;
-    Safe internal safeSingleton;
+    ISmartAccountFactory internal accountFactory;
+    ISmartAccount internal accountSingleton;
+    address initialAuthModule;
 
     bool initialzed;
 
     function init() internal override {
         super.init();
         executorManager = new SafeExecutorManager(address(mockRegistry));
-        safeFactory = new SafeProxyFactory();
-        safeSingleton = new Safe();
+
+        bytes memory accountSingletonArgs = abi.encode(entrypoint);
+        bytes memory accountSingletonBytecode =
+            abi.encodePacked(SMART_ACCOUNT_BYTECODE, accountSingletonArgs);
+        address _accountSingleton;
+        assembly {
+            _accountSingleton :=
+                create(0, add(accountSingletonBytecode, 0x20), mload(accountSingletonBytecode))
+        }
+        accountSingleton = ISmartAccount(_accountSingleton);
+
+        bytes memory factoryArgs = abi.encode(_accountSingleton, address(0x69));
+        bytes memory factoryBytecode = abi.encodePacked(SMART_ACCOUNT_FACTORY_BYTECODE, factoryArgs);
+        address _accountFactory;
+        assembly {
+            _accountFactory := create(0, add(factoryBytecode, 0x20), mload(factoryBytecode))
+        }
+        accountFactory = ISmartAccountFactory(_accountFactory);
+
+        bytes memory initialAuthModuleBytecode =
+            abi.encodePacked(ECDSA_OWNERSHIP_REGISTRY_MODULE_BYTECODE);
+        address _initialAuthModule;
+        assembly {
+            _initialAuthModule :=
+                create(0, add(initialAuthModuleBytecode, 0x20), mload(initialAuthModuleBytecode))
+        }
+        initialAuthModule = _initialAuthModule;
 
         rhinestoneManager = new RhinestoneSafeFlavor(
             address(entrypoint),
@@ -61,45 +116,41 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
 
+        uint256 initialOwnerKey = 1;
+        address initialOwnerAddress = getAddr(uint256(initialOwnerKey));
+
         instance = RhinestoneAccount({
-            account: getAccountAddress(env, salt),
+            account: getAccountAddress(initialOwnerAddress, salt),
             rhinestoneManager: IRhinestone4337(
                 payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), salt))
                 ),
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({
-                accountFactory: safeFactory,
-                accountSingleton: ISafe(address(safeSingleton))
-            })
+                accountFactory: accountFactory,
+                accountSingleton: ISmartAccount(address(accountSingleton))
+            }),
+            initialAuthModule: address(initialAuthModule),
+            initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey })
         });
     }
 
     function getAccountAddress(
-        Auxiliary memory env,
-        bytes32 _salt
+        address initialOwnerAddress,
+        bytes32 salt
     )
         public
+        view
         returns (address payable)
     {
-        // Get initializer
-        bytes memory initializer = SafeHelpers.getSafeInitializer(env, _salt);
-
-        // Safe deployment data
-        bytes memory deploymentData =
-            abi.encodePacked(type(SafeProxy).creationCode, uint256(uint160(address(safeSingleton))));
-        // Get salt
-        // bytes32 salt = keccak256(abi.encodePacked(keccak256(initializer), saltNonce));
-        bytes32 salt = keccak256(abi.encodePacked(keccak256(initializer), _salt));
-        bytes32 hash = keccak256(
-            abi.encodePacked(bytes1(0xff), address(safeFactory), salt, keccak256(deploymentData))
+        address account = accountFactory.getAddressForCounterFactualAccount(
+            initialAuthModule,
+            abi.encodeWithSignature("initForSmartAccount(address)", initialOwnerAddress),
+            uint256(salt)
         );
-        return payable(address(uint160(uint256(hash))));
+        return payable(account);
     }
 }
-
-import { SafeHelpers } from "./SafeSetup.sol";
-import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
 library RhinestoneModuleKitLib {
     function exec4337(
@@ -122,7 +173,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bool, bytes memory)
     {
-        return exec4337(instance, target, value, callData, 0, bytes(""));
+        return exec4337(instance, target, value, callData, bytes(""));
     }
 
     function exec4337(
@@ -130,25 +181,20 @@ library RhinestoneModuleKitLib {
         address target,
         uint256 value,
         bytes memory callData,
-        uint8 operation, // {0: Call, 1: DelegateCall}
         bytes memory signature
     )
         internal
         returns (bool, bytes memory)
     {
         bytes memory data =
-            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
-
-        if (signature.length == 0) {
-            // TODO: generate default signature
-            signature = bytes("");
-        }
-        return exec4337(instance, data);
+            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
+        return exec4337(instance, data, signature);
     }
 
     function exec4337(
         RhinestoneAccount memory instance,
-        bytes memory callData
+        bytes memory callData,
+        bytes memory signature
     )
         internal
         returns (bool, bytes memory)
@@ -156,34 +202,24 @@ library RhinestoneModuleKitLib {
         // prepare ERC4337 UserOperation
 
         bytes memory initCode =
-            isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+            isDeployed(instance) ? bytes("") : BiconomyHelpers.accountInitCode(instance);
         UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
-        // mock signature
-        userOp.signature = bytes("");
+
+        // create signature
+        if (signature.length == 0) {
+            bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+            (uint8 v, bytes32 r, bytes32 s) =
+                sign(instance.initialOwner.key, ECDSA.toEthSignedMessageHash(userOpHash));
+            bytes memory _signature = abi.encodePacked(r, s, v);
+            signature = abi.encode(_signature, instance.initialAuthModule);
+        }
+        userOp.signature = signature;
 
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
 
         // send userOps to 4337 entrypoint
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-    }
-
-    function callViaManager(
-        RhinestoneAccount memory instance,
-        address target,
-        bytes memory callData
-    )
-        internal
-        returns (bool, bytes memory)
-    {
-        (bool success, bytes memory data) = exec4337({
-            instance: instance,
-            target: address(instance.rhinestoneManager),
-            value: 0,
-            callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.forwardCall.selector, target, callData
-                )
-        });
     }
 
     function addValidator(
@@ -195,11 +231,9 @@ library RhinestoneModuleKitLib {
     {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.account),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.addValidator.selector, validator
-                )
+            callData: abi.encodeWithSelector(ISmartAccount.enableModule.selector, validator)
         });
         return success;
     }
@@ -214,11 +248,9 @@ library RhinestoneModuleKitLib {
     {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.account),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.addRecovery.selector, validator, recovery
-                )
+            callData: abi.encodeWithSelector(ISmartAccount.enableModule.selector, recovery)
         });
         return success;
     }
@@ -230,6 +262,19 @@ library RhinestoneModuleKitLib {
         internal
         returns (bool)
     {
+        bool isExecutorEnabled = instance.accountFlavor.accountSingleton.isModuleEnabled(
+            address(instance.aux.executorManager)
+        );
+        if (!isExecutorEnabled) {
+            (bool success, bytes memory data) = exec4337({
+                instance: instance,
+                target: address(instance.account),
+                value: 0,
+                callData: abi.encodeWithSelector(
+                    ISmartAccount.enableModule.selector, address(instance.aux.executorManager)
+                    )
+            });
+        }
         (bool success, bytes memory data) = exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),
@@ -279,16 +324,13 @@ library RhinestoneModuleKitLib {
         RhinestoneAccount memory instance,
         address target,
         uint256 value,
-        bytes memory callData,
-        uint8 operation // {0: Call, 1: DelegateCall}
+        bytes memory callData
     )
         internal
         returns (bytes32)
     {
-        bytes memory data =
-            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
         bytes memory initCode =
-            isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+            isDeployed(instance) ? bytes("") : BiconomyHelpers.accountInitCode(instance);
         UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
         return userOpHash;
