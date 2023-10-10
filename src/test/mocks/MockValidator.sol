@@ -2,7 +2,8 @@
 pragma solidity >=0.8.17;
 
 import "../../common/erc4337/UserOperation.sol";
-import { IValidatorModule} from "../../modulekit/IValidator.sol";
+import "../../common/IERC1271.sol";
+import { IValidatorModule, VALIDATION_SUCCESS } from "../../modulekit/IValidator.sol";
 
 contract MockValidator is IValidatorModule {
     /**
@@ -30,10 +31,9 @@ contract MockValidator is IValidatorModule {
         public
         view
         virtual
-        override
         returns (bytes4)
     {
-        return EIP1271_MAGIC_VALUE;
+        return ERC1271_MAGICVALUE;
     }
 
     function recoverValidator(
@@ -43,7 +43,6 @@ contract MockValidator is IValidatorModule {
     )
         external
         virtual
-        override
     {
         return;
     }

@@ -22,7 +22,6 @@ struct Auxiliary {
     IBootstrap rhinestoneBootstrap;
     IProtocolFactory rhinestoneFactory;
     IValidatorModule validator;
-    IRecoveryModule recovery;
     IERC7484Registry registry;
 }
 
@@ -30,8 +29,7 @@ contract AuxiliaryFactory {
     IEntryPoint internal entrypoint;
 
     MockValidator internal mockValidator;
-    MockRecovery internal mockRecovery;
-    MockRegistry internal mockRegistry;
+    IERC7484Registry internal mockRegistry;
     MockProtocol internal mockRhinestoneFactory;
     ExecutorManager internal executorManager;
 
@@ -45,8 +43,7 @@ contract AuxiliaryFactory {
 
         entrypoint = etchEntrypoint();
         mockValidator = new MockValidator();
-        mockRecovery = new MockRecovery();
-        mockRegistry = new MockRegistry();
+        mockRegistry = IERC7484Registry(address(new MockRegistry()));
         mockRhinestoneFactory = new MockProtocol();
     }
 
@@ -63,9 +60,8 @@ contract AuxiliaryFactory {
             rhinestoneManager: _rhinestoneManger,
             executorManager: executorManager,
             rhinestoneBootstrap: _bootstrap,
-            rhinestoneFactory: mockRhinestoneFactory,
+            rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,
-            recovery: mockRecovery,
             registry: mockRegistry
         });
     }

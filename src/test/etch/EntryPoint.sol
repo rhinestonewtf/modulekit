@@ -10,8 +10,10 @@ bytes constant EntryPointCode =
 
 function etchEntrypoint() returns (IEntryPoint) {
     address _tmpEntrypoint;
+
+    bytes memory _code = EntryPointCode;
     assembly {
-        create(0, add(EntryPointCode, 0x20), mload(EntryPointCode))
+        _tmpEntrypoint := create(0, add(_code, 0x20), mload(_code))
     }
     etch(ENTRYPOINT_ADDR, _tmpEntrypoint.code);
     return IEntryPoint(ENTRYPOINT_ADDR);

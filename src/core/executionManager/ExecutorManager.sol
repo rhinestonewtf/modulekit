@@ -3,7 +3,9 @@ pragma solidity ^0.8.19;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import "../../modulekit/IExecutor.sol";
-import { RegistryAdapterForSingletons } from "../registryAdapter/RegistryAdapter.sol";
+import {
+    RegistryAdapterForSingletons, IERC7484Registry
+} from "../registryAdapter/RegistryAdapter.sol";
 
 abstract contract ExecutorManager is RegistryAdapterForSingletons {
     using SentinelListLib for SentinelListLib.SentinelList;
@@ -17,6 +19,8 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
         bool rootAddressGranted;
         address nextExecutorPointer;
     }
+
+    constructor(IERC7484Registry registry) RegistryAdapterForSingletons(registry) { }
 
     modifier onlyExecutor(address account) {
         bool executorEnabled = isExecutorEnabled({ account: account, executor: msg.sender });

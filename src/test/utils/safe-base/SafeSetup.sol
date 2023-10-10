@@ -41,7 +41,6 @@ library SafeHelpers {
                 IRhinestone4337.initialize.selector,
                 address(0),
                 env.validator,
-                env.recovery,
                 env.registry,
                 address(0x696969696969),
                 env.rhinestoneFactory

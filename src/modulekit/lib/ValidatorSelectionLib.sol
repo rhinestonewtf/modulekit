@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "../../common/erc4337/UserOperation.sol";
 
-library SelectValidatorLib {
+library ValidatorSelectionLib {
     function decodeSignature(bytes calldata signature) internal returns (address validator) { }
 
     function decodeValidator(UserOperation calldata userOps)

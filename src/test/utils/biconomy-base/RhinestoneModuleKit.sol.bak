@@ -16,8 +16,12 @@ import {
     AuxiliaryLib,
     UserOperation
 } from "../Auxiliary.sol";
-// import { SafeExecutorManager } from "../../../contracts/safe/SafeExecutorManager.sol";
+import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
 // import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
+
+import { ExecutorManager } from "../../../core/executionManager/ExecutorManager.sol";
+import "../safe-base/SafeExecutorManager.sol";
+import "../safe-base/Rhinestone4337SafeFlavour.sol";
 
 import { BiconomyHelpers } from "./BiconomySetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
@@ -45,6 +49,7 @@ struct Owner {
 struct RhinestoneAccount {
     address account;
     IRhinestone4337 rhinestoneManager;
+    ExecutorManager executorManager;
     Auxiliary aux;
     bytes32 salt;
     AccountFlavor accountFlavor;
@@ -58,7 +63,6 @@ struct AccountFlavor {
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
-    RhinestoneSafeFlavor internal rhinestoneManager;
     Bootstrap internal safeBootstrap;
 
     ISmartAccountFactory internal accountFactory;
@@ -99,9 +103,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initialAuthModule = _initialAuthModule;
 
         rhinestoneManager = new RhinestoneSafeFlavor(
-            address(entrypoint),
-            address(mockRegistry),
-            defaultAttester
+            IERC7484Registry(address(mockRegistry))
         );
 
         safeBootstrap = new Bootstrap();
@@ -121,9 +123,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         instance = RhinestoneAccount({
             account: getAccountAddress(initialOwnerAddress, salt),
-            rhinestoneManager: IRhinestone4337(
-                payable(AuxiliaryLib.getModuleCloneAddress(env, address(rhinestoneManager), salt))
-                ),
+            rhinestoneManager: IRhinestone4337(rhinestoneManager),
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({

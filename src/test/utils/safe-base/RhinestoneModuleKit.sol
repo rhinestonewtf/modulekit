@@ -6,6 +6,9 @@ import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
 import { ISafe } from "../../../common/ISafe.sol";
+import { IERC7484Registry } from "../../../common/IERC7484.sol";
+import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
+import { SafeExecutorManager } from "./SafeExecutorManager.sol";
 import {
     Auxiliary,
     IRhinestone4337,
@@ -29,7 +32,7 @@ struct AccountFlavor {
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
-    RhinestoneSafeFlavor internal rhinestoneManager;
+    IRhinestone4337 internal rhinestoneManager;
     Bootstrap internal safeBootstrap;
 
     SafeProxyFactory internal safeFactory;
@@ -39,14 +42,17 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     function init() internal override {
         super.init();
-        executorManager = new SafeExecutorManager(address(mockRegistry));
+        executorManager = new SafeExecutorManager(IERC7484Registry(address(mockRegistry)));
         safeFactory = new SafeProxyFactory();
         safeSingleton = new Safe();
 
-        rhinestoneManager = new RhinestoneSafeFlavor(
-            address(entrypoint),
-            address(mockRegistry),
-            defaultAttester
+        rhinestoneManager = IRhinestone4337(
+            address(
+                new RhinestoneSafeFlavor(
+                address(entrypoint),
+                mockRegistry
+                )
+            )
         );
 
         safeBootstrap = new Bootstrap();
