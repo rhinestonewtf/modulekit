@@ -5,7 +5,7 @@ import {
     SMART_ACCOUNT_BYTECODE,
     SMART_ACCOUNT_FACTORY_BYTECODE,
     ECDSA_OWNERSHIP_REGISTRY_MODULE_BYTECODE
-} from "./utils/Artifacts.sol";
+} from "../../etch/Biconomy.sol";
 import { ISmartAccountFactory, ISmartAccount } from "./utils/Interfaces.sol";
 
 import {
@@ -19,7 +19,7 @@ import {
 import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
 // import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
-import { ExecutorManager } from "../../../core/executionManager/ExecutorManager.sol";
+import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../safe-base/SafeExecutorManager.sol";
 import "../safe-base/Rhinestone4337SafeFlavour.sol";
 
@@ -48,8 +48,6 @@ struct Owner {
 
 struct RhinestoneAccount {
     address account;
-    IRhinestone4337 rhinestoneManager;
-    ExecutorManager executorManager;
     Auxiliary aux;
     bytes32 salt;
     AccountFlavor accountFlavor;
@@ -73,7 +71,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     function init() internal override {
         super.init();
-        executorManager = new SafeExecutorManager(address(mockRegistry));
+        executorManager = new SafeExecutorManager(mockRegistry);
 
         bytes memory accountSingletonArgs = abi.encode(entrypoint);
         bytes memory accountSingletonBytecode =
@@ -102,10 +100,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         }
         initialAuthModule = _initialAuthModule;
 
-        rhinestoneManager = new RhinestoneSafeFlavor(
-            IERC7484Registry(address(mockRegistry))
-        );
-
         safeBootstrap = new Bootstrap();
         initialzed = true;
     }
@@ -116,14 +110,13 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         if (!initialzed) init();
 
-        Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
+        Auxiliary memory env = makeAuxiliary(address(0), safeBootstrap);
 
         uint256 initialOwnerKey = 1;
         address initialOwnerAddress = getAddr(uint256(initialOwnerKey));
 
         instance = RhinestoneAccount({
             account: getAccountAddress(initialOwnerAddress, salt),
-            rhinestoneManager: IRhinestone4337(rhinestoneManager),
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({

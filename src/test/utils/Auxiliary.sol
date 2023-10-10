@@ -48,7 +48,7 @@ contract AuxiliaryFactory {
     }
 
     function makeAuxiliary(
-        IRhinestone4337 _rhinestoneManger,
+        address _rhinestoneManager,
         IBootstrap _bootstrap
     )
         internal
@@ -57,7 +57,7 @@ contract AuxiliaryFactory {
     {
         aux = Auxiliary({
             entrypoint: entrypoint,
-            rhinestoneManager: _rhinestoneManger,
+            rhinestoneManager: IRhinestone4337(_rhinestoneManager),
             executorManager: executorManager,
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),

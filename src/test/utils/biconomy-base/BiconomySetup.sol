@@ -5,8 +5,6 @@ import { Auxiliary, AuxiliaryLib } from "../Auxiliary.sol";
 import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import { IBootstrap, InitialModule } from "../../../common/IBootstrap.sol";
 
-import { IRhinestone4337 } from "../../../core/erc4337Manager/IRhinestone4337.sol";
-
 library BiconomyHelpers {
     function accountInitCode(RhinestoneAccount memory instance) internal returns (bytes memory) {
         return abi.encodePacked(

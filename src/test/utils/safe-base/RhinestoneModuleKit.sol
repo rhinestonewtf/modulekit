@@ -67,7 +67,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         if (!initialzed) init();
 
-        Auxiliary memory env = makeAuxiliary(rhinestoneManager, safeBootstrap);
+        Auxiliary memory env = makeAuxiliary(address(rhinestoneManager), safeBootstrap);
 
         instance = RhinestoneAccount({
             account: getAccountAddress(env, salt),
