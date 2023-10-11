@@ -49,9 +49,21 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         emit ValidatorAdded(msg.sender, validator);
     }
 
-    function addValidator(address validator) external {
+    function addValidator(address validator) external onlySmartAccount {
         validators[msg.sender].push(validator);
         emit ValidatorAdded(msg.sender, validator);
+    }
+
+    function removeValidator(
+        address prevValidator,
+        address delValidator
+    )
+        external
+        onlySmartAccount
+    {
+        validators[msg.sender].pop({ prevEntry: prevValidator, popEntry: delValidator });
+
+        emit ValidatorRemoved(msg.sender, delValidator);
     }
 
     function getValidatorPaginated(
@@ -64,12 +76,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         returns (address[] memory array, address next)
     {
         return validators[account].getEntriesPaginated(start, pageSize);
-    }
-
-    function removeValidator(address prevValidator, address delValidator) external {
-        validators[msg.sender].pop({ prevEntry: prevValidator, popEntry: delValidator });
-
-        emit ValidatorRemoved(msg.sender, delValidator);
     }
 
     function isEnabledValidator(address account, address validator) public view returns (bool) {
