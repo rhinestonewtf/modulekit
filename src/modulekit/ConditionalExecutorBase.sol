@@ -11,7 +11,18 @@ abstract contract ConditionalExecutor is ExecutorBase {
         _conditionManager = conditionManager;
     }
 
-    function _check(address account, ConditionConfig[] calldata conditions) internal view {
-        _conditionManager.check(account, conditions);
+    modifier onlyIfConditionsMet(address account, ConditionConfig[] calldata conditions) {
+        _checkConditions(account, conditions);
+        _;
+    }
+
+    function _checkConditions(
+        address account,
+        ConditionConfig[] calldata conditions
+    )
+        internal
+        view
+    {
+        _conditionManager.checkCondition(account, conditions);
     }
 }

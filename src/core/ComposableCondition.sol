@@ -18,7 +18,7 @@ contract ComposableConditionManager {
 
     event ConditionHashSet(address indexed account, address indexed executor, bytes32 hash);
 
-    function check(
+    function checkCondition(
         address account,
         ConditionConfig[] calldata conditions
     )
