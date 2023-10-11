@@ -19,6 +19,10 @@ import {
     UserOperation
 } from "../Auxiliary.sol";
 
+import "../Vm.sol";
+
+import "forge-std/console2.sol";
+
 struct RhinestoneAccount {
     address account;
     IRhinestone4337 rhinestoneManager;
@@ -46,8 +50,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     function init() internal override {
         super.init();
         executorManager = new SafeExecutorManager(IERC7484Registry(address(mockRegistry)));
+        label(address(executorManager), "executorManager");
         safeFactory = new SafeProxyFactory();
+        label(address(safeFactory), "safeFactory");
         safeSingleton = new Safe();
+        label(address(safeSingleton), "safeSingleton");
 
         rhinestoneManager = IRhinestone4337(
             address(
@@ -57,8 +64,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 )
             )
         );
-
+        label(address(rhinestoneManager), "Rhinestone4337");
         safeBootstrap = new Bootstrap();
+        label(address(safeBootstrap), "safeBootstrap");
         initialzed = true;
     }
 
@@ -228,8 +236,15 @@ library RhinestoneModuleKitLib {
         (address[] memory array, address next) =
             instance.rhinestoneManager.getValidatorPaginated(address(0x1), 100, instance.account);
 
-        if (array.length == 1) previous = address(0x0);
-        else previous = array[array.length - 2];
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == validator) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == validator) previous = array[i - 1];
+            }
+        }
 
         (bool success, bytes memory data) = exec4337({
             instance: instance,
@@ -237,25 +252,6 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeWithSelector(
                 instance.rhinestoneManager.removeValidator.selector, previous, validator
-                )
-        });
-        return success;
-    }
-
-    function addRecovery(
-        RhinestoneAccount memory instance,
-        address validator,
-        address recovery
-    )
-        internal
-        returns (bool)
-    {
-        (bool success, bytes memory data) = exec4337({
-            instance: instance,
-            target: address(instance.rhinestoneManager),
-            value: 0,
-            callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.addRecovery.selector, validator, recovery
                 )
         });
         return success;
@@ -297,8 +293,15 @@ library RhinestoneModuleKitLib {
         (address[] memory array, address next) =
             instance.aux.executorManager.getExecutorsPaginated(address(0x1), 100, instance.account);
 
-        if (array.length == 1) previous = address(0x0);
-        else previous = array[array.length - 2];
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == executor) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == executor) previous = array[i - 1];
+            }
+        }
 
         emit SDKLOG_RemoveExecutor(address(instance.account), executor, previous);
 
@@ -342,4 +345,5 @@ library RhinestoneModuleKitLib {
     }
 
     event SDKLOG_RemoveExecutor(address account, address executor, address prevExecutor);
+    event SDKLOG_RemoveValidator(address account, address executor, address prevExecutor);
 }

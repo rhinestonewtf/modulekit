@@ -10,7 +10,7 @@ import { IRhinestone4337 } from "../../../core/IRhinestone4337.sol";
 pragma solidity ^0.8.19;
 
 library SafeHelpers {
-    function safeInitCode(RhinestoneAccount memory instance) internal returns (bytes memory) {
+    function safeInitCode(RhinestoneAccount memory instance) internal pure returns (bytes memory) {
         return abi.encodePacked(
             instance.accountFlavor.accountFactory,
             abi.encodeWithSelector(
@@ -22,7 +22,14 @@ library SafeHelpers {
         );
     }
 
-    function getSafeInitializer(Auxiliary memory env, bytes32 salt) public returns (bytes memory) {
+    function getSafeInitializer(
+        Auxiliary memory env,
+        bytes32 salt
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         // Initial owner of safe, removed by init4337Safe
         address safeOwner = address(0xdead);
 

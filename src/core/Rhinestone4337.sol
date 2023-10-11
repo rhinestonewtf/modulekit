@@ -49,18 +49,12 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         emit ValidatorAdded(msg.sender, validator);
     }
 
-    function addValidator(address validator) external onlySmartAccount {
+    function addValidator(address validator) external {
         validators[msg.sender].push(validator);
         emit ValidatorAdded(msg.sender, validator);
     }
 
-    function removeValidator(
-        address prevValidator,
-        address delValidator
-    )
-        external
-        onlySmartAccount
-    {
+    function removeValidator(address prevValidator, address delValidator) external {
         validators[msg.sender].pop({ prevEntry: prevValidator, popEntry: delValidator });
 
         emit ValidatorRemoved(msg.sender, delValidator);
@@ -78,7 +72,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         return validators[account].getEntriesPaginated(start, pageSize);
     }
 
-    function isEnabledValidator(address account, address validator) public view returns (bool) {
+    function isValidatorEnabled(address account, address validator) public view returns (bool) {
         return validators[account].contains(validator);
     }
 
@@ -172,7 +166,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         else validator = userOp.decodeValidator();
 
         // check if selected validator is enabled
-        require(isEnabledValidator(userOp.sender, validator), "Validator not enabled");
+        require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
 
         uint256 ret = IValidatorModule(validator).validateUserOp(userOp, userOpHash);
         require(ret == 0, "Invalid signature");
@@ -214,7 +208,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         (bytes memory moduleSignature, address validationModule) =
             abi.decode(signature, (bytes, address));
 
-        require(isEnabledValidator(msg.sender, validationModule), "Validator not enabled");
+        require(isValidatorEnabled(msg.sender, validationModule), "Validator not enabled");
         return IERC1271(validationModule).isValidSignature(dataHash, moduleSignature);
     }
 

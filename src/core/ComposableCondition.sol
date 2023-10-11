@@ -52,7 +52,7 @@ contract ComposableConditionManager {
     }
 
     function _conditionDigest(ConditionConfig[] calldata conditions)
-        internal
+        public
         pure
         returns (bytes32)
     {
@@ -62,5 +62,9 @@ contract ComposableConditionManager {
     function setHash(address executor, ConditionConfig[] calldata conditions) external {
         _conditions[msg.sender][executor] = _conditionDigest(conditions);
         emit ConditionHashSet(msg.sender, executor, _conditions[msg.sender][executor]);
+    }
+
+    function getHash(address account, address executor) external view returns (bytes32) {
+        return _conditions[account][executor];
     }
 }

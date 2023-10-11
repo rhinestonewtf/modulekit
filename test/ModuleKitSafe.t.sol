@@ -10,8 +10,13 @@ import {
 
 import { MockExecutor } from "../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import "../src/core/IRhinestone4337.sol";
 
-import { ICondition, ConditionConfig } from "../src/core/ComposableCondition.sol";
+import {
+    ICondition,
+    ConditionConfig,
+    ComposableConditionManager
+} from "../src/core/ComposableCondition.sol";
 
 contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
@@ -69,19 +74,28 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         instance.removeExecutor(address(executor));
     }
 
-    function test_AddAndRemoveValidator() public {
+    function test_validator() public {
         address newValidator = makeAddr("new validator");
-
         instance.addValidator(newValidator);
 
-        bool enabled = instance.rhinestoneManager.isEnabledValidator(instance.account, newValidator);
+        bool enabled = instance.rhinestoneManager.isValidatorEnabled(instance.account, newValidator);
         assertTrue(enabled);
+
+        instance.removeValidator(newValidator);
+
+        enabled = instance.rhinestoneManager.isValidatorEnabled(instance.account, newValidator);
+        assertFalse(enabled);
     }
 
-    function test_AddAndRemove_Executor() public {
+    function test_executor() public {
         address newExecutor = makeAddr("new Executor");
-
         instance.addExecutor(newExecutor);
+        bool enabled = instance.aux.executorManager.isExecutorEnabled(instance.account, newExecutor);
+        assertTrue(enabled);
+
+        instance.removeExecutor(newExecutor);
+        enabled = instance.aux.executorManager.isExecutorEnabled(instance.account, newExecutor);
+        assertFalse(enabled);
     }
 
     function test_setCondition() public {
@@ -95,6 +109,12 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
             condition: ICondition(makeAddr("condition"))
         });
 
+        bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);
+
         instance.setCondition(newExecutor, conditions);
+
+        bytes32 digestOnManager =
+            instance.aux.compConditionManager.getHash(instance.account, newExecutor);
+        assertEq(digest, digestOnManager);
     }
 }

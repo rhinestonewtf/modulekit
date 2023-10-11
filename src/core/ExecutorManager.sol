@@ -167,7 +167,7 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
     function getExecutorsPaginated(
         address start,
         uint256 pageSize,
-        address safe
+        address account
     )
         external
         view
@@ -177,7 +177,7 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
             revert ZeroPageSizeNotAllowed();
         }
 
-        if (!(start == SENTINEL_MODULES || isExecutorEnabled(safe, start))) {
+        if (!(start == SENTINEL_MODULES || isExecutorEnabled(account, start))) {
             revert InvalidExecutorAddress(start);
         }
         // Init array with max page size
@@ -185,10 +185,10 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
 
         // Populate return array
         uint256 executorCount = 0;
-        next = enabledExecutors[safe][start].nextExecutorPointer;
+        next = enabledExecutors[account][start].nextExecutorPointer;
         while (next != address(0) && next != SENTINEL_MODULES && executorCount < pageSize) {
             array[executorCount] = next;
-            next = enabledExecutors[safe][next].nextExecutorPointer;
+            next = enabledExecutors[account][next].nextExecutorPointer;
             executorCount++;
         }
 

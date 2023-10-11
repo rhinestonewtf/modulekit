@@ -52,7 +52,7 @@ interface IRhinestone4337 {
         view
         returns (address[] memory array, address next);
 
-    function isEnabledValidator(address account, address validator) external view returns (bool);
+    function isValidatorEnabled(address account, address validator) external view returns (bool);
 
     /**
      * @dev Removes a validator
@@ -61,27 +61,6 @@ interface IRhinestone4337 {
      * @param validator Address of the validator
      */
     function removeValidator(address prevValidator, address validator) external;
-
-    /**
-     * @dev Adds a recovery module for a validator
-     *
-     * @param validator Address of the validator
-     * @param recovery Address of the recovery module
-     */
-    function addRecovery(address validator, address recovery) external;
-
-    /**
-     * @dev Makes an external call with the manager. this is used to config validators / singletons
-     *
-     * @param target  Address of the target
-     * @param callData Data to send to the target
-     */
-    function forwardCall(
-        address target,
-        bytes calldata callData
-    )
-        external
-        returns (bool success, bytes memory returnData);
 
     /*//////////////////////////////////////////////////////////////
                               RECOVERY
