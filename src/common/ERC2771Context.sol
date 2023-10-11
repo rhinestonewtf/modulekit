@@ -1,4 +1,5 @@
-import "forge-std/console2.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.21;
 
 abstract contract ERC2771Context {
     error ERC2771Unauthorized();
@@ -9,8 +10,6 @@ abstract contract ERC2771Context {
     }
 
     function _onlySmartAccount() private view {
-        console2.log("_msg", _msgSender());
-        console2.log("msg", msg.sender);
         if (_msgSender() != msg.sender) {
             revert ERC2771Unauthorized();
         }
@@ -20,5 +19,9 @@ abstract contract ERC2771Context {
         assembly {
             sender := shr(96, calldataload(sub(calldatasize(), 20)))
         }
+    }
+
+    function _manager() internal view virtual returns (address manager) {
+        manager = msg.sender;
     }
 }

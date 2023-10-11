@@ -43,6 +43,8 @@ interface IRhinestone4337 {
      */
     function addValidator(address validator) external;
 
+    function setSafeMethod(bytes4 selector, bytes32 newMethod) external;
+
     function getValidatorPaginated(
         address start,
         uint256 pageSize,

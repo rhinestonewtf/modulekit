@@ -21,6 +21,8 @@ import {
 
 import "../Vm.sol";
 
+import "../../../common/FallbackHandler.sol";
+
 import "forge-std/console2.sol";
 
 struct RhinestoneAccount {
@@ -314,6 +316,25 @@ library RhinestoneModuleKitLib {
                 )
         });
         return success;
+    }
+
+    function addFallback(
+        RhinestoneAccount memory instance,
+        bytes4 handleFunctionSig,
+        address handler
+    )
+        internal
+        returns (bool)
+    {
+        bytes32 encodedData = MarshalLib.encodeWithSelector(true, handleFunctionSig, handler);
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.rhinestoneManager),
+            value: 0,
+            callData: abi.encodeWithSelector(
+                instance.rhinestoneManager.setSafeMethod.selector, handleFunctionSig, encodedData
+                )
+        });
     }
 
     function getUserOpHash(

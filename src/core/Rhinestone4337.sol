@@ -8,8 +8,9 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import "../modulekit/IValidator.sol";
 import "../common/ERC2771Context.sol";
 import "../modulekit/lib/ValidatorSelectionLib.sol";
+import "../common/FallbackHandler.sol";
 
-abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context {
+abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandler {
     using SentinelListLib for SentinelListLib.SentinelList;
     using ValidatorSelectionLib for UserOperation;
 
@@ -168,7 +169,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, ERC2771Context
         // check if selected validator is enabled
         require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
 
-        uint256 ret = IValidatorModule(validator).validateUserOp(userOp, userOpHash);
+        uint256 ret = IValidator(validator).validateUserOp(userOp, userOpHash);
         require(ret == 0, "Invalid signature");
     }
 

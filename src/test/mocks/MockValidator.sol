@@ -3,9 +3,9 @@ pragma solidity >=0.8.17;
 
 import "../../common/erc4337/UserOperation.sol";
 import "../../common/IERC1271.sol";
-import { IValidatorModule, VALIDATION_SUCCESS } from "../../modulekit/IValidator.sol";
+import { IValidator, VALIDATION_SUCCESS } from "../../modulekit/IValidator.sol";
 
-contract MockValidator is IValidatorModule {
+contract MockValidator is IValidator {
     /**
      * @dev validates userOperation
      * @param userOp User Operation to be validated.
