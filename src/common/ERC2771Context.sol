@@ -21,4 +21,8 @@ abstract contract ERC2771Context {
             sender := shr(96, calldataload(sub(calldatasize(), 20)))
         }
     }
+
+    function _manager() internal view virtual returns (address manager) {
+        manager = msg.sender;
+    }
 }
