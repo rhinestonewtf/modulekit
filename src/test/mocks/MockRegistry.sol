@@ -17,4 +17,22 @@ contract MockRegistry is IERC7484Registry {
     {
         return 1337;
     }
+
+    function checkN(
+        address module,
+        address[] memory attesters,
+        uint256 threshold
+    )
+        external
+        view
+        override
+        returns (uint256[] memory)
+    {
+        uint256 attestersLength = attesters.length;
+        uint256[] memory attestedAtArray = new uint256[](attestersLength);
+        for (uint256 i; i < attestersLength; ++i) {
+            attestedAtArray[i] = uint256(1234);
+        }
+        return attestedAtArray;
+    }
 }

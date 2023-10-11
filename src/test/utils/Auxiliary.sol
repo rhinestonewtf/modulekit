@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import "../etch/EntryPoint.sol";
+import "./dependencies/EntryPoint.sol";
 import { IRhinestone4337, UserOperation } from "../../core/IRhinestone4337.sol";
 import { ExecutorManager } from "../../core/ExecutorManager.sol";
 import { IBootstrap } from "../../common/IBootstrap.sol";

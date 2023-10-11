@@ -6,9 +6,9 @@ import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount
-} from "../src/test/utils/biconomy-base/RhinestoneModuleKit.sol";
+} from "../../src/test/utils/biconomy-base/RhinestoneModuleKit.sol";
 
-import { MockExecutor } from "../src/test/mocks/MockExecutor.sol";
+import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 
 import "forge-std/console.sol";

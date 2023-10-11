@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import "../utils/Vm.sol";
+import "../Vm.sol";
 
 interface ISmartAccount {
     function enableModule(address module) external;

@@ -26,17 +26,17 @@ contract ComposableConditionManager {
         view
         returns (bool)
     {
-        bytes32 validHash = _conditions[account][msg.sender];
-        if (validHash == bytes32(0)) {
+        uint256 length = conditions.length;
+        if (length == 0) {
             revert InvalidConditionsProvided(bytes32(0));
         }
-        if (conditions.length == 0) {
+        bytes32 validHash = _conditions[account][msg.sender];
+        if (validHash == bytes32(0)) {
             revert InvalidConditionsProvided(bytes32(0));
         }
         bytes32 hash = _conditionDigest(conditions);
         if (validHash != hash) revert InvalidConditionsProvided(hash);
 
-        uint256 length = conditions.length;
         for (uint256 i; i < length; i++) {
             ConditionConfig calldata condition = conditions[i];
             if (

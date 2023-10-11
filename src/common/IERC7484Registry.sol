@@ -3,6 +3,15 @@ pragma solidity ^0.8.19;
 
 interface IERC7484Registry {
     function check(address executor, address attester) external view returns (uint256 listedAt);
+
+    function checkN(
+        address module,
+        address[] memory attesters,
+        uint256 threshold
+    )
+        external
+        view
+        returns (uint256[] memory attestedAtArray);
 }
 
 /// @author zeroknots
