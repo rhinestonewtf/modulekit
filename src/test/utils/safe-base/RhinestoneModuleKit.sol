@@ -216,7 +216,7 @@ library RhinestoneModuleKitLib {
     {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.account),
             value: 0,
             callData: abi.encodeWithSelector(
                 instance.rhinestoneManager.addValidator.selector, validator
@@ -250,7 +250,7 @@ library RhinestoneModuleKitLib {
 
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.account),
             value: 0,
             callData: abi.encodeWithSelector(
                 instance.rhinestoneManager.removeValidator.selector, previous, validator
@@ -329,7 +329,7 @@ library RhinestoneModuleKitLib {
         bytes32 encodedData = MarshalLib.encodeWithSelector(true, handleFunctionSig, handler);
         (bool success, bytes memory data) = exec4337({
             instance: instance,
-            target: address(instance.rhinestoneManager),
+            target: address(instance.account),
             value: 0,
             callData: abi.encodeWithSelector(
                 instance.rhinestoneManager.setSafeMethod.selector, handleFunctionSig, encodedData

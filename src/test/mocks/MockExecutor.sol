@@ -37,4 +37,6 @@ contract MockExecutor is IExecutorBase {
     { }
 
     function requiresRootAccess() external view override returns (bool requiresRootAccess) { }
+
+    function supportsInterface(bytes4 interfaceID) external view override returns (bool) { }
 }

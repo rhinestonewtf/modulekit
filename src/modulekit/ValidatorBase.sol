@@ -28,4 +28,6 @@ contract ValidatorBase is IValidator {
     {
         return VALIDATION_FAILED;
     }
+
+    function supportsInterface(bytes4 interfaceID) external view override returns (bool) { }
 }

@@ -108,7 +108,7 @@ abstract contract FallbackHandler is ExtensibleBase, IFallbackHandler {
      * @param selector The `bytes4` selector of the method to set the handler for
      * @param newMethod A contract that implements the `IFallbackMethod` or `IStaticFallbackMethod` interface
      */
-    function setSafeMethod(bytes4 selector, bytes32 newMethod) public override {
+    function setSafeMethod(bytes4 selector, bytes32 newMethod) public override onlySelf {
         console2.log("msg.sender", msg.sender);
         console2.log("address(this)", address(this));
         console2.log("_msgSender", _msgSender());

@@ -50,12 +50,12 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         emit ValidatorAdded(msg.sender, validator);
     }
 
-    function addValidator(address validator) external {
+    function addValidator(address validator) external onlySelf {
         validators[msg.sender].push(validator);
         emit ValidatorAdded(msg.sender, validator);
     }
 
-    function removeValidator(address prevValidator, address delValidator) external {
+    function removeValidator(address prevValidator, address delValidator) external onlySelf {
         validators[msg.sender].pop({ prevEntry: prevValidator, popEntry: delValidator });
 
         emit ValidatorRemoved(msg.sender, delValidator);

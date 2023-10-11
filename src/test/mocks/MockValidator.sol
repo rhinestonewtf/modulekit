@@ -46,4 +46,6 @@ contract MockValidator is IValidator {
     {
         return;
     }
+
+    function supportsInterface(bytes4 interfaceID) external view override returns (bool) { }
 }

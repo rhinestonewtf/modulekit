@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.18;
 
+import "forge-std/interfaces/IERC165.sol";
+
 // using from Safe Protocol. https://github.com/safe-global/safe-core-protocol/blob/main/contracts/DataTypes.sol
 struct ExecutorAction {
     address payable to;
@@ -21,9 +23,9 @@ struct ExecutorRootAccess {
 }
 
 /**
- * @title IExecutorBase - An interface that a Safe executor should implement
+ * @title IExecutorBase - An interface that a executor should implement
  */
-interface IExecutorBase {
+interface IExecutorBase is IERC165 {
     /**
      * @notice A funtion that returns name of the executor
      * @return name string name of the executor
