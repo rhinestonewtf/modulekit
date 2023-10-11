@@ -18,6 +18,10 @@ import {
     ComposableConditionManager
 } from "../src/core/ComposableCondition.sol";
 
+import "../src/common/FallbackHandler.sol";
+import "forge-std/console2.sol";
+import "forge-std/interfaces/IERC20.sol";
+
 contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
 
@@ -116,5 +120,36 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         bytes32 digestOnManager =
             instance.aux.compConditionManager.getHash(instance.account, newExecutor);
         assertEq(digest, digestOnManager);
+    }
+
+    function test_addFallback() public {
+        TokenReceiver handler = new TokenReceiver();
+        bytes4 selector = 0x150b7a02;
+
+        instance.addFallback(selector, address(handler));
+
+        bytes memory callData = abi.encodeWithSelector(
+            selector, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
+        );
+
+        instance.account.call(callData);
+    }
+}
+
+contract TokenReceiver is IStaticFallbackMethod {
+    function handle(
+        address account,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (bytes memory result)
+    {
+        console2.log("Handling fallback");
+        bytes4 selector = 0x150b7a02;
+        result = abi.encode(selector);
     }
 }
