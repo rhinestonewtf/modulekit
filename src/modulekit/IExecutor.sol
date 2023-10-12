@@ -119,7 +119,8 @@ interface ICondition {
     function checkCondition(
         address account,
         address executor,
-        bytes calldata boundries
+        bytes calldata boundries,
+        bytes calldata subParams
     )
         external
         view

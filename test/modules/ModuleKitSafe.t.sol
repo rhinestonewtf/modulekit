@@ -109,8 +109,8 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
 
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] = ConditionConfig({
-            boundriesData: hex"1234",
-            condition: ICondition(makeAddr("condition"))
+            condition: ICondition(makeAddr("condition")),
+            conditionData: hex"1234"
         });
 
         bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);

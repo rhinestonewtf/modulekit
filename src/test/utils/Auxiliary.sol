@@ -27,6 +27,7 @@ struct Auxiliary {
     IProtocolFactory rhinestoneFactory;
     IValidator validator;
     IERC7484Registry registry;
+    address initialTrustedAttester;
 }
 
 contract AuxiliaryFactory {
@@ -44,6 +45,7 @@ contract AuxiliaryFactory {
 
     function init() internal virtual {
         defaultAttester = address(0x4242424242);
+        label(defaultAttester, "defaultAttester");
         bootstrap = new Bootstrap();
         label(address(bootstrap), "bootstrap");
 
@@ -76,7 +78,8 @@ contract AuxiliaryFactory {
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,
-            registry: mockRegistry
+            registry: mockRegistry,
+            initialTrustedAttester: defaultAttester
         });
     }
 }

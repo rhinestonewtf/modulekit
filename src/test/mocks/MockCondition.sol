@@ -7,7 +7,8 @@ contract MockCondition is ICondition {
     function checkCondition(
         address account,
         address executor,
-        bytes calldata boundries
+        bytes calldata conditionData,
+        bytes calldata subData
     )
         external
         view

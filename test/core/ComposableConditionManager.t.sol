@@ -8,20 +8,7 @@ import {
     ConditionConfig,
     ICondition
 } from "../../src/core/ComposableCondition.sol";
-
-contract MockCondition is ICondition {
-    function checkCondition(
-        address account,
-        address executor,
-        bytes calldata boundries
-    )
-        external
-        view
-        returns (bool)
-    {
-        return true;
-    }
-}
+import "../../src/test/mocks/MockCondition.sol";
 
 contract ComposableConditionManagerTest is Test {
     ComposableConditionManager conditionManager;
@@ -37,7 +24,8 @@ contract ComposableConditionManagerTest is Test {
         address account = address(this);
 
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
-        conditions[0] = ConditionConfig({ boundriesData: bytes(""), condition: mockCondition });
+
+        conditions[0] = ConditionConfig({ condition: mockCondition, conditionData: bytes("") });
 
         conditionManager.setHash(executor, conditions);
 
@@ -55,7 +43,7 @@ contract ComposableConditionManagerTest is Test {
 
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
 
         vm.startPrank(executor);
         vm.expectRevert();
@@ -82,15 +70,15 @@ contract ComposableConditionManagerTest is Test {
 
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
 
         conditionManager.setHash(executor, conditions);
 
         ConditionConfig[] memory newConditions = new ConditionConfig[](2);
         newConditions[0] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
         newConditions[1] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
 
         vm.startPrank(executor);
         vm.expectRevert();
@@ -105,7 +93,7 @@ contract ComposableConditionManagerTest is Test {
 
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
 
         conditionManager.setHash(executor, conditions);
 
@@ -119,7 +107,7 @@ contract ComposableConditionManagerTest is Test {
         address condition = makeAddr("condition");
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
 
         bytes32 digest = conditionManager._conditionDigest(conditions);
 
@@ -131,7 +119,7 @@ contract ComposableConditionManagerTest is Test {
         address executor = makeAddr("executor");
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] =
-            ConditionConfig({ boundriesData: bytes(""), condition: ICondition(condition) });
+            ConditionConfig({ condition: ICondition(condition), conditionData: bytes("") });
         bytes32 digest = conditionManager._conditionDigest(conditions);
 
         conditionManager.setHash(executor, conditions);

@@ -29,6 +29,11 @@ abstract contract RegistryAdapterForSingletons {
         registry = _registry;
     }
 
+    modifier onlySecureModule(address module) {
+        _enforceRegistryCheck(module);
+        _;
+    }
+
     function _setAttester(address account, address attester) internal {
         trustedAttester[account] = attester;
     }
