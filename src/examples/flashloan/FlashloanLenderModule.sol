@@ -36,6 +36,12 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
     error FlashLoan_CallbackFailed();
     error FlashLoan_TokenNotAvailable();
 
+    event FeeToken(address indexed account, address indexed token);
+    event Fee(address indexed account, address indexed token, uint256 indexed tokenId, uint256 fee);
+    event FlashLoan(
+        address indexed account, address indexed token, uint256 indexed tokenId, uint256 fee
+    );
+
     mapping(address account => mapping(address token => mapping(uint256 tokenId => uint256 fee)))
         public _feePerToken;
 
@@ -47,6 +53,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
      */
     function setFeeToken(address feeToken) external {
         _flashFeeTokenPerAccount[msg.sender] = feeToken;
+        emit FeeToken(msg.sender, feeToken);
     }
 
     /**
@@ -57,6 +64,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
      */
     function setFee(address token, uint256 tokenId, uint256 fee) external {
         _feePerToken[msg.sender][token][tokenId] = fee;
+        emit Fee(msg.sender, token, tokenId, fee);
     }
 
     /**
@@ -164,6 +172,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
         });
         manager.exec(account, feeCollectionAction);
 
+        emit FlashLoan(account, token, tokenId, fee);
         return true;
     }
 
