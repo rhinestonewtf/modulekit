@@ -126,7 +126,11 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         TokenReceiver handler = new TokenReceiver();
         bytes4 selector = 0x150b7a02;
 
-        instance.addFallback(selector, address(handler));
+        instance.addFallback({
+            handleFunctionSig: selector,
+            isStatic: true,
+            handler: address(handler)
+        });
 
         bytes memory callData = abi.encodeWithSelector(
             selector, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")

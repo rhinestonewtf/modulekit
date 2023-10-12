@@ -321,12 +321,13 @@ library RhinestoneModuleKitLib {
     function addFallback(
         RhinestoneAccount memory instance,
         bytes4 handleFunctionSig,
+        bool isStatic,
         address handler
     )
         internal
         returns (bool)
     {
-        bytes32 encodedData = MarshalLib.encodeWithSelector(true, handleFunctionSig, handler);
+        bytes32 encodedData = MarshalLib.encodeWithSelector(isStatic, handleFunctionSig, handler);
         (bool success, bytes memory data) = exec4337({
             instance: instance,
             target: address(instance.account),
