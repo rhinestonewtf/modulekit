@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import "../modulekit/IExecutor.sol";
+import {ExecutorTransaction, ExecutorAction} from "../modulekit/IExecutor.sol";
 import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC7484Registry.sol";
 
 /**
@@ -38,20 +38,6 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
     modifier onlyExecutor(address account) {
         bool executorEnabled = isExecutorEnabled({ account: account, executor: msg.sender });
         if (!executorEnabled) revert ExecutorNotEnabled(msg.sender);
-
-        _enforceRegistryCheck(msg.sender);
-        _;
-    }
-
-    modifier checkRegistry(address executor) {
-        _enforceRegistryCheck(executor);
-        _;
-    }
-
-    modifier onlyEnabledExecutor(address safe) {
-        if (enabledExecutors[safe][msg.sender].nextExecutorPointer == address(0)) {
-            revert ExecutorNotEnabled(msg.sender);
-        }
         _;
     }
 
@@ -82,7 +68,6 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
         external
         noZeroOrSentinelExecutor(executor)
         onlySecureModule(executor)
-        checkRegistry(executor)
     {
         ExecutorAccessInfo storage senderSentinelExecutor =
             enabledExecutors[msg.sender][SENTINEL_MODULES];

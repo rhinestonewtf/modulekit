@@ -78,7 +78,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         instance.removeExecutor(address(executor));
     }
 
-    function test_validator() public {
+    function testValidator() public {
         address newValidator = makeAddr("new validator");
         instance.addValidator(newValidator);
 
@@ -91,7 +91,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertFalse(enabled);
     }
 
-    function test_executor() public {
+    function testExecutor() public {
         address newExecutor = makeAddr("new Executor");
         instance.addExecutor(newExecutor);
         bool enabled = instance.aux.executorManager.isExecutorEnabled(instance.account, newExecutor);
@@ -102,7 +102,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertFalse(enabled);
     }
 
-    function test_setCondition() public {
+    function testSetCondition() public {
         address newExecutor = makeAddr("new Executor");
 
         instance.addExecutor(newExecutor);
@@ -122,7 +122,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertEq(digest, digestOnManager);
     }
 
-    function test_addFallback() public {
+    function testAddFallback() public {
         TokenReceiver handler = new TokenReceiver();
         bytes4 selector = 0x150b7a02;
 

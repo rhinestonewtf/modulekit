@@ -26,6 +26,14 @@ cd module-template
 forge install
 ```
 
+## Updating
+
+To update the ModuleKit, run:
+
+```bash
+forge update rhinestonewtf/modulekit
+```
+
 ## Features
 
 - [ ] ERC-4337 integration tests

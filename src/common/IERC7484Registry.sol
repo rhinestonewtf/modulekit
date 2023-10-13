@@ -20,9 +20,6 @@ abstract contract RegistryAdapterForSingletons {
     // Instance of the IRegistry contract
     IERC7484Registry immutable registry;
 
-    // Address of the trusted authority
-    address trustedAuthority;
-
     mapping(address account => address trustedAttester) internal trustedAttester;
 
     constructor(IERC7484Registry _registry) {
@@ -36,9 +33,12 @@ abstract contract RegistryAdapterForSingletons {
 
     function _setAttester(address account, address attester) internal {
         trustedAttester[account] = attester;
+        emit TrustedAttesterSet(account, attester);
     }
 
     function _enforceRegistryCheck(address executorImpl) internal view virtual {
         registry.check(executorImpl, trustedAttester[msg.sender]);
     }
+
+    event TrustedAttesterSet(address indexed account, address indexed attester);
 }
