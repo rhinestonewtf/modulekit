@@ -95,7 +95,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
      * @param account The address of the lender.
      * @return Address of the ERC20 token used for fees.
      */
-    function _flashFeeToken(address account) public view returns (address) {
+    function _flashFeeToken(address account) internal view returns (address) {
         return _flashFeeTokenPerAccount[account];
     }
 
@@ -111,7 +111,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
         address token,
         uint256 tokenId
     )
-        public
+        internal
         view
         returns (uint256)
     {
