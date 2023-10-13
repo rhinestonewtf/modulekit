@@ -3,7 +3,11 @@ pragma solidity ^0.8.21;
 
 import { Test } from "forge-std/Test.sol";
 
-import { ExecutorManager,ExecutorTransaction, ExecutorAction } from "../../src/core/ExecutorManager.sol";
+import {
+    ExecutorManager,
+    ExecutorTransaction,
+    ExecutorAction
+} from "../../src/core/ExecutorManager.sol";
 import { MockRegistry, IERC7484Registry } from "../../src/test/mocks/MockRegistry.sol";
 
 contract FalseRegistry is IERC7484Registry {
@@ -50,7 +54,7 @@ contract ExecutorManagerInstance is ExecutorManager {
         override
         returns (bool, bytes memory)
     {
-        return to.call{value:value}(data);
+        return to.call{ value: value }(data);
     }
 }
 
@@ -206,19 +210,12 @@ contract ExecutorManagerTest is Test {
         vm.stopPrank();
 
         ExecutorAction[] memory actions = new ExecutorAction[](1);
-        actions[0] = ExecutorAction({
-            to: payable(target),
-            value: 1 wei,
-            data: ""
-        });
+        actions[0] = ExecutorAction({ to: payable(target), value: 1 wei, data: "" });
 
         bytes32 metadataHash = keccak256(abi.encodePacked("fail()"));
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({
-            actions: actions,
-            nonce: 0,
-            metadataHash:metadataHash
-        });
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: metadataHash });
 
         vm.startPrank(executor);
         executorManager.executeTransaction(account, transaction);
@@ -226,20 +223,15 @@ contract ExecutorManagerTest is Test {
     }
 
     function testExecuteTransaction__RevertWhen__ExecutorNotEnabled() public {
-         address account = makeAddr("account");
+        address account = makeAddr("account");
         address executor = makeAddr("executor");
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({
-            actions: new ExecutorAction[](0),
-            nonce: 0,
-            metadataHash: ""
-        });
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: new ExecutorAction[](0), nonce: 0, metadataHash: "" });
 
         vm.startPrank(executor);
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ExecutorManager.ExecutorNotEnabled.selector, executor
-            )
+            abi.encodeWithSelector(ExecutorManager.ExecutorNotEnabled.selector, executor)
         );
         executorManager.executeTransaction(account, transaction);
         vm.stopPrank();
@@ -247,8 +239,8 @@ contract ExecutorManagerTest is Test {
 
     function testExecuteTransaction__RevertWhen__InsecureModule() public {
         IERC7484Registry falseRegistry = new FalseRegistry();
-            
-         address account = makeAddr("account");
+
+        address account = makeAddr("account");
         address executor = makeAddr("executor");
 
         vm.startPrank(account);
@@ -257,21 +249,17 @@ contract ExecutorManagerTest is Test {
 
         vm.etch(address(registry), address(falseRegistry).code);
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({
-            actions: new ExecutorAction[](0),
-            nonce: 0,
-            metadataHash: ""
-        });
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: new ExecutorAction[](0), nonce: 0, metadataHash: "" });
 
         vm.startPrank(executor);
-        vm.expectRevert(
-        );
+        vm.expectRevert();
         executorManager.executeTransaction(account, transaction);
         vm.stopPrank();
     }
 
     function testExecuteTransaction__RevertWhen__CallingSelf() public {
-         address account = makeAddr("account");
+        address account = makeAddr("account");
         address executor = makeAddr("executor");
 
         vm.startPrank(account);
@@ -279,17 +267,10 @@ contract ExecutorManagerTest is Test {
         vm.stopPrank();
 
         ExecutorAction[] memory actions = new ExecutorAction[](1);
-        actions[0] = ExecutorAction({
-            to: payable(address(executorManager)),
-            value: 0,
-            data: ""
-        });
+        actions[0] = ExecutorAction({ to: payable(address(executorManager)), value: 0, data: "" });
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({
-            actions: actions,
-            nonce: 0,
-            metadataHash: ""
-        });
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
 
         vm.startPrank(executor);
         vm.expectRevert(
@@ -302,7 +283,7 @@ contract ExecutorManagerTest is Test {
     }
 
     function testExecuteTransaction__RevertWhen__CallingAccount() public {
-         address account = makeAddr("account");
+        address account = makeAddr("account");
         address executor = makeAddr("executor");
 
         vm.startPrank(account);
@@ -310,17 +291,10 @@ contract ExecutorManagerTest is Test {
         vm.stopPrank();
 
         ExecutorAction[] memory actions = new ExecutorAction[](1);
-        actions[0] = ExecutorAction({
-            to: payable(account),
-            value: 0,
-            data: ""
-        });
+        actions[0] = ExecutorAction({ to: payable(account), value: 0, data: "" });
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({
-            actions: actions,
-            nonce: 0,
-            metadataHash: ""
-        });
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
 
         vm.startPrank(executor);
         vm.expectRevert(
@@ -333,7 +307,7 @@ contract ExecutorManagerTest is Test {
     }
 
     function testExecuteTransaction__RevertWhen__ActionFails() public {
-         address account = makeAddr("account");
+        address account = makeAddr("account");
         address executor = makeAddr("executor");
         address target = makeAddr("target");
 
@@ -342,19 +316,12 @@ contract ExecutorManagerTest is Test {
         vm.stopPrank();
 
         ExecutorAction[] memory actions = new ExecutorAction[](1);
-        actions[0] = ExecutorAction({
-            to: payable(target),
-            value: 1 wei,
-            data: ""
-        });
+        actions[0] = ExecutorAction({ to: payable(target), value: 1 wei, data: "" });
 
         bytes32 metadataHash = keccak256(abi.encodePacked("fail()"));
 
-        ExecutorTransaction memory transaction = ExecutorTransaction({
-            actions: actions,
-            nonce: 0,
-            metadataHash:metadataHash
-        });
+        ExecutorTransaction memory transaction =
+            ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: metadataHash });
 
         vm.startPrank(executor);
         vm.expectRevert(
@@ -379,7 +346,8 @@ contract ExecutorManagerTest is Test {
         vm.stopPrank();
 
         vm.startPrank(account);
-        (address[] memory array, address next) = executorManager.getExecutorsPaginated(address(0x1), 3, account);
+        (address[] memory array, address next) =
+            executorManager.getExecutorsPaginated(address(0x1), 3, account);
         vm.stopPrank();
 
         assertTrue(array.length == 3);
@@ -393,26 +361,19 @@ contract ExecutorManagerTest is Test {
         address account = makeAddr("account");
         address start = makeAddr("start");
 
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                ExecutorManager.ZeroPageSizeNotAllowed.selector
-            )
-        );
+        vm.expectRevert(abi.encodeWithSelector(ExecutorManager.ZeroPageSizeNotAllowed.selector));
         executorManager.getExecutorsPaginated(start, 0, account);
-     }
+    }
 
-     function testGetExecutorsPaginated__RevertWhen__InvalidStart() public {
+    function testGetExecutorsPaginated__RevertWhen__InvalidStart() public {
         address account = makeAddr("account");
         address start = makeAddr("start");
-        
+
         vm.expectRevert(
-            abi.encodeWithSelector(
-                ExecutorManager.InvalidExecutorAddress.selector, start
-            )
+            abi.encodeWithSelector(ExecutorManager.InvalidExecutorAddress.selector, start)
         );
         executorManager.getExecutorsPaginated(start, 1, account);
-     }
+    }
 
-         event TrustedAttesterSet(address indexed account, address indexed attester);
-
+    event TrustedAttesterSet(address indexed account, address indexed attester);
 }

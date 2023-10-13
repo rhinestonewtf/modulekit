@@ -5,7 +5,7 @@ import { Test } from "forge-std/Test.sol";
 
 import { Rhinestone4337 } from "../../src/core/Rhinestone4337.sol";
 import { MockRegistry, IERC7484Registry } from "../../src/test/mocks/MockRegistry.sol";
-import {ENTRYPOINT_ADDR} from "../../src/test/utils/dependencies/EntryPoint.sol";
+import { ENTRYPOINT_ADDR } from "../../src/test/utils/dependencies/EntryPoint.sol";
 
 contract Rhinestone4337Instance is Rhinestone4337 {
     constructor(
@@ -79,10 +79,8 @@ contract Rhinestone4337Test is Test {
     Rhinestone4337Instance rhinestone4337;
     MockRegistry registry;
 
-    function setUp() public { 
+    function setUp() public {
         registry = new MockRegistry();
         rhinestone4337 = new Rhinestone4337Instance(ENTRYPOINT_ADDR, registry);
     }
-
-    
 }

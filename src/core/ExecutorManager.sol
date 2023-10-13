@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import {ExecutorTransaction, ExecutorAction} from "../modulekit/IExecutor.sol";
+import { ExecutorTransaction, ExecutorAction } from "../modulekit/IExecutor.sol";
 import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC7484Registry.sol";
 
 /**
