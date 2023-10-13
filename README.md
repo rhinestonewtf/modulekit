@@ -49,6 +49,7 @@ forge update rhinestonewtf/modulekit
   - [x] Biconomy
   - [ ] Kernel
   - [ ] ERC-6900 reference implementation
+- [x] Deployment through Module Registry
 - [ ] Gas calculation helper
 
 ## Helper utilities
