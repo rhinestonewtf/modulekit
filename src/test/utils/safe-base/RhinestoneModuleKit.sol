@@ -23,6 +23,8 @@ import "../Vm.sol";
 
 import "../../../common/FallbackHandler.sol";
 
+import "../Log.sol";
+
 import "forge-std/console2.sol";
 
 struct RhinestoneAccount {
@@ -186,6 +188,8 @@ library RhinestoneModuleKitLib {
 
         // send userOps to 4337 entrypoint
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        emit ModuleKitLogs.ModuleKit_Exec4337(address(instance.account), userOp.sender);
     }
 
     function setCondition(
@@ -204,6 +208,7 @@ library RhinestoneModuleKitLib {
                 instance.aux.compConditionManager.setHash, (forExecutor, conditions)
                 )
         });
+        emit ModuleKitLogs.ModuleKit_SetCondition(address(instance.account), forExecutor);
         return success;
     }
 
@@ -220,6 +225,7 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeCall(instance.rhinestoneManager.addValidator, (validator))
         });
+        emit ModuleKitLogs.ModuleKit_AddValidator(address(instance.account), validator);
         return success;
     }
 
@@ -254,6 +260,7 @@ library RhinestoneModuleKitLib {
                 instance.rhinestoneManager.removeValidator.selector, previous, validator
                 )
         });
+        emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
         return success;
     }
 
@@ -275,6 +282,7 @@ library RhinestoneModuleKitLib {
             instance.aux.executorManager.isExecutorEnabled(address(instance.account), executor),
             "Executor not enabled"
         );
+        emit ModuleKitLogs.ModuleKit_AddExecutor(address(instance.account), executor);
         return success;
     }
 
@@ -301,7 +309,7 @@ library RhinestoneModuleKitLib {
             }
         }
 
-        emit SDKLOG_RemoveExecutor(address(instance.account), executor, previous);
+        emit ModuleKitLogs.ModuleKit_RemoveExecutor(address(instance.account), executor);
 
         (bool success, bytes memory data) = exec4337({
             instance: instance,
@@ -330,6 +338,9 @@ library RhinestoneModuleKitLib {
                 instance.rhinestoneManager.setSafeMethod.selector, handleFunctionSig, encodedData
                 )
         });
+        emit ModuleKitLogs.ModuleKit_SetFallback(
+            address(instance.account), handleFunctionSig, handler
+        );
     }
 
     function getUserOpHash(
@@ -348,6 +359,7 @@ library RhinestoneModuleKitLib {
             isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
         UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+
         return userOpHash;
     }
 

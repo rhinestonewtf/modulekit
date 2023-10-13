@@ -28,6 +28,8 @@ import "../../../common/FallbackHandler.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import "../Vm.sol";
 
+import "../Log.sol";
+
 struct Owner {
     address addr;
     uint256 key;
@@ -96,6 +98,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey }),
             fallbackHandler: address(fallbackHandler)
         });
+        emit ModuleKitLogs.ModuleKit_NewAccount(instance.account, "Rhinestone-Biconomy");
     }
 
     function getAccountAddress(
@@ -183,6 +186,7 @@ library RhinestoneModuleKitLib {
 
         // send userOps to 4337 entrypoint
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
     }
 
     function addValidator(
@@ -198,23 +202,7 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeCall(ISmartAccount.enableModule, (validator))
         });
-        return success;
-    }
-
-    function addRecovery(
-        RhinestoneAccount memory instance,
-        address validator,
-        address recovery
-    )
-        internal
-        returns (bool)
-    {
-        (bool success, bytes memory data) = exec4337({
-            instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeCall(ISmartAccount.enableModule, (recovery))
-        });
+        emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
         return success;
     }
 
@@ -249,6 +237,7 @@ library RhinestoneModuleKitLib {
             instance.aux.executorManager.isExecutorEnabled(address(instance.account), executor),
             "Executor not enabled"
         );
+        emit ModuleKitLogs.ModuleKit_AddExecutor(instance.account, executor);
         return success;
     }
 
@@ -280,6 +269,8 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeCall(FallbackHandler.setSafeMethod, (handleFunctionSig, encodedData))
         });
+
+        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
     }
 
     function removeExecutor(
@@ -306,6 +297,7 @@ library RhinestoneModuleKitLib {
             value: 0,
             callData: abi.encodeCall(instance.aux.executorManager.disableExecutor, (previous, executor))
         });
+        emit ModuleKitLogs.ModuleKit_RemoveExecutor(instance.account, executor);
         return success;
     }
 
