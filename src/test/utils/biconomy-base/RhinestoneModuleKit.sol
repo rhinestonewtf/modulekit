@@ -196,7 +196,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.account),
             value: 0,
-            callData: abi.encodeWithSelector(ISmartAccount.enableModule.selector, validator)
+            callData: abi.encodeCall(ISmartAccount.enableModule, (validator))
         });
         return success;
     }
@@ -213,7 +213,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.account),
             value: 0,
-            callData: abi.encodeWithSelector(ISmartAccount.enableModule.selector, recovery)
+            callData: abi.encodeCall(ISmartAccount.enableModule, (recovery))
         });
         return success;
     }
@@ -233,8 +233,8 @@ library RhinestoneModuleKitLib {
                 instance: instance,
                 target: address(instance.account),
                 value: 0,
-                callData: abi.encodeWithSelector(
-                    ISmartAccount.enableModule.selector, address(instance.aux.executorManager)
+                callData: abi.encodeCall(
+                    ISmartAccount.enableModule, (address(instance.aux.executorManager))
                     )
             });
         }
@@ -242,9 +242,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.executorManager.enableExecutor.selector, executor, false
-                )
+            callData: abi.encodeCall(instance.aux.executorManager.enableExecutor, (executor, false))
         });
 
         require(
@@ -267,7 +265,7 @@ library RhinestoneModuleKitLib {
         address fallbackHandler = ISmartAccount(instance.account).getFallbackHandler();
 
         if (fallbackHandler != instance.fallbackHandler) {
-            (bool success, bytes memory data) = exec4337({
+            exec4337({
                 instance: instance,
                 target: address(instance.account),
                 value: 0,
@@ -276,7 +274,7 @@ library RhinestoneModuleKitLib {
         }
 
         bytes32 encodedData = MarshalLib.encodeWithSelector(isStatic, handleFunctionSig, handler);
-        (bool success, bytes memory data) = exec4337({
+        exec4337({
             instance: instance,
             target: address(instance.account),
             value: 0,
@@ -306,9 +304,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.executorManager.disableExecutor.selector, previous, executor
-                )
+            callData: abi.encodeCall(instance.aux.executorManager.disableExecutor, (previous, executor))
         });
         return success;
     }

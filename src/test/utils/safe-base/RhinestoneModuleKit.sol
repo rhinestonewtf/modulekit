@@ -200,8 +200,8 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.compConditionManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.compConditionManager.setHash.selector, forExecutor, conditions
+            callData: abi.encodeCall(
+                instance.aux.compConditionManager.setHash, (forExecutor, conditions)
                 )
         });
         return success;
@@ -218,9 +218,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.account),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.addValidator.selector, validator
-                )
+            callData: abi.encodeCall(instance.rhinestoneManager.addValidator, (validator))
         });
         return success;
     }
@@ -270,9 +268,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.executorManager.enableExecutor.selector, executor, false
-                )
+            callData: abi.encodeCall(instance.aux.executorManager.enableExecutor, (executor, false))
         });
 
         require(
@@ -311,9 +307,7 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.executorManager.disableExecutor.selector, previous, executor
-                )
+            callData: abi.encodeCall(instance.aux.executorManager.disableExecutor, (previous, executor))
         });
         return success;
     }
