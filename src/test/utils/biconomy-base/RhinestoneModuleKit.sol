@@ -23,6 +23,8 @@ import "../../../core/ComposableCondition.sol";
 import { BiconomyHelpers } from "./BiconomySetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
+import "../../../common/FallbackHandler.sol";
+
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import "../Vm.sol";
 
@@ -38,6 +40,7 @@ struct RhinestoneAccount {
     AccountFlavor accountFlavor;
     address initialAuthModule;
     Owner initialOwner;
+    address fallbackHandler;
 }
 
 struct AccountFlavor {
@@ -52,6 +55,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     ISmartAccount internal accountSingleton;
     address initialAuthModule;
 
+    FallbackHandler internal fallbackHandler;
+
     bool initialzed;
 
     function init() internal override {
@@ -61,6 +66,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         accountSingleton = deployAccountSingleton(address(entrypoint));
         accountFactory = deployAccountFactory(address(accountSingleton));
         initialAuthModule = deployECDSA();
+
+        fallbackHandler = new FallbackHandler();
 
         safeBootstrap = new Bootstrap();
         initialzed = true;
@@ -86,7 +93,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 accountSingleton: ISmartAccount(address(accountSingleton))
             }),
             initialAuthModule: address(initialAuthModule),
-            initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey })
+            initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey }),
+            fallbackHandler: address(fallbackHandler)
         });
     }
 
@@ -244,6 +252,36 @@ library RhinestoneModuleKitLib {
             "Executor not enabled"
         );
         return success;
+    }
+
+    function addFallback(
+        RhinestoneAccount memory instance,
+        bytes4 handleFunctionSig,
+        bool isStatic,
+        address handler
+    )
+        internal
+        returns (bool)
+    {
+        // check if fallback handler is enabled
+        address fallbackHandler = ISmartAccount(instance.account).getFallbackHandler();
+
+        if (fallbackHandler != instance.fallbackHandler) {
+            (bool success, bytes memory data) = exec4337({
+                instance: instance,
+                target: address(instance.account),
+                value: 0,
+                callData: abi.encodeCall(ISmartAccount.setFallbackHandler, (instance.fallbackHandler))
+            });
+        }
+
+        bytes32 encodedData = MarshalLib.encodeWithSelector(isStatic, handleFunctionSig, handler);
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.account),
+            value: 0,
+            callData: abi.encodeCall(FallbackHandler.setSafeMethod, (handleFunctionSig, encodedData))
+        });
     }
 
     function removeExecutor(

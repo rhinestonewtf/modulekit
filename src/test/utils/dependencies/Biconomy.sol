@@ -4,6 +4,9 @@ pragma solidity ^0.8.21;
 import "../Vm.sol";
 
 interface ISmartAccount {
+    function setFallbackHandler(address handler) external;
+
+    function getFallbackHandler() external view returns (address _handler);
     function enableModule(address module) external;
 
     function setupAndEnableModule(

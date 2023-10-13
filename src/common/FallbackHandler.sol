@@ -100,7 +100,7 @@ interface IFallbackHandler {
     function setSafeMethod(bytes4 selector, bytes32 newMethod) external;
 }
 
-abstract contract FallbackHandler is ExtensibleBase, IFallbackHandler {
+contract FallbackHandler is ExtensibleBase, IFallbackHandler {
     // --- setters ---
 
     /**
