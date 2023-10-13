@@ -43,7 +43,6 @@ forge update rhinestonewtf/modulekit
 - [ ] Different Module types
   - [x] Validators
   - [x] Executors
-  - [x] Recovery modules
   - [ ] Hooks
 - [ ] Different modular accounts
   - [x] Safe
@@ -58,26 +57,35 @@ forge update rhinestonewtf/modulekit
 
 #### Interfaces
 
-- `IExecutorBase`: Interface for Executors to inherit from.
-- `BaseValidator`: Interface for Validator Modules to inherit from.
-- `IRecoveryModule`: Interface for Recovery Modules to inherit from.
+- `ValidatorBase`: Interface for Validators to inherit from.
+- `ExecutorBase`: Interface for Executors to inherit from.
 
 #### Templates
 
 - [Validator](https://github.com/rhinestonewtf/module-template/blob/main/src/validators/ValidatorTemplate.sol): Template implementation for Validators.
+- [Executor](https://github.com/rhinestonewtf/module-template/blob/main/src/executors/ExecutorTemplate.sol): Template implementation for Executors.
 
 ### Testing modules
 
-#### RhinestoneModuleKitLib
+New docs coming soon
 
-- `function exec4337(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData) internal returns (bool, bytes memory)`: Executes a UserOperation from the account using a `target`, a `value` and an already-encoded `callData`. Can only use use `CALL` from the account and calculates a default signature.
-- `function exec4337(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation, bytes memory signature) internal returns (bool, bytes memory)`: Executes a UserOperation from the account using a `target`, a `value` and an already-encoded `callData`. Can use either `CALL` or `DELEGATECALL` from the account and uses the provided `signature`.
-- `function addValidator(RhinestoneAccount memory instance, address validator) internal returns (bool)`: Adds a validator to the account.
-- `function addRecovery(RhinestoneAccount memory instance, address validator, address recovery) internal returns (bool)`: Adds a recovery module to the account.
-- `function addExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool)`: Adds a executor to the account.
-- `function removeExecutor(RhinestoneAccount memory instance, address executor) internal returns (bool)`: Removes a executor from the account.
-- `function getUserOpHash(RhinestoneAccount memory instance, address target, uint256 value, bytes memory callData, uint8 operation) internal returns (bytes32)`: Calculates the hash of a UserOperation in order to be signed for a custom signature.
+## Contribute
+
+For feature or change requests, feel free to open a PR or get in touch with us.
 
 ## Credits
 
 - [Safe{Core} Protocol](https://github.com/safe-global/safe-core-protocol/): ExecutorManager.sol is heavily insprired by Safe's SafeProtocolManager but is compatible across all supported accounts
+
+## Authors ✨
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="http://twitter.com/zeroknotsETH/"><img src="https://pbs.twimg.com/profile_images/1639062011387715590/bNmZ5Gpf_400x400.jpg" width="100px;" alt=""/><br /><sub><b>zeroknots</b></sub></a><br /><a href="https://github.com/rhinestonewtf/registry/commits?author=zeroknots" title="Code">💻</a></td>
+    <td align="center"><a href="https://twitter.com/abstractooor"><img src="https://avatars.githubusercontent.com/u/26718079" width="100px;" alt=""/><br /><sub><b>Konrad</b></sub></a><br /><a href="https://github.com/rhinestonewtf/registry/commits?author=kopy-kat" title="Code">💻</a> </td>
+    
+  </tr>
+</table>
