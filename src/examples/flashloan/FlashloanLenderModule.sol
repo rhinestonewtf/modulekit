@@ -122,7 +122,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
      * @notice Executes a flash loan by lending an NFT and collecting a fee.
      *
      * @param account Address of the lender.
-     * @param receiver Address of the borrower implementing IERC3156FlashBorrower.
+     * @param borrower Address of the borrower implementing IERC3156FlashBorrower.
      * @param token Address of the ERC721 token contract.
      * @param tokenId ID of the NFT.
      * @param data Arbitrary data provided by the borrower.
@@ -132,7 +132,7 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
      */
     function _flashLoan(
         address account,
-        IERC3156FlashBorrower receiver,
+        IERC3156FlashBorrower borrower,
         address token,
         uint256 tokenId,
         bytes memory data
@@ -145,29 +145,35 @@ contract FlashloanLenderModule is ExecutorBase, IFallbackMethod {
         if (!_availableForFlashLoan(account, token, tokenId)) revert FlashLoan_TokenNotAvailable();
         if (_flashFee(account, token, tokenId) == 0) revert FlashLoan_TokenNotAvailable();
         if (_flashFeeToken(account) == address(0)) revert FlashLoan_TokenNotAvailable();
+
+        // transfering NFT to borrower
         ExecutorAction memory sendToken = ERC721ModuleKit.transferFromAction({
             token: IERC721(token),
             from: account,
-            to: address(receiver),
+            to: address(borrower),
             tokenId: tokenId
         });
         manager.exec(account, sendToken);
 
+        // Fee that borrower has to pay to account
         uint256 fee = _flashFee(account, token, tokenId);
-        bool success = receiver.onFlashLoan(account, token, tokenId, fee, borrowData)
-            == keccak256("ERC3156FlashBorrower.onFlashLoan");
 
+        // ERC3156 compliant callback
+        bool success = borrower.onFlashLoan(account, token, tokenId, fee, borrowData)
+            == keccak256("ERC3156FlashBorrower.onFlashLoan");
         if (!success) revert FlashLoan_CallbackFailed();
 
-        // check that token was transfered back to holder
+        // ensure that borrower sent token back to lender
         if (!_availableForFlashLoan(account, token, tokenId)) {
             revert FlashLoan_TokenNotTransferedBack();
         }
 
+        // assume that borrower has set allowance to fee token
+        // lender can now transfer the fee on behalf of the borrower
         ExecutorAction memory feeCollectionAction = ERC20ModuleKit.transferFromAction({
             token: IERC20(_flashFeeToken(account)),
             to: account,
-            from: address(receiver),
+            from: address(borrower),
             amount: fee
         });
         manager.exec(account, feeCollectionAction);
