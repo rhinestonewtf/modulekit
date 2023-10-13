@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../etch/Biconomy.sol";
+import "../dependencies/Biconomy.sol";
 // import { ISmartAccountFactory, ISmartAccount } from "./utils/Interfaces.sol";
 
 import {
@@ -23,8 +23,12 @@ import "../../../core/ComposableCondition.sol";
 import { BiconomyHelpers } from "./BiconomySetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
+import "../../../common/FallbackHandler.sol";
+
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import "../Vm.sol";
+
+import "../Log.sol";
 
 struct Owner {
     address addr;
@@ -38,6 +42,7 @@ struct RhinestoneAccount {
     AccountFlavor accountFlavor;
     address initialAuthModule;
     Owner initialOwner;
+    address fallbackHandler;
 }
 
 struct AccountFlavor {
@@ -52,6 +57,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     ISmartAccount internal accountSingleton;
     address initialAuthModule;
 
+    FallbackHandler internal fallbackHandler;
+
     bool initialzed;
 
     function init() internal override {
@@ -61,6 +68,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         accountSingleton = deployAccountSingleton(address(entrypoint));
         accountFactory = deployAccountFactory(address(accountSingleton));
         initialAuthModule = deployECDSA();
+
+        fallbackHandler = new FallbackHandler();
 
         safeBootstrap = new Bootstrap();
         initialzed = true;
@@ -86,8 +95,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 accountSingleton: ISmartAccount(address(accountSingleton))
             }),
             initialAuthModule: address(initialAuthModule),
-            initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey })
+            initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey }),
+            fallbackHandler: address(fallbackHandler)
         });
+        emit ModuleKitLogs.ModuleKit_NewAccount(instance.account, "Rhinestone-Biconomy");
     }
 
     function getAccountAddress(
@@ -175,6 +186,7 @@ library RhinestoneModuleKitLib {
 
         // send userOps to 4337 entrypoint
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
     }
 
     function addValidator(
@@ -188,25 +200,9 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.account),
             value: 0,
-            callData: abi.encodeWithSelector(ISmartAccount.enableModule.selector, validator)
+            callData: abi.encodeCall(ISmartAccount.enableModule, (validator))
         });
-        return success;
-    }
-
-    function addRecovery(
-        RhinestoneAccount memory instance,
-        address validator,
-        address recovery
-    )
-        internal
-        returns (bool)
-    {
-        (bool success, bytes memory data) = exec4337({
-            instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeWithSelector(ISmartAccount.enableModule.selector, recovery)
-        });
+        emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
         return success;
     }
 
@@ -225,8 +221,8 @@ library RhinestoneModuleKitLib {
                 instance: instance,
                 target: address(instance.account),
                 value: 0,
-                callData: abi.encodeWithSelector(
-                    ISmartAccount.enableModule.selector, address(instance.aux.executorManager)
+                callData: abi.encodeCall(
+                    ISmartAccount.enableModule, (address(instance.aux.executorManager))
                     )
             });
         }
@@ -234,16 +230,47 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.executorManager.enableExecutor.selector, executor, false
-                )
+            callData: abi.encodeCall(instance.aux.executorManager.enableExecutor, (executor, false))
         });
 
         require(
             instance.aux.executorManager.isExecutorEnabled(address(instance.account), executor),
             "Executor not enabled"
         );
+        emit ModuleKitLogs.ModuleKit_AddExecutor(instance.account, executor);
         return success;
+    }
+
+    function addFallback(
+        RhinestoneAccount memory instance,
+        bytes4 handleFunctionSig,
+        bool isStatic,
+        address handler
+    )
+        internal
+        returns (bool)
+    {
+        // check if fallback handler is enabled
+        address fallbackHandler = ISmartAccount(instance.account).getFallbackHandler();
+
+        if (fallbackHandler != instance.fallbackHandler) {
+            exec4337({
+                instance: instance,
+                target: address(instance.account),
+                value: 0,
+                callData: abi.encodeCall(ISmartAccount.setFallbackHandler, (instance.fallbackHandler))
+            });
+        }
+
+        bytes32 encodedData = MarshalLib.encodeWithSelector(isStatic, handleFunctionSig, handler);
+        exec4337({
+            instance: instance,
+            target: address(instance.account),
+            value: 0,
+            callData: abi.encodeCall(FallbackHandler.setSafeMethod, (handleFunctionSig, encodedData))
+        });
+
+        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
     }
 
     function removeExecutor(
@@ -268,10 +295,9 @@ library RhinestoneModuleKitLib {
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
-            callData: abi.encodeWithSelector(
-                instance.aux.executorManager.disableExecutor.selector, previous, executor
-                )
+            callData: abi.encodeCall(instance.aux.executorManager.disableExecutor, (previous, executor))
         });
+        emit ModuleKitLogs.ModuleKit_RemoveExecutor(instance.account, executor);
         return success;
     }
 

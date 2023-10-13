@@ -43,7 +43,9 @@ library SafeHelpers {
         modules[0] = InitialModule({
             moduleAddress: address(env.rhinestoneManager),
             salt: salt,
-            initializer: abi.encodeWithSelector(IRhinestone4337.init.selector, env.validator),
+            initializer: abi.encodeCall(
+                IRhinestone4337.init, (address(env.validator), env.initialTrustedAttester)
+                ),
             requiresClone: false
         });
 

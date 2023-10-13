@@ -6,19 +6,19 @@ import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount
-} from "../src/test/utils/safe-base/RhinestoneModuleKit.sol";
+} from "../../src/test/utils/safe-base/RhinestoneModuleKit.sol";
 
-import { MockExecutor } from "../src/test/mocks/MockExecutor.sol";
+import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
-import "../src/core/IRhinestone4337.sol";
+import "../../src/core/IRhinestone4337.sol";
 
 import {
     ICondition,
     ConditionConfig,
     ComposableConditionManager
-} from "../src/core/ComposableCondition.sol";
+} from "../../src/core/ComposableCondition.sol";
 
-import "../src/common/FallbackHandler.sol";
+import "../../src/common/FallbackHandler.sol";
 import "forge-std/console2.sol";
 import "forge-std/interfaces/IERC20.sol";
 
@@ -78,7 +78,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         instance.removeExecutor(address(executor));
     }
 
-    function test_validator() public {
+    function testValidator() public {
         address newValidator = makeAddr("new validator");
         instance.addValidator(newValidator);
 
@@ -91,7 +91,7 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertFalse(enabled);
     }
 
-    function test_executor() public {
+    function testExecutor() public {
         address newExecutor = makeAddr("new Executor");
         instance.addExecutor(newExecutor);
         bool enabled = instance.aux.executorManager.isExecutorEnabled(instance.account, newExecutor);
@@ -102,15 +102,15 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertFalse(enabled);
     }
 
-    function test_setCondition() public {
+    function testSetCondition() public {
         address newExecutor = makeAddr("new Executor");
 
         instance.addExecutor(newExecutor);
 
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
         conditions[0] = ConditionConfig({
-            boundriesData: hex"1234",
-            condition: ICondition(makeAddr("condition"))
+            condition: ICondition(makeAddr("condition")),
+            conditionData: hex"1234"
         });
 
         bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);
@@ -122,11 +122,15 @@ contract ModuleKitTemplateTest is Test, RhinestoneModuleKit {
         assertEq(digest, digestOnManager);
     }
 
-    function test_addFallback() public {
+    function testAddFallback() public {
         TokenReceiver handler = new TokenReceiver();
         bytes4 selector = 0x150b7a02;
 
-        instance.addFallback(selector, address(handler));
+        instance.addFallback({
+            handleFunctionSig: selector,
+            isStatic: true,
+            handler: address(handler)
+        });
 
         bytes memory callData = abi.encodeWithSelector(
             selector, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")

@@ -2,9 +2,17 @@
 pragma solidity ^0.8.19;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import "../modulekit/IExecutor.sol";
+import {ExecutorTransaction, ExecutorAction} from "../modulekit/IExecutor.sol";
 import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC7484Registry.sol";
 
+/**
+ * @title ExecutorManager
+ * @dev Manages executors for Safe accounts, enabling/disabling and interaction.
+ * It also integrates with the ERC-7484 registry for executor verification.
+ * @dev this is a Mock contract and should not be used in Prod.
+ * @dev this contract is based on Safe's SafeProtocolManager, but its supporting ERC-7484
+ * @dev this manager works for both Safe and Biconomy
+ */
 abstract contract ExecutorManager is RegistryAdapterForSingletons {
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -13,30 +21,23 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
     mapping(address account => mapping(address executor => ExecutorAccessInfo)) public
         enabledExecutors;
 
+    /**
+     * @dev Represents access configuration for an executor linked to an account.
+     */
     struct ExecutorAccessInfo {
         bool rootAddressGranted;
         address nextExecutorPointer;
     }
 
+    /**
+     * @dev Initializes the contract with the given ERC-7484 registry.
+     * @param registry Address of the ERC-7484 registry.
+     */
     constructor(IERC7484Registry registry) RegistryAdapterForSingletons(registry) { }
 
     modifier onlyExecutor(address account) {
         bool executorEnabled = isExecutorEnabled({ account: account, executor: msg.sender });
         if (!executorEnabled) revert ExecutorNotEnabled(msg.sender);
-
-        _enforceRegistryCheck(msg.sender);
-        _;
-    }
-
-    modifier checkRegistry(address executor) {
-        _enforceRegistryCheck(executor);
-        _;
-    }
-
-    modifier onlyEnabledExecutor(address safe) {
-        if (enabledExecutors[safe][msg.sender].nextExecutorPointer == address(0)) {
-            revert ExecutorNotEnabled(msg.sender);
-        }
         _;
     }
 
@@ -47,6 +48,10 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
         _;
     }
 
+    /**
+     * @dev Sets the trusted attester for the current sender.
+     * @param attester Address of the attester.
+     */
     function setTrustedAttester(address attester) external {
         _setAttester(msg.sender, attester);
     }
@@ -62,7 +67,7 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
     )
         external
         noZeroOrSentinelExecutor(executor)
-        checkRegistry(executor)
+        onlySecureModule(executor)
     {
         ExecutorAccessInfo storage senderSentinelExecutor =
             enabledExecutors[msg.sender][SENTINEL_MODULES];
@@ -83,11 +88,12 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
 
         emit ExecutorEnabled(msg.sender, executor);
     }
-    /**
-     * @notice Disable a executor. This function should be called by Safe.
-     * @param executor Executor to be disabled
-     */
 
+    /**
+     * @notice Disables an executor for the calling Safe account.
+     * @param prevExecutor Address of the previous executor in the list.
+     * @param executor Address of the executor to be disabled.
+     */
     function disableExecutor(
         address prevExecutor,
         address executor
@@ -110,8 +116,10 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
         emit ExecutorDisabled(msg.sender, executor);
     }
     /**
-     * @notice Returns if an executor is enabled
-     * @return True if the executor is enabled
+     * @notice Checks if an executor is enabled for a specific account.
+     * @param account Address of the Safe account.
+     * @param executor Address of the executor.
+     * @return True if the executor is enabled, false otherwise.
      */
 
     function isExecutorEnabled(address account, address executor) public view returns (bool) {
@@ -119,12 +127,19 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
             && enabledExecutors[account][executor].nextExecutorPointer != address(0);
     }
 
+    /**
+     * @notice Executes multiple actions in a transaction on behalf of a Safe account.
+     * @param account Address of the Safe account.
+     * @param transaction Details of the actions to be executed.
+     * @return data bytes array containing the returned data from each action executed.
+     */
     function executeTransaction(
         address account,
         ExecutorTransaction calldata transaction
     )
         external
-        onlyExecutor(account)
+        onlyExecutor(account) // checks if executor is enabled on account
+        onlySecureModule(msg.sender) // checks registry
         returns (bytes[] memory data)
     {
         // Initialize a new array of bytes with the same length as the transaction actions

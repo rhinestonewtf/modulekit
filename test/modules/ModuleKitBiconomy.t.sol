@@ -6,12 +6,14 @@ import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount
-} from "../src/test/utils/biconomy-base/RhinestoneModuleKit.sol";
+} from "../../src/test/utils/biconomy-base/RhinestoneModuleKit.sol";
 
-import { MockExecutor } from "../src/test/mocks/MockExecutor.sol";
+import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 
 import "forge-std/console.sol";
+
+import "../../src/common/FallbackHandler.sol";
 
 contract ModuleKitTemplateBiconomyTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
@@ -67,5 +69,41 @@ contract ModuleKitTemplateBiconomyTest is Test, RhinestoneModuleKit {
         MockExecutor executor2 = new MockExecutor();
         instance.addExecutor(address(executor2));
         instance.removeExecutor(address(executor));
+    }
+
+    function test_addFallback() public {
+        instance.addExecutor(address(executor));
+        TokenReceiver handler = new TokenReceiver();
+        bytes4 selector = 0x150b7a02;
+
+        instance.addFallback({
+            handleFunctionSig: selector,
+            isStatic: true,
+            handler: address(handler)
+        });
+
+        bytes memory callData = abi.encodeWithSelector(
+            selector, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
+        );
+
+        instance.account.call(callData);
+    }
+}
+
+contract TokenReceiver is IStaticFallbackMethod {
+    function handle(
+        address account,
+        address sender,
+        uint256 value,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (bytes memory result)
+    {
+        console2.log("Handling fallback");
+        bytes4 selector = 0x150b7a02;
+        result = abi.encode(selector);
     }
 }

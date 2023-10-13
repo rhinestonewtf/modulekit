@@ -19,14 +19,15 @@ contract ChainlinkPriceCondition is ICondition, ChainlinkTokenPrice {
     function checkCondition(
         address,
         address,
-        bytes calldata boundries
+        bytes calldata conditionData,
+        bytes calldata subParams
     )
         external
         view
         override
         returns (bool)
     {
-        Params memory params = abi.decode(boundries, (Params));
+        Params memory params = abi.decode(conditionData, (Params));
 
         uint256 currentTokenPriceInUSD = getPriceInUSD(params.tokenAddr);
 

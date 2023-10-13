@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../common/erc4337/UserOperation.sol";
+import { UserOperation } from "../common/erc4337/UserOperation.sol";
 import "../common/IERC1271.sol";
 import "forge-std/interfaces/IERC165.sol";
 

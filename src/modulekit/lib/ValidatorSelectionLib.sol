@@ -6,23 +6,23 @@ import "../../common/erc4337/UserOperation.sol";
 library ValidatorSelectionLib {
     function decodeSignature(bytes calldata signature) internal returns (address validator) { }
 
-    function decodeValidator(UserOperation calldata userOps)
+    function decodeValidator(UserOperation calldata userOp)
         internal
         pure
         returns (address validator)
     {
-        bytes memory addressSplice = userOps.signature[0:20];
+        bytes memory addressSplice = userOp.signature[0:20];
         assembly {
             validator := mload(add(addressSplice, 20))
         }
     }
 
-    function decodeSignature(UserOperation calldata userOps)
+    function decodeSignature(UserOperation calldata userOp)
         internal
         pure
         returns (bytes memory signature)
     {
-        signature = userOps.signature[20:];
+        signature = userOp.signature[20:];
     }
 
     function encodeValidator(
