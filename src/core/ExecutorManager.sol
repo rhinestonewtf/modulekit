@@ -12,6 +12,10 @@ import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC74
  * @dev this is a Mock contract and should not be used in Prod.
  * @dev this contract is based on Safe's SafeProtocolManager, but its supporting ERC-7484
  * @dev this manager works for both Safe and Biconomy
+ *
+ * Based on the Safe{Core} Protocol:
+ * https://github.com/safe-global/safe-core-protocol-specs/
+ * https://github.com/safe-global/safe-core-protocol/
  */
 abstract contract ExecutorManager is RegistryAdapterForSingletons {
     using SentinelListLib for SentinelListLib.SentinelList;
@@ -56,7 +60,7 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
         _setAttester(msg.sender, attester);
     }
     /**
-     * @notice Called by a Safe to enable a executor on a Safe. To be called by a safe.
+     * @notice Called by a Smart Account to enable a executor on a Safe. To be called by a safe.
      * @param executor ISafeProtocolExecutor A executor that has to be enabled
      * @param allowRootAccess Bool indicating whether root access to be allowed.
      */
