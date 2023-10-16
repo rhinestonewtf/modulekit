@@ -21,6 +21,11 @@ struct ModuleRecord {
     bytes data; // Additional data related to the contract deployment
 }
 
+struct ResolverRecord {
+    IResolver resolver; // Optional schema resolver.
+    address schemaOwner; // The address of the account used to register the schema.
+}
+
 interface IResolver is IERC165 {
     /**
      * @dev Returns whether the resolver supports ETH transfers.
@@ -85,11 +90,6 @@ interface IResolver is IERC165 {
         external
         payable
         returns (bool);
-}
-
-struct ResolverRecord {
-    IResolver resolver; // Optional schema resolver.
-    address schemaOwner; // The address of the account used to register the schema.
 }
 
 interface IRegistry {

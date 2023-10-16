@@ -7,11 +7,10 @@ import { console } from "forge-std/console.sol";
 import {
     RegistryDeployer,
     ModuleRecord,
-    DebugResolver,
     ResolverRecord
 } from "../../../src/modulekit/deployment/RegistryDeployer.sol";
 import { MockValidator } from "../../../src/test/mocks/MockValidator.sol";
-import { REGISTRY_ADDR, RegistryCode } from "../../../src/test/utils/dependencies/Registry.sol";
+import { RegistryCode, DebugResolver } from "../../../src/test/utils/dependencies/Registry.sol";
 
 contract MockValidatorFactory {
     function deployModule(uint256 salt) public returns (address proxy) {
@@ -33,6 +32,7 @@ contract MockValidatorFactory {
 
 contract RegistryDeployerTest is Test, RegistryDeployer {
     MockValidator mockValidator;
+    DebugResolver debugResolver;
 
     function setUp() public {
         mockValidator = new MockValidator();
@@ -45,6 +45,11 @@ contract RegistryDeployerTest is Test, RegistryDeployer {
             newRegistry := create2(0, add(registryBytecode, 0x20), mload(registryBytecode), 0)
         }
         setRegistry(newRegistry);
+
+        debugResolver = new DebugResolver(newRegistry);
+
+        bytes32 _resolverUID = registerResolver(address(debugResolver));
+        setResolverUID(_resolverUID);
     }
 
     function testDeployModule() public {
@@ -106,15 +111,7 @@ contract RegistryDeployerTest is Test, RegistryDeployer {
         assertEq(_resolverUID, resolverUID);
     }
 
-    function testRegisterResolver__With__AddressZero() public {
-        bytes32 _resolverUID = registerResolver(address(0));
-        ResolverRecord memory resolver = registry.getResolver(_resolverUID);
-
-        assertEq(address(debugResolver), address(resolver.resolver));
-        assertEq(address(this), resolver.schemaOwner);
-    }
-
-    function testRegisterResolver__With__CustomResolver() public {
+    function testRegisterResolver() public {
         DebugResolver _newDebugResolver =
             new DebugResolver{salt:bytes32(keccak256("test"))}(address(registry));
         bytes32 _resolverUID = registerResolver(address(_newDebugResolver));
@@ -129,5 +126,11 @@ contract RegistryDeployerTest is Test, RegistryDeployer {
         address _registry = makeAddr("registry");
         setRegistry(_registry);
         assertEq(_registry, address(registry));
+    }
+
+    function testSetResolverUID() public {
+        bytes32 _resolverUID = bytes32(keccak256("test"));
+        setResolverUID(_resolverUID);
+        assertEq(_resolverUID, resolverUID);
     }
 }
