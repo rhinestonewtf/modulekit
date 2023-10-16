@@ -3,7 +3,7 @@ pragma solidity ^0.8.21;
 
 import "./IValidator.sol";
 
-contract ValidatorBase is IValidator {
+abstract contract ValidatorBase is IValidator {
     function isValidSignature(
         bytes32 hash,
         bytes memory signature
@@ -12,10 +12,7 @@ contract ValidatorBase is IValidator {
         view
         virtual
         override
-        returns (bytes4 magicValue)
-    {
-        return 0xffffffff;
-    }
+        returns (bytes4 magicValue);
 
     function validateUserOp(
         UserOperation calldata userOp,
@@ -24,10 +21,10 @@ contract ValidatorBase is IValidator {
         external
         virtual
         override
-        returns (uint256)
-    {
-        return VALIDATION_FAILED;
-    }
+        returns (uint256);
 
-    function supportsInterface(bytes4 interfaceID) external view virtual override returns (bool) { }
+    function supportsInterface(bytes4 interfaceID) external view virtual override returns (bool) {
+        return interfaceID == IERC1271.isValidSignature.selector
+            || interfaceID == IValidator.validateUserOp.selector;
+    }
 }
