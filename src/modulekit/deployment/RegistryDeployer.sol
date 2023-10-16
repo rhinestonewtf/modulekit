@@ -7,7 +7,6 @@ import {
     AttestationRecord,
     ModuleRecord,
     IResolver,
-    ResolverBase,
     ResolverRecord
 } from "../../test/utils/dependencies/Registry.sol";
 
