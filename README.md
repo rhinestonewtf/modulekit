@@ -1,14 +1,17 @@
 # ModuleKit
 
-The ModuleKit is a development kit for building and testing smart account modules. ModuleKit allows you to:
+**A development kit for building and testing smart account modules.**
+
+ModuleKit allows you to:
 
 - **Easily build smart account modules** with interfaces for:
   - Validators
   - Executors
-  - Recovery modules
   - Hooks
 - **Unit test** your modules using a dedicated helper library
-- **Integration test** your modules using modular ERC-4337 accounts and a helper library that abstracts away almost all the complexity
+- **Integration test** your modules using different modular ERC-4337 accounts and a helper library that abstracts away the complexity
+
+In-depth documentation is available at [docs.rhinestone.wtf](https://docs.rhinestone.wtf/modulekit/).
 
 ## Installation
 
@@ -49,30 +52,14 @@ forge update rhinestonewtf/modulekit
   - [x] Biconomy
   - [ ] Kernel
   - [ ] ERC-6900 reference implementation
-- [x] Deployment through Module Registry
+- [x] Deployment helper using Module Registry
 - [ ] Gas calculation helper
 
-## Helper utilities
+## Contributing
 
-### Building modules
+For feature or change requests, feel free to open a PR, start a discussion or get in touch with us.
 
-#### Interfaces
-
-- `ValidatorBase`: Interface for Validators to inherit from.
-- `ExecutorBase`: Interface for Executors to inherit from.
-
-#### Templates
-
-- [Validator](https://github.com/rhinestonewtf/module-template/blob/main/src/validators/ValidatorTemplate.sol): Template implementation for Validators.
-- [Executor](https://github.com/rhinestonewtf/module-template/blob/main/src/executors/ExecutorTemplate.sol): Template implementation for Executors.
-
-### Testing modules
-
-New docs coming soon
-
-## Contribute
-
-For feature or change requests, feel free to open a PR or get in touch with us.
+For guidance on how to create PRs, see the [CONTRIBUTING](./CONTRIBUTING.md) guide.
 
 ## Credits
 
