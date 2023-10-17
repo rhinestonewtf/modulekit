@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {
-    IExecutorBase,
-    ModuleExecLib,
-    IExecutorManager
-} from "../../contracts/modules/executors/IExecutorBase.sol";
+import { IExecutorBase, ModuleExecLib, IExecutorManager } from "../../modulekit/IExecutor.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 /// @author zeroknots
@@ -41,4 +37,6 @@ contract MockExecutor is IExecutorBase {
     { }
 
     function requiresRootAccess() external view override returns (bool requiresRootAccess) { }
+
+    function supportsInterface(bytes4 interfaceID) external view override returns (bool) { }
 }

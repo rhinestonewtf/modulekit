@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../../contracts/modules/executors/IExecutorBase.sol";
+import "../../modulekit/IExecutor.sol";
 
 struct DebugData {
     address account;

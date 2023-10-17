@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.17;
 
-import { UserOperation } from "@aa/interfaces/UserOperation.sol";
-import { BaseValidator } from "../../contracts/modules/validators/BaseValidator.sol";
+import "../../common/IERC1271.sol";
+import { IValidator, VALIDATION_SUCCESS, UserOperation } from "../../modulekit/IValidator.sol";
 
-contract MockValidator is BaseValidator {
+contract MockValidator is IValidator {
     /**
      * @dev validates userOperation
      * @param userOp User Operation to be validated.
@@ -30,21 +30,10 @@ contract MockValidator is BaseValidator {
         public
         view
         virtual
-        override
         returns (bytes4)
     {
-        return EIP1271_MAGIC_VALUE;
+        return ERC1271_MAGICVALUE;
     }
 
-    function recoverValidator(
-        address recoveryModule,
-        bytes calldata recoveryProof,
-        bytes calldata recoveryData
-    )
-        external
-        virtual
-        override
-    {
-        return;
-    }
+    function supportsInterface(bytes4 interfaceID) external view override returns (bool) { }
 }

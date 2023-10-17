@@ -3,15 +3,14 @@
 import { Auxiliary, AuxiliaryLib } from "../Auxiliary.sol";
 import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
 import "safe-contracts/contracts/Safe.sol";
-import { InitialModule } from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import { IBootstrap, InitialModule } from "../../../common/IBootstrap.sol";
 
-import { IRhinestone4337 } from "../../../contracts/account/IRhinestone4337.sol";
-import { IBootstrap } from "../../../contracts/auxiliary/interfaces/IBootstrap.sol";
+import { IRhinestone4337 } from "../../../core/IRhinestone4337.sol";
 
 pragma solidity ^0.8.19;
 
 library SafeHelpers {
-    function safeInitCode(RhinestoneAccount memory instance) internal returns (bytes memory) {
+    function safeInitCode(RhinestoneAccount memory instance) internal pure returns (bytes memory) {
         return abi.encodePacked(
             instance.accountFlavor.accountFactory,
             abi.encodeWithSelector(
@@ -23,14 +22,20 @@ library SafeHelpers {
         );
     }
 
-    function getSafeInitializer(Auxiliary memory env, bytes32 salt) public returns (bytes memory) {
+    function getSafeInitializer(
+        Auxiliary memory env,
+        bytes32 salt
+    )
+        public
+        pure
+        returns (bytes memory)
+    {
         // Initial owner of safe, removed by init4337Safe
         address safeOwner = address(0xdead);
 
         // Get proxy address of safe ERC4337 module
 
-        address safe4337ModuleCloneAddress =
-            AuxiliaryLib.getModuleCloneAddress(env, address(env.rhinestoneManager), salt);
+        address safe4337ModuleCloneAddress = address(env.rhinestoneManager);
 
         InitialModule[] memory modules = new InitialModule[](2);
 
@@ -38,16 +43,10 @@ library SafeHelpers {
         modules[0] = InitialModule({
             moduleAddress: address(env.rhinestoneManager),
             salt: salt,
-            initializer: abi.encodeWithSelector(
-                IRhinestone4337.initialize.selector,
-                address(0),
-                env.validator,
-                env.recovery,
-                env.registry,
-                address(0x696969696969),
-                env.rhinestoneFactory
+            initializer: abi.encodeCall(
+                IRhinestone4337.init, (address(env.validator), env.initialTrustedAttester)
                 ),
-            requiresClone: true
+            requiresClone: false
         });
 
         modules[1] = InitialModule({

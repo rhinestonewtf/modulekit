@@ -2,40 +2,42 @@
 
 pragma solidity ^0.8.19;
 
-import { EntryPoint } from "@aa/core/EntryPoint.sol";
-import "../../contracts/account/IRhinestone4337.sol";
-import { ExecutorManager } from "../../contracts/account/core/ExecutorManagerSingleton.sol";
-import "../../contracts/auxiliary/interfaces/IBootstrap.sol";
-import "../../contracts/safe/Bootstrap.sol";
-import "../../contracts/auxiliary/interfaces/IProtocolFactory.sol";
-import "../../contracts/auxiliary/interfaces/IRegistry.sol";
-import "../../contracts/modules/validators//IValidatorModule.sol";
-import "../../contracts/modules/recovery/IRecoveryModule.sol";
+import "./dependencies/EntryPoint.sol";
+import { IRhinestone4337, UserOperation } from "../../core/IRhinestone4337.sol";
+import { ExecutorManager } from "../../core/ExecutorManager.sol";
+import { IBootstrap } from "../../common/IBootstrap.sol";
+import { Bootstrap } from "./safe-base/BootstrapSafe.sol";
+import { IProtocolFactory } from "../../common/IRhinestoneProtocol.sol";
+import { IERC7484Registry } from "../../common/IERC7484Registry.sol";
+import { IValidator } from "../../modulekit/IValidator.sol";
 
 import { MockValidator } from "../mocks/MockValidator.sol";
-import { MockRecovery } from "../mocks/MockRecovery.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
+import { ComposableConditionManager } from "../../core/ComposableCondition.sol";
+
+import "./Vm.sol";
 
 struct Auxiliary {
-    EntryPoint entrypoint;
+    IEntryPoint entrypoint;
     IRhinestone4337 rhinestoneManager;
     ExecutorManager executorManager;
+    ComposableConditionManager compConditionManager;
     IBootstrap rhinestoneBootstrap;
     IProtocolFactory rhinestoneFactory;
-    IValidatorModule validator;
-    IRecoveryModule recovery;
-    IRegistry registry;
+    IValidator validator;
+    IERC7484Registry registry;
+    address initialTrustedAttester;
 }
 
 contract AuxiliaryFactory {
-    EntryPoint internal entrypoint;
+    IEntryPoint internal entrypoint;
 
     MockValidator internal mockValidator;
-    MockRecovery internal mockRecovery;
-    MockRegistry internal mockRegistry;
+    IERC7484Registry internal mockRegistry;
     MockProtocol internal mockRhinestoneFactory;
     ExecutorManager internal executorManager;
+    ComposableConditionManager internal compConditionManager;
 
     Bootstrap internal bootstrap;
 
@@ -43,17 +45,25 @@ contract AuxiliaryFactory {
 
     function init() internal virtual {
         defaultAttester = address(0x4242424242);
+        label(defaultAttester, "defaultAttester");
         bootstrap = new Bootstrap();
+        label(address(bootstrap), "bootstrap");
 
-        entrypoint = new EntryPoint();
+        entrypoint = etchEntrypoint();
+        label(address(entrypoint), "entrypoint");
         mockValidator = new MockValidator();
-        mockRecovery = new MockRecovery();
-        mockRegistry = new MockRegistry();
+        label(address(mockValidator), "mockValidator");
+        mockRegistry = IERC7484Registry(address(new MockRegistry()));
+        label(address(mockRegistry), "mockRegistry");
         mockRhinestoneFactory = new MockProtocol();
+        label(address(mockRhinestoneFactory), "mockRhinestoneFactory");
+
+        compConditionManager = new ComposableConditionManager();
+        label(address(compConditionManager), "compConditionManager");
     }
 
     function makeAuxiliary(
-        IRhinestone4337 _rhinestoneManger,
+        address _rhinestoneManager,
         IBootstrap _bootstrap
     )
         internal
@@ -62,13 +72,14 @@ contract AuxiliaryFactory {
     {
         aux = Auxiliary({
             entrypoint: entrypoint,
-            rhinestoneManager: _rhinestoneManger,
+            rhinestoneManager: IRhinestone4337(_rhinestoneManager),
             executorManager: executorManager,
+            compConditionManager: compConditionManager,
             rhinestoneBootstrap: _bootstrap,
-            rhinestoneFactory: mockRhinestoneFactory,
+            rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,
-            recovery: mockRecovery,
-            registry: mockRegistry
+            registry: mockRegistry,
+            initialTrustedAttester: defaultAttester
         });
     }
 }
