@@ -37,6 +37,10 @@ To update the ModuleKit, run:
 forge update rhinestonewtf/modulekit
 ```
 
+## Usage
+
+To learn more about using ModuleKit, visit the [features section](/modulekit/libraries) of the docs. To get a better understanding of Modules generally, visit the [modules section](/modulekit/modules) and for hands-on tutorials on the entire lifecycle of modules, visit the [tutorials section](/tutorials).
+
 ## Features
 
 - [ ] ERC-4337 integration tests
@@ -54,6 +58,10 @@ forge update rhinestonewtf/modulekit
   - [ ] ERC-6900 reference implementation
 - [x] Deployment helper using Module Registry
 - [ ] Gas calculation helper
+
+## Examples
+
+For module examples, check out our [modulekit examples repo](https://github.com/rhinestonewtf/modulekit-examples) and for module inspiration see our [module idea list](https://rhinestone.notion.site/Module-ideas-for-product-inspo-338100a2c99540f490472b8aa839da11). For general examples, check out the [awesome modular accounts repo](https://github.com/rhinestonewtf/awesome-modular-accounts).
 
 ## Contributing
 
