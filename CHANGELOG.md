@@ -7,7 +7,7 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
 
-## [0.2.0] - 16-10-2023
+## [0.2.0] - 17-10-2023
 
 ### Changed
 
@@ -19,6 +19,7 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 - Biconomy account integration test helper
 - Conditional Execution Manager
 - DeFi integrations and actions
+- Fallback handler
 
 ### Removed
 
