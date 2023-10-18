@@ -25,6 +25,17 @@ contract MockExecutor is IExecutorBase {
         });
     }
 
+    function execCalldata(
+        IExecutorManager manager,
+        address account,
+        address target,
+        bytes calldata callData
+    )
+        external
+    {
+        manager.exec({ account: account, target: target, callData: callData });
+    }
+
     function name() external view override returns (string memory name) { }
 
     function version() external view override returns (string memory version) { }
