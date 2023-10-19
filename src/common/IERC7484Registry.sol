@@ -31,6 +31,10 @@ abstract contract RegistryAdapterForSingletons {
         _;
     }
 
+    function getAttester(address account) public view virtual returns (address attester) {
+        attester = trustedAttester[account];
+    }
+
     function _setAttester(address account, address attester) internal {
         trustedAttester[account] = attester;
         emit TrustedAttesterSet(account, attester);

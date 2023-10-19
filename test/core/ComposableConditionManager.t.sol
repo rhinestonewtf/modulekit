@@ -9,6 +9,7 @@ import {
     ICondition
 } from "../../src/core/ComposableCondition.sol";
 import { MockCondition } from "../../src/test/mocks/MockCondition.sol";
+import { MockRegistry } from "../../src/test/mocks/MockRegistry.sol";
 
 contract MockInvalidCondition is ICondition {
     function checkCondition(
@@ -29,9 +30,11 @@ contract ComposableConditionManagerTest is Test {
     ComposableConditionManager conditionManager;
     MockCondition mockCondition;
     MockInvalidCondition mockInvalidCondition;
+    MockRegistry registry;
 
     function setUp() public {
-        conditionManager = new ComposableConditionManager();
+        registry = new MockRegistry();
+        conditionManager = new ComposableConditionManager(registry);
         mockCondition = new MockCondition();
         mockInvalidCondition = new MockInvalidCondition();
     }
