@@ -29,7 +29,7 @@ abstract contract ConditionalExecutor is ExecutorBase {
      * @param account The address against which the conditions are checked.
      * @param conditions Array of conditions to be checked.
      */
-    modifier onlyIfConditionsMet(address account, ConditionConfig[] calldata conditions) {
+    modifier onlyIfConditionsMet(address account, ConditionConfig[] calldata conditions) virtual {
         _checkConditions(account, conditions);
         _;
     }

@@ -58,7 +58,7 @@ contract AuxiliaryFactory {
         mockRhinestoneFactory = new MockProtocol();
         label(address(mockRhinestoneFactory), "mockRhinestoneFactory");
 
-        compConditionManager = new ComposableConditionManager();
+        compConditionManager = new ComposableConditionManager(mockRegistry);
         label(address(compConditionManager), "compConditionManager");
     }
 

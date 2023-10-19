@@ -15,10 +15,6 @@ contract AdapterInstance is RegistryAdapterForSingletons {
         _setAttester(account, attester);
     }
 
-    function getAttester(address account) public view returns (address) {
-        return trustedAttester[account];
-    }
-
     function enforceRegistryCheck(address executorImpl) public view {
         _enforceRegistryCheck(executorImpl);
     }
