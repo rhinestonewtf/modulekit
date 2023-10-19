@@ -2,9 +2,6 @@
 pragma solidity ^0.8.19;
 
 import { ICondition } from "../IExecutor.sol";
-import "./helpers/ChainlinkTokenPrice.sol";
-
-import "forge-std/console2.sol";
 
 contract ScheduleCondition is ICondition, ChainlinkTokenPrice {
     struct Params {
@@ -12,7 +9,7 @@ contract ScheduleCondition is ICondition, ChainlinkTokenPrice {
     }
 
     struct Schedule {
-        uint48 lastExecuted;
+        uint256 lastExecuted;
     }
 
     mapping(address executor => mapping(address account => Schedule)) _schedules;
@@ -45,9 +42,8 @@ contract ScheduleCondition is ICondition, ChainlinkTokenPrice {
         returns (bool isDue)
     {
         uint256 lastExecuted = scheduleForAccount.lastExecuted;
-        console2.log("last exec:", lastExecuted);
         if (lastExecuted == 0) return true;
-        if (lastExecuted > uint48(block.timestamp + params.triggerEveryHours)) {
+        if (lastExecuted > (block.timestamp + params.triggerEveryHours)) {
             isDue = true;
             return isDue;
         }
