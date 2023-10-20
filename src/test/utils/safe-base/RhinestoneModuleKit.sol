@@ -151,6 +151,27 @@ library RhinestoneModuleKitLib {
         address target,
         uint256 value,
         bytes memory callData,
+        bytes memory signature
+    )
+        internal
+        returns (bool, bytes memory)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
+
+        if (signature.length == 0) {
+            // TODO: generate default signature
+            signature = bytes("");
+        }
+        return exec4337(instance, data, signature);
+    }
+
+    /// @dev added method to allow for delegatecall operation
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
         uint8 operation, // {0: Call, 1: DelegateCall}
         bytes memory signature
     )
@@ -354,6 +375,26 @@ library RhinestoneModuleKitLib {
         );
     }
 
+    function getUserOpHash(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (bytes32)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
+        bytes memory initCode =
+            isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+
+        return userOpHash;
+    }
+
+    /// @dev added method to allow for delegatecall operation
     function getUserOpHash(
         RhinestoneAccount memory instance,
         address target,
