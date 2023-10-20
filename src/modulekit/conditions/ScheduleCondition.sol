@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { ICondition } from "../IExecutor.sol";
+import { ChainlinkTokenPrice } from "./helpers/ChainlinkTokenPrice.sol";
 
 contract ScheduleCondition is ICondition, ChainlinkTokenPrice {
     struct Params {
