@@ -206,6 +206,17 @@ library RhinestoneModuleKitLib {
         return success;
     }
 
+    function setExecutorHook(RhinestoneAccount memory instance, address hook) internal returns (bool) {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.aux.executorManager),
+            value: 0,
+            callData: abi.encodeCall(instance.aux.executorManager.setHook, hook)
+        });
+
+        return success;
+    }
+
     function addExecutor(
         RhinestoneAccount memory instance,
         address executor

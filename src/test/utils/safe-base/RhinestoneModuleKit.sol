@@ -264,7 +264,7 @@ library RhinestoneModuleKitLib {
         return success;
     }
 
-    function addHook(RhinestoneAccount memory instance, address hook) internal returns (bool) {
+    function setExecutorHook(RhinestoneAccount memory instance, address hook) internal returns (bool) {
         (bool success, bytes memory data) = exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),

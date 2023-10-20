@@ -204,7 +204,7 @@ contract HookManagerTest is Test, RhinestoneModuleKit {
 
     function testHookExecution() public {
         instance.addExecutor(address(executor));
-        instance.addHook(address(multiHookManager));
+        instance.setExecutorHook(address(multiHookManager));
 
         executor.execCalldata(
             IExecutorManager(address(instance.aux.executorManager)),
