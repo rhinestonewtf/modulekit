@@ -14,7 +14,13 @@ import { IValidator } from "../../modulekit/interfaces/IValidator.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
+import { MockCondition } from "../mocks/MockCondition.sol";
 import { ComposableConditionManager } from "../../core/ComposableCondition.sol";
+
+import { ChainlinkPriceCondition } from "../../modulekit/conditions/ChainlinkPriceCondition.sol";
+import { GasPriceCondition } from "../../modulekit/conditions/GasPriceCondition.sol";
+import { ScheduleCondition } from "../../modulekit/conditions/ScheduleCondition.sol";
+import { SignatureCondition } from "../../modulekit/conditions/SignatureCondition.sol";
 
 import "./Vm.sol";
 
@@ -28,6 +34,15 @@ struct Auxiliary {
     IValidator validator;
     IERC7484Registry registry;
     address initialTrustedAttester;
+    Conditions conditions;
+}
+
+struct Conditions {
+    ChainlinkPriceCondition priceCondition;
+    GasPriceCondition gasPriceCondition;
+    ScheduleCondition scheduleCondition;
+    SignatureCondition signatureCondition;
+    MockCondition mockCondition;
 }
 
 contract AuxiliaryFactory {
@@ -39,11 +54,21 @@ contract AuxiliaryFactory {
     ExecutorManager internal executorManager;
     ComposableConditionManager internal compConditionManager;
 
+    Conditions internal conditions;
+
     Bootstrap internal bootstrap;
 
     address defaultAttester;
 
     function init() internal virtual {
+        conditions = Conditions({
+            priceCondition: new ChainlinkPriceCondition(),
+            gasPriceCondition: new GasPriceCondition(),
+            scheduleCondition: new ScheduleCondition(),
+            signatureCondition: new SignatureCondition(),
+            mockCondition: new MockCondition()
+        });
+
         defaultAttester = address(0x4242424242);
         label(defaultAttester, "defaultAttester");
         bootstrap = new Bootstrap();
@@ -79,7 +104,8 @@ contract AuxiliaryFactory {
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,
             registry: mockRegistry,
-            initialTrustedAttester: defaultAttester
+            initialTrustedAttester: defaultAttester,
+            conditions: conditions
         });
     }
 }

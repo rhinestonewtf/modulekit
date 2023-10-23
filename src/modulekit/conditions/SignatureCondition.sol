@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import { ICondition } from "../interfaces/IExecutor.sol";
 import { IERC1271, ERC1271_MAGICVALUE } from "../../common/IERC1271.sol";
 
-contract SignatureCondtion is ICondition {
+contract SignatureCondition is ICondition {
     struct Params {
         bytes32 hash;
         bytes signature;
