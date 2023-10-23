@@ -12,12 +12,14 @@ import { MockERC721 } from "solmate/test/utils/mocks/MockERC721.sol";
 import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
 
 import {
-    IExecutorBase, ModuleExecLib, IExecutorManager
-} from "../../src/modulekit/ExecutorBase.sol";
+    IExecutorBase,
+    ModuleExecLib,
+    IExecutorManager
+} from "../../src/modulekit/interfaces/IExecutor.sol";
 
 import "forge-std/interfaces/IERC721.sol";
 
-import "../../src/modulekit/MultiHookManager.sol";
+import "../../src/core/MultiHookManager.sol";
 
 /// @title HookManagerTest
 /// @author zeroknots

@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "../helpers/MainnetAddresses.sol";
 import "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import "../../ERC20Actions.sol";
-import "../../../IExecutor.sol";
+import "../../../interfaces/IExecutor.sol";
 
 /// @author zeroknots
 

@@ -3,7 +3,7 @@ pragma solidity ^0.8.21;
 
 import "../../../src/modulekit/ConditionalExecutorBase.sol";
 import "../../../src/modulekit/integrations/ERC20Actions.sol";
-import { ModuleExecLib } from "../../../src/modulekit/IExecutor.sol";
+import { ModuleExecLib } from "../../../src/modulekit/interfaces/IExecutor.sol";
 import "../../../src/modulekit/conditions/ScheduleCondition.sol";
 import "../../../src/core/ComposableCondition.sol";
 

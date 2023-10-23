@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { ICondition } from "../..//modulekit/IExecutor.sol";
+import { ICondition } from "../../modulekit/interfaces/IExecutor.sol";
 
 contract MockCondition is ICondition {
     function checkCondition(

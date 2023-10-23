@@ -5,7 +5,7 @@ import { IERC7484Registry, RegistryAdapterForSingletons } from "../common/IERC74
 import "../common/IERC1271.sol";
 import { UserOperation } from "../common/erc4337/UserOperation.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import { IValidator } from "../modulekit/IValidator.sol";
+import { IValidator } from "../modulekit/interfaces/IValidator.sol";
 import "../common/ERC2771Context.sol";
 import "../modulekit/lib/ValidatorSelectionLib.sol";
 import "../common/FallbackHandler.sol";

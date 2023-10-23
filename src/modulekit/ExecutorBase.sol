@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import "./IExecutor.sol";
+import { IExecutorBase } from "./interfaces/IExecutor.sol";
 
 abstract contract ExecutorBase is IExecutorBase {
     function name() external view virtual returns (string memory name);

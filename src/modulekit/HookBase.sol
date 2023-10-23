@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { IHook, ExecutorTransaction } from "./IHook.sol";
+import { IHook, ExecutorTransaction } from "./interfaces/IHook.sol";
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
 
 abstract contract HookBase is IHook, IERC165 {

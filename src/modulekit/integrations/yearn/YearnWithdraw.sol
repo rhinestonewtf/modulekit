@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "../interfaces/yearn/IYVault.sol";
+import "../../interfaces/IExecutor.sol";
 import "../ERC20Actions.sol";
-import "../../IExecutor.sol";
 
 /// @title YearnWithdraw
 /// @author zeroknots

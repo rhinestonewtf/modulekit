@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { ICondition } from "../IExecutor.sol";
+import { ICondition } from "../interfaces/IExecutor.sol";
 
 contract GasPriceCondition is ICondition {
     struct ConditionParams {
