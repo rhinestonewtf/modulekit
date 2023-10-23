@@ -2,7 +2,11 @@
 pragma solidity >=0.8.17;
 
 import "../../common/IERC1271.sol";
-import { IValidator, VALIDATION_SUCCESS, UserOperation } from "../../modulekit/IValidator.sol";
+import {
+    IValidator,
+    VALIDATION_SUCCESS,
+    UserOperation
+} from "../../modulekit/interfaces/IValidator.sol";
 
 contract MockValidator is IValidator {
     /**

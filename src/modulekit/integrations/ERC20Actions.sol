@@ -2,7 +2,7 @@
 pragma solidity ^0.8.18;
 
 import "forge-std/interfaces/IERC20.sol";
-import "../IExecutor.sol";
+import "../interfaces/IExecutor.sol";
 import "./interfaces/IWETH.sol";
 
 library ERC20ModuleKit {

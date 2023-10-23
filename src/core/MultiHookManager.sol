@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "./IExecutor.sol";
-import "./IHook.sol";
+import "../modulekit/interfaces/IExecutor.sol";
+import "../modulekit/interfaces/IHook.sol";
 
 contract MultiHookManager is IHook {
     using EnumerableSet for EnumerableSet.AddressSet;

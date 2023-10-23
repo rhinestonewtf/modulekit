@@ -9,7 +9,7 @@ import { IBootstrap } from "../../common/IBootstrap.sol";
 import { Bootstrap } from "./safe-base/BootstrapSafe.sol";
 import { IProtocolFactory } from "../../common/IRhinestoneProtocol.sol";
 import { IERC7484Registry } from "../../common/IERC7484Registry.sol";
-import { IValidator } from "../../modulekit/IValidator.sol";
+import { IValidator } from "../../modulekit/interfaces/IValidator.sol";
 
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";

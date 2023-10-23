@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { ICondition } from "../IExecutor.sol";
+import { ICondition } from "../interfaces/IExecutor.sol";
 import { IERC1271, ERC1271_MAGICVALUE } from "../../common/IERC1271.sol";
 
 contract SignatureCondtion is ICondition {

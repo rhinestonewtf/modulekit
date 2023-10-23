@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import "../common/IERC1271.sol";
-import { ICondition } from "../modulekit/IExecutor.sol";
+import { ICondition } from "../modulekit/interfaces/IExecutor.sol";
 import { IERC7484Registry, RegistryAdapterForSingletons } from "../common/IERC7484Registry.sol";
 
 /**
