@@ -201,22 +201,22 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         return abi.encodePacked(bytes1(0x19), bytes1(0x01), domainSeparator(), safeOperationHash);
     }
 
-    function _validateSignatures(UserOperation calldata userOp, bytes32 userOpHash) internal {
-        // get operation target from userOp
-        // (, address target,,,,) =
-        //     abi.decode(userOp.callData[4:], (address, address, uint256, bytes, uint8, uint256));
-
-        // get validators for target
-        address validator;
-        uint256 sigLength = userOp.signature.length;
-
-        if (sigLength == 0) return;
-        else validator = userOp.decodeValidator();
+    function _validateSignatures(UserOperation memory userOp, bytes32 userOpHash) internal {
+        bytes calldata userOpSignature;
+        uint256 userOpEndOffset;
+        assembly {
+            userOpEndOffset := add(calldataload(0x04), 0x24)
+            userOpSignature.offset :=
+                add(calldataload(add(userOpEndOffset, 0x120)), userOpEndOffset)
+            userOpSignature.length := calldataload(sub(userOpSignature.offset, 0x20))
+        }
+        address validationModule = address(uint160(bytes20(userOpSignature[0:20])));
+        userOp.signature = userOpSignature[20:];
 
         // check if selected validator is enabled
-        require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
+        require(isValidatorEnabled(userOp.sender, validationModule), "Validator not enabled");
 
-        uint256 ret = IValidator(validator).validateUserOp(userOp, userOpHash);
+        uint256 ret = IValidator(validationModule).validateUserOp(userOp, userOpHash);
         require(ret == 0, "Invalid signature");
     }
 
