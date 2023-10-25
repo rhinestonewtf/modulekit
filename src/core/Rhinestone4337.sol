@@ -144,15 +144,10 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
             userOpSignature.length := calldataload(sub(userOpSignature.offset, 0x20))
         }
 
-        console2.logBytes(userOp.signature);
-        console2.logBytes(userOpSignature);
-
         address validationModule = address(uint160(bytes20(userOpSignature[0:20])));
         userOp.signature = userOpSignature[20:];
 
         address payable safeAddress = payable(userOp.sender);
-
-        console2.log("userOp.sender: %s", userOp.sender);
 
         // The entryPoint address is appended to the calldata in `HandlerContext` contract
         // Because of this, the relayer may be manipulate the entryPoint address, therefore we have to verify that
@@ -164,8 +159,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         address entryPoint = _msgSender();
         // enforce that only trusted entrypoint can be used
         require(entryPoint == supportedEntryPoint, "Unsupported entry point");
-
-        console2.log("entryPoint: %s", entryPoint);
 
         // check if selected validator is enabled
         require(isValidatorEnabled(userOp.sender, validationModule), "Validator not enabled");
@@ -220,27 +213,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         );
 
         return abi.encodePacked(bytes1(0x19), bytes1(0x01), domainSeparator(), safeOperationHash);
-    }
-
-    function _validateSignatures(UserOperation memory userOp, bytes32 userOpHash) internal {
-        bytes calldata userOpSignature;
-        uint256 userOpEndOffset;
-
-        // use assembly trick to get the signature from the calldata. Thanks to Taek @ ZeroDev for this one!
-        assembly {
-            userOpEndOffset := add(calldataload(0x04), 0x24)
-            userOpSignature.offset :=
-                add(calldataload(add(userOpEndOffset, 0x120)), userOpEndOffset)
-            userOpSignature.length := calldataload(sub(userOpSignature.offset, 0x20))
-        }
-        address validationModule = address(uint160(bytes20(userOpSignature[0:20])));
-        userOp.signature = userOpSignature[20:];
-
-        // check if selected validator is enabled
-        require(isValidatorEnabled(userOp.sender, validationModule), "Validator not enabled");
-
-        uint256 ret = IValidator(validationModule).validateUserOp(userOp, userOpHash);
-        require(ret == 0, "Invalid signature");
     }
 
     function checkAndExecTransactionFromModule(
