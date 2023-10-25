@@ -10,6 +10,7 @@ import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
 import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
 import { SafeExecutorManager } from "./SafeExecutorManager.sol";
 import { ConditionConfig } from "../../../core/ComposableCondition.sol";
+import { Rhinestone4337Signature } from "../../../core/Rhinestone4337.sol";
 import {
     Auxiliary,
     IRhinestone4337,
@@ -160,8 +161,11 @@ library RhinestoneModuleKitLib {
             ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
 
         if (signature.length == 0) {
-            // TODO: generate default signature
-            signature = bytes("");
+            signature = bytes(hex"414141414141414141414141414141414141414141414141414141414141");
+            signature = Rhinestone4337Signature.encode({
+                signature: signature,
+                validationModule: address(instance.aux.validator)
+            });
         }
         return exec4337(instance, data, signature);
     }
@@ -182,8 +186,11 @@ library RhinestoneModuleKitLib {
             ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
 
         if (signature.length == 0) {
-            // TODO: generate default signature
-            signature = bytes("");
+            signature = bytes(hex"414141414141414141414141414141414141414141414141414141414141");
+            signature = Rhinestone4337Signature.encode({
+                signature: signature,
+                validationModule: address(instance.aux.validator)
+            });
         }
         return exec4337(instance, data, signature);
     }
