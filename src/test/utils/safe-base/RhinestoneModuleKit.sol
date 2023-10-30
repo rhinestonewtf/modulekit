@@ -5,6 +5,7 @@ import { SafeProxy } from "safe-contracts/contracts/proxies/SafeProxy.sol";
 import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
+import "murky/src/Merkle.sol";
 import { ISafe } from "../../../common/ISafe.sol";
 import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
 import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
@@ -241,6 +242,7 @@ library RhinestoneModuleKitLib {
         bytes memory sessionKeyData
     )
         internal
+        returns (bytes32 root, bytes32[] memory proof)
     {
         if (
             !instance.rhinestoneManager.isValidatorEnabled(
@@ -250,12 +252,27 @@ library RhinestoneModuleKitLib {
             addValidator(instance, address(instance.aux.sessionKeyManager));
         }
 
+        Merkle m = new Merkle();
+
         bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
             validUntil: validUntil,
             validAfter: validAfter,
             sessionValidationModule: sessionValidationModule,
             sessionKeyData: sessionKeyData
         });
+
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = "asdf";
+        leaves[1] = leaf;
+
+        root = m.getRoot(leaves);
+        proof = m.getProof(leaves, 1);
+
+        exec4337(
+            instance,
+            address(instance.aux.sessionKeyManager),
+            abi.encodeCall(instance.aux.sessionKeyManager.setMerkleRoot, (root))
+        );
     }
 
     function addValidator(

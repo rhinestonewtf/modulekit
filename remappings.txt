@@ -1,5 +1,6 @@
 account-abstraction/=lib/account-abstraction/contracts/
 solady/=lib/solady/src/
+murky/=lib/murky/
 solmate/=lib/solmate/src/
 @aa/=lib/account-abstraction/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
