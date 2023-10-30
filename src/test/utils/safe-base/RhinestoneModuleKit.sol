@@ -233,6 +233,31 @@ library RhinestoneModuleKitLib {
         return success;
     }
 
+    function addSessionKey(
+        RhinestoneAccount memory instance,
+        uint256 validUntil,
+        uint256 validAfter,
+        address sessionValidationModule,
+        bytes memory sessionKeyData
+    )
+        internal
+    {
+        if (
+            !instance.rhinestoneManager.isValidatorEnabled(
+                instance.account, address(instance.aux.sessionKeyManager)
+            )
+        ) {
+            addValidator(instance, address(instance.aux.sessionKeyManager));
+        }
+
+        bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionValidationModule,
+            sessionKeyData: sessionKeyData
+        });
+    }
+
     function addValidator(
         RhinestoneAccount memory instance,
         address validator
