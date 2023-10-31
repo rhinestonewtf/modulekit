@@ -25,3 +25,6 @@
 [submodule "lib/kernel"]
 	path = lib/kernel
 	url = https://github.com/zerodevapp/kernel
+[submodule "lib/account-abstraction"]
+	path = lib/account-abstraction
+	url = https://github.com/eth-infinitism/account-abstraction
