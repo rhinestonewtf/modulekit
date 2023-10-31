@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import "./dependencies/EntryPoint.sol";
 import { IRhinestone4337, UserOperation } from "../../core/IRhinestone4337.sol";
 import { ExecutorManager } from "../../core/ExecutorManager.sol";
+import { SessionKeyManager } from "../../core/SessionKeyManager.sol";
 import { IBootstrap } from "../../common/IBootstrap.sol";
 import { Bootstrap } from "./safe-base/BootstrapSafe.sol";
 import { IProtocolFactory } from "../../common/IRhinestoneProtocol.sol";
@@ -29,6 +30,7 @@ struct Auxiliary {
     IRhinestone4337 rhinestoneManager;
     ExecutorManager executorManager;
     ComposableConditionManager compConditionManager;
+    SessionKeyManager sessionKeyManager;
     IBootstrap rhinestoneBootstrap;
     IProtocolFactory rhinestoneFactory;
     IValidator validator;
@@ -57,6 +59,7 @@ contract AuxiliaryFactory {
     Conditions internal conditions;
 
     Bootstrap internal bootstrap;
+    SessionKeyManager internal sessionKeyManager;
 
     address defaultAttester;
 
@@ -85,6 +88,9 @@ contract AuxiliaryFactory {
 
         compConditionManager = new ComposableConditionManager(mockRegistry);
         label(address(compConditionManager), "compConditionManager");
+
+        sessionKeyManager = new SessionKeyManager();
+        label(address(sessionKeyManager), "sessionKeyManager");
     }
 
     function makeAuxiliary(
@@ -100,6 +106,7 @@ contract AuxiliaryFactory {
             rhinestoneManager: IRhinestone4337(_rhinestoneManager),
             executorManager: executorManager,
             compConditionManager: compConditionManager,
+            sessionKeyManager: sessionKeyManager,
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,
