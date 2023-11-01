@@ -128,13 +128,25 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
      * @param requiredPrefund - Prefund required to execute the operation.
      */
     function validateUserOp(
-        UserOperation calldata userOp,
+        UserOperation memory userOp,
         bytes32 userOpHash,
         uint256 requiredPrefund
     )
         external
         returns (uint256)
     {
+        bytes calldata userOpSignature;
+        uint256 userOpEndOffset;
+        assembly {
+            userOpEndOffset := add(calldataload(0x04), 0x24)
+            userOpSignature.offset :=
+                add(calldataload(add(userOpEndOffset, 0x120)), userOpEndOffset)
+            userOpSignature.length := calldataload(sub(userOpSignature.offset, 0x20))
+        }
+
+        address validationModule = address(uint160(bytes20(userOpSignature[0:20])));
+        userOp.signature = userOpSignature[20:];
+
         address payable safeAddress = payable(userOp.sender);
 
         // The entryPoint address is appended to the calldata in `HandlerContext` contract
@@ -148,8 +160,10 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         // enforce that only trusted entrypoint can be used
         require(entryPoint == supportedEntryPoint, "Unsupported entry point");
 
-        // TODO verify return
-        _validateSignatures(userOp, userOpHash);
+        // check if selected validator is enabled
+        require(isValidatorEnabled(userOp.sender, validationModule), "Validator not enabled");
+        uint256 ret = IValidator(validationModule).validateUserOp(userOp, userOpHash);
+        require(ret == 0, "Invalid signature");
 
         if (requiredPrefund != 0) {
             _prefundEntrypoint(safeAddress, entryPoint, requiredPrefund);
@@ -199,25 +213,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         );
 
         return abi.encodePacked(bytes1(0x19), bytes1(0x01), domainSeparator(), safeOperationHash);
-    }
-
-    function _validateSignatures(UserOperation calldata userOp, bytes32 userOpHash) internal {
-        // get operation target from userOp
-        // (, address target,,,,) =
-        //     abi.decode(userOp.callData[4:], (address, address, uint256, bytes, uint8, uint256));
-
-        // get validators for target
-        address validator;
-        uint256 sigLength = userOp.signature.length;
-
-        if (sigLength == 0) return;
-        else validator = userOp.decodeValidator();
-
-        // check if selected validator is enabled
-        require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
-
-        uint256 ret = IValidator(validator).validateUserOp(userOp, userOpHash);
-        require(ret == 0, "Invalid signature");
     }
 
     function checkAndExecTransactionFromModule(
@@ -286,4 +281,17 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         internal
         virtual
         returns (bool, bytes memory);
+}
+
+library Rhinestone4337Signature {
+    function encode(
+        bytes memory signature,
+        address validationModule
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(validationModule, signature);
+    }
 }
