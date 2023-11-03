@@ -2,7 +2,8 @@
 pragma solidity ^0.8.21;
 
 import "../common/IERC1271.sol";
-import { ICondition } from "../modulekit/IExecutor.sol";
+import { ICondition } from "../modulekit/interfaces/IExecutor.sol";
+import { IERC7484Registry, RegistryAdapterForSingletons } from "../common/IERC7484Registry.sol";
 
 /**
  * @dev Represents a single condition configuration. It captures the boundary data and associated condition logic.
@@ -20,7 +21,9 @@ struct ConditionConfig {
  * Conditions are stored as a hash, and checks are made against the stored hash for an account and executor.
  * This allows for modular and composable conditions to be used in a flexible manner.
  */
-contract ComposableConditionManager {
+contract ComposableConditionManager is RegistryAdapterForSingletons {
+    // storing the hash of conditions for a given account and executor.
+    // This allows for modular and composable conditions to be used in a flexible manner and saves gas
     mapping(address account => mapping(address executor => bytes32 conditionHash)) private
         _conditions;
 
@@ -28,6 +31,12 @@ contract ComposableConditionManager {
     error ConditionNotMet(address account, address executor, ICondition condition);
 
     event ConditionHashSet(address indexed account, address indexed executor, bytes32 hash);
+
+    constructor(IERC7484Registry registry) RegistryAdapterForSingletons(registry) { }
+
+    function setAttester(address attester) external {
+        _setAttester(msg.sender, attester);
+    }
 
     /**
      * @dev Checks if all conditions for a given account are met. This involves confirming that the conditions hash matches the stored hash
@@ -96,6 +105,7 @@ contract ComposableConditionManager {
             revert InvalidConditionsProvided(bytes32(0));
         }
         bytes32 hash = _conditionDigest(conditions);
+        // verify that conditions provided by executor are in fact the user's conditions
         if (validHash != hash) revert InvalidConditionsProvided(hash);
 
         for (uint256 i; i < length; i++) {
@@ -133,6 +143,16 @@ contract ComposableConditionManager {
      * @param conditions Array of `ConditionConfig` which represent the conditions being set.
      */
     function setHash(address executor, ConditionConfig[] calldata conditions) external {
+        address trustedAttester = getAttester(msg.sender);
+        // if the user has an attester, make sure that the conditions are in the registry
+        if (trustedAttester != address(0)) {
+            uint256 length = conditions.length;
+            for (uint256 i; i < length; i++) {
+                ConditionConfig calldata condition = conditions[i];
+                _enforceRegistryCheck(address(condition.condition));
+            }
+        }
+
         _conditions[msg.sender][executor] = _conditionDigest(conditions);
         emit ConditionHashSet(msg.sender, executor, _conditions[msg.sender][executor]);
     }

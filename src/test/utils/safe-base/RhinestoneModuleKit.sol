@@ -5,6 +5,7 @@ import { SafeProxy } from "safe-contracts/contracts/proxies/SafeProxy.sol";
 import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
+import "murky/src/Merkle.sol";
 import { ISafe } from "../../../common/ISafe.sol";
 import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
 import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
@@ -151,6 +152,27 @@ library RhinestoneModuleKitLib {
         address target,
         uint256 value,
         bytes memory callData,
+        bytes memory signature
+    )
+        internal
+        returns (bool, bytes memory)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
+
+        if (signature.length == 0) {
+            // TODO: generate default signature
+            signature = bytes("");
+        }
+        return exec4337(instance, data, signature);
+    }
+
+    /// @dev added method to allow for delegatecall operation
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
         uint8 operation, // {0: Call, 1: DelegateCall}
         bytes memory signature
     )
@@ -212,6 +234,47 @@ library RhinestoneModuleKitLib {
         return success;
     }
 
+    function addSessionKey(
+        RhinestoneAccount memory instance,
+        uint256 validUntil,
+        uint256 validAfter,
+        address sessionValidationModule,
+        bytes memory sessionKeyData
+    )
+        internal
+        returns (bytes32 root, bytes32[] memory proof)
+    {
+        if (
+            !instance.rhinestoneManager.isValidatorEnabled(
+                instance.account, address(instance.aux.sessionKeyManager)
+            )
+        ) {
+            addValidator(instance, address(instance.aux.sessionKeyManager));
+        }
+
+        Merkle m = new Merkle();
+
+        bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionValidationModule,
+            sessionKeyData: sessionKeyData
+        });
+
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = "asdf";
+        leaves[1] = leaf;
+
+        root = m.getRoot(leaves);
+        proof = m.getProof(leaves, 1);
+
+        exec4337(
+            instance,
+            address(instance.aux.sessionKeyManager),
+            abi.encodeCall(instance.aux.sessionKeyManager.setMerkleRoot, (root))
+        );
+    }
+
     function addValidator(
         RhinestoneAccount memory instance,
         address validator
@@ -261,6 +324,17 @@ library RhinestoneModuleKitLib {
                 )
         });
         emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
+        return success;
+    }
+
+    function addHook(RhinestoneAccount memory instance, address hook) internal returns (bool) {
+        (bool success, bytes memory data) = exec4337({
+            instance: instance,
+            target: address(instance.aux.executorManager),
+            value: 0,
+            callData: abi.encodeCall(instance.aux.executorManager.setHook, hook)
+        });
+
         return success;
     }
 
@@ -343,6 +417,26 @@ library RhinestoneModuleKitLib {
         );
     }
 
+    function getUserOpHash(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (bytes32)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
+        bytes memory initCode =
+            isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+
+        return userOpHash;
+    }
+
+    /// @dev added method to allow for delegatecall operation
     function getUserOpHash(
         RhinestoneAccount memory instance,
         address target,

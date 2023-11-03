@@ -1,5 +1,5 @@
-account-abstraction/=lib/account-abstraction/contracts/
 solady/=lib/solady/src/
+murky/=lib/murky/
 solmate/=lib/solmate/src/
 @aa/=lib/account-abstraction/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
@@ -8,3 +8,4 @@ safe-contracts/=lib/safe-contracts/
 lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+kernel/=lib/kernel/src/

@@ -5,16 +5,23 @@ pragma solidity ^0.8.19;
 import "./dependencies/EntryPoint.sol";
 import { IRhinestone4337, UserOperation } from "../../core/IRhinestone4337.sol";
 import { ExecutorManager } from "../../core/ExecutorManager.sol";
+import { SessionKeyManager } from "../../core/SessionKeyManager.sol";
 import { IBootstrap } from "../../common/IBootstrap.sol";
 import { Bootstrap } from "./safe-base/BootstrapSafe.sol";
 import { IProtocolFactory } from "../../common/IRhinestoneProtocol.sol";
 import { IERC7484Registry } from "../../common/IERC7484Registry.sol";
-import { IValidator } from "../../modulekit/IValidator.sol";
+import { IValidator } from "../../modulekit/interfaces/IValidator.sol";
 
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
 import { MockProtocol } from "../mocks/MockProtocol.sol";
+import { MockCondition } from "../mocks/MockCondition.sol";
 import { ComposableConditionManager } from "../../core/ComposableCondition.sol";
+
+import { ChainlinkPriceCondition } from "../../modulekit/conditions/ChainlinkPriceCondition.sol";
+import { GasPriceCondition } from "../../modulekit/conditions/GasPriceCondition.sol";
+import { ScheduleCondition } from "../../modulekit/conditions/ScheduleCondition.sol";
+import { SignatureCondition } from "../../modulekit/conditions/SignatureCondition.sol";
 
 import "./Vm.sol";
 
@@ -23,11 +30,21 @@ struct Auxiliary {
     IRhinestone4337 rhinestoneManager;
     ExecutorManager executorManager;
     ComposableConditionManager compConditionManager;
+    SessionKeyManager sessionKeyManager;
     IBootstrap rhinestoneBootstrap;
     IProtocolFactory rhinestoneFactory;
     IValidator validator;
     IERC7484Registry registry;
     address initialTrustedAttester;
+    Conditions conditions;
+}
+
+struct Conditions {
+    ChainlinkPriceCondition priceCondition;
+    GasPriceCondition gasPriceCondition;
+    ScheduleCondition scheduleCondition;
+    SignatureCondition signatureCondition;
+    MockCondition mockCondition;
 }
 
 contract AuxiliaryFactory {
@@ -39,11 +56,22 @@ contract AuxiliaryFactory {
     ExecutorManager internal executorManager;
     ComposableConditionManager internal compConditionManager;
 
+    Conditions internal conditions;
+
     Bootstrap internal bootstrap;
+    SessionKeyManager internal sessionKeyManager;
 
     address defaultAttester;
 
     function init() internal virtual {
+        conditions = Conditions({
+            priceCondition: new ChainlinkPriceCondition(),
+            gasPriceCondition: new GasPriceCondition(),
+            scheduleCondition: new ScheduleCondition(),
+            signatureCondition: new SignatureCondition(),
+            mockCondition: new MockCondition()
+        });
+
         defaultAttester = address(0x4242424242);
         label(defaultAttester, "defaultAttester");
         bootstrap = new Bootstrap();
@@ -58,8 +86,11 @@ contract AuxiliaryFactory {
         mockRhinestoneFactory = new MockProtocol();
         label(address(mockRhinestoneFactory), "mockRhinestoneFactory");
 
-        compConditionManager = new ComposableConditionManager();
+        compConditionManager = new ComposableConditionManager(mockRegistry);
         label(address(compConditionManager), "compConditionManager");
+
+        sessionKeyManager = new SessionKeyManager();
+        label(address(sessionKeyManager), "sessionKeyManager");
     }
 
     function makeAuxiliary(
@@ -75,11 +106,13 @@ contract AuxiliaryFactory {
             rhinestoneManager: IRhinestone4337(_rhinestoneManager),
             executorManager: executorManager,
             compConditionManager: compConditionManager,
+            sessionKeyManager: sessionKeyManager,
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,
             registry: mockRegistry,
-            initialTrustedAttester: defaultAttester
+            initialTrustedAttester: defaultAttester,
+            conditions: conditions
         });
     }
 }

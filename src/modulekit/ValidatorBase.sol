@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import "./IValidator.sol";
+import "./interfaces/IValidator.sol";
 
 abstract contract ValidatorBase is IValidator {
     function isValidSignature(

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "../interfaces/yearn/IYVault.sol";
-import "../../IExecutor.sol";
+import "../../interfaces/IExecutor.sol";
 import "../ERC20Actions.sol";
 
 import "forge-std/interfaces/IERC20.sol";

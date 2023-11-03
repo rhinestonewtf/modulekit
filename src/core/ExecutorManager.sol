@@ -2,7 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
-import { ExecutorTransaction, ExecutorAction } from "../modulekit/IExecutor.sol";
+import { ExecutorTransaction, ExecutorAction } from "../modulekit/interfaces/IExecutor.sol";
+import { IHook } from "../modulekit/interfaces/IHook.sol";
 import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC7484Registry.sol";
 
 /**
@@ -24,6 +25,8 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
 
     mapping(address account => mapping(address executor => ExecutorAccessInfo)) public
         enabledExecutors;
+
+    mapping(address account => IHook) public enabledHooks;
 
     /**
      * @dev Represents access configuration for an executor linked to an account.
@@ -50,6 +53,14 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
             revert InvalidExecutorAddress(executor);
         }
         _;
+    }
+
+    function setHook(address hook) external {
+        enabledHooks[msg.sender] = IHook(hook);
+    }
+
+    function getEnabledHooks(address account) external view returns (address hooksAddress) {
+        hooksAddress = address(enabledHooks[account]);
     }
 
     /**
@@ -146,6 +157,20 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
         onlySecureModule(msg.sender) // checks registry
         returns (bytes[] memory data)
     {
+        // check if hooks are enabled for the account
+        IHook hook = enabledHooks[account];
+        bool hooksEnabled = address(hook) != address(0);
+
+        bytes memory hookData;
+        if (hooksEnabled) {
+            // call the hook precheck
+            hookData = hook.preCheck({
+                account: account,
+                transaction: transaction,
+                executionType: 1,
+                executionMeta: ""
+            });
+        }
         // Initialize a new array of bytes with the same length as the transaction actions
         uint256 length = transaction.actions.length;
         data = new bytes[](length);
@@ -171,6 +196,11 @@ abstract contract ExecutorManager is RegistryAdapterForSingletons {
             } else {
                 data[i] = resultData;
             }
+        }
+
+        if (hooksEnabled) {
+            // call hook post check
+            hook.postCheck({ account: account, success: true, preCheckData: hookData });
         }
     }
 

@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import { IERC4626 } from "../../integrations/interfaces/IERC4626.sol";
 import "../ERC20Actions.sol";
-import "../../IExecutor.sol";
+import "../../interfaces/IExecutor.sol";
 
 struct ModuleKitParam {
     IExecutorManager manager;

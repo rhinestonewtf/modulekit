@@ -12,7 +12,7 @@ import {
 
 contract RegistryDeployer {
     IRegistry registry = IRegistry(REGISTRY_ADDR);
-    bytes32 resolverUID = 0x984f176bc8a8b71d1a35736c5a892be396a01ba80b290a3394d0089b891dcf46; // Default resolver
+    bytes32 resolverUID = 0xb9b4999cbba6cde047b368adda06dbadc43fa3e6673c373ed46aac455ed4e521; // Default resolver
 
     // <---- DEPLOYMENT ---->
 

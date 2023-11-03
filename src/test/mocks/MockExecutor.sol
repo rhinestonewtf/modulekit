@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { IExecutorBase, ModuleExecLib, IExecutorManager } from "../../modulekit/IExecutor.sol";
+import {
+    IExecutorBase,
+    ModuleExecLib,
+    IExecutorManager
+} from "../../modulekit/interfaces/IExecutor.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 /// @author zeroknots
@@ -23,6 +27,17 @@ contract MockExecutor is IExecutorBase {
             target: token,
             callData: abi.encodeWithSelector(IERC20.transfer.selector, receiver, amount)
         });
+    }
+
+    function execCalldata(
+        IExecutorManager manager,
+        address account,
+        address target,
+        bytes calldata callData
+    )
+        external
+    {
+        manager.exec({ account: account, target: target, callData: callData });
     }
 
     function name() external view override returns (string memory name) { }
