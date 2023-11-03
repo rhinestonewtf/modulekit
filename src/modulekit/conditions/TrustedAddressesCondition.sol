@@ -5,13 +5,15 @@ import { ICondition } from "../interfaces/IExecutor.sol";
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
 
-contract MerkleTreeCondition is ICondition, Ownable {
+contract TrustedAddressesCondition is ICondition, Ownable {
     bytes32 trustedAddressesRoot;
 
     struct Params {
         bytes32[] proof;
         address checkAddress;
     }
+
+    error InvalidProof();
 
     constructor(address _owner) {
         _initializeOwner(_owner);
@@ -39,7 +41,7 @@ contract MerkleTreeCondition is ICondition, Ownable {
         Params memory params = abi.decode(conditionData, (Params));
 
         bytes32 root = trustedAddressesRoot;
-        if (root == bytes32(0)) revert();
+        if (root == bytes32(0)) revert InvalidProof();
 
         return MerkleProofLib.verify(params.proof, root, leaf(params.checkAddress));
     }
