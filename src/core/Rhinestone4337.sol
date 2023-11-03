@@ -228,30 +228,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         require(ret == 0, "Invalid signature");
     }
 
-    // function checkAndExecTransactionFromModule(
-    //     address smartAccount,
-    //     address target,
-    //     uint256 value,
-    //     bytes calldata data,
-    //     uint8 operation,
-    //     uint256 nonce
-    // )
-    //     external
-    // {
-    //     bytes32 executionHash =
-    //         keccak256(abi.encode(smartAccount, target, value, data, operation, nonce));
-    //     ExecutionStatus memory status = _hashes[smartAccount][executionHash];
-    //     // require(status.approved && !status.executed, "Unexpected status");
-    //     _hashes[smartAccount][executionHash].executed = true;
-    //
-    //     // check if target is an installed executor
-    //
-    //     // if (isExecutorEnabled(target)) {
-    //     //     _execExecutor(target, value, data);
-    //     // } else {
-    //     _execTransationOnSmartAccount(smartAccount, target, value, data);
-    //     // }
-    // }
 
     function executeBatch(ExecutorAction[] calldata action) external payable {
         // TODO
