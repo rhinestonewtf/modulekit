@@ -9,3 +9,4 @@ lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 kernel/=lib/kernel/src/
+murky/=lib/murky/src/

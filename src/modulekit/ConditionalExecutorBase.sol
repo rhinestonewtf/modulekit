@@ -33,6 +33,22 @@ abstract contract ConditionalExecutor is ExecutorBase {
         _checkConditions(account, conditions);
         _;
     }
+    /**
+     * @dev Modifier to ensure the conditions are met before executing a function.
+     * @param account The address against which the conditions are checked.
+     * @param conditions Array of conditions to be checked.
+     */
+
+    modifier onlyIfConditionsAndParamsMet(
+        address account,
+        ConditionConfig[] calldata conditions,
+        bytes[] calldata subParams
+    )
+        virtual
+    {
+        _checkConditions(account, conditions, subParams);
+        _;
+    }
 
     /**
      * @notice Checks if the provided conditions for an account are satisfied.
@@ -47,5 +63,21 @@ abstract contract ConditionalExecutor is ExecutorBase {
         view
     {
         _conditionManager.checkCondition(account, conditions);
+    }
+    /**
+     * @notice Checks if the provided conditions for an account are satisfied.
+     * @param account The address against which the conditions are checked.
+     * @param conditions Array of conditions to be checked.
+     */
+
+    function _checkConditions(
+        address account,
+        ConditionConfig[] calldata conditions,
+        bytes[] calldata subParams
+    )
+        internal
+        view
+    {
+        _conditionManager.checkCondition(account, conditions, subParams);
     }
 }

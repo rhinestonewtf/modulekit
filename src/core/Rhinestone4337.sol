@@ -228,7 +228,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         require(ret == 0, "Invalid signature");
     }
 
-
     function executeBatch(ExecutorAction[] calldata action) external payable {
         // TODO
         uint256 len = action.length;
