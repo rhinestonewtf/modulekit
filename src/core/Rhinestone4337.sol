@@ -1,5 +1,22 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
+
+/**
+ *             .+#%@@@#+:
+ *            -%@@@*++*@@@%=
+ *         -%@@#-      :*@@@=            @author:     zeroknots.eth, Konrad Kopp (@kopy-kat)
+ *       -%@@#:    :-    .*@@@=          @license:    SPDX-License-Identifier: MIT
+ *     -%@@#:     .@@:     .*@@%-        @title:      Rhinestone4337
+ *     @@%:      :%@@@-      :#@@#                    Abstract contract to handle user operations in the context of EIP-4337. Extends the functionality of
+ *    @@*     .-#@@@@@@%=.     +@@#                   FallbackHandler, RegistryAdapterForSingletons to ensure secure and efficient handling of user operations.
+ *   @@@    +@@@@@@@@@@@@@@*    @@@                   Provides an interface for working with EIP-1271 signature validation and EIP-7484 validators.
+ *    @@+     .=%@@@@@@%=:     =@@      @dev this is a modified mock contract to add ERC-4337 to Safe accounts.
+ *     @@#:      -@@@@-      .#@@       @dev this contract MUST NOT be used in production.
+ *     -@@@*.     .@@:     .*@@@
+ *       =@@@*.    --    .*@@@+
+ *         =%@@#:      :*@@@=
+ *           =%@@%*==+%@@%=
+ *             :+#@@@@%+:
+ */
 
 import { IERC7484Registry, RegistryAdapterForSingletons } from "../common/IERC7484Registry.sol";
 import "../common/IERC1271.sol";
@@ -7,19 +24,10 @@ import { UserOperation } from "../common/erc4337/UserOperation.sol";
 import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { IValidator } from "../modulekit/interfaces/IValidator.sol";
 import "../common/ERC2771Context.sol";
+import { ExecutorAction } from "../modulekit/interfaces/IExecutor.sol";
 import "../modulekit/lib/ValidatorSelectionLib.sol";
 import "../common/FallbackHandler.sol";
 
-/**
- * @title Rhinestone4337
- *
- * Abstract contract to handle user operations in the context of EIP-4337. Extends the functionality of
- * FallbackHandler, RegistryAdapterForSingletons to ensure secure and efficient handling of user operations.
- * Provides an interface for working with EIP-1271 signature validation and EIP-7484 validators.
- *
- * @dev this is a modified mock contract to add ERC-4337 to Safe accounts.
- * @dev this contract MUST NOT be used in production.
- */
 abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandler {
     using SentinelListLib for SentinelListLib.SentinelList;
     using ValidatorSelectionLib for UserOperation;
@@ -220,29 +228,42 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         require(ret == 0, "Invalid signature");
     }
 
-    function checkAndExecTransactionFromModule(
-        address smartAccount,
-        address target,
-        uint256 value,
-        bytes calldata data,
-        uint8 operation,
-        uint256 nonce
-    )
-        external
-    {
-        bytes32 executionHash =
-            keccak256(abi.encode(smartAccount, target, value, data, operation, nonce));
-        ExecutionStatus memory status = _hashes[smartAccount][executionHash];
-        // require(status.approved && !status.executed, "Unexpected status");
-        _hashes[smartAccount][executionHash].executed = true;
+    // function checkAndExecTransactionFromModule(
+    //     address smartAccount,
+    //     address target,
+    //     uint256 value,
+    //     bytes calldata data,
+    //     uint8 operation,
+    //     uint256 nonce
+    // )
+    //     external
+    // {
+    //     bytes32 executionHash =
+    //         keccak256(abi.encode(smartAccount, target, value, data, operation, nonce));
+    //     ExecutionStatus memory status = _hashes[smartAccount][executionHash];
+    //     // require(status.approved && !status.executed, "Unexpected status");
+    //     _hashes[smartAccount][executionHash].executed = true;
+    //
+    //     // check if target is an installed executor
+    //
+    //     // if (isExecutorEnabled(target)) {
+    //     //     _execExecutor(target, value, data);
+    //     // } else {
+    //     _execTransationOnSmartAccount(smartAccount, target, value, data);
+    //     // }
+    // }
 
-        // check if target is an installed executor
+    function executeBatch(ExecutorAction[] calldata action) external payable {
+        // TODO
+        uint256 len = action.length;
+        for (uint256 i; i < len; i++) {
+            _execTransationOnSmartAccount(msg.sender, action[i].to, action[i].value, action[i].data);
+        }
+    }
 
-        // if (isExecutorEnabled(target)) {
-        //     _execExecutor(target, value, data);
-        // } else {
-        _execTransationOnSmartAccount(smartAccount, target, value, data);
-        // }
+    function execute(ExecutorAction calldata action) external payable {
+        // TODO
+        _execTransationOnSmartAccount(msg.sender, action.to, action.value, action.data);
     }
 
     /**
