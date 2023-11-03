@@ -3,6 +3,8 @@
 pragma solidity ^0.8.19;
 
 import { RhinestoneAccount } from "./RhinestoneModuleKit.sol";
+import { Rhinestone4337 } from "../../../core/Rhinestone4337.sol";
+import { ExecutorAction } from "../../../modulekit/interfaces/IExecutor.sol";
 import { UserOperation } from "../../../common/erc4337/UserOperation.sol";
 
 library ERC4337Wrappers {
@@ -23,16 +25,39 @@ library ERC4337Wrappers {
         // Get nonce from Entrypoint
         uint256 nonce = instance.aux.entrypoint.getNonce(sender, 0);
 
-        return abi.encodeWithSignature(
-            "checkAndExecTransactionFromModule(address,address,uint256,bytes,uint8,uint256)",
-            sender,
-            target,
-            value,
-            data,
-            operation,
-            nonce
-        );
+        ExecutorAction memory action =
+            ExecutorAction({ to: payable(target), value: value, data: data });
+
+        return abi.encodeCall(Rhinestone4337.execute, action);
     }
+
+    // function getSafe4337TxCalldata(
+    //     RhinestoneAccount memory instance,
+    //     address target,
+    //     uint256 value,
+    //     bytes memory data,
+    //     uint8 operation // {0: Call, 1: DelegateCall}
+    // )
+    //     internal
+    //     view
+    //     returns (bytes memory)
+    // {
+    //     // Get Safe address
+    //     address sender = address(instance.account);
+    //
+    //     // Get nonce from Entrypoint
+    //     uint256 nonce = instance.aux.entrypoint.getNonce(sender, 0);
+    //
+    //     return abi.encodeWithSignature(
+    //         "checkAndExecTransactionFromModule(address,address,uint256,bytes,uint8,uint256)",
+    //         sender,
+    //         target,
+    //         value,
+    //         data,
+    //         operation,
+    //         nonce
+    //     );
+    // }
 
     function getPartialUserOp(
         RhinestoneAccount memory instance,

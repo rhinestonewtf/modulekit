@@ -10,6 +10,9 @@ import {
 } from "../../src/core/ComposableCondition.sol";
 import { MockCondition } from "../../src/test/mocks/MockCondition.sol";
 import { MockRegistry } from "../../src/test/mocks/MockRegistry.sol";
+import { MerkleTreeCondition } from "../../src/modulekit/conditions/MerkleTreeCondition.sol";
+
+import { Merkle } from "murky/src/Merkle.sol";
 
 contract MockInvalidCondition is ICondition {
     function checkCondition(
@@ -31,12 +34,53 @@ contract ComposableConditionManagerTest is Test {
     MockCondition mockCondition;
     MockInvalidCondition mockInvalidCondition;
     MockRegistry registry;
+    MerkleTreeCondition merkleTreeCondition;
 
     function setUp() public {
         registry = new MockRegistry();
         conditionManager = new ComposableConditionManager(registry);
         mockCondition = new MockCondition();
         mockInvalidCondition = new MockInvalidCondition();
+        merkleTreeCondition = new MerkleTreeCondition();
+    }
+
+    function test_ConditionImpl_Merkle() public {
+        // prep merkle proof
+        Merkle m = new Merkle();
+        bytes32[] memory leaves = new bytes32[](4);
+        leaves[0] = bytes32("0x0");
+        leaves[1] = bytes32("0x1");
+        leaves[2] = bytes32("0x2");
+        leaves[3] = bytes32("0x3");
+        // Get Root, Proof, and Verify
+        bytes32 root = m.getRoot(leaves);
+        bytes32[] memory proof = m.getProof(leaves, 2); // will get proof for 0x2 value
+        address executor = makeAddr("executor");
+        address account = address(this);
+
+        ConditionConfig[] memory conditions = new ConditionConfig[](1);
+
+        conditions[0] = ConditionConfig({
+            condition: merkleTreeCondition,
+            conditionData: abi.encode(MerkleTreeCondition.Params({ root: root }))
+        });
+
+        conditionManager.setHash(executor, conditions);
+
+        MerkleTreeCondition.MerkleParams memory subParams =
+            MerkleTreeCondition.MerkleParams({ proof: proof, leaf: bytes32("0x2") });
+        bytes[] memory subParamsBytes = new bytes[](1);
+        subParamsBytes[0] = abi.encode(subParams);
+
+        vm.startPrank(executor);
+        bool result = conditionManager.checkCondition({
+            account: account,
+            conditions: conditions,
+            subParams: subParamsBytes
+        });
+        vm.stopPrank();
+
+        assertTrue(result);
     }
 
     function testCheckCondition() public {
