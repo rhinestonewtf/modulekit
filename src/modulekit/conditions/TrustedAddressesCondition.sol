@@ -14,16 +14,18 @@ contract TrustedAddressesCondition is ICondition, Ownable {
     }
 
     error InvalidProof();
+    error InvalidAddress();
 
     constructor(address _owner) {
         _initializeOwner(_owner);
     }
 
-    function setTrustedAddressesRoot(bytes32 _trustedAddressesRoot) external onlyOwner {
+    function setTrustedAddressesRoot(bytes32 _trustedAddressesRoot) onlyOwner external {
         trustedAddressesRoot = _trustedAddressesRoot;
     }
 
     function leaf(address checkAddress) public pure returns (bytes32) {
+        if (checkAddress == address(0)) revert InvalidAddress();
         return keccak256(abi.encodePacked(checkAddress));
     }
 
