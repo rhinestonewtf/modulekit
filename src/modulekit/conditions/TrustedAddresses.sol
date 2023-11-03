@@ -3,8 +3,9 @@ pragma solidity ^0.8.19;
 
 import { ICondition } from "../interfaces/IExecutor.sol";
 import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
+import { Ownable } from "solady/auth/Ownable.sol";
 
-contract MerkleTreeCondition is ICondition {
+contract MerkleTreeCondition is ICondition, Ownable {
     bytes32 trustedAddressesRoot;
 
     struct Params {
@@ -12,7 +13,11 @@ contract MerkleTreeCondition is ICondition {
         address checkAddress;
     }
 
-    function setTrustedAddressesRoot(bytes32 _trustedAddressesRoot) external {
+    constructor(address _owner) {
+        _initializeOwner(_owner);
+    }
+
+    function setTrustedAddressesRoot(bytes32 _trustedAddressesRoot) external onlyOwner {
         trustedAddressesRoot = _trustedAddressesRoot;
     }
 
