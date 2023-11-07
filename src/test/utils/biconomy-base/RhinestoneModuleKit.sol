@@ -14,6 +14,7 @@ import {
 } from "../Auxiliary.sol";
 import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
 // import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
+import "murky/src/Merkle.sol";
 
 import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../safe-base/SafeExecutorManager.sol";
@@ -187,6 +188,39 @@ library RhinestoneModuleKitLib {
         // send userOps to 4337 entrypoint
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
         emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
+    }
+
+    function addSessionKey(
+        RhinestoneAccount memory instance,
+        uint256 validUntil,
+        uint256 validAfter,
+        address sessionValidationModule,
+        bytes memory sessionKeyData
+    )
+        internal
+        returns (bytes32 root, bytes32[] memory proof)
+    {
+        Merkle m = new Merkle();
+
+        bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionValidationModule,
+            sessionKeyData: sessionKeyData
+        });
+
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = "asdf";
+        leaves[1] = leaf;
+
+        root = m.getRoot(leaves);
+        proof = m.getProof(leaves, 1);
+
+        exec4337(
+            instance,
+            address(instance.aux.sessionKeyManager),
+            abi.encodeCall(instance.aux.sessionKeyManager.setMerkleRoot, (root))
+        );
     }
 
     function addValidator(
