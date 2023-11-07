@@ -20,7 +20,7 @@ contract TrustedAddressesCondition is ICondition, Ownable {
         _initializeOwner(_owner);
     }
 
-    function setTrustedAddressesRoot(bytes32 _trustedAddressesRoot) onlyOwner external {
+    function setTrustedAddressesRoot(bytes32 _trustedAddressesRoot) external onlyOwner {
         trustedAddressesRoot = _trustedAddressesRoot;
     }
 

@@ -35,4 +35,17 @@ library ValidatorSelectionLib {
     {
         packedSignature = abi.encodePacked(chosenValidator, signature);
     }
+
+    function getUserOpTarget(UserOperation calldata _op) internal pure returns (address target) {
+        target = address(bytes20(_op.callData[48:68]));
+    }
+
+    function getUserOpCallData(UserOperation calldata _op)
+        internal
+        pure
+        returns (bytes4 functionSig, bytes calldata callData)
+    {
+        callData = (_op.callData[164:]);
+        functionSig = bytes4(callData[0:4]);
+    }
 }
