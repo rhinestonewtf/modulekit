@@ -45,7 +45,7 @@ library ValidatorSelectionLib {
         pure
         returns (bytes4 functionSig, bytes calldata callData)
     {
-        callData = (_op.callData[164:]);
-        functionSig = bytes4(callData[0:4]);
+        functionSig = bytes4(_op.callData[164:168]);
+        callData = (_op.callData[168:]);
     }
 }
