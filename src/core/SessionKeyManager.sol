@@ -31,19 +31,18 @@ contract SessionKeyManager is ValidatorBase {
 
     mapping(address => SessionStorage) internal userSessions;
 
-        // biconomy
-        // target @ 16:36
-        // targetCallData @ 132:
-        // address target = address(bytes20(userOp.callData[16:36]));
+    // biconomy
+    // target @ 16:36
+    // targetCallData @ 132:
+    // address target = address(bytes20(userOp.callData[16:36]));
 
-
-        // safe 
-        // target @ 48:68
-        // targetCallData @ 164:
+    // safe
+    // target @ 48:68
+    // targetCallData @ 164:
     uint256 immutable TARGET_OFFSET;
     uint256 immutable CALLDATA_OFFSET;
 
-    constructor(uint _targetOffset, uint _callDataOffset) {
+    constructor(uint256 _targetOffset, uint256 _callDataOffset) {
         TARGET_OFFSET = _targetOffset;
         CALLDATA_OFFSET = _callDataOffset;
     }
@@ -98,24 +97,20 @@ contract SessionKeyManager is ValidatorBase {
     {
         SessionStorage storage sessionKeyStorage = _getSessionData(userOp.sender);
 
-
         // biconomy
         // target @ 16:36
         // targetCallData @ 132:
         // address target = address(bytes20(userOp.callData[16:36]));
 
-
-        // safe 
+        // safe
         // target @ 48:68
         // targetCallData @ 164:
-        address target = address(bytes20(userOp.callData[TARGET_OFFSET:TARGET_OFFSET+20]));
+        address target = address(bytes20(userOp.callData[TARGET_OFFSET:TARGET_OFFSET + 20]));
         console2.log("target", target);
-
 
         (bytes memory signature,) = abi.decode(userOp.signature, (bytes, address));
 
-        SessionKeyParams memory sessionKeyParams =
-            abi.decode(signature, (SessionKeyParams));
+        SessionKeyParams memory sessionKeyParams = abi.decode(signature, (SessionKeyParams));
 
         console2.log("asdf");
 

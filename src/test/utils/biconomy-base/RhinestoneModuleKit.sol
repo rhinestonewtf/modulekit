@@ -129,19 +129,17 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 }
 
 library RhinestoneModuleKitLib {
-
-  function encodeValidator(
-      RhinestoneAccount memory instance,
-      bytes memory signature,
-      address chosenValidator)
-      internal
-      pure returns (bytes memory packedSignature)
-      {
-
-      packedSignature = abi.encode(signature, chosenValidator);
-
-      }
-
+    function encodeValidator(
+        RhinestoneAccount memory instance,
+        bytes memory signature,
+        address chosenValidator
+    )
+        internal
+        pure
+        returns (bytes memory packedSignature)
+    {
+        packedSignature = abi.encode(signature, chosenValidator);
+    }
 
     function exec4337(
         RhinestoneAccount memory instance,
@@ -180,7 +178,6 @@ library RhinestoneModuleKitLib {
             ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
         return exec4337(instance, data, signature);
     }
-
 
     function exec4337(
         RhinestoneAccount memory instance,
@@ -255,7 +252,6 @@ library RhinestoneModuleKitLib {
 
         root = m.getRoot(leaves);
         proof = m.getProof(leaves, 1);
-
 
         exec4337(
             instance,

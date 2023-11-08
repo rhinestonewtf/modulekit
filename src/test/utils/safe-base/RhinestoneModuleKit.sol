@@ -86,7 +86,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         SessionKeyManager sessionKeyManager = new SessionKeyManager(48,164);
         label(address(sessionKeyManager), "sessionKeyManager");
-        Auxiliary memory env = makeAuxiliary(address(rhinestoneManager), safeBootstrap, sessionKeyManager);
+        Auxiliary memory env =
+            makeAuxiliary(address(rhinestoneManager), safeBootstrap, sessionKeyManager);
 
         instance = RhinestoneAccount({
             account: getAccountAddress(env, salt),
@@ -129,17 +130,18 @@ import { SafeHelpers } from "./SafeSetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
 library RhinestoneModuleKitLib {
-  function encodeValidator(
-      RhinestoneAccount memory instance,
-      bytes memory signature,
-      address chosenValidator)
-      internal
-      pure returns (bytes memory packedSignature)
-      {
+    function encodeValidator(
+        RhinestoneAccount memory instance,
+        bytes memory signature,
+        address chosenValidator
+    )
+        internal
+        pure
+        returns (bytes memory packedSignature)
+    {
+        packedSignature = ValidatorSelectionLib.encodeValidator(signature, chosenValidator);
+    }
 
-      packedSignature = ValidatorSelectionLib.encodeValidator(signature, chosenValidator);
-
-      }
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -182,6 +184,7 @@ library RhinestoneModuleKitLib {
         }
         return exec4337(instance, data, signature);
     }
+
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
