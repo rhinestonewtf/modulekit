@@ -3,6 +3,7 @@ pragma solidity ^0.8.21;
 
 import { Test } from "forge-std/Test.sol";
 import { AuxiliaryFactory, IBootstrap, Auxiliary } from "../../../src/test/utils/Auxiliary.sol";
+import { SessionKeyManager } from "../../../src/core/SessionKeyManager.sol";
 
 contract AuxilaryTest is Test, AuxiliaryFactory {
     function setUp() public {
@@ -14,10 +15,10 @@ contract AuxilaryTest is Test, AuxiliaryFactory {
         IBootstrap _bootstrap
     )
         public
-        view
         returns (Auxiliary memory aux)
     {
-        return makeAuxiliary(_rhinestoneManager, _bootstrap);
+        SessionKeyManager sessionKeyManager = new SessionKeyManager(48,164);
+        return makeAuxiliary(_rhinestoneManager, _bootstrap, sessionKeyManager);
     }
 
     function testMakeAuxiliary() public {

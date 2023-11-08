@@ -16,6 +16,7 @@ import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
 // import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 import "murky/src/Merkle.sol";
 
+import { SessionKeyManager } from "../../../core/SessionKeyManager.sol";
 import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../safe-base/SafeExecutorManager.sol";
 import "../safe-base/Rhinestone4337SafeFlavour.sol";
@@ -67,12 +68,17 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         executorManager = new SafeExecutorManager(mockRegistry);
 
         accountSingleton = deployAccountSingleton(address(entrypoint));
+        label(address(accountSingleton), "account singleton");
         accountFactory = deployAccountFactory(address(accountSingleton));
+        label(address(accountFactory), "account factory");
         initialAuthModule = deployECDSA();
+        label(initialAuthModule, "initial auth module");
 
         fallbackHandler = new FallbackHandler();
+        label(address(fallbackHandler), "fallback handler");
 
         safeBootstrap = new Bootstrap();
+        label(address(safeBootstrap), "safe bootstrap");
         initialzed = true;
     }
 
@@ -81,8 +87,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         returns (RhinestoneAccount memory instance)
     {
         if (!initialzed) init();
+        sessionKeyManager = new SessionKeyManager(16,132);
+        label(address(sessionKeyManager), "sessionKeyManager");
 
-        Auxiliary memory env = makeAuxiliary(address(0), safeBootstrap);
+        Auxiliary memory env = makeAuxiliary(address(0), safeBootstrap, sessionKeyManager);
 
         uint256 initialOwnerKey = 1;
         address initialOwnerAddress = getAddr(uint256(initialOwnerKey));
@@ -99,6 +107,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey }),
             fallbackHandler: address(fallbackHandler)
         });
+        label(instance.account, "rhinestone account");
         emit ModuleKitLogs.ModuleKit_NewAccount(instance.account, "Rhinestone-Biconomy");
     }
 
@@ -120,6 +129,18 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 }
 
 library RhinestoneModuleKitLib {
+    function encodeValidator(
+        RhinestoneAccount memory instance,
+        bytes memory signature,
+        address chosenValidator
+    )
+        internal
+        pure
+        returns (bytes memory packedSignature)
+    {
+        packedSignature = abi.encode(signature, chosenValidator);
+    }
+
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -156,6 +177,22 @@ library RhinestoneModuleKitLib {
         bytes memory data =
             ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
         return exec4337(instance, data, signature);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        bytes memory signature,
+        address validator
+    )
+        internal
+        returns (bool, bytes memory)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
+        return exec4337(instance, data, encodeValidator(instance, signature, validator));
     }
 
     function exec4337(

@@ -4,6 +4,9 @@ pragma solidity ^0.8.19;
 import { SafeProxy } from "safe-contracts/contracts/proxies/SafeProxy.sol";
 import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import { SessionKeyManager } from "../../../core/SessionKeyManager.sol";
+
+import "../../../modulekit/lib/ValidatorSelectionLib.sol";
 
 import "murky/src/Merkle.sol";
 import { ISafe } from "../../../common/ISafe.sol";
@@ -81,7 +84,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         if (!initialzed) init();
 
-        Auxiliary memory env = makeAuxiliary(address(rhinestoneManager), safeBootstrap);
+        SessionKeyManager sessionKeyManager = new SessionKeyManager(48,164);
+        label(address(sessionKeyManager), "sessionKeyManager");
+        Auxiliary memory env =
+            makeAuxiliary(address(rhinestoneManager), safeBootstrap, sessionKeyManager);
 
         instance = RhinestoneAccount({
             account: getAccountAddress(env, salt),
@@ -124,6 +130,18 @@ import { SafeHelpers } from "./SafeSetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
 library RhinestoneModuleKitLib {
+    function encodeValidator(
+        RhinestoneAccount memory instance,
+        bytes memory signature,
+        address chosenValidator
+    )
+        internal
+        pure
+        returns (bytes memory packedSignature)
+    {
+        packedSignature = ValidatorSelectionLib.encodeValidator(signature, chosenValidator);
+    }
+
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -165,6 +183,22 @@ library RhinestoneModuleKitLib {
             signature = bytes("");
         }
         return exec4337(instance, data, signature);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        bytes memory signature,
+        address validator
+    )
+        internal
+        returns (bool, bytes memory)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
+        return exec4337(instance, data, encodeValidator(instance, signature, validator));
     }
 
     /// @dev added method to allow for delegatecall operation
