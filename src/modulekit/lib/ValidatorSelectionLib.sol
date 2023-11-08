@@ -33,7 +33,6 @@ library ValidatorSelectionLib {
         pure
         returns (bytes memory packedSignature)
     {
-        packedSignature = abi.encodePacked(chosenValidator, signature);
       packedSignature = abi.encode(signature, chosenValidator);
     }
 

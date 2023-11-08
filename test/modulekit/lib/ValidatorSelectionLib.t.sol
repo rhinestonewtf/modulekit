@@ -68,7 +68,7 @@ contract ValidatorSelectionLibTest is Test {
     function testEncodeValidator() public {
         address validator = makeAddr("validator");
         bytes memory signature = bytes("signature");
-        bytes memory signatureEncoded = abi.encodePacked(validator, bytes("signature"));
+        bytes memory signatureEncoded = abi.encode(signature, validator);
         bytes memory signatureEncodedWithLib = impl.encodeValidator(signature, validator);
 
         assertEq(signatureEncodedWithLib, signatureEncoded);
