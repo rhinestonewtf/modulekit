@@ -89,13 +89,14 @@ contract AuxiliaryFactory {
         compConditionManager = new ComposableConditionManager(mockRegistry);
         label(address(compConditionManager), "compConditionManager");
 
-        sessionKeyManager = new SessionKeyManager();
-        label(address(sessionKeyManager), "sessionKeyManager");
+        // sessionKeyManager = new SessionKeyManager(10);
+        // label(address(sessionKeyManager), "sessionKeyManager");
     }
 
     function makeAuxiliary(
         address _rhinestoneManager,
-        IBootstrap _bootstrap
+        IBootstrap _bootstrap,
+        SessionKeyManager _sessionKeyManager
     )
         internal
         view
@@ -106,7 +107,7 @@ contract AuxiliaryFactory {
             rhinestoneManager: IRhinestone4337(_rhinestoneManager),
             executorManager: executorManager,
             compConditionManager: compConditionManager,
-            sessionKeyManager: sessionKeyManager,
+            sessionKeyManager: _sessionKeyManager,
             rhinestoneBootstrap: _bootstrap,
             rhinestoneFactory: IProtocolFactory(address(mockRhinestoneFactory)),
             validator: mockValidator,

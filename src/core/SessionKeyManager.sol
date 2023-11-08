@@ -7,6 +7,8 @@ import "../modulekit/ValidatorBase.sol";
 import "../modulekit/lib/ValidatorSelectionLib.sol";
 import "./ISessionKeyValidationModule.sol";
 
+import "forge-std/console2.sol";
+
 struct SessionStorage {
     bytes32 merkleRoot;
 }
@@ -28,6 +30,23 @@ contract SessionKeyManager is ValidatorBase {
      */
 
     mapping(address => SessionStorage) internal userSessions;
+
+        // biconomy
+        // target @ 16:36
+        // targetCallData @ 132:
+        // address target = address(bytes20(userOp.callData[16:36]));
+
+
+        // safe 
+        // target @ 48:68
+        // targetCallData @ 164:
+    uint256 immutable TARGET_OFFSET;
+    uint256 immutable CALLDATA_OFFSET;
+
+    constructor(uint _targetOffset, uint _callDataOffset) {
+        TARGET_OFFSET = _targetOffset;
+        CALLDATA_OFFSET = _callDataOffset;
+    }
 
     /**
      * @dev returns the SessionStorage object for a given smartAccount
@@ -79,8 +98,26 @@ contract SessionKeyManager is ValidatorBase {
     {
         SessionStorage storage sessionKeyStorage = _getSessionData(userOp.sender);
 
+
+        // biconomy
+        // target @ 16:36
+        // targetCallData @ 132:
+        // address target = address(bytes20(userOp.callData[16:36]));
+
+
+        // safe 
+        // target @ 48:68
+        // targetCallData @ 164:
+        address target = address(bytes20(userOp.callData[TARGET_OFFSET:TARGET_OFFSET+20]));
+        console2.log("target", target);
+
+
+        (bytes memory signature,) = abi.decode(userOp.signature, (bytes, address));
+
         SessionKeyParams memory sessionKeyParams =
-            abi.decode(userOp.decodeSignature(), (SessionKeyParams));
+            abi.decode(signature, (SessionKeyParams));
+
+        console2.log("asdf");
 
         bytes32 leaf = _sessionMerkelLeaf({
             validUntil: sessionKeyParams.validUntil,
@@ -97,7 +134,9 @@ contract SessionKeyManager is ValidatorBase {
             userOp,
             userOpHash,
             sessionKeyParams.sessionKeyData,
-            sessionKeyParams.sessionKeySignature
+            sessionKeyParams.sessionKeySignature,
+            target,
+            CALLDATA_OFFSET
         );
 
         if (validSig) return 0;

@@ -219,7 +219,8 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         uint256 sigLength = userOp.signature.length;
 
         if (sigLength == 0) return;
-        else validator = userOp.decodeValidator();
+        else (,validator) = abi.decode(userOp.signature, (bytes, address));
+        
 
         // check if selected validator is enabled
         require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
