@@ -39,7 +39,7 @@ forge update rhinestonewtf/modulekit
 
 ## Usage
 
-To learn more about using ModuleKit, visit the [features section](/modulekit/libraries) of the docs. To get a better understanding of Modules generally, visit the [modules section](/modulekit/modules) and for hands-on tutorials on the entire lifecycle of modules, visit the [tutorials section](/tutorials).
+To learn more about using ModuleKit, visit the [tools section](https://docs.rhinestone.wtf/modulekit/tools) of the docs. To get a better understanding of Modules generally, visit the [modules section](https://docs.rhinestone.wtf/modulekit/modules) and for hands-on tutorials on the entire lifecycle of modules, visit the [tutorials section](https://docs.rhinestone.wtf/tutorials).
 
 ## Features
 
