@@ -15,7 +15,6 @@ interface IERC7484Registry {
 }
 
 /// @author zeroknots
-
 abstract contract RegistryAdapterForSingletons {
     // Instance of the IRegistry contract
     IERC7484Registry immutable registry;

@@ -86,7 +86,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
      * @dev queries the registry with ERC-7484 to ensure that the validator is trusted.
      * @param validator - Address of the validator to be added.
      */
-    function addValidator(address validator) external onlySelf onlySecureModule(validator) {
+    function addValidator(address validator) external onlySecureModule(validator) {
         validators[msg.sender].push(validator);
         emit ValidatorAdded(msg.sender, validator);
     }
@@ -96,7 +96,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
      * @param prevValidator - Address of the previous validator in the list.
      * @param delValidator - Address of the validator to be removed.
      */
-    function removeValidator(address prevValidator, address delValidator) external onlySelf {
+    function removeValidator(address prevValidator, address delValidator) external {
         validators[msg.sender].pop({ prevEntry: prevValidator, popEntry: delValidator });
 
         emit ValidatorRemoved(msg.sender, delValidator);
@@ -156,7 +156,6 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         // enforce that only trusted entrypoint can be used
         require(entryPoint == supportedEntryPoint, "Unsupported entry point");
 
-        // TODO verify return
         _validateSignatures(userOp, userOpHash);
 
         if (requiredPrefund != 0) {
@@ -210,22 +209,17 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     }
 
     function _validateSignatures(UserOperation calldata userOp, bytes32 userOpHash) internal {
-        // get operation target from userOp
-        // (, address target,,,,) =
-        //     abi.decode(userOp.callData[4:], (address, address, uint256, bytes, uint8, uint256));
-
         // get validators for target
         address validator;
         uint256 sigLength = userOp.signature.length;
 
-        if (sigLength == 0) return;
-        else validator = userOp.decodeValidator();
+        validator = userOp.decodeValidator();
 
         // check if selected validator is enabled
         require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
 
-        uint256 ret = IValidator(validator).validateUserOp(userOp, userOpHash);
-        require(ret == 0, "Invalid signature");
+        uint256 isValid = IValidator(validator).validateUserOp(userOp, userOpHash);
+        require(isValid == 0, "Invalid signature");
     }
 
     function executeBatch(ExecutorAction[] calldata action) external payable {

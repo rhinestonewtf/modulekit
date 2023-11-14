@@ -12,7 +12,7 @@ import { MockCondition } from "../../src/test/mocks/MockCondition.sol";
 import { MockRegistry } from "../../src/test/mocks/MockRegistry.sol";
 import { MerkleTreeCondition } from "../../src/modulekit/conditions/MerkleTreeCondition.sol";
 
-import { Merkle } from "murky/src/Merkle.sol";
+import { Merkle } from "murky/Merkle.sol";
 
 contract MockInvalidCondition is ICondition {
     function checkCondition(

@@ -5,10 +5,10 @@ import { SafeProxy } from "safe-contracts/contracts/proxies/SafeProxy.sol";
 import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 
-import "murky/src/Merkle.sol";
+import { Merkle } from "murky/Merkle.sol";
 import { ISafe } from "../../../common/ISafe.sol";
 import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
-import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavour.sol";
+import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavor.sol";
 import { SafeExecutorManager } from "./SafeExecutorManager.sol";
 import { ConditionConfig } from "../../../core/ComposableCondition.sol";
 import {

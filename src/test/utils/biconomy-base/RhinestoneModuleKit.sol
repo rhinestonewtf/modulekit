@@ -13,11 +13,10 @@ import {
     UserOperation
 } from "../Auxiliary.sol";
 import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
-// import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
 import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../safe-base/SafeExecutorManager.sol";
-import "../safe-base/Rhinestone4337SafeFlavour.sol";
+import "../safe-base/Rhinestone4337SafeFlavor.sol";
 import "../../../core/ComposableCondition.sol";
 
 import { BiconomyHelpers } from "./BiconomySetup.sol";

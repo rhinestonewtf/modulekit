@@ -32,16 +32,13 @@ library SafeHelpers {
     {
         // Initial owner of safe, removed by init4337Safe
         address safeOwner = address(0xdead);
-
-        // Get proxy address of safe ERC4337 module
-
-        address safe4337ModuleCloneAddress = address(env.rhinestoneManager);
+        address rhinestoneManagerAddress = address(env.rhinestoneManager);
 
         InitialModule[] memory modules = new InitialModule[](2);
 
         // Add ERC4337 module on Safe deployment
         modules[0] = InitialModule({
-            moduleAddress: address(env.rhinestoneManager),
+            moduleAddress: rhinestoneManagerAddress,
             salt: salt,
             initializer: abi.encodeCall(
                 IRhinestone4337.init, (address(env.validator), env.initialTrustedAttester)
@@ -70,7 +67,7 @@ library SafeHelpers {
             1, // threshold
             address(env.rhinestoneBootstrap), // init module
             initModuleCalldata, // init module calldata
-            safe4337ModuleCloneAddress, // fallbackHandler
+            rhinestoneManagerAddress, // fallbackHandler
             address(0), // payment token
             0, // payment
             address(0) // payment receiver

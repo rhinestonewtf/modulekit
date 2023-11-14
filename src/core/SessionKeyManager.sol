@@ -22,11 +22,13 @@ struct SessionKeyParams {
 
 contract SessionKeyManager is ValidatorBase {
     using ValidatorSelectionLib for UserOperation;
+
+    error SessionNotApproved(bytes32 root, bytes32 leaf);
+
     /**
      * @dev mapping of Smart Account to a SessionStorage
      * Info about session keys is stored as root of the merkle tree built over the session keys
      */
-
     mapping(address => SessionStorage) internal userSessions;
 
     /**
@@ -89,7 +91,7 @@ contract SessionKeyManager is ValidatorBase {
             sessionKeyData: sessionKeyParams.sessionKeyData
         });
         if (!MerkleProof.verify(sessionKeyParams.merkleProof, sessionKeyStorage.merkleRoot, leaf)) {
-            revert("SessionNotApproved");
+            revert SessionNotApproved(sessionKeyStorage.merkleRoot, leaf);
         }
         //_packValidationData expects true if sig validation has failed, false otherwise
         bool validSig = ISessionKeyValidationModule(sessionKeyParams.sessionValidationModule)
