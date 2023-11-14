@@ -40,7 +40,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     );
 
     // Address of the entry point that is supported.
-    address public immutable supportedEntryPoint;
+    address public immutable ENTRYPOINT;
 
     // Struct to track execution status for operations.
     struct ExecutionStatus {
@@ -54,6 +54,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     event ValidatorAdded(address indexed account, address indexed validator);
     event ValidatorRemoved(address indexed account, address indexed validator);
 
+    error Unauthorized();
     /**
      * @dev Constructor that initializes the supported entry point and sets the registry.
      * @param _entryPoint - The address of the supported entry point.
@@ -65,7 +66,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     )
         RegistryAdapterForSingletons(_registry)
     {
-        supportedEntryPoint = _entryPoint;
+        ENTRYPOINT = _entryPoint;
     }
 
     /**
@@ -233,12 +234,14 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         uint256 len = action.length;
         for (uint256 i; i < len; i++) {
             _execTransationOnSmartAccount(msg.sender, action[i].to, action[i].value, action[i].data);
+        onlyEntrypoint
         }
     }
 
     function execute(ExecutorAction calldata action) external payable {
         // TODO
         _execTransationOnSmartAccount(msg.sender, action.to, action.value, action.data);
+        onlyEntrypoint
     }
 
     /**
@@ -282,4 +285,9 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         internal
         virtual
         returns (bool, bytes memory);
+
+    modifier onlyEntrypoint() {
+        if (msg.sender != ENTRYPOINT) revert Unauthorized();
+        _;
+    }
 }
