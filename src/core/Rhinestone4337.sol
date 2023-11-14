@@ -305,7 +305,9 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         returns (bool, bytes memory);
 
     modifier onlyEntrypoint() {
-        if (msg.sender != ENTRYPOINT) revert Unauthorized();
+        address entryPoint = _msgSender();
+        // enforce that only trusted entrypoint can be used
+        if (entryPoint != ENTRYPOINT) revert Unauthorized();
         _;
     }
 }

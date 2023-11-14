@@ -19,16 +19,7 @@ library ERC4337Wrappers {
         view
         returns (bytes memory)
     {
-        // Get Safe address
-        address sender = address(instance.account);
-
-        // Get nonce from Entrypoint
-        uint256 nonce = instance.aux.entrypoint.getNonce(sender, 0);
-
-        ExecutorAction memory action =
-            ExecutorAction({ to: payable(target), value: value, data: data });
-
-        return abi.encodeCall(Rhinestone4337.execute, action);
+        return abi.encodeCall(Rhinestone4337.execute, (target, value, data));
     }
 
     // function getSafe4337TxCalldata(
