@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { IKernel } from "../kernel-base/IKernel.sol";
+import { IKernel, IKernelFactory } from "../kernel-base/IKernel.sol";
 
 function deployAccountSingleton(address entrypoint) returns (IKernel accountSingleton) {
     bytes memory accountSingletonArgs = abi.encode(entrypoint);
@@ -12,44 +12,6 @@ function deployAccountSingleton(address entrypoint) returns (IKernel accountSing
             create(0, add(accountSingletonBytecode, 0x20), mload(accountSingletonBytecode))
     }
     accountSingleton = IKernel(_accountSingleton);
-}
-
-interface IKernelFactory {
-    function addStake(uint32 unstakeDelaySec) external payable;
-    function cancelOwnershipHandover() external payable;
-    function completeOwnershipHandover(address pendingOwner) external payable;
-    function createAccount(
-        address _implementation,
-        bytes memory _data,
-        uint256 _index
-    )
-        external
-        payable
-        returns (address proxy);
-    function entryPoint() external view returns (address);
-    function getAccountAddress(
-        bytes memory _data,
-        uint256 _index
-    )
-        external
-        view
-        returns (address);
-    function initCodeHash() external view returns (bytes32 result);
-    function isAllowedImplementation(address) external view returns (bool);
-    function owner() external view returns (address result);
-    function ownershipHandoverExpiresAt(address pendingOwner)
-        external
-        view
-        returns (uint256 result);
-    function ownershipHandoverValidFor() external view returns (uint64);
-    function predictDeterministicAddress(bytes32 salt) external view returns (address predicted);
-    function renounceOwnership() external payable;
-    function requestOwnershipHandover() external payable;
-    function setEntryPoint(address _entryPoint) external;
-    function setImplementation(address _implementation, bool _allow) external;
-    function transferOwnership(address newOwner) external payable;
-    function unlockStake() external;
-    function withdrawStake(address withdrawAddress) external;
 }
 
 bytes constant KERNEL_BYTECODE =
