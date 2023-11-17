@@ -69,7 +69,8 @@ interface IKernel {
         Operation operation
     )
         external
-        payable;
+        payable
+        returns (bytes memory);
 
     function validateUserOp(
         UserOperation memory _op,
@@ -112,4 +113,47 @@ interface IKernel {
         payable;
 
     function disableMode(bytes4 _disableFlag) external payable;
+}
+
+interface IKernelFactory {
+    event Deployed(address indexed proxy, address indexed implementation);
+    event OwnershipHandoverCanceled(address indexed pendingOwner);
+    event OwnershipHandoverRequested(address indexed pendingOwner);
+    event OwnershipTransferred(address indexed oldOwner, address indexed newOwner);
+
+    function addStake(uint32 unstakeDelaySec) external payable;
+    function cancelOwnershipHandover() external payable;
+    function completeOwnershipHandover(address pendingOwner) external payable;
+    function createAccount(
+        address _implementation,
+        bytes memory _data,
+        uint256 _index
+    )
+        external
+        payable
+        returns (address proxy);
+    function entryPoint() external view returns (address);
+    function getAccountAddress(
+        bytes memory _data,
+        uint256 _index
+    )
+        external
+        view
+        returns (address);
+    function initCodeHash() external view returns (bytes32 result);
+    function isAllowedImplementation(address) external view returns (bool);
+    function owner() external view returns (address result);
+    function ownershipHandoverExpiresAt(address pendingOwner)
+        external
+        view
+        returns (uint256 result);
+    function ownershipHandoverValidFor() external view returns (uint64);
+    function predictDeterministicAddress(bytes32 salt) external view returns (address predicted);
+    function renounceOwnership() external payable;
+    function requestOwnershipHandover() external payable;
+    function setEntryPoint(address _entryPoint) external;
+    function setImplementation(address _implementation, bool _allow) external;
+    function transferOwnership(address newOwner) external payable;
+    function unlockStake() external;
+    function withdrawStake(address withdrawAddress) external;
 }
