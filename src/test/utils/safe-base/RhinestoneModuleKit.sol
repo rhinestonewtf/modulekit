@@ -4,11 +4,11 @@ pragma solidity ^0.8.19;
 import { SafeProxy } from "safe-contracts/contracts/proxies/SafeProxy.sol";
 import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-
+import { ValidatorSelectionLib } from "../../../modulekit/lib/ValidatorSelectionLib.sol";
 import { Merkle } from "murky/Merkle.sol";
 import { ISafe } from "../../../common/ISafe.sol";
 import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
-import { RhinestoneSafeFlavor } from "./Rhinestone4337SafeFlavor.sol";
+import { RhinestoneSafeFlavor } from "./RhinestoneSafeFlavor.sol";
 import { SafeExecutorManager } from "./SafeExecutorManager.sol";
 import { ConditionConfig } from "../../../core/ComposableCondition.sol";
 import {
@@ -39,6 +39,20 @@ struct RhinestoneAccount {
 struct AccountFlavor {
     SafeProxyFactory accountFactory;
     ISafe accountSingleton;
+}
+
+function writeExpectRevert(uint256 value) {
+    bytes32 slot = keccak256("ExpectSlot");
+    assembly {
+        sstore(slot, value)
+    }
+}
+
+function getExpectRevert() view returns (uint256 value) {
+    bytes32 slot = keccak256("ExpectSlot");
+    assembly {
+        value := sload(slot)
+    }
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
@@ -124,15 +138,18 @@ import { SafeHelpers } from "./SafeSetup.sol";
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 
 library RhinestoneModuleKitLib {
+    /*//////////////////////////////////////////////////////////////////////////
+                                EXEC4337
+    //////////////////////////////////////////////////////////////////////////*/
+
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
         bytes memory callData
     )
         internal
-        returns (bool, bytes memory)
     {
-        return exec4337(instance, target, 0, callData);
+        exec4337(instance, target, 0, callData);
     }
 
     function exec4337(
@@ -142,9 +159,8 @@ library RhinestoneModuleKitLib {
         bytes memory callData
     )
         internal
-        returns (bool, bytes memory)
     {
-        return exec4337(instance, target, value, callData, 0, bytes(""));
+        exec4337(instance, target, value, callData, 0, bytes(""));
     }
 
     function exec4337(
@@ -155,16 +171,18 @@ library RhinestoneModuleKitLib {
         bytes memory signature
     )
         internal
-        returns (bool, bytes memory)
     {
         bytes memory data =
             ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
 
         if (signature.length == 0) {
-            // TODO: generate default signature
-            signature = bytes("");
+            signature = bytes(hex"414141414141414141414141414141414141414141414141414141414141");
+            signature = ValidatorSelectionLib.encodeValidator({
+                signature: signature,
+                chosenValidator: address(instance.aux.validator)
+            });
         }
-        return exec4337(instance, data, signature);
+        exec4337(instance, data, signature);
     }
 
     /// @dev added method to allow for delegatecall operation
@@ -177,16 +195,18 @@ library RhinestoneModuleKitLib {
         bytes memory signature
     )
         internal
-        returns (bool, bytes memory)
     {
         bytes memory data =
             ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
 
         if (signature.length == 0) {
-            // TODO: generate default signature
-            signature = bytes("");
+            signature = bytes(hex"414141414141414141414141414141414141414141414141414141414141");
+            signature = ValidatorSelectionLib.encodeValidator({
+                signature: signature,
+                chosenValidator: address(instance.aux.validator)
+            });
         }
-        return exec4337(instance, data, signature);
+        exec4337(instance, data, signature);
     }
 
     function exec4337(
@@ -195,7 +215,6 @@ library RhinestoneModuleKitLib {
         bytes memory signature
     )
         internal
-        returns (bool, bytes memory)
     {
         // prepare ERC4337 UserOperation
 
@@ -209,29 +228,74 @@ library RhinestoneModuleKitLib {
         userOps[0] = userOp;
 
         // send userOps to 4337 entrypoint
+        recordLogs();
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
 
+        VmSafe.Log[] memory logs = getRecordedLogs();
+
+        for (uint256 i; i < logs.length; i++) {
+            if (
+                logs[i].topics[0]
+                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+            ) {
+                if (getExpectRevert() != 1) revert("UserOperation failed");
+            }
+        }
+
+        writeExpectRevert(0);
         emit ModuleKitLogs.ModuleKit_Exec4337(address(instance.account), userOp.sender);
     }
 
-    function setCondition(
-        RhinestoneAccount memory instance,
-        address forExecutor,
-        ConditionConfig[] memory conditions
-    )
-        internal
-        returns (bool)
-    {
-        (bool success, bytes memory data) = exec4337({
+    /*//////////////////////////////////////////////////////////////////////////
+                                MODULES
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function addValidator(RhinestoneAccount memory instance, address validator) internal {
+        exec4337({
             instance: instance,
-            target: address(instance.aux.compConditionManager),
+            target: address(instance.account),
             value: 0,
-            callData: abi.encodeCall(
-                instance.aux.compConditionManager.setHash, (forExecutor, conditions)
+            callData: abi.encodeCall(instance.rhinestoneManager.addValidator, (validator))
+        });
+        emit ModuleKitLogs.ModuleKit_AddValidator(address(instance.account), validator);
+    }
+
+    function removeValidator(RhinestoneAccount memory instance, address validator) internal {
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array, address next) =
+            instance.rhinestoneManager.getValidatorPaginated(address(0x1), 100, instance.account);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == validator) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == validator) previous = array[i - 1];
+            }
+        }
+
+        exec4337({
+            instance: instance,
+            target: address(instance.account),
+            value: 0,
+            callData: abi.encodeWithSelector(
+                instance.rhinestoneManager.removeValidator.selector, previous, validator
                 )
         });
-        emit ModuleKitLogs.ModuleKit_SetCondition(address(instance.account), forExecutor);
-        return success;
+        emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
+    }
+
+    function isValidatorEnabled(
+        RhinestoneAccount memory instance,
+        address validator
+    )
+        internal
+        returns (bool isEnabled)
+    {
+        isEnabled = instance.rhinestoneManager.isValidatorEnabled(instance.account, validator);
     }
 
     function addSessionKey(
@@ -262,7 +326,7 @@ library RhinestoneModuleKitLib {
         });
 
         bytes32[] memory leaves = new bytes32[](2);
-        leaves[0] = "asdf";
+        leaves[0] = leaf;
         leaves[1] = leaf;
 
         root = m.getRoot(leaves);
@@ -275,102 +339,42 @@ library RhinestoneModuleKitLib {
         );
     }
 
-    function addValidator(
-        RhinestoneAccount memory instance,
-        address validator
-    )
-        internal
-        returns (bool)
-    {
-        (bool success, bytes memory data) = exec4337({
-            instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeCall(instance.rhinestoneManager.addValidator, (validator))
-        });
-        emit ModuleKitLogs.ModuleKit_AddValidator(address(instance.account), validator);
-        return success;
-    }
-
-    function removeValidator(
-        RhinestoneAccount memory instance,
-        address validator
-    )
-        internal
-        returns (bool)
-    {
-        // get previous executor in sentinel list
-        address previous;
-
-        (address[] memory array, address next) =
-            instance.rhinestoneManager.getValidatorPaginated(address(0x1), 100, instance.account);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == validator) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
-            }
-        }
-
-        (bool success, bytes memory data) = exec4337({
-            instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeWithSelector(
-                instance.rhinestoneManager.removeValidator.selector, previous, validator
-                )
-        });
-        emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
-        return success;
-    }
-
-    function addHook(RhinestoneAccount memory instance, address hook) internal returns (bool) {
-        (bool success, bytes memory data) = exec4337({
+    function addHook(RhinestoneAccount memory instance, address hook) internal {
+        exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
             callData: abi.encodeCall(instance.aux.executorManager.setHook, hook)
         });
-
-        return success;
     }
 
-    function addExecutor(
+    function isHookEnabled(
         RhinestoneAccount memory instance,
-        address executor
+        address hook
     )
         internal
-        returns (bool)
+        returns (bool isEnabled)
     {
-        (bool success, bytes memory data) = exec4337({
+        isEnabled = address(instance.aux.executorManager.enabledHooks(instance.account)) == hook;
+    }
+
+    function addExecutor(RhinestoneAccount memory instance, address executor) internal {
+        exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
             callData: abi.encodeCall(instance.aux.executorManager.enableExecutor, (executor, false))
         });
 
-        require(
-            instance.aux.executorManager.isExecutorEnabled(address(instance.account), executor),
-            "Executor not enabled"
-        );
+        require(isExecutorEnabled(instance, executor), "Executor not enabled");
         emit ModuleKitLogs.ModuleKit_AddExecutor(address(instance.account), executor);
-        return success;
     }
 
-    function removeExecutor(
-        RhinestoneAccount memory instance,
-        address executor
-    )
-        internal
-        returns (bool)
-    {
+    function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
         // get previous executor in sentinel list
         address previous;
 
-        (address[] memory array, address next) =
+        (address[] memory array,) =
             instance.aux.executorManager.getExecutorsPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) {
@@ -385,13 +389,41 @@ library RhinestoneModuleKitLib {
 
         emit ModuleKitLogs.ModuleKit_RemoveExecutor(address(instance.account), executor);
 
-        (bool success, bytes memory data) = exec4337({
+        exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),
             value: 0,
             callData: abi.encodeCall(instance.aux.executorManager.disableExecutor, (previous, executor))
         });
-        return success;
+    }
+
+    function isExecutorEnabled(
+        RhinestoneAccount memory instance,
+        address executor
+    )
+        internal
+        returns (bool isEnabled)
+    {
+        isEnabled =
+            instance.aux.executorManager.isExecutorEnabled(address(instance.account), executor);
+    }
+
+    function setCondition(
+        RhinestoneAccount memory instance,
+        address forExecutor,
+        ConditionConfig[] memory conditions
+    )
+        internal
+    {
+        exec4337({
+            instance: instance,
+            target: address(instance.aux.compConditionManager),
+            value: 0,
+            callData: abi.encodeCall(
+                instance.aux.compConditionManager.setHash, (forExecutor, conditions)
+                )
+        });
+        emit ModuleKitLogs.ModuleKit_SetCondition(address(instance.account), forExecutor);
     }
 
     function addFallback(
@@ -401,10 +433,9 @@ library RhinestoneModuleKitLib {
         address handler
     )
         internal
-        returns (bool)
     {
         bytes32 encodedData = MarshalLib.encodeWithSelector(isStatic, handleFunctionSig, handler);
-        (bool success, bytes memory data) = exec4337({
+        exec4337({
             instance: instance,
             target: address(instance.account),
             value: 0,
@@ -417,6 +448,10 @@ library RhinestoneModuleKitLib {
         );
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
     function getUserOpHash(
         RhinestoneAccount memory instance,
         address target,
@@ -426,11 +461,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32)
     {
-        bytes memory data =
-            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
-        bytes memory initCode =
-            isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
-        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+        UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData, 0);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
 
         return userOpHash;
@@ -447,14 +478,48 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32)
     {
+        UserOperation memory userOp =
+            getFormattedUserOp(instance, target, value, callData, operation);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+
+        return userOpHash;
+    }
+
+    function getFormattedUserOp(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (UserOperation memory userOp)
+    {
+        bytes memory data =
+            ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, 0);
+        bytes memory initCode =
+            isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
+        userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+    }
+
+    function getFormattedUserOp(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        uint8 operation // {0: Call, 1: DelegateCall}
+    )
+        internal
+        returns (UserOperation memory userOp)
+    {
         bytes memory data =
             ERC4337Wrappers.getSafe4337TxCalldata(instance, target, value, callData, operation);
         bytes memory initCode =
             isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
-        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
-        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+        userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+    }
 
-        return userOpHash;
+    function expect4337Revert(RhinestoneAccount memory) internal {
+        writeExpectRevert(1);
     }
 
     function isDeployed(RhinestoneAccount memory instance) internal view returns (bool) {

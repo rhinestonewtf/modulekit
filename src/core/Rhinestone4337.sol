@@ -232,7 +232,9 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
 
     function execute(ExecutorAction calldata action) external payable {
         // TODO
-        _execTransationOnSmartAccount(msg.sender, action.to, action.value, action.data);
+        (bool success,) =
+            _execTransationOnSmartAccount(msg.sender, action.to, action.value, action.data);
+        if (!success) revert("Execution Failed");
     }
 
     /**

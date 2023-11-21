@@ -20,3 +20,15 @@ function etch(address target, bytes memory runtimeBytecode) {
 function label(address _addr, string memory _label) {
     Vm(VM_ADDR).label(_addr, _label);
 }
+
+function expectEmit() {
+    Vm(VM_ADDR).expectEmit();
+}
+
+function recordLogs() {
+    Vm(VM_ADDR).recordLogs();
+}
+
+function getRecordedLogs() returns (VmSafe.Log[] memory) {
+    return Vm(VM_ADDR).getRecordedLogs();
+}
