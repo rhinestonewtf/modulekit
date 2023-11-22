@@ -3,8 +3,21 @@ pragma solidity ^0.8.21;
 
 import { UserOperation } from "src/common/erc4337/UserOperation.sol";
 import { IEntryPoint } from "src/common/erc4337/IEntryPoint.sol";
+import { IKernel, Operation } from "src/test/utils/kernel-base/IKernel.sol";
 
 library ERC4337Wrappers {
+    function getKernel4337TxCalldata(
+        address target,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodeCall(IKernel.execute, (target, value, data, Operation.Call));
+    }
+
     function getPartialUserOp(
         address smartAccount,
         IEntryPoint entrypoint,

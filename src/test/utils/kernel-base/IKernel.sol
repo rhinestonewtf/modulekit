@@ -112,6 +112,8 @@ interface IKernel {
         external
         payable;
 
+    function getDefaultValidator() external returns (address);
+
     function disableMode(bytes4 _disableFlag) external payable;
 }
 
