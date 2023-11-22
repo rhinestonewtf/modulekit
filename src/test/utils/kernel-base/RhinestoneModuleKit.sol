@@ -86,6 +86,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 accountFactory: kernelFactory
             })
         });
+        RhinestoneModuleKitLib.setDefaultValidator(instance);
         label(instance.account, "account instance");
     }
 
@@ -165,8 +166,6 @@ library RhinestoneModuleKitLib {
         userOp.signature = signature;
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
-
-        setDefaultValidator(instance);
 
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }

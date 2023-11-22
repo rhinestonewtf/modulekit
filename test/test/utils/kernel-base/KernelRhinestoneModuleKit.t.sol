@@ -47,37 +47,11 @@ contract KernelRhinestoneModuleKitTest is RhinestoneModuleKit, Test {
     }
 
     function test_execViaModule() public {
-        vm.prank(address(entrypoint));
-        IKernel(instance.account).setDefaultValidator(
-            IKernelValidator(address(instance.executorManager)), ""
-        );
-
-        console2.log("executorManager", address(instance.executorManager));
-
         address thisAddress = address(this);
         vm.prank(address(instance.account));
         KernelExecutorManager(address(instance.executorManager)).enableExecutor(thisAddress, false);
 
         execViaKernel(address(target), 0, abi.encodeWithSelector(target.set.selector, 0x41414141));
-    }
-
-    function test_exec4337() public {
-        vm.prank(address(entrypoint));
-        IKernel(instance.account).setDefaultValidator(
-            IKernelValidator(address(instance.executorManager)), ""
-        );
-
-        vm.prank(instance.account);
-        KernelExecutorManager(address(instance.executorManager)).addValidator(address(validator));
-        instance.exec4337({
-            target: address(target),
-            value: 0,
-            callData: abi.encodeWithSelector(target.set.selector, 0x41414141),
-            signature: hex"41414141",
-            validator: address(validator)
-        });
-
-        assertTrue(target.value() == 0x41414141);
     }
 
     function test_withKit_exec4337() public {
