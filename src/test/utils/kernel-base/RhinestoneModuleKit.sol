@@ -86,6 +86,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 accountFactory: kernelFactory
             })
         });
+        instance.aux.executorManager = ExecutorManager(address(instance.executorManager));
         RhinestoneModuleKitLib.setDefaultValidator(instance);
         label(instance.account, "account instance");
     }
