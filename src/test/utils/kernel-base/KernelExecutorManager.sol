@@ -31,6 +31,24 @@ contract KernelExecutorManager is ExecutorManager, IKernelValidator {
     }
 
     /**
+     * @dev Returns paginated list of validators.
+     * @param start - Starting address for the pagination.
+     * @param pageSize - Number of entries per page.
+     * @param account - Account whose validators are to be fetched.
+     */
+    function getValidatorPaginated(
+        address start,
+        uint256 pageSize,
+        address account
+    )
+        external
+        view
+        returns (address[] memory array, address next)
+    {
+        return validators[account].getEntriesPaginated(start, pageSize);
+    }
+
+    /**
      * @dev Removes a validator.
      * @param prevValidator - Address of the previous validator in the list.
      * @param delValidator - Address of the validator to be removed.
