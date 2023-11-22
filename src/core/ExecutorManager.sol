@@ -5,6 +5,7 @@ import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
 import { ExecutorTransaction, ExecutorAction } from "../modulekit/interfaces/IExecutor.sol";
 import { IHook } from "../modulekit/interfaces/IHook.sol";
 import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC7484Registry.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title ExecutorManager

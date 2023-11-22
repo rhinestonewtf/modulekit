@@ -3,10 +3,15 @@ pragma solidity ^0.8.21;
 
 import "forge-std/Test.sol";
 import "src/test/utils/kernel-base/RhinestoneModuleKit.sol";
+import "src/test/utils/kernel-base/KernelExecutorManager.sol";
+import "src/test/mocks/MockRegistry.sol";
 import "src/test/utils/kernel-base/IKernel.sol";
+import "src/modulekit/interfaces/IExecutor.sol";
+
+import "src/test/mocks/MockValidator.sol";
 
 contract Target {
-    uint256 value;
+    uint256 public value;
 
     function set(uint256 _value) public returns (uint256) {
         value = _value;
@@ -14,55 +19,19 @@ contract Target {
     }
 }
 
-contract DefaultKernelValidator is IKernelValidator {
-    function enable(bytes calldata _data) external payable override { }
-
-    function disable(bytes calldata _data) external payable override { }
-
-    function validateUserOp(
-        UserOperation calldata userOp,
-        bytes32 userOpHash,
-        uint256 missingFunds
-    )
-        external
-        payable
-        override
-        returns (ValidationData)
-    { }
-
-    function validateSignature(
-        bytes32 hash,
-        bytes calldata signature
-    )
-        external
-        view
-        override
-        returns (ValidationData)
-    { }
-
-    function validCaller(
-        address caller,
-        bytes calldata data
-    )
-        external
-        view
-        override
-        returns (bool)
-    {
-        return true;
-    }
-}
-
 contract KernelRhinestoneModuleKitTest is RhinestoneModuleKit, Test {
+    using RhinestoneModuleKitLib for RhinestoneAccount;
+
     RhinestoneAccount instance;
     Target target;
-    DefaultKernelValidator validator;
+    MockRegistry registry;
+    MockValidator validator;
 
     function setUp() public {
         target = new Target();
+        registry = new MockRegistry();
         instance = makeRhinestoneAccount("1");
-
-        validator = new DefaultKernelValidator();
+        validator = new MockValidator();
 
         vm.deal(instance.account, 1 ether);
     }
@@ -71,12 +40,43 @@ contract KernelRhinestoneModuleKitTest is RhinestoneModuleKit, Test {
         assertTrue(address(instance.account) != address(0));
     }
 
-    function test_exec() public {
-        vm.prank(address(entrypoint));
-        IKernel(instance.account).setDefaultValidator(IKernelValidator(address(validator)), "");
+    function execViaKernel(address to, uint256 value, bytes memory callData) public {
+        ExecutorAction memory action =
+            ExecutorAction({ to: payable(to), value: value, data: callData });
+        ModuleExecLib.exec(instance.executorManager, instance.account, action);
+    }
 
-        // IKernel(instance.account).execute(
-        //     address(target), 0, abi.encodeCall(Target.set, (1336)), Operation.Call
-        // );
+    function test_execViaModule() public {
+        vm.prank(address(entrypoint));
+        IKernel(instance.account).setDefaultValidator(
+            IKernelValidator(address(instance.executorManager)), ""
+        );
+
+        console2.log("executorManager", address(instance.executorManager));
+
+        address thisAddress = address(this);
+        vm.prank(address(instance.account));
+        KernelExecutorManager(address(instance.executorManager)).enableExecutor(thisAddress, false);
+
+        execViaKernel(address(target), 0, abi.encodeWithSelector(target.set.selector, 0x41414141));
+    }
+
+    function test_exec4337() public {
+        vm.prank(address(entrypoint));
+        IKernel(instance.account).setDefaultValidator(
+            IKernelValidator(address(instance.executorManager)), ""
+        );
+
+        vm.prank(instance.account);
+        KernelExecutorManager(address(instance.executorManager)).addValidator(address(validator));
+        instance.exec4337({
+            target: address(target),
+            value: 0,
+            callData: abi.encodeWithSelector(target.set.selector, 0x41414141),
+            signature: hex"41414141",
+            validator: address(validator)
+        });
+
+        assertTrue(target.value() == 0x41414141);
     }
 }
