@@ -20,3 +20,7 @@ function etch(address target, bytes memory runtimeBytecode) {
 function label(address _addr, string memory _label) {
     Vm(VM_ADDR).label(_addr, _label);
 }
+
+function prank(address _addr) {
+    Vm(VM_ADDR).prank(_addr);
+}

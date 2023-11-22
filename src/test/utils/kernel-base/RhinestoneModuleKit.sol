@@ -5,6 +5,8 @@ import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
 import "murky/src/Merkle.sol";
 import "src/test/utils/kernel-base/IKernel.sol";
 
+import "forge-std/console2.sol";
+
 import {
     Auxiliary,
     IRhinestone4337,
@@ -68,9 +70,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         if (!initialzed) init();
         Auxiliary memory env = makeAuxiliary(address(0), IBootstrap(address(0)), sessionKeyManager);
 
+        IExecutorManager kernelStyleExecManager =
+            IExecutorManager(address(new KernelExecutorManager(env.registry)));
+        // bytes memory initCallData = abi.encodeCall(
+        //     IKernel.setDefaultValidator, (IKernelValidator(address(kernelStyleExecManager)), "")
+        // );
+
         instance = RhinestoneAccount({
             account: kernelFactory.createAccount(address(accountSingleton), "", uint256(salt)),
-            executorManager: IExecutorManager(address(new KernelExecutorManager(env.registry))),
+            executorManager: kernelStyleExecManager,
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({
@@ -112,6 +120,7 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
+        console2.log("validator", address(instance.aux.validator));
         exec4337(instance, target, value, callData, hex"41414141", address(instance.aux.validator));
     }
 
@@ -156,6 +165,8 @@ library RhinestoneModuleKitLib {
         userOp.signature = signature;
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
+
+        setDefaultValidator(instance);
 
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
@@ -224,14 +235,11 @@ library RhinestoneModuleKitLib {
 
         // if default validator is not set to instance.executorManager, set it
         if (currentDefaultValidator != address(instance.executorManager)) {
-            exec4337({
-                instance: instance,
-                target: address(instance.executorManager),
-                callData: abi.encodeCall(
-                    IKernel.setDefaultValidator,
-                    (IKernelValidator(address(instance.executorManager)), "")
-                    )
-            });
+            prank(address(instance.aux.entrypoint));
+            IKernel(instance.account).setDefaultValidator(
+                IKernelValidator(address(instance.executorManager)),
+                abi.encode(address(instance.aux.validator))
+            );
         }
     }
 

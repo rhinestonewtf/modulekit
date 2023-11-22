@@ -17,6 +17,9 @@ contract KernelExecutorManager is ExecutorManager, IKernelValidator {
 
     function enable(bytes calldata _data) external payable override {
         validators[msg.sender].init();
+
+        address validator = abi.decode(_data, (address));
+        addValidator(validator);
     }
 
     function disable(bytes calldata _data) external payable override { }
@@ -26,7 +29,7 @@ contract KernelExecutorManager is ExecutorManager, IKernelValidator {
      * @param validator - Address of the validator to be added.
      */
 
-    function addValidator(address validator) external onlySecureModule(validator) {
+    function addValidator(address validator) public onlySecureModule(validator) {
         validators[msg.sender].push(validator);
     }
 
