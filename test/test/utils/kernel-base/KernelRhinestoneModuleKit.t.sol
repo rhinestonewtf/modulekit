@@ -79,4 +79,13 @@ contract KernelRhinestoneModuleKitTest is RhinestoneModuleKit, Test {
 
         assertTrue(target.value() == 0x41414141);
     }
+
+    function test_withKit_exec4337() public {
+        vm.prank(address(instance.aux.entrypoint));
+        instance.exec4337({
+            target: address(target),
+            callData: abi.encodeWithSelector(target.set.selector, 0x41414141)
+        });
+        assertTrue(target.value() == 0x41414141);
+    }
 }

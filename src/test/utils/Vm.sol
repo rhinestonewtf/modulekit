@@ -32,3 +32,7 @@ function recordLogs() {
 function getRecordedLogs() returns (VmSafe.Log[] memory) {
     return Vm(VM_ADDR).getRecordedLogs();
 }
+
+function prank(address _addr) {
+    Vm(VM_ADDR).prank(_addr);
+}
