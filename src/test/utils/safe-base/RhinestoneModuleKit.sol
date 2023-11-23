@@ -41,20 +41,6 @@ struct AccountFlavor {
     ISafe accountSingleton;
 }
 
-function writeExpectRevert(uint256 value) {
-    bytes32 slot = keccak256("ExpectSlot");
-    assembly {
-        sstore(slot, value)
-    }
-}
-
-function getExpectRevert() view returns (uint256 value) {
-    bytes32 slot = keccak256("ExpectSlot");
-    assembly {
-        value := sload(slot)
-    }
-}
-
 contract RhinestoneModuleKit is AuxiliaryFactory {
     IRhinestone4337 internal rhinestoneManager;
     Bootstrap internal safeBootstrap;
@@ -69,11 +55,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     function init() internal override {
         super.init();
         executorManager = new SafeExecutorManager(IERC7484Registry(address(mockRegistry)));
-        label(address(executorManager), "executorManager");
+        label(address(executorManager), "ExecutorManager");
         safeFactory = new SafeProxyFactory();
-        label(address(safeFactory), "safeFactory");
+        label(address(safeFactory), "SafeFactory");
         safeSingleton = new Safe();
-        label(address(safeSingleton), "safeSingleton");
+        label(address(safeSingleton), "SafeSingleton");
 
         rhinestoneManager = IRhinestone4337(
             address(
@@ -85,7 +71,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         );
         label(address(rhinestoneManager), "Rhinestone4337");
         safeBootstrap = new Bootstrap();
-        label(address(safeBootstrap), "safeBootstrap");
+        label(address(safeBootstrap), "SafeBootstrap");
         initialzed = true;
     }
 

@@ -6,17 +6,24 @@ import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount,
-    UserOperation
+    UserOperation,
+    ConditionConfig
 } from "../../src/test/utils/biconomy-base/RhinestoneModuleKit.sol";
 import { MockValidator } from "../../src/test/mocks/MockValidator.sol";
+import { MockHook } from "../../src/test/mocks/MockHook.sol";
 import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { ICondition } from "../../src/core/ComposableCondition.sol";
+import { TokenReceiver } from "../mocks/fallback/TokenReceiver.sol";
+import { Merkle } from "murky/Merkle.sol";
+import { MockCondition } from "../../src/test/mocks/MockCondition.sol";
 
 contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount;
 
     RhinestoneAccount instance;
     MockValidator validator;
+    MockHook hook;
     MockExecutor executor;
 
     MockERC20 token;
@@ -28,11 +35,8 @@ contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
         // Setup modules
         validator = new MockValidator();
+        hook = new MockHook();
         executor = new MockExecutor();
-
-        // Add modules to account
-        instance.addValidator(address(validator));
-        instance.addExecutor(address(executor));
 
         // Setup aux
         token = new MockERC20("Test", "TEST", 18);
@@ -75,7 +79,6 @@ contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
         bytes memory callData = "";
-        // @Todo: add signature
         bytes memory signature = "";
 
         // Create userOperation
@@ -88,6 +91,16 @@ contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
+    }
+
+    function testExec4337__RevertWhen__UserOperationFails() public {
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 100_000 ether;
+
+        // Create userOperation
+        instance.expect4337Revert();
+        instance.exec4337({ target: receiver, callData: "", value: value });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -114,6 +127,50 @@ contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertFalse(validatorEnabled);
     }
 
+    function testAddSessionKey() public {
+        uint256 validUntil = block.timestamp + 1 days;
+        uint256 validAfter = block.timestamp;
+        address sessionValidationModule = address(validator);
+        bytes memory sessionKeyData = "";
+
+        instance.addSessionKey({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionValidationModule,
+            sessionKeyData: sessionKeyData
+        });
+
+        // Validate proof
+        Merkle m = new Merkle();
+
+        bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionValidationModule,
+            sessionKeyData: sessionKeyData
+        });
+
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = leaf;
+        leaves[1] = leaf;
+
+        bytes32 root = instance.aux.sessionKeyManager.getSessionKeys(instance.account).merkleRoot;
+        bytes32[] memory proof = m.getProof(leaves, 1);
+
+        bool isValidProof = m.verifyProof(root, proof, leaf);
+
+        assertTrue(isValidProof);
+    }
+
+    function testAddHook() public {
+        vm.expectRevert();
+        instance.addHook(address(hook));
+
+        vm.expectRevert();
+        bool hookEnabled = instance.isHookEnabled(address(hook));
+        assertTrue(hookEnabled);
+    }
+
     function testAddExecutor() public {
         address newExecutor = makeAddr("executor");
 
@@ -132,6 +189,40 @@ contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         instance.removeExecutor(newExecutor);
         executorEnabled = instance.isValidatorEnabled(newExecutor);
         assertFalse(executorEnabled);
+    }
+
+    function testSetCondition() public {
+        address newExecutor = makeAddr("newExecutor");
+        instance.addExecutor(newExecutor);
+
+        address mockCondition = address(new MockCondition());
+        ConditionConfig[] memory conditions = new ConditionConfig[](1);
+        conditions[0] = ConditionConfig({ condition: ICondition(mockCondition), conditionData: "" });
+
+        bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);
+
+        instance.setCondition(newExecutor, conditions);
+
+        bytes32 digestOnManager =
+            instance.aux.compConditionManager.getHash(instance.account, newExecutor);
+        assertEq(digest, digestOnManager);
+    }
+
+    function testAddFallback() public {
+        TokenReceiver handler = new TokenReceiver();
+        string memory functionSig = "onERC721Received(address,address,uint256,bytes)";
+        bytes memory callData = abi.encodeWithSignature(
+            functionSig, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
+        );
+
+        instance.addFallback({
+            handleFunctionSig: bytes4(keccak256(bytes(functionSig))),
+            isStatic: true,
+            handler: address(handler)
+        });
+
+        (bool success,) = instance.account.call(callData);
+        assertTrue(success);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

@@ -73,24 +73,24 @@ contract AuxiliaryFactory {
         });
 
         defaultAttester = address(0x4242424242);
-        label(defaultAttester, "defaultAttester");
+        label(defaultAttester, "DefaultAttester");
         bootstrap = new Bootstrap();
-        label(address(bootstrap), "bootstrap");
+        label(address(bootstrap), "Bootstrap");
 
         entrypoint = etchEntrypoint();
-        label(address(entrypoint), "entrypoint");
+        label(address(entrypoint), "EntryPoint");
         mockValidator = new MockValidator();
-        label(address(mockValidator), "mockValidator");
+        label(address(mockValidator), "MockValidator");
         mockRegistry = IERC7484Registry(address(new MockRegistry()));
-        label(address(mockRegistry), "mockRegistry");
+        label(address(mockRegistry), "MockRegistry");
         mockRhinestoneFactory = new MockProtocol();
-        label(address(mockRhinestoneFactory), "mockRhinestoneFactory");
+        label(address(mockRhinestoneFactory), "MockRhinestoneFactory");
 
         compConditionManager = new ComposableConditionManager(mockRegistry);
-        label(address(compConditionManager), "compConditionManager");
+        label(address(compConditionManager), "CompConditionManager");
 
         sessionKeyManager = new SessionKeyManager();
-        label(address(sessionKeyManager), "sessionKeyManager");
+        label(address(sessionKeyManager), "SessionKeyManager");
     }
 
     function makeAuxiliary(

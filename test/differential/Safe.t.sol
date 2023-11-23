@@ -16,6 +16,7 @@ import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { ICondition } from "../../src/core/ComposableCondition.sol";
 import { TokenReceiver } from "../mocks/fallback/TokenReceiver.sol";
 import { Merkle } from "murky/Merkle.sol";
+import { MockCondition } from "../../src/test/mocks/MockCondition.sol";
 
 contract SafeDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount;
@@ -36,12 +37,6 @@ contract SafeDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         validator = new MockValidator();
         hook = new MockHook();
         executor = new MockExecutor();
-
-        // Add modules to account
-        //@todo delete?
-        instance.addValidator(address(validator));
-        instance.addHook(address(hook));
-        instance.addExecutor(address(executor));
 
         // Setup aux
         token = new MockERC20("Test", "TEST", 18);
@@ -197,11 +192,9 @@ contract SafeDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         address newExecutor = makeAddr("newExecutor");
         instance.addExecutor(newExecutor);
 
+        address mockCondition = address(new MockCondition());
         ConditionConfig[] memory conditions = new ConditionConfig[](1);
-        conditions[0] = ConditionConfig({
-            condition: ICondition(makeAddr("condition")),
-            conditionData: hex"1234"
-        });
+        conditions[0] = ConditionConfig({ condition: ICondition(mockCondition), conditionData: "" });
 
         bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);
 
@@ -214,17 +207,16 @@ contract SafeDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     function testAddFallback() public {
         TokenReceiver handler = new TokenReceiver();
-        bytes4 selector = 0x150b7a02;
+        string memory functionSig = "onERC721Received(address,address,uint256,bytes)";
+        bytes memory callData = abi.encodeWithSignature(
+            functionSig, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
+        );
 
         instance.addFallback({
-            handleFunctionSig: selector,
+            handleFunctionSig: bytes4(keccak256(bytes(functionSig))),
             isStatic: true,
             handler: address(handler)
         });
-
-        bytes memory callData = abi.encodeWithSelector(
-            selector, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
-        );
 
         (bool success,) = instance.account.call(callData);
         assertTrue(success);
