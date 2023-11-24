@@ -127,6 +127,13 @@ library RhinestoneModuleKitLib {
                                 EXEC4337
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev Executes an ERC-4337 transaction
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param callData Calldata
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -137,6 +144,14 @@ library RhinestoneModuleKitLib {
         exec4337(instance, target, 0, callData);
     }
 
+    /**
+     * @dev Executes an ERC-4337 transaction
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value
+     * @param callData Calldata
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -148,6 +163,15 @@ library RhinestoneModuleKitLib {
         exec4337(instance, target, value, callData, bytes(""));
     }
 
+    /**
+     * @dev Executes an ERC-4337 transaction
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value
+     * @param callData Calldata
+     * @param signature Signature
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -162,6 +186,15 @@ library RhinestoneModuleKitLib {
         exec4337(instance, data, signature);
     }
 
+    /**
+     * @dev Executes an ERC-4337 transaction
+     * @dev this is an internal function that assumes that calldata is already correctly formatted
+     * @dev only use this function if you want to manually encode the calldata, otherwise use the functions above
+     *
+     * @param instance RhinestoneAccount
+     * @param callData ENcoded callData
+     * @param signature Signature
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         bytes memory callData,
@@ -205,14 +238,18 @@ library RhinestoneModuleKitLib {
         writeExpectRevert(0);
 
         emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
-
-        // @Todo: return bool and bytes memory
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev Adds a validator to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validator Validator address
+     */
     function addValidator(RhinestoneAccount memory instance, address validator) internal {
         exec4337({
             instance: instance,
@@ -223,6 +260,12 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
     }
 
+    /**
+     * @dev Removes a validator from the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validator Validator address
+     */
     function removeValidator(RhinestoneAccount memory instance, address validator) internal {
         // get previous executor in sentinel list
         address previous;
@@ -249,6 +292,14 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
     }
 
+    /**
+     * @dev Checks if a validator is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param validator Validator address
+     *
+     * @return isEnabled True if validator is enabled
+     */
     function isValidatorEnabled(
         RhinestoneAccount memory instance,
         address validator
@@ -259,6 +310,18 @@ library RhinestoneModuleKitLib {
         isEnabled = ISmartAccount(instance.account).isModuleEnabled(validator);
     }
 
+    /**
+     * @dev Adds a session key to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validUntil Valid until timestamp
+     * @param validAfter Valid after timestamp
+     * @param sessionValidationModule Session validation module address
+     * @param sessionKeyData Session key data
+     *
+     * @return root Merkle root of session key manager
+     * @return proof Merkle proof for session key
+     */
     function addSessionKey(
         RhinestoneAccount memory instance,
         uint256 validUntil,
@@ -299,10 +362,24 @@ library RhinestoneModuleKitLib {
         );
     }
 
+    /**
+     * @dev Adds a hook to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     */
     function addHook(RhinestoneAccount memory instance, address hook) internal {
         revert("Not supported yet");
     }
 
+    /**
+     * @dev Checks if a hook is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     *
+     * @return isEnabled True if hook is enabled
+     */
     function isHookEnabled(
         RhinestoneAccount memory instance,
         address hook
@@ -313,6 +390,12 @@ library RhinestoneModuleKitLib {
         revert("Not supported yet");
     }
 
+    /**
+     * @dev Adds an executor to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param executor Executor address
+     */
     function addExecutor(RhinestoneAccount memory instance, address executor) internal {
         if (
             (
@@ -342,6 +425,12 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_AddExecutor(instance.account, executor);
     }
 
+    /**
+     * @dev Removes an executor from the account
+     *
+     * @param instance RhinestoneAccount
+     * @param executor Executor address
+     */
     function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
         // get previous executor in sentinel list
         address previous;
@@ -370,6 +459,14 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_RemoveExecutor(instance.account, executor);
     }
 
+    /**
+     * @dev Checks if an executor is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param executor Executor address
+     *
+     * @return isEnabled True if executor is enabled
+     */
     function isExecutorEnabled(
         RhinestoneAccount memory instance,
         address executor
@@ -380,6 +477,13 @@ library RhinestoneModuleKitLib {
         isEnabled = instance.aux.executorManager.isExecutorEnabled(instance.account, executor);
     }
 
+    /**
+     * @dev Adds a condition to the Condition Manager
+     *
+     * @param instance RhinestoneAccount
+     * @param forExecutor Executor address for which the condition is used
+     * @param conditions Condition config
+     */
     function setCondition(
         RhinestoneAccount memory instance,
         address forExecutor,
@@ -398,6 +502,14 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_SetCondition(address(instance.account), forExecutor);
     }
 
+    /**
+     * @dev Adds a fallback handler to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param handleFunctionSig Function signature
+     * @param isStatic True if function is static
+     * @param handler Handler address
+     */
     function addFallback(
         RhinestoneAccount memory instance,
         bytes4 handleFunctionSig,
@@ -436,6 +548,15 @@ library RhinestoneModuleKitLib {
                                 UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * @dev Gets the user operation hash
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param callData Calldata
+     *
+     * @return userOpHash User operation hash
+     */
     function getUserOpHash(
         RhinestoneAccount memory instance,
         address target,
@@ -450,6 +571,16 @@ library RhinestoneModuleKitLib {
         return userOpHash;
     }
 
+    /**
+     * @dev Gets the formatted UserOperation
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value to send
+     * @param callData Calldata
+     *
+     * @return userOp Formatted UserOperation
+     */
     function getFormattedUserOp(
         RhinestoneAccount memory instance,
         address target,
@@ -466,10 +597,23 @@ library RhinestoneModuleKitLib {
         userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
     }
 
-    function expect4337Revert(RhinestoneAccount memory) internal {
+    /**
+     * @dev Expects an ERC-4337 transaction to revert
+     * @dev if this is called before an exec4337 call, it will throw an error if the ERC-4337 flow does not revert
+     *
+     * @param instance RhinestoneAccount
+     */
+    function expect4337Revert(RhinestoneAccount memory instance) internal {
         writeExpectRevert(1);
     }
 
+    /**
+     * @dev Checks if an account is deployed
+     *
+     * @param instance RhinestoneAccount
+     *
+     * @return isDeployed True if account is deployed
+     */
     function isDeployed(RhinestoneAccount memory instance) internal view returns (bool) {
         address _addr = address(instance.account);
         uint32 size;
