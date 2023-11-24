@@ -82,6 +82,7 @@ library ModuleExecLib {
         ExecutorAction memory action
     )
         internal
+        returns (bytes[] memory data)
     {
         ExecutorAction[] memory actions = new ExecutorAction[](1);
         actions[0] = action;
@@ -89,7 +90,7 @@ library ModuleExecLib {
         ExecutorTransaction memory transaction =
             ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
 
-        manager.executeTransaction(account, transaction);
+        return manager.executeTransaction(account, transaction);
     }
 
     function exec(
@@ -98,11 +99,12 @@ library ModuleExecLib {
         ExecutorAction[] memory actions
     )
         internal
+        returns (bytes[] memory data)
     {
         ExecutorTransaction memory transaction =
             ExecutorTransaction({ actions: actions, nonce: 0, metadataHash: "" });
 
-        manager.executeTransaction(account, transaction);
+        return manager.executeTransaction(account, transaction);
     }
 
     function exec(
@@ -112,10 +114,11 @@ library ModuleExecLib {
         bytes memory callData
     )
         internal
+        returns (bytes[] memory data)
     {
         ExecutorAction memory action =
             ExecutorAction({ to: payable(target), value: 0, data: callData });
-        exec(manager, account, action);
+        return exec(manager, account, action);
     }
 }
 
