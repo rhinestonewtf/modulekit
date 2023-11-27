@@ -46,8 +46,9 @@ contract ValidatorSelectionLibTest is Test {
         UserOperation memory userOp = getEmptyUserOp();
 
         address validator = makeAddr("validator");
-        bytes memory signature = abi.encodePacked(validator, bytes("signature"));
-        userOp.signature = signature;
+        bytes memory signature = bytes("signature");
+        bytes memory signatureEncoded = impl.encodeValidator(signature, validator);
+        userOp.signature = signatureEncoded;
         address decodedValidator = impl.decodeValidator(userOp);
 
         assertEq(decodedValidator, validator);
@@ -58,7 +59,7 @@ contract ValidatorSelectionLibTest is Test {
 
         address validator = makeAddr("validator");
         bytes memory signature = bytes("signature");
-        bytes memory signatureEncoded = abi.encodePacked(validator, bytes("signature"));
+        bytes memory signatureEncoded = impl.encodeValidator(signature, validator);
         userOp.signature = signatureEncoded;
         bytes memory signatureDecoded = impl.decodeSignature(userOp);
 
@@ -68,7 +69,7 @@ contract ValidatorSelectionLibTest is Test {
     function testEncodeValidator() public {
         address validator = makeAddr("validator");
         bytes memory signature = bytes("signature");
-        bytes memory signatureEncoded = abi.encodePacked(validator, bytes("signature"));
+        bytes memory signatureEncoded = abi.encode(signature, validator);
         bytes memory signatureEncodedWithLib = impl.encodeValidator(signature, validator);
 
         assertEq(signatureEncodedWithLib, signatureEncoded);

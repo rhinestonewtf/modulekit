@@ -13,7 +13,9 @@ import {
     UserOperation
 } from "../Auxiliary.sol";
 import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
+// import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
 
+import { SessionKeyManager } from "../../../core/SessionKeyManager.sol";
 import { ExecutorManager } from "../../../core/ExecutorManager.sol";
 import "../safe-base/SafeExecutorManager.sol";
 import "../safe-base/RhinestoneSafeFlavor.sol";
@@ -70,6 +72,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         accountFactory = deployAccountFactory(address(accountSingleton));
         label(address(accountFactory), "AccountFactory");
         initialAuthModule = deployECDSA();
+        label(initialAuthModule, "initial auth module");
 
         fallbackHandler = new FallbackHandler();
         label(address(fallbackHandler), "FallbackHandler");
@@ -84,8 +87,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         returns (RhinestoneAccount memory instance)
     {
         if (!initialzed) init();
+        sessionKeyManager = new SessionKeyManager(16,132);
+        label(address(sessionKeyManager), "sessionKeyManager");
 
-        Auxiliary memory env = makeAuxiliary(address(0), safeBootstrap);
+        Auxiliary memory env = makeAuxiliary(address(0), safeBootstrap, sessionKeyManager);
 
         uint256 initialOwnerKey = 1;
         address initialOwnerAddress = getAddr(uint256(initialOwnerKey));
@@ -102,6 +107,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey }),
             fallbackHandler: address(fallbackHandler)
         });
+        label(instance.account, "rhinestone account");
         emit ModuleKitLogs.ModuleKit_NewAccount(instance.account, "Rhinestone-Biconomy");
     }
 
@@ -195,6 +201,21 @@ library RhinestoneModuleKitLib {
      * @param callData ENcoded callData
      * @param signature Signature
      */
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        bytes memory signature,
+        address validator
+    )
+        internal
+    {
+        bytes memory data =
+            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
+        exec4337(instance, data, encodeValidator(instance, signature, validator));
+    }
+
     function exec4337(
         RhinestoneAccount memory instance,
         bytes memory callData,
@@ -595,6 +616,27 @@ library RhinestoneModuleKitLib {
         bytes memory initCode =
             isDeployed(instance) ? bytes("") : BiconomyHelpers.accountInitCode(instance);
         userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+    }
+
+    /**
+     * @dev Encodes a signature with a chosen validator
+     *
+     * @param instance RhinestoneAccount
+     * @param signature Signature
+     * @param chosenValidator Chosen validator
+     *
+     * @return packedSignature Packed signature
+     */
+    function encodeValidator(
+        RhinestoneAccount memory instance,
+        bytes memory signature,
+        address chosenValidator
+    )
+        internal
+        pure
+        returns (bytes memory packedSignature)
+    {
+        packedSignature = abi.encode(signature, chosenValidator);
     }
 
     /**

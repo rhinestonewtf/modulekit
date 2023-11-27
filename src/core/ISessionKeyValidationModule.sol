@@ -16,7 +16,9 @@ interface ISessionKeyValidationModule {
         UserOperation calldata _op,
         bytes32 _userOpHash,
         bytes calldata _sessionKeyData,
-        bytes calldata _sessionKeySignature
+        bytes calldata _sessionKeySignature,
+        address target,
+        uint256 _offset
     )
         external
         view

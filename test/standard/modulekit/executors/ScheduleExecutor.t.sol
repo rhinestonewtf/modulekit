@@ -126,6 +126,8 @@ contract ScheduleExecutorTest is Test, RhinestoneModuleKit {
         // dealing ether and tokens to newly created smart account
         vm.deal(instance.account, 10 ether);
         token.mint(instance.account, 100 ether);
+
+        instance.addValidator(address(mockValidator));
     }
 
     function test_TriggerExecutor() public {

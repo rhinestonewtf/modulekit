@@ -40,7 +40,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     );
 
     // Address of the entry point that is supported.
-    address public immutable supportedEntryPoint;
+    address public immutable ENTRYPOINT;
 
     // Struct to track execution status for operations.
     struct ExecutionStatus {
@@ -54,6 +54,9 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     event ValidatorAdded(address indexed account, address indexed validator);
     event ValidatorRemoved(address indexed account, address indexed validator);
 
+    error Unauthorized();
+    error InvalidInput();
+
     /**
      * @dev Constructor that initializes the supported entry point and sets the registry.
      * @param _entryPoint - The address of the supported entry point.
@@ -65,7 +68,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
     )
         RegistryAdapterForSingletons(_registry)
     {
-        supportedEntryPoint = _entryPoint;
+        ENTRYPOINT = _entryPoint;
     }
 
     /**
@@ -154,7 +157,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         // get entrypoint from params
         address entryPoint = _msgSender();
         // enforce that only trusted entrypoint can be used
-        require(entryPoint == supportedEntryPoint, "Unsupported entry point");
+        require(entryPoint == ENTRYPOINT, "Unsupported entry point");
 
         _validateSignatures(userOp, userOpHash);
 
@@ -222,19 +225,35 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         require(isValid == 0, "Invalid signature");
     }
 
-    function executeBatch(ExecutorAction[] calldata action) external payable {
-        // TODO
-        uint256 len = action.length;
-        for (uint256 i; i < len; i++) {
-            _execTransationOnSmartAccount(msg.sender, action[i].to, action[i].value, action[i].data);
+    function executeBatch(
+        address[] calldata targets,
+        uint256[] calldata values,
+        bytes[] calldata callDatas
+    )
+        external
+        payable
+        onlyEntrypoint
+    {
+        uint256 length = targets.length;
+
+        if (length == 0 || length != values.length || length != callDatas.length) {
+            revert InvalidInput();
+        }
+        for (uint256 i; i < length; i++) {
+            _execTransationOnSmartAccount(msg.sender, targets[i], values[i], callDatas[i]);
         }
     }
 
-    function execute(ExecutorAction calldata action) external payable {
-        // TODO
-        (bool success,) =
-            _execTransationOnSmartAccount(msg.sender, action.to, action.value, action.data);
-        if (!success) revert("Execution Failed");
+    function execute(
+        address target,
+        uint256 value,
+        bytes calldata callData
+    )
+        external
+        payable
+        onlyEntrypoint
+    {
+        _execTransationOnSmartAccount(msg.sender, target, value, callData);
     }
 
     /**
@@ -278,4 +297,11 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         internal
         virtual
         returns (bool, bytes memory);
+
+    modifier onlyEntrypoint() {
+        address entryPoint = _msgSender();
+        // enforce that only trusted entrypoint can be used
+        if (entryPoint != ENTRYPOINT) revert Unauthorized();
+        _;
+    }
 }

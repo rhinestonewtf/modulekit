@@ -6,6 +6,7 @@ import { Safe } from "safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from "safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 import { ValidatorSelectionLib } from "../../../modulekit/lib/ValidatorSelectionLib.sol";
 import { Merkle } from "murky/Merkle.sol";
+import { SessionKeyManager } from "../../../core/SessionKeyManager.sol";
 import { ISafe } from "../../../common/ISafe.sol";
 import { IERC7484Registry } from "../../../common/IERC7484Registry.sol";
 import { RhinestoneSafeFlavor } from "./RhinestoneSafeFlavor.sol";
@@ -81,7 +82,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         if (!initialzed) init();
 
-        Auxiliary memory env = makeAuxiliary(address(rhinestoneManager), safeBootstrap);
+        SessionKeyManager sessionKeyManager = new SessionKeyManager(48,164);
+        label(address(sessionKeyManager), "sessionKeyManager");
+        Auxiliary memory env =
+            makeAuxiliary(address(rhinestoneManager), safeBootstrap, sessionKeyManager);
 
         instance = RhinestoneAccount({
             account: getAccountAddress(env, salt),
@@ -116,6 +120,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         bytes32 hash = keccak256(
             abi.encodePacked(bytes1(0xff), address(safeFactory), salt, keccak256(deploymentData))
         );
+        label(address(uint160(uint256(hash))), "Account");
         return payable(address(uint160(uint256(hash))));
     }
 }
@@ -187,7 +192,8 @@ library RhinestoneModuleKitLib {
 
         if (signature.length == 0) {
             signature = bytes(hex"414141414141414141414141414141414141414141414141414141414141");
-            signature = ValidatorSelectionLib.encodeValidator({
+            signature = encodeValidator({
+                instance: instance,
                 signature: signature,
                 chosenValidator: address(instance.aux.validator)
             });
@@ -221,7 +227,8 @@ library RhinestoneModuleKitLib {
 
         if (signature.length == 0) {
             signature = bytes(hex"414141414141414141414141414141414141414141414141414141414141");
-            signature = ValidatorSelectionLib.encodeValidator({
+            signature = encodeValidator({
+                instance: instance,
                 signature: signature,
                 chosenValidator: address(instance.aux.validator)
             });
@@ -666,6 +673,27 @@ library RhinestoneModuleKitLib {
         bytes memory initCode =
             isDeployed(instance) ? bytes("") : SafeHelpers.safeInitCode(instance);
         userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+    }
+
+    /**
+     * @dev Encodes a signature with a chosen validator
+     *
+     * @param instance RhinestoneAccount
+     * @param signature Signature
+     * @param chosenValidator Chosen validator
+     *
+     * @return packedSignature Packed signature
+     */
+    function encodeValidator(
+        RhinestoneAccount memory instance,
+        bytes memory signature,
+        address chosenValidator
+    )
+        internal
+        pure
+        returns (bytes memory packedSignature)
+    {
+        packedSignature = ValidatorSelectionLib.encodeValidator(signature, chosenValidator);
     }
 
     /**

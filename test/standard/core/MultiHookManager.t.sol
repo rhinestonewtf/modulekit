@@ -202,6 +202,8 @@ contract HookManagerTest is Test, RhinestoneModuleKit {
         vm.deal(instance.account, 10 ether);
         token.mint(instance.account, 1);
         token.mint(instance.account, 2);
+
+        instance.addValidator(address(mockValidator));
     }
 
     function testHookExecution() public {

@@ -13,6 +13,8 @@ ModuleKit allows you to:
 
 In-depth documentation is available at [docs.rhinestone.wtf](https://docs.rhinestone.wtf/modulekit/).
 
+> The ModuleKit is in active development and is subject to breaking changes. If you spot a bug, please take out an issue and we will fix it as soon as we can.
+
 ## Installation
 
 ### With Foundry
@@ -39,7 +41,7 @@ forge update rhinestonewtf/modulekit
 
 ## Usage
 
-To learn more about using ModuleKit, visit the [features section](/modulekit/libraries) of the docs. To get a better understanding of Modules generally, visit the [modules section](/modulekit/modules) and for hands-on tutorials on the entire lifecycle of modules, visit the [tutorials section](/tutorials).
+To learn more about using ModuleKit, visit the [tools section](https://docs.rhinestone.wtf/modulekit/tools) of the docs. To get a better understanding of Modules generally, visit the [modules section](https://docs.rhinestone.wtf/modulekit/modules) and for hands-on tutorials on the entire lifecycle of modules, visit the [tutorials section](https://docs.rhinestone.wtf/tutorials).
 
 ## Features
 

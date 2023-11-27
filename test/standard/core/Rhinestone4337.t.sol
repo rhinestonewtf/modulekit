@@ -201,7 +201,7 @@ contract Rhinestone4337Test is Test {
         userOp.sender = account;
 
         bytes memory sig = abi.encode(keccak256("signature"));
-        userOp.signature = abi.encodePacked(address(validator), sig);
+        userOp.signature = abi.encode(sig, address(validator));
 
         bytes memory callData = abi.encodeWithSelector(
             Rhinestone4337.validateUserOp.selector, userOp, keccak256("invalidCaller"), 0
@@ -284,11 +284,23 @@ contract Rhinestone4337Test is Test {
         uint256 value2 = 0;
         bytes memory data2 = abi.encode(false);
 
-        ExecutorAction[] memory actions = new ExecutorAction[](2);
-        actions[0] = ExecutorAction({ to: payable(to), value: value, data: data });
-        actions[1] = ExecutorAction({ to: payable(to2), value: value2, data: data2 });
+        address[] memory targets = new address[](2);
+        targets[0] = to;
+        targets[1] = to2;
 
-        rhinestone4337.executeBatch(actions);
+        uint256[] memory values = new uint256[](2);
+        values[0] = value;
+        values[1] = value2;
+
+        bytes[] memory datas = new bytes[](2);
+        datas[0] = data;
+        datas[1] = data2;
+
+        bytes memory callData =
+            abi.encodeWithSelector(Rhinestone4337.executeBatch.selector, targets, values, datas);
+        callData = abi.encodePacked(callData, ENTRYPOINT_ADDR);
+
+        address(rhinestone4337).call(callData);
 
         assertEq(hashes.length, 2);
         assertEq(hashes[0], keccak256(abi.encode(to, value, data)));

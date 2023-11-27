@@ -38,6 +38,9 @@ contract SafeDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         hook = new MockHook();
         executor = new MockExecutor();
 
+        // Add validator
+        instance.addValidator(address(mockValidator));
+
         // Setup aux
         token = new MockERC20("Test", "TEST", 18);
         token.mint(instance.account, 100 ether);
