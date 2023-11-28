@@ -8,6 +8,15 @@ interface ISmartAccount {
 
     function getFallbackHandler() external view returns (address _handler);
     function enableModule(address module) external;
+    function disableModule(address prevModule, address module) external;
+
+    function getModulesPaginated(
+        address start,
+        uint256 pageSize
+    )
+        external
+        view
+        returns (address[] memory array, address next);
 
     function setupAndEnableModule(
         address setupContract,

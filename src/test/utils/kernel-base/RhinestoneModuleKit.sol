@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
-import "../dependencies/Biconomy.sol";
-// import { ISmartAccountFactory, ISmartAccount } from "./utils/Interfaces.sol";
+import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
+import "murky/Merkle.sol";
+import "src/test/utils/kernel-base/IKernel.sol";
+
+import "forge-std/console2.sol";
 
 import {
     Auxiliary,
@@ -12,73 +15,54 @@ import {
     AuxiliaryLib,
     UserOperation
 } from "../Auxiliary.sol";
-import { SafeExecutorManager } from "../safe-base/SafeExecutorManager.sol";
-// import { RhinestoneSafeFlavor } from "../../../contracts/safe/RhinestoneSafeFlavor.sol";
-
+import { ConditionConfig } from "../../../core/ComposableCondition.sol";
 import { SessionKeyManager } from "../../../core/SessionKeyManager.sol";
-import { ExecutorManager } from "../../../core/ExecutorManager.sol";
-import "../safe-base/SafeExecutorManager.sol";
-import "../safe-base/RhinestoneSafeFlavor.sol";
-import "../../../core/ComposableCondition.sol";
+import { IBootstrap } from "src/common/IBootstrap.sol";
+import { KernelExecutorManager } from "src/test/utils/kernel-base/KernelExecutorManager.sol";
+import { IExecutorManager } from "src/modulekit/interfaces/IExecutor.sol";
 
-import { BiconomyHelpers } from "./BiconomySetup.sol";
-import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
-import { Merkle } from "murky/Merkle.sol";
+import { ValidatorSelectionLib } from "src/modulekit/lib/ValidatorSelectionLib.sol";
 
-import "../../../common/FallbackHandler.sol";
+import { ExecutorManager } from "src/core/ExecutorManager.sol";
 
-import { ECDSA } from "solady/utils/ECDSA.sol";
+import {
+    IKernel,
+    IKernelFactory,
+    deployAccountSingleton,
+    deployAccountFactory
+} from "../dependencies/Kernel.sol";
+
 import "../Vm.sol";
-
 import "../Log.sol";
-
-struct Owner {
-    address addr;
-    uint256 key;
-}
 
 struct RhinestoneAccount {
     address account;
     Auxiliary aux;
     bytes32 salt;
     AccountFlavor accountFlavor;
-    address initialAuthModule;
-    Owner initialOwner;
-    address fallbackHandler;
 }
 
 struct AccountFlavor {
-    ISmartAccountFactory accountFactory;
-    ISmartAccount accountSingleton;
+    IKernel accountSingleton;
+    IKernelFactory accountFactory;
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
-    Bootstrap internal safeBootstrap;
-
-    ISmartAccountFactory internal accountFactory;
-    ISmartAccount internal accountSingleton;
-    address initialAuthModule;
-
-    FallbackHandler internal fallbackHandler;
-
+    IKernelFactory kernelFactory;
+    IKernel accountSingleton;
     bool initialzed;
 
     function init() internal override {
         super.init();
-        executorManager = new SafeExecutorManager(mockRegistry);
-        label(address(executorManager), "ExecutorManager");
+
         accountSingleton = deployAccountSingleton(address(entrypoint));
-        label(address(accountSingleton), "AccountSingleton");
-        accountFactory = deployAccountFactory(address(accountSingleton));
-        label(address(accountFactory), "AccountFactory");
-        initialAuthModule = deployECDSA();
-        label(initialAuthModule, "initial auth module");
+        kernelFactory = deployAccountFactory(address(this), address(entrypoint));
+        sessionKeyManager = new SessionKeyManager(16,132);
+        label(address(sessionKeyManager), "sessionKeyManager");
 
-        fallbackHandler = new FallbackHandler();
-        label(address(fallbackHandler), "FallbackHandler");
+        kernelFactory.setImplementation(address(accountSingleton), true);
+        label(address(accountSingleton), "accountSingleton");
 
-        safeBootstrap = new Bootstrap();
-        label(address(safeBootstrap), "SafeBootstrap");
         initialzed = true;
     }
 
@@ -87,44 +71,32 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         returns (RhinestoneAccount memory instance)
     {
         if (!initialzed) init();
-        sessionKeyManager = new SessionKeyManager(16,132);
-        label(address(sessionKeyManager), "sessionKeyManager");
+        Auxiliary memory env = makeAuxiliary(address(0), IBootstrap(address(0)), sessionKeyManager);
 
-        Auxiliary memory env = makeAuxiliary(address(0), safeBootstrap, sessionKeyManager);
-
-        uint256 initialOwnerKey = 1;
-        address initialOwnerAddress = getAddr(uint256(initialOwnerKey));
+        IExecutorManager kernelStyleExecManager =
+            IExecutorManager(address(new KernelExecutorManager(env.registry)));
+        // overwriting the env.executorManager with the kernel style executor manager
+        env.executorManager = ExecutorManager(address(kernelStyleExecManager));
+        // bytes memory initCallData = abi.encodeCall(
+        //     IKernel.setDefaultValidator, (IKernelValidator(address(kernelStyleExecManager)), "")
+        // );
 
         instance = RhinestoneAccount({
-            account: getAccountAddress(initialOwnerAddress, salt),
+            account: kernelFactory.createAccount(address(accountSingleton), "", uint256(salt)),
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({
-                accountFactory: accountFactory,
-                accountSingleton: ISmartAccount(address(accountSingleton))
-            }),
-            initialAuthModule: address(initialAuthModule),
-            initialOwner: Owner({ addr: initialOwnerAddress, key: initialOwnerKey }),
-            fallbackHandler: address(fallbackHandler)
+                accountSingleton: accountSingleton,
+                accountFactory: kernelFactory
+            })
         });
-        label(instance.account, "rhinestone account");
-        emit ModuleKitLogs.ModuleKit_NewAccount(instance.account, "Rhinestone-Biconomy");
+        // instance.aux.executorManager = ExecutorManager(address(instance.aux.executorManager));
+        RhinestoneModuleKitLib.setDefaultValidator(instance);
+        label(instance.account, "account instance");
     }
 
-    function getAccountAddress(
-        address initialOwnerAddress,
-        bytes32 salt
-    )
-        public
-        view
-        returns (address payable)
-    {
-        address account = accountFactory.getAddressForCounterFactualAccount(
-            initialAuthModule,
-            abi.encodeWithSignature("initForSmartAccount(address)", initialOwnerAddress),
-            uint256(salt)
-        );
-        return payable(account);
+    function getAccountAddress(bytes memory data, bytes32 salt) internal view returns (address) {
+        return IKernelFactory(kernelFactory).getAccountAddress(data, uint256(salt));
     }
 }
 
@@ -132,7 +104,6 @@ library RhinestoneModuleKitLib {
     /*//////////////////////////////////////////////////////////////////////////
                                 EXEC4337
     //////////////////////////////////////////////////////////////////////////*/
-
     /**
      * @dev Executes an ERC-4337 transaction
      *
@@ -166,7 +137,7 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        exec4337(instance, target, value, callData, bytes(""));
+        exec4337(instance, target, value, callData, hex"41414141", address(instance.aux.validator));
     }
 
     /**
@@ -187,8 +158,8 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        bytes memory data =
-            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
+        bytes memory data = ERC4337Wrappers.getKernel4337TxCalldata(target, value, callData);
+        signature = encodeSig(encodeValidator(instance, signature, address(instance.aux.validator)));
         exec4337(instance, data, signature);
     }
 
@@ -211,9 +182,12 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        bytes memory data =
-            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
-        exec4337(instance, data, encodeValidator(instance, signature, validator));
+        bytes memory data = ERC4337Wrappers.getKernel4337TxCalldata(target, value, callData);
+        exec4337({
+            instance: instance,
+            callData: data,
+            signature: encodeSig(encodeValidator(instance, signature, validator))
+        });
     }
 
     function exec4337(
@@ -223,42 +197,14 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        // prepare ERC4337 UserOperation
-        bytes memory initCode =
-            isDeployed(instance) ? bytes("") : BiconomyHelpers.accountInitCode(instance);
-        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(instance, callData, initCode);
-
-        // create signature
-        if (signature.length == 0) {
-            bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-            (uint8 v, bytes32 r, bytes32 s) =
-                sign(instance.initialOwner.key, ECDSA.toEthSignedMessageHash(userOpHash));
-            bytes memory _signature = abi.encodePacked(r, s, v);
-            signature = abi.encode(_signature, instance.initialAuthModule);
-        }
+        UserOperation memory userOp = ERC4337Wrappers.getPartialUserOp(
+            instance.account, instance.aux.entrypoint, callData, ""
+        );
         userOp.signature = signature;
-
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
 
-        // send userOps to 4337 entrypoint
-        recordLogs();
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
-        }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -272,27 +218,22 @@ library RhinestoneModuleKitLib {
      * @param validator Validator address
      */
     function addValidator(RhinestoneAccount memory instance, address validator) internal {
+        setDefaultValidator(instance);
+        // add validator to instance.aux.executorManager
         exec4337({
             instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeCall(ISmartAccount.enableModule, (validator))
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(KernelExecutorManager.addValidator, (validator))
         });
-        emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
     }
 
-    /**
-     * @dev Removes a validator from the account
-     *
-     * @param instance RhinestoneAccount
-     * @param validator Validator address
-     */
     function removeValidator(RhinestoneAccount memory instance, address validator) internal {
         // get previous executor in sentinel list
         address previous;
 
-        (address[] memory array, address next) =
-            ISmartAccount(instance.account).getModulesPaginated(address(0x1), 100);
+        (address[] memory array, address next) = KernelExecutorManager(
+            address(instance.aux.executorManager)
+        ).getValidatorPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -303,14 +244,11 @@ library RhinestoneModuleKitLib {
                 if (array[i] == validator) previous = array[i - 1];
             }
         }
-
         exec4337({
             instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeWithSelector(ISmartAccount.disableModule.selector, previous, validator)
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(KernelExecutorManager.removeValidator, (previous, validator))
         });
-        emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
     }
 
     /**
@@ -328,7 +266,12 @@ library RhinestoneModuleKitLib {
         internal
         returns (bool isEnabled)
     {
-        isEnabled = ISmartAccount(instance.account).isModuleEnabled(validator);
+        address defaultValidator = IKernel(instance.account).getDefaultValidator();
+        if (defaultValidator != address(instance.aux.executorManager)) {
+            return false;
+        }
+        isEnabled =
+            KernelExecutorManager(defaultValidator).isValidatorEnabled(instance.account, validator);
     }
 
     /**
@@ -354,8 +297,9 @@ library RhinestoneModuleKitLib {
         returns (bytes32 root, bytes32[] memory proof)
     {
         if (
-            isDeployed(instance)
-                && !isValidatorEnabled(instance, address(instance.aux.sessionKeyManager))
+            !KernelExecutorManager(address(instance.aux.executorManager)).isValidatorEnabled(
+                instance.account, address(instance.aux.sessionKeyManager)
+            )
         ) {
             addValidator(instance, address(instance.aux.sessionKeyManager));
         }
@@ -401,6 +345,7 @@ library RhinestoneModuleKitLib {
      *
      * @return isEnabled True if hook is enabled
      */
+
     function isHookEnabled(
         RhinestoneAccount memory instance,
         address hook
@@ -418,32 +363,12 @@ library RhinestoneModuleKitLib {
      * @param executor Executor address
      */
     function addExecutor(RhinestoneAccount memory instance, address executor) internal {
-        if (
-            (
-                isDeployed(instance)
-                    && !ISmartAccount(instance.account).isModuleEnabled(
-                        address(instance.aux.executorManager)
-                    )
-            ) || !isDeployed(instance)
-        ) {
-            exec4337({
-                instance: instance,
-                target: address(instance.account),
-                value: 0,
-                callData: abi.encodeCall(
-                    ISmartAccount.enableModule, (address(instance.aux.executorManager))
-                    )
-            });
-        }
+        setDefaultValidator(instance);
         exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),
-            value: 0,
-            callData: abi.encodeCall(instance.aux.executorManager.enableExecutor, (executor, false))
+            callData: abi.encodeCall(ExecutorManager.enableExecutor, (executor, false))
         });
-
-        require(isExecutorEnabled(instance, executor), "Executor not enabled");
-        emit ModuleKitLogs.ModuleKit_AddExecutor(instance.account, executor);
     }
 
     /**
@@ -453,11 +378,10 @@ library RhinestoneModuleKitLib {
      * @param executor Executor address
      */
     function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
-        // get previous executor in sentinel list
         address previous;
-
-        (address[] memory array,) =
-            instance.aux.executorManager.getExecutorsPaginated(address(0x1), 100, instance.account);
+        (address[] memory array, address next) = ExecutorManager(
+            address(instance.aux.executorManager)
+        ).getExecutorsPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -468,18 +392,39 @@ library RhinestoneModuleKitLib {
                 if (array[i] == executor) previous = array[i - 1];
             }
         }
-
-        emit SDKLOG_RemoveExecutor(address(instance.account), executor, previous);
-
         exec4337({
             instance: instance,
             target: address(instance.aux.executorManager),
-            value: 0,
-            callData: abi.encodeCall(instance.aux.executorManager.disableExecutor, (previous, executor))
+            callData: abi.encodeCall(ExecutorManager.disableExecutor, (previous, executor))
         });
-        emit ModuleKitLogs.ModuleKit_RemoveExecutor(instance.account, executor);
     }
 
+    /**
+     * @dev Gets the formatted UserOperation
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value to send
+     * @param callData Calldata
+     *
+     * @return userOp Formatted UserOperation
+     */
+    function getFormattedUserOp(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (UserOperation memory userOp)
+    {
+        bytes memory data = ERC4337Wrappers.getKernel4337TxCalldata(target, value, callData);
+        // bytes memory initCode = isDeployed(instance) ? bytes("") : "";
+        bytes memory initCode = "";
+        userOp = ERC4337Wrappers.getPartialUserOp(
+            instance.account, instance.aux.entrypoint, data, initCode
+        );
+    }
     /**
      * @dev Checks if an executor is enabled
      *
@@ -488,6 +433,7 @@ library RhinestoneModuleKitLib {
      *
      * @return isEnabled True if executor is enabled
      */
+
     function isExecutorEnabled(
         RhinestoneAccount memory instance,
         address executor
@@ -520,7 +466,20 @@ library RhinestoneModuleKitLib {
                 instance.aux.compConditionManager.setHash, (forExecutor, conditions)
                 )
         });
-        emit ModuleKitLogs.ModuleKit_SetCondition(address(instance.account), forExecutor);
+    }
+
+    function setDefaultValidator(RhinestoneAccount memory instance) internal {
+        // get default validator from kernel
+        address currentDefaultValidator = IKernel(instance.account).getDefaultValidator();
+
+        // if default validator is not set to instance.aux.executorManager, set it
+        if (currentDefaultValidator != address(instance.aux.executorManager)) {
+            prank(address(instance.aux.entrypoint));
+            IKernel(instance.account).setDefaultValidator(
+                IKernelValidator(address(instance.aux.executorManager)),
+                abi.encode(address(instance.aux.validator))
+            );
+        }
     }
 
     /**
@@ -539,30 +498,7 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        // check if account is deployed and if fallback handler is enabled
-        address fallbackHandler;
-        if (isDeployed(instance)) {
-            fallbackHandler = ISmartAccount(instance.account).getFallbackHandler();
-        }
-
-        if (fallbackHandler != instance.fallbackHandler) {
-            exec4337({
-                instance: instance,
-                target: address(instance.account),
-                value: 0,
-                callData: abi.encodeCall(ISmartAccount.setFallbackHandler, (instance.fallbackHandler))
-            });
-        }
-
-        bytes32 encodedData = MarshalLib.encodeWithSelector(isStatic, handleFunctionSig, handler);
-        exec4337({
-            instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeCall(FallbackHandler.setSafeMethod, (handleFunctionSig, encodedData))
-        });
-
-        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
+        revert("Not supported yet");
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -593,39 +529,25 @@ library RhinestoneModuleKitLib {
     }
 
     /**
-     * @dev Gets the formatted UserOperation
+     * @dev Encodes the signature
      *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param value Value to send
-     * @param callData Calldata
+     * @param sig Signature to encode
      *
-     * @return userOp Formatted UserOperation
+     * @return encodedSig Signature encoded with mode
      */
-    function getFormattedUserOp(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData
-    )
-        internal
-        returns (UserOperation memory userOp)
-    {
-        bytes memory data =
-            ERC4337Wrappers.getBiconomy4337TxCalldata(instance, target, value, callData);
-        bytes memory initCode =
-            isDeployed(instance) ? bytes("") : BiconomyHelpers.accountInitCode(instance);
-        userOp = ERC4337Wrappers.getPartialUserOp(instance, data, initCode);
+    function encodeSig(bytes memory sig) internal pure returns (bytes memory) {
+        bytes4 mode = 0;
+        return abi.encodePacked(mode, sig);
     }
 
     /**
-     * @dev Encodes a signature with a chosen validator
+     * @dev Encodes the validator
      *
      * @param instance RhinestoneAccount
      * @param signature Signature
-     * @param chosenValidator Chosen validator
+     * @param chosenValidator Validator address
      *
-     * @return packedSignature Packed signature
+     * @return packedSignature Signature encoded with validator
      */
     function encodeValidator(
         RhinestoneAccount memory instance,
@@ -636,7 +558,7 @@ library RhinestoneModuleKitLib {
         pure
         returns (bytes memory packedSignature)
     {
-        packedSignature = abi.encode(signature, chosenValidator);
+        packedSignature = ValidatorSelectionLib.encodeValidator(signature, chosenValidator);
     }
 
     /**
@@ -649,13 +571,6 @@ library RhinestoneModuleKitLib {
         writeExpectRevert(1);
     }
 
-    /**
-     * @dev Checks if an account is deployed
-     *
-     * @param instance RhinestoneAccount
-     *
-     * @return isDeployed True if account is deployed
-     */
     function isDeployed(RhinestoneAccount memory instance) internal view returns (bool) {
         address _addr = address(instance.account);
         uint32 size;
@@ -664,6 +579,4 @@ library RhinestoneModuleKitLib {
         }
         return (size > 0);
     }
-
-    event SDKLOG_RemoveExecutor(address account, address executor, address prevExecutor);
 }
