@@ -117,7 +117,35 @@ library RhinestoneModuleKitLib {
     {
         packedSignature = ValidatorSelectionLib.encodeValidator(signature, chosenValidator);
     }
+    /*//////////////////////////////////////////////////////////////////////////
+                                EXEC4337
+    //////////////////////////////////////////////////////////////////////////*/
+    /**
+     * @dev Executes an ERC-4337 transaction
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param callData Calldata
+     */
 
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        bytes memory callData
+    )
+        internal
+    {
+        exec4337(instance, target, 0, callData);
+    }
+
+    /**
+     * @dev Executes an ERC-4337 transaction
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value
+     * @param callData Calldata
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -129,6 +157,15 @@ library RhinestoneModuleKitLib {
         exec4337(instance, target, value, callData, hex"41414141", address(instance.aux.validator));
     }
 
+    /**
+     * @dev Executes an ERC-4337 transaction
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value
+     * @param callData Calldata
+     * @param signature Signature
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -143,6 +180,15 @@ library RhinestoneModuleKitLib {
         exec4337(instance, data, signature);
     }
 
+    /**
+     * @dev Executes an ERC-4337 transaction
+     * @dev this is an internal function that assumes that calldata is already correctly formatted
+     * @dev only use this function if you want to manually encode the calldata, otherwise use the functions above
+     *
+     * @param instance RhinestoneAccount
+     * @param callData ENcoded callData
+     * @param signature Signature
+     */
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -163,16 +209,6 @@ library RhinestoneModuleKitLib {
 
     function exec4337(
         RhinestoneAccount memory instance,
-        address target,
-        bytes memory callData
-    )
-        internal
-    {
-        exec4337(instance, target, 0, callData);
-    }
-
-    function exec4337(
-        RhinestoneAccount memory instance,
         bytes memory callData,
         bytes memory signature
     )
@@ -188,20 +224,47 @@ library RhinestoneModuleKitLib {
         instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
-    function setCondition(
-        RhinestoneAccount memory instance,
-        address forExecutor,
-        ConditionConfig[] memory conditions
-    )
-        internal
-    {
+    /*//////////////////////////////////////////////////////////////////////////
+                                MODULES
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Adds a validator to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validator Validator address
+     */
+    function addValidator(RhinestoneAccount memory instance, address validator) internal {
+        setDefaultValidator(instance);
+        // add validator to instance.aux.executorManager
         exec4337({
             instance: instance,
-            target: address(instance.aux.compConditionManager),
-            value: 0,
-            callData: abi.encodeCall(
-                instance.aux.compConditionManager.setHash, (forExecutor, conditions)
-                )
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(KernelExecutorManager.addValidator, (validator))
+        });
+    }
+
+    function removeValidator(RhinestoneAccount memory instance, address validator) internal {
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array, address next) = KernelExecutorManager(
+            address(instance.aux.executorManager)
+        ).getValidatorPaginated(address(0x1), 100, instance.account);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == validator) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == validator) previous = array[i - 1];
+            }
+        }
+        exec4337({
+            instance: instance,
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(KernelExecutorManager.removeValidator, (previous, validator))
         });
     }
 
@@ -226,6 +289,131 @@ library RhinestoneModuleKitLib {
         }
         isEnabled =
             KernelExecutorManager(defaultValidator).isValidatorEnabled(instance.account, validator);
+    }
+
+    /**
+     * @dev Adds a session key to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validUntil Valid until timestamp
+     * @param validAfter Valid after timestamp
+     * @param sessionValidationModule Session validation module address
+     * @param sessionKeyData Session key data
+     *
+     * @return root Merkle root of session key manager
+     * @return proof Merkle proof for session key
+     */
+    function addSessionKey(
+        RhinestoneAccount memory instance,
+        uint256 validUntil,
+        uint256 validAfter,
+        address sessionValidationModule,
+        bytes memory sessionKeyData
+    )
+        internal
+        returns (bytes32 root, bytes32[] memory proof)
+    {
+        if (
+            !KernelExecutorManager(address(instance.aux.executorManager)).isValidatorEnabled(
+                instance.account, address(instance.aux.sessionKeyManager)
+            )
+        ) {
+            addValidator(instance, address(instance.aux.sessionKeyManager));
+        }
+
+        Merkle m = new Merkle();
+
+        bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionValidationModule,
+            sessionKeyData: sessionKeyData
+        });
+
+        bytes32[] memory leaves = new bytes32[](2);
+        leaves[0] = leaf;
+        leaves[1] = leaf;
+
+        root = m.getRoot(leaves);
+        proof = m.getProof(leaves, 1);
+
+        exec4337(
+            instance,
+            address(instance.aux.sessionKeyManager),
+            abi.encodeCall(instance.aux.sessionKeyManager.setMerkleRoot, (root))
+        );
+    }
+
+    /**
+     * @dev Adds a hook to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     */
+    function addHook(RhinestoneAccount memory instance, address hook) internal {
+        revert("Not supported yet");
+    }
+
+    /**
+     * @dev Checks if a hook is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     *
+     * @return isEnabled True if hook is enabled
+     */
+
+    function isHookEnabled(
+        RhinestoneAccount memory instance,
+        address hook
+    )
+        internal
+        returns (bool isEnabled)
+    {
+        revert("Not supported yet");
+    }
+
+    /**
+     * @dev Adds an executor to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param executor Executor address
+     */
+    function addExecutor(RhinestoneAccount memory instance, address executor) internal {
+        setDefaultValidator(instance);
+        exec4337({
+            instance: instance,
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(ExecutorManager.enableExecutor, (executor, false))
+        });
+    }
+
+    /**
+     * @dev Removes an executor from the account
+     *
+     * @param instance RhinestoneAccount
+     * @param executor Executor address
+     */
+    function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
+        address previous;
+        (address[] memory array, address next) = ExecutorManager(
+            address(instance.aux.executorManager)
+        ).getExecutorsPaginated(address(0x1), 100, instance.account);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == executor) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == executor) previous = array[i - 1];
+            }
+        }
+        exec4337({
+            instance: instance,
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(ExecutorManager.disableExecutor, (previous, executor))
+        });
     }
 
     /**
@@ -272,74 +460,29 @@ library RhinestoneModuleKitLib {
     {
         isEnabled = instance.aux.executorManager.isExecutorEnabled(instance.account, executor);
     }
+
     /**
-     * @dev Checks if a hook is enabled
+     * @dev Adds a condition to the Condition Manager
      *
      * @param instance RhinestoneAccount
-     * @param hook Hook address
-     *
-     * @return isEnabled True if hook is enabled
+     * @param forExecutor Executor address for which the condition is used
+     * @param conditions Condition config
      */
-
-    function isHookEnabled(
+    function setCondition(
         RhinestoneAccount memory instance,
-        address hook
+        address forExecutor,
+        ConditionConfig[] memory conditions
     )
         internal
-        returns (bool isEnabled)
     {
-        revert("Not supported yet");
-    }
-    /**
-     * @dev Adds a hook to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param hook Hook address
-     */
-
-    function addHook(RhinestoneAccount memory instance, address hook) internal {
-        revert("Not supported yet");
-    }
-
-    function addSessionKey(
-        RhinestoneAccount memory instance,
-        uint256 validUntil,
-        uint256 validAfter,
-        address sessionValidationModule,
-        bytes memory sessionKeyData
-    )
-        internal
-        returns (bytes32 root, bytes32[] memory proof)
-    {
-        if (
-            !KernelExecutorManager(address(instance.aux.executorManager)).isValidatorEnabled(
-                instance.account, address(instance.aux.sessionKeyManager)
-            )
-        ) {
-            addValidator(instance, address(instance.aux.sessionKeyManager));
-        }
-
-        Merkle m = new Merkle();
-
-        bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
-            validUntil: validUntil,
-            validAfter: validAfter,
-            sessionValidationModule: sessionValidationModule,
-            sessionKeyData: sessionKeyData
+        exec4337({
+            instance: instance,
+            target: address(instance.aux.compConditionManager),
+            value: 0,
+            callData: abi.encodeCall(
+                instance.aux.compConditionManager.setHash, (forExecutor, conditions)
+                )
         });
-
-        bytes32[] memory leaves = new bytes32[](2);
-        leaves[0] = leaf;
-        leaves[1] = leaf;
-
-        root = m.getRoot(leaves);
-        proof = m.getProof(leaves, 1);
-
-        exec4337(
-            instance,
-            address(instance.aux.sessionKeyManager),
-            abi.encodeCall(instance.aux.sessionKeyManager.setMerkleRoot, (root))
-        );
     }
 
     function setDefaultValidator(RhinestoneAccount memory instance) internal {
@@ -356,71 +499,14 @@ library RhinestoneModuleKitLib {
         }
     }
 
-    function addValidator(RhinestoneAccount memory instance, address validator) internal {
-        setDefaultValidator(instance);
-        // add validator to instance.aux.executorManager
-        exec4337({
-            instance: instance,
-            target: address(instance.aux.executorManager),
-            callData: abi.encodeCall(KernelExecutorManager.addValidator, (validator))
-        });
-    }
-
-    function removeValidator(RhinestoneAccount memory instance, address validator) internal {
-        // get previous executor in sentinel list
-        address previous;
-
-        (address[] memory array, address next) = KernelExecutorManager(
-            address(instance.aux.executorManager)
-        ).getValidatorPaginated(address(0x1), 100, instance.account);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == validator) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
-            }
-        }
-        exec4337({
-            instance: instance,
-            target: address(instance.aux.executorManager),
-            callData: abi.encodeCall(KernelExecutorManager.removeValidator, (previous, validator))
-        });
-    }
-
-    function addExecutor(RhinestoneAccount memory instance, address executor) internal {
-        setDefaultValidator(instance);
-        exec4337({
-            instance: instance,
-            target: address(instance.aux.executorManager),
-            callData: abi.encodeCall(ExecutorManager.enableExecutor, (executor, false))
-        });
-    }
-
-    function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
-        address previous;
-        (address[] memory array, address next) = ExecutorManager(
-            address(instance.aux.executorManager)
-        ).getExecutorsPaginated(address(0x1), 100, instance.account);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == executor) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == executor) previous = array[i - 1];
-            }
-        }
-        exec4337({
-            instance: instance,
-            target: address(instance.aux.executorManager),
-            callData: abi.encodeCall(ExecutorManager.disableExecutor, (previous, executor))
-        });
-    }
-
+    /**
+     * @dev Adds a fallback handler to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param handleFunctionSig Function signature
+     * @param isStatic True if function is static
+     * @param handler Handler address
+     */
     function addFallback(
         RhinestoneAccount memory instance,
         bytes4 handleFunctionSig,
@@ -428,8 +514,23 @@ library RhinestoneModuleKitLib {
         address handler
     )
         internal
-    { }
+    {
+        revert("Not supported yet");
+    }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Gets the user operation hash
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param callData Calldata
+     *
+     * @return userOpHash User operation hash
+     */
     function getUserOpHash(
         RhinestoneAccount memory instance,
         address target,
@@ -437,9 +538,8 @@ library RhinestoneModuleKitLib {
         bytes memory callData
     )
         internal
-        returns (bytes32 hash)
-    { 
-
+        returns (bytes32)
+    {
         UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
         return userOpHash;
