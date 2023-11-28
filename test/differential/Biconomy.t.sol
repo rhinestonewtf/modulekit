@@ -13,6 +13,7 @@ import { MockValidator } from "../../src/test/mocks/MockValidator.sol";
 import { MockHook } from "../../src/test/mocks/MockHook.sol";
 import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { IERC721TokenReceiver } from "forge-std/interfaces/IERC721.sol";
 import { ICondition } from "../../src/core/ComposableCondition.sol";
 import { TokenReceiver } from "../mocks/fallback/TokenReceiver.sol";
 import { Merkle } from "murky/Merkle.sol";
@@ -210,13 +211,14 @@ contract BiconomyDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     function testAddFallback() public {
         TokenReceiver handler = new TokenReceiver();
-        string memory functionSig = "onERC721Received(address,address,uint256,bytes)";
-        bytes memory callData = abi.encodeWithSignature(
+        bytes4 functionSig = IERC721TokenReceiver.onERC721Received.selector;
+
+        bytes memory callData = abi.encodeWithSelector(
             functionSig, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
         );
 
         instance.addFallback({
-            handleFunctionSig: bytes4(keccak256(bytes(functionSig))),
+            handleFunctionSig: functionSig,
             isStatic: true,
             handler: address(handler)
         });
