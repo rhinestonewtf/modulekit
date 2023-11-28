@@ -95,14 +95,12 @@ contract KernelExecutorManager is ExecutorManager, IKernelValidator {
         address validator;
         uint256 sigLength = userOp.signature.length;
 
-        if (sigLength == 0) return 0;
-        else (, validator) = abi.decode(userOp.signature, (bytes, address));
+        (, validator) = abi.decode(userOp.signature, (bytes, address));
 
         // check if selected validator is enabled
         require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
 
         ret = IValidator(validator).validateUserOp(userOp, userOpHash);
-        require(ret == 0, "Invalid signature");
     }
 
     function validateSignature(

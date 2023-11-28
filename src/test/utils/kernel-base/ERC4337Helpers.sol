@@ -28,9 +28,6 @@ library ERC4337Wrappers {
         view
         returns (UserOperation memory)
     {
-        // // Get Safe initCode if not deployed already
-        // bytes memory initCode = isDeployed(smartAccount) ? bytes("") : safeInitCode(instance);
-
         // Get nonce from Entrypoint
         uint256 nonce = entrypoint.getNonce(smartAccount, 0);
 
