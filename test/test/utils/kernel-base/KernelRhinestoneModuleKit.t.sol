@@ -43,13 +43,17 @@ contract KernelRhinestoneModuleKitTest is RhinestoneModuleKit, Test {
     function execViaKernel(address to, uint256 value, bytes memory callData) public {
         ExecutorAction memory action =
             ExecutorAction({ to: payable(to), value: value, data: callData });
-        ModuleExecLib.exec(instance.executorManager, instance.account, action);
+        ModuleExecLib.exec(
+            IExecutorManager(address(instance.aux.executorManager)), instance.account, action
+        );
     }
 
     function test_execViaModule() public {
         address thisAddress = address(this);
         vm.prank(address(instance.account));
-        KernelExecutorManager(address(instance.executorManager)).enableExecutor(thisAddress, false);
+        KernelExecutorManager(address(instance.aux.executorManager)).enableExecutor(
+            thisAddress, false
+        );
 
         execViaKernel(address(target), 0, abi.encodeWithSelector(target.set.selector, 0x41414141));
     }

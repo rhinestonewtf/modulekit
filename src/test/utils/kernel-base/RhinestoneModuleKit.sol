@@ -16,6 +16,7 @@ import {
     UserOperation
 } from "../Auxiliary.sol";
 import { ConditionConfig } from "../../../core/ComposableCondition.sol";
+import { SessionKeyManager } from "../../../core/SessionKeyManager.sol";
 import { IBootstrap } from "src/common/IBootstrap.sol";
 import { KernelExecutorManager } from "src/test/utils/kernel-base/KernelExecutorManager.sol";
 import { IExecutorManager } from "src/modulekit/interfaces/IExecutor.sol";
@@ -36,7 +37,6 @@ import "../Log.sol";
 
 struct RhinestoneAccount {
     address account;
-    IExecutorManager executorManager;
     Auxiliary aux;
     bytes32 salt;
     AccountFlavor accountFlavor;
@@ -57,6 +57,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         accountSingleton = deployAccountSingleton(address(entrypoint));
         kernelFactory = deployAccountFactory(address(this), address(entrypoint));
+        sessionKeyManager = new SessionKeyManager(16,132);
+        label(address(sessionKeyManager), "sessionKeyManager");
 
         kernelFactory.setImplementation(address(accountSingleton), true);
         label(address(accountSingleton), "accountSingleton");
@@ -73,13 +75,14 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         IExecutorManager kernelStyleExecManager =
             IExecutorManager(address(new KernelExecutorManager(env.registry)));
+        // overwriting the env.executorManager with the kernel style executor manager
+        env.executorManager = ExecutorManager(address(kernelStyleExecManager));
         // bytes memory initCallData = abi.encodeCall(
         //     IKernel.setDefaultValidator, (IKernelValidator(address(kernelStyleExecManager)), "")
         // );
 
         instance = RhinestoneAccount({
             account: kernelFactory.createAccount(address(accountSingleton), "", uint256(salt)),
-            executorManager: kernelStyleExecManager,
             aux: env,
             salt: salt,
             accountFlavor: AccountFlavor({
@@ -87,7 +90,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                 accountFactory: kernelFactory
             })
         });
-        instance.aux.executorManager = ExecutorManager(address(instance.executorManager));
+        // instance.aux.executorManager = ExecutorManager(address(instance.aux.executorManager));
         RhinestoneModuleKitLib.setDefaultValidator(instance);
         label(instance.account, "account instance");
     }
@@ -123,7 +126,6 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        console2.log("validator", address(instance.aux.validator));
         exec4337(instance, target, value, callData, hex"41414141", address(instance.aux.validator));
     }
 
@@ -137,6 +139,7 @@ library RhinestoneModuleKitLib {
         internal
     {
         bytes memory data = ERC4337Wrappers.getKernel4337TxCalldata(target, value, callData);
+        signature = encodeSig(encodeValidator(instance, signature, address(instance.aux.validator)));
         exec4337(instance, data, signature);
     }
 
@@ -218,7 +221,11 @@ library RhinestoneModuleKitLib {
         returns (bool isEnabled)
     {
         address defaultValidator = IKernel(instance.account).getDefaultValidator();
-        return defaultValidator == validator;
+        if (defaultValidator != address(instance.aux.executorManager)) {
+            return false;
+        }
+        isEnabled =
+            KernelExecutorManager(defaultValidator).isValidatorEnabled(instance.account, validator);
     }
 
     /**
@@ -305,7 +312,7 @@ library RhinestoneModuleKitLib {
         returns (bytes32 root, bytes32[] memory proof)
     {
         if (
-            !KernelExecutorManager(address(instance.executorManager)).isValidatorEnabled(
+            !KernelExecutorManager(address(instance.aux.executorManager)).isValidatorEnabled(
                 instance.account, address(instance.aux.sessionKeyManager)
             )
         ) {
@@ -322,7 +329,7 @@ library RhinestoneModuleKitLib {
         });
 
         bytes32[] memory leaves = new bytes32[](2);
-        leaves[0] = "asdf";
+        leaves[0] = leaf;
         leaves[1] = leaf;
 
         root = m.getRoot(leaves);
@@ -339,11 +346,11 @@ library RhinestoneModuleKitLib {
         // get default validator from kernel
         address currentDefaultValidator = IKernel(instance.account).getDefaultValidator();
 
-        // if default validator is not set to instance.executorManager, set it
-        if (currentDefaultValidator != address(instance.executorManager)) {
+        // if default validator is not set to instance.aux.executorManager, set it
+        if (currentDefaultValidator != address(instance.aux.executorManager)) {
             prank(address(instance.aux.entrypoint));
             IKernel(instance.account).setDefaultValidator(
-                IKernelValidator(address(instance.executorManager)),
+                IKernelValidator(address(instance.aux.executorManager)),
                 abi.encode(address(instance.aux.validator))
             );
         }
@@ -351,13 +358,11 @@ library RhinestoneModuleKitLib {
 
     function addValidator(RhinestoneAccount memory instance, address validator) internal {
         setDefaultValidator(instance);
-        // add validator to instance.executorManager
+        // add validator to instance.aux.executorManager
         exec4337({
             instance: instance,
-            target: address(instance.executorManager),
-            callData: abi.encodeCall(
-                KernelExecutorManager.addValidator, (address(instance.executorManager))
-                )
+            target: address(instance.aux.executorManager),
+            callData: abi.encodeCall(KernelExecutorManager.addValidator, (validator))
         });
     }
 
@@ -366,7 +371,7 @@ library RhinestoneModuleKitLib {
         address previous;
 
         (address[] memory array, address next) = KernelExecutorManager(
-            address(instance.executorManager)
+            address(instance.aux.executorManager)
         ).getValidatorPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) {
@@ -380,7 +385,7 @@ library RhinestoneModuleKitLib {
         }
         exec4337({
             instance: instance,
-            target: address(instance.executorManager),
+            target: address(instance.aux.executorManager),
             callData: abi.encodeCall(KernelExecutorManager.removeValidator, (previous, validator))
         });
     }
@@ -389,15 +394,16 @@ library RhinestoneModuleKitLib {
         setDefaultValidator(instance);
         exec4337({
             instance: instance,
-            target: address(instance.executorManager),
+            target: address(instance.aux.executorManager),
             callData: abi.encodeCall(ExecutorManager.enableExecutor, (executor, false))
         });
     }
 
     function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
         address previous;
-        (address[] memory array, address next) = ExecutorManager(address(instance.executorManager))
-            .getExecutorsPaginated(address(0x1), 100, instance.account);
+        (address[] memory array, address next) = ExecutorManager(
+            address(instance.aux.executorManager)
+        ).getExecutorsPaginated(address(0x1), 100, instance.account);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -410,7 +416,7 @@ library RhinestoneModuleKitLib {
         }
         exec4337({
             instance: instance,
-            target: address(instance.executorManager),
+            target: address(instance.aux.executorManager),
             callData: abi.encodeCall(ExecutorManager.disableExecutor, (previous, executor))
         });
     }
@@ -431,8 +437,13 @@ library RhinestoneModuleKitLib {
         bytes memory callData
     )
         internal
-        returns (bytes32)
-    { }
+        returns (bytes32 hash)
+    { 
+
+        UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData);
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+        return userOpHash;
+    }
 
     /**
      * @dev Expects an ERC-4337 transaction to revert
