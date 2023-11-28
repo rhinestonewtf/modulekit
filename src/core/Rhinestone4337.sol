@@ -77,10 +77,20 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
      * @param validator - Address of the validator.
      * @param trustedAttester - Address of the trusted attester for ERC-7484
      */
-    function init(address validator, address trustedAttester) external {
+    function init(
+        address validator,
+        address trustedAttester,
+        bytes calldata validatorInitData
+    )
+        external
+    {
         _setAttester(msg.sender, trustedAttester);
         validators[msg.sender].init();
         validators[msg.sender].push(validator);
+        if (validatorInitData.length != 0) {
+            (bool success,) = validator.call(validatorInitData);
+            require(success, "Validator init failed");
+        }
         emit ValidatorAdded(msg.sender, validator);
     }
 
