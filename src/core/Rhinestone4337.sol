@@ -144,7 +144,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         uint256 requiredPrefund
     )
         external
-        returns (uint256)
+        returns (uint256 validationData)
     {
         address payable safeAddress = payable(userOp.sender);
 
@@ -159,12 +159,11 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         // enforce that only trusted entrypoint can be used
         require(entryPoint == ENTRYPOINT, "Unsupported entry point");
 
-        _validateSignatures(userOp, userOpHash);
+        validationData = _validateSignatures(userOp, userOpHash);
 
         if (requiredPrefund != 0) {
             _prefundEntrypoint(safeAddress, entryPoint, requiredPrefund);
         }
-        return 0;
     }
 
     /// @dev Returns the bytes that are hashed to be signed by owners.
@@ -211,7 +210,13 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         return abi.encodePacked(bytes1(0x19), bytes1(0x01), domainSeparator(), safeOperationHash);
     }
 
-    function _validateSignatures(UserOperation calldata userOp, bytes32 userOpHash) internal {
+    function _validateSignatures(
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        internal
+        returns (uint256 validationData)
+    {
         // get validators for target
         address validator;
         uint256 sigLength = userOp.signature.length;
@@ -221,8 +226,7 @@ abstract contract Rhinestone4337 is RegistryAdapterForSingletons, FallbackHandle
         // check if selected validator is enabled
         require(isValidatorEnabled(userOp.sender, validator), "Validator not enabled");
 
-        uint256 isValid = IValidator(validator).validateUserOp(userOp, userOpHash);
-        require(isValid == 0, "Invalid signature");
+        uint256 validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
     }
 
     function executeBatch(
