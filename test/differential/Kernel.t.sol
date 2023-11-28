@@ -210,21 +210,22 @@ contract KernelDifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     }
 
     function testAddFallback() public {
-        // TokenReceiver handler = new TokenReceiver();
-        // bytes4 functionSig = IERC721TokenReceiver.onERC721Received.selector;
-        //
-        // bytes memory callData = abi.encodeWithSelector(
-        //     functionSig, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
-        // );
-        //
-        // instance.addFallback({
-        //     handleFunctionSig: functionSig,
-        //     isStatic: true,
-        //     handler: address(handler)
-        // });
-        //
-        // (bool success,) = instance.account.call(callData);
-        // assertTrue(success);
+        TokenReceiver handler = new TokenReceiver();
+        bytes4 functionSig = IERC721TokenReceiver.onERC721Received.selector;
+
+        bytes memory callData = abi.encodeWithSelector(
+            functionSig, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
+        );
+
+        vm.expectRevert();
+        instance.addFallback({
+            handleFunctionSig: functionSig,
+            isStatic: true,
+            handler: address(handler)
+        });
+
+        (bool success,) = instance.account.call(callData);
+        assertTrue(success);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
