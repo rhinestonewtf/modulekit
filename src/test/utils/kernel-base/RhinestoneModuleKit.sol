@@ -32,6 +32,7 @@ import {
 } from "../dependencies/Kernel.sol";
 
 import "../Vm.sol";
+import "../Log.sol";
 
 struct RhinestoneAccount {
     address account;
@@ -131,6 +132,19 @@ library RhinestoneModuleKitLib {
         address target,
         uint256 value,
         bytes memory callData,
+        bytes memory signature
+    )
+        internal
+    {
+        bytes memory data = ERC4337Wrappers.getKernel4337TxCalldata(target, value, callData);
+        exec4337(instance, data, signature);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
         bytes memory signature,
         address validator
     )
@@ -186,6 +200,98 @@ library RhinestoneModuleKitLib {
                 instance.aux.compConditionManager.setHash, (forExecutor, conditions)
                 )
         });
+    }
+
+    /**
+     * @dev Checks if a validator is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param validator Validator address
+     *
+     * @return isEnabled True if validator is enabled
+     */
+    function isValidatorEnabled(
+        RhinestoneAccount memory instance,
+        address validator
+    )
+        internal
+        returns (bool isEnabled)
+    {
+        address defaultValidator = IKernel(instance.account).getDefaultValidator();
+        return defaultValidator == validator;
+    }
+
+    /**
+     * @dev Gets the formatted UserOperation
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value to send
+     * @param callData Calldata
+     *
+     * @return userOp Formatted UserOperation
+     */
+    function getFormattedUserOp(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (UserOperation memory userOp)
+    {
+        bytes memory data = ERC4337Wrappers.getKernel4337TxCalldata(target, value, callData);
+        // bytes memory initCode = isDeployed(instance) ? bytes("") : "";
+        bytes memory initCode = "";
+        userOp = ERC4337Wrappers.getPartialUserOp(
+            instance.account, instance.aux.entrypoint, data, initCode
+        );
+    }
+    /**
+     * @dev Checks if an executor is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param executor Executor address
+     *
+     * @return isEnabled True if executor is enabled
+     */
+
+    function isExecutorEnabled(
+        RhinestoneAccount memory instance,
+        address executor
+    )
+        internal
+        returns (bool isEnabled)
+    {
+        isEnabled = instance.aux.executorManager.isExecutorEnabled(instance.account, executor);
+    }
+    /**
+     * @dev Checks if a hook is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     *
+     * @return isEnabled True if hook is enabled
+     */
+
+    function isHookEnabled(
+        RhinestoneAccount memory instance,
+        address hook
+    )
+        internal
+        returns (bool isEnabled)
+    {
+        revert("Not supported yet");
+    }
+    /**
+     * @dev Adds a hook to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     */
+
+    function addHook(RhinestoneAccount memory instance, address hook) internal {
+        revert("Not supported yet");
     }
 
     function addSessionKey(
@@ -327,6 +433,16 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32)
     { }
+
+    /**
+     * @dev Expects an ERC-4337 transaction to revert
+     * @dev if this is called before an exec4337 call, it will throw an error if the ERC-4337 flow does not revert
+     *
+     * @param instance RhinestoneAccount
+     */
+    function expect4337Revert(RhinestoneAccount memory instance) internal {
+        writeExpectRevert(1);
+    }
 
     function isDeployed(RhinestoneAccount memory instance) internal view returns (bool) {
         address _addr = address(instance.account);
