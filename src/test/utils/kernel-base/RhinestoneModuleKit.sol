@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import { ERC4337Wrappers } from "./ERC4337Helpers.sol";
-import "murky/src/Merkle.sol";
+import "murky/Merkle.sol";
 import "src/test/utils/kernel-base/IKernel.sol";
 
 import "forge-std/console2.sol";

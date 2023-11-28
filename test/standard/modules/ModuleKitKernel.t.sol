@@ -6,14 +6,14 @@ import {
     RhinestoneModuleKit,
     RhinestoneModuleKitLib,
     RhinestoneAccount
-} from "../../src/test/utils/kernel-base/RhinestoneModuleKit.sol";
+} from "src/test/utils/kernel-base/RhinestoneModuleKit.sol";
 
-import { MockExecutor } from "../../src/test/mocks/MockExecutor.sol";
+import { MockExecutor } from "src/test/mocks/MockExecutor.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 
 import "forge-std/console.sol";
 
-import "../../src/common/FallbackHandler.sol";
+import "src/common/FallbackHandler.sol";
 
 contract ModuleKitTemplateKernelTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount; // <-- library that wraps smart account actions for easier testing
