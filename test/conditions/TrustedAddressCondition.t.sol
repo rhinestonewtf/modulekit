@@ -13,7 +13,7 @@ import { MockRegistry } from "../../src/test/mocks/MockRegistry.sol";
 import { TrustedAddressesCondition } from
     "../../src/modulekit/conditions/TrustedAddressesCondition.sol";
 
-import { Merkle } from "murky/src/Merkle.sol";
+import { Merkle } from "murky/Merkle.sol";
 
 contract TrustedAddressConditionTest is Test {
     ComposableConditionManager conditionManager;

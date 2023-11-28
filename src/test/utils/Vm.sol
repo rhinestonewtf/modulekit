@@ -21,6 +21,18 @@ function label(address _addr, string memory _label) {
     Vm(VM_ADDR).label(_addr, _label);
 }
 
+function expectEmit() {
+    Vm(VM_ADDR).expectEmit();
+}
+
+function recordLogs() {
+    Vm(VM_ADDR).recordLogs();
+}
+
+function getRecordedLogs() returns (VmSafe.Log[] memory) {
+    return Vm(VM_ADDR).getRecordedLogs();
+}
+
 function prank(address _addr) {
     Vm(VM_ADDR).prank(_addr);
 }

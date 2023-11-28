@@ -11,10 +11,11 @@ library ValidatorSelectionLib {
         pure
         returns (address validator)
     {
-        bytes memory addressSplice = userOp.signature[0:20];
-        assembly {
-            validator := mload(add(addressSplice, 20))
-        }
+        // bytes memory addressSplice = userOp.signature[0:20];
+        // assembly {
+        //     validator := mload(add(addressSplice, 20))
+        // }
+        (, validator) = abi.decode(userOp.signature, (bytes, address));
     }
 
     function decodeSignature(UserOperation calldata userOp)
@@ -22,7 +23,8 @@ library ValidatorSelectionLib {
         pure
         returns (bytes memory signature)
     {
-        signature = userOp.signature[20:];
+        // signature = userOp.signature[20:];
+        (signature,) = abi.decode(userOp.signature, (bytes, address));
     }
 
     function encodeValidator(
