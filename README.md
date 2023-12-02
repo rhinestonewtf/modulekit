@@ -56,8 +56,7 @@ To learn more about using ModuleKit, visit the [tools section](https://docs.rhin
 - [ ] Different modular accounts
   - [x] Safe
   - [x] Biconomy
-  - [ ] Kernel
-  - [ ] ERC-6900 reference implementation
+  - [x] Kernel
 - [x] Deployment helper using Module Registry
 - [ ] Gas calculation helper
 
