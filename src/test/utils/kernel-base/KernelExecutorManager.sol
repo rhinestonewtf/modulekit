@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import "src/core/ExecutorManager.sol";
 import "./IKernel.sol";
 import { IValidator } from "src/modulekit/interfaces/IValidator.sol";
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
 
 import "forge-std/console2.sol";
 

@@ -9,3 +9,5 @@ lib/forge-std:ds-test/=lib/forge-std/lib/ds-test/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 kernel/=lib/kernel/src/
 murky/=lib/murky/src/
+erc7579/=lib/erc7579-implementation/src/
+sentinellist/=lib/sentinellist/src/
