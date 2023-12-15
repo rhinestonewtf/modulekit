@@ -57,6 +57,7 @@ To learn more about using ModuleKit, visit the [tools section](https://docs.rhin
   - [x] Safe
   - [x] Biconomy
   - [x] Kernel
+  - [ ] ERC-7579
 - [x] Deployment helper using Module Registry
 - [ ] Gas calculation helper
 
