@@ -8,9 +8,11 @@ import {
 } from "../../modulekit/interfaces/IExecutor.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
+import { IExecutor } from "erc7579/interfaces/IModule.sol";
+
 /// @author zeroknots
 
-contract MockExecutor is IExecutorBase {
+contract MockExecutor is IExecutorBase, IExecutor {
     using ModuleExecLib for IExecutorManager;
 
     function exec(
@@ -54,4 +56,8 @@ contract MockExecutor is IExecutorBase {
     function requiresRootAccess() external view override returns (bool requiresRootAccess) { }
 
     function supportsInterface(bytes4 interfaceID) external view override returns (bool) { }
+
+    function onInstall(bytes calldata data) external override { }
+
+    function onUninstall(bytes calldata data) external override { }
 }

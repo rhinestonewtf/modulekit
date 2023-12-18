@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { SentinelListLib } from "sentinellist/src/SentinelList.sol";
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { ExecutorTransaction, ExecutorAction } from "../modulekit/interfaces/IExecutor.sol";
 import { IHook } from "../modulekit/interfaces/IHook.sol";
 import { RegistryAdapterForSingletons, IERC7484Registry } from "../common/IERC7484Registry.sol";

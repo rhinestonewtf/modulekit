@@ -12,7 +12,7 @@ import {
 import { MockRegistry, IERC7484Registry } from "../../../src/test/mocks/MockRegistry.sol";
 import { ENTRYPOINT_ADDR } from "../../../src/test/utils/dependencies/EntryPoint.sol";
 import { MockValidator } from "../../../src/test/mocks/MockValidator.sol";
-import { SENTINEL, ZERO_ADDRESS } from "sentinellist/src/SentinelList.sol";
+import { SENTINEL, ZERO_ADDRESS } from "sentinellist/SentinelList.sol";
 import { getEmptyUserOp, UserOperation } from "../../TestUtils.t.sol";
 
 contract FalseValidator {
