@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import {MSAHooks as MSA} from "erc7579/accountExamples/MSA_withHookExtension.sol";
+import { MSAHooks as MSA } from "erc7579/accountExamples/MSA_withHookExtension.sol";
+import { ModuleManager as IMSA_ModuleManager } from "erc7579/core/ModuleManager.sol";
 import "erc7579/MSAFactory.sol";
 import "./BootstrapUtil.sol";
 import "erc7579/interfaces/IMSA.sol";
@@ -192,9 +193,7 @@ library RhinestoneModuleKitLib {
     //////////////////////////////////////////////////////////////////////////*/
 
     function addValidator(RhinestoneAccount memory instance, address validator) internal {
-
-      return addValidator(instance, validator, bytes(""));
-
+        return addValidator(instance, validator, bytes(""));
     }
     /**
      * @dev Adds a validator to the account
@@ -202,7 +201,14 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param validator Validator address
      */
-    function addValidator(RhinestoneAccount memory instance, address validator, bytes memory initData) internal {
+
+    function addValidator(
+        RhinestoneAccount memory instance,
+        address validator,
+        bytes memory initData
+    )
+        internal
+    {
         exec4337(
             instance,
             instance.account,
@@ -219,6 +225,31 @@ library RhinestoneModuleKitLib {
      * @param validator Validator address
      */
     function removeValidator(RhinestoneAccount memory instance, address validator) internal {
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array, address next) =
+            IMSA_ModuleManager(instance.account).getValidatorPaginated(address(0x1), 100);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == validator) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == validator) previous = array[i - 1];
+            }
+        }
+
+        exec4337({
+            instance: instance,
+            target: address(instance.account),
+            value: 0,
+            callData: abi.encodeCall(
+                IMSA_ModuleManager.uninstallValidator, (validator, abi.encode(previous, ""))
+                )
+        });
+
         emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
     }
 
@@ -247,9 +278,8 @@ library RhinestoneModuleKitLib {
      * @param hook Hook address
      */
     function addHook(RhinestoneAccount memory instance, address hook) internal {
-      return addHook(instance, hook, bytes(""));
+        return addHook(instance, hook, bytes(""));
     }
-
 
     /**
      * @dev Adds a hook to the account
@@ -257,9 +287,13 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param hook Hook address
      */
-    function addHook(RhinestoneAccount memory instance, address hook, bytes memory initData) internal {
-
-
+    function addHook(
+        RhinestoneAccount memory instance,
+        address hook,
+        bytes memory initData
+    )
+        internal
+    {
         exec4337(
             instance,
             instance.account,
@@ -282,7 +316,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bool isEnabled)
     {
-        revert("Not supported yet");
+        return IAccountConfig_Hook(instance.account).isHookEnabled(hook);
     }
 
     /**
@@ -308,7 +342,31 @@ library RhinestoneModuleKitLib {
      * @param executor Executor address
      */
     function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
-        // TODO
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array,) =
+            IMSA_ModuleManager(instance.account).getExecutorsPaginated(address(0x1), 100);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == executor) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == executor) previous = array[i - 1];
+            }
+        }
+
+        exec4337({
+            instance: instance,
+            target: instance.account,
+            value: 0,
+            callData: abi.encodeCall(
+                IMSA_ModuleManager.uninstallExecutor, (executor, abi.encode(previous, ""))
+                )
+        });
+
         emit ModuleKitLogs.ModuleKit_RemoveExecutor(instance.account, executor);
     }
 
@@ -451,7 +509,9 @@ library RhinestoneModuleKitLib {
     )
         internal
         returns (bytes32 root, bytes32[] memory proof)
-    { }
+    {
+        revert("not implemented");
+    }
 
     /**
      * @dev Adds a condition to the Condition Manager

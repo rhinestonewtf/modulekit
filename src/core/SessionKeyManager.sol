@@ -7,8 +7,6 @@ import "../modulekit/ValidatorBase.sol";
 import "../modulekit/lib/ValidatorSelectionLib.sol";
 import "./ISessionKeyValidationModule.sol";
 
-import "forge-std/console2.sol";
-
 struct SessionStorage {
     bytes32 merkleRoot;
 }
