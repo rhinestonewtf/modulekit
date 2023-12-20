@@ -1,4 +1,4 @@
-solady/=lib/solady/src/
+solady/=lib/solady/
 solmate/=lib/solmate/src/
 @aa/=lib/account-abstraction/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/
