@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import "erc7579/accountExamples/MSA_ValidatorInNonce.sol";
+import {MSAHooks as MSA} from "erc7579/accountExamples/MSA_withHookExtension.sol";
 import "erc7579/MSAFactory.sol";
 import "./BootstrapUtil.sol";
 import "erc7579/interfaces/IMSA.sol";
@@ -191,17 +191,22 @@ library RhinestoneModuleKitLib {
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
 
+    function addValidator(RhinestoneAccount memory instance, address validator) internal {
+
+      return addValidator(instance, validator, bytes(""));
+
+    }
     /**
      * @dev Adds a validator to the account
      *
      * @param instance RhinestoneAccount
      * @param validator Validator address
      */
-    function addValidator(RhinestoneAccount memory instance, address validator) internal {
+    function addValidator(RhinestoneAccount memory instance, address validator, bytes memory initData) internal {
         exec4337(
             instance,
             instance.account,
-            abi.encodeCall(IAccountConfig.installValidator, (validator, ""))
+            abi.encodeCall(IAccountConfig.installValidator, (validator, initData))
         );
 
         emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
@@ -242,7 +247,24 @@ library RhinestoneModuleKitLib {
      * @param hook Hook address
      */
     function addHook(RhinestoneAccount memory instance, address hook) internal {
-        revert("Not supported yet");
+      return addHook(instance, hook, bytes(""));
+    }
+
+
+    /**
+     * @dev Adds a hook to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     */
+    function addHook(RhinestoneAccount memory instance, address hook, bytes memory initData) internal {
+
+
+        exec4337(
+            instance,
+            instance.account,
+            abi.encodeCall(IAccountConfig_Hook.installHook, (hook, initData))
+        );
     }
 
     /**
