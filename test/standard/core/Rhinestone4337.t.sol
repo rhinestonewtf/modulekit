@@ -128,7 +128,7 @@ contract Rhinestone4337Test is Test {
         rhinestone4337 = new Rhinestone4337Instance(ENTRYPOINT_ADDR, registry);
 
         vm.prank(account);
-        rhinestone4337.init(address(validator), attester);
+        rhinestone4337.init(address(validator), attester, bytes(""));
     }
 
     function testAddValidator() public {

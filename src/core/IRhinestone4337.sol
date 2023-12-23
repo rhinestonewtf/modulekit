@@ -5,7 +5,12 @@ import "../modulekit/interfaces/IExecutor.sol";
 import "../common/erc4337/UserOperation.sol";
 
 interface IRhinestone4337 {
-    function init(address validator, address trustedAttester) external;
+    function init(
+        address validator,
+        address trustedAttester,
+        bytes calldata validatorInitData
+    )
+        external;
 
     /*//////////////////////////////////////////////////////////////
                             ERC 4337
