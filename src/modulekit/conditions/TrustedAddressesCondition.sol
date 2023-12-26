@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { ICondition } from "../interfaces/IExecutor.sol";
-import { MerkleProofLib } from "solady/utils/MerkleProofLib.sol";
-import { Ownable } from "solady/auth/Ownable.sol";
+import { MerkleProofLib } from "solady/src/utils/MerkleProofLib.sol";
+import { Ownable } from "solady/src/auth/Ownable.sol";
 
 contract TrustedAddressesCondition is ICondition, Ownable {
     bytes32 trustedAddressesRoot;
