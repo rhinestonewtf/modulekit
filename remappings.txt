@@ -1,0 +1,6 @@
+account-abstraction/=lib/account-abstraction/contracts/
+ds-test/=lib/forge-std/lib/ds-test/src/
+erc7579/=lib/erc7579-implementation.git/src/
+forge-std/=lib/forge-std/src/
+sentinellist/=lib/erc7579-implementation.git/lib/sentinellist/
+solady/=lib/solady/
