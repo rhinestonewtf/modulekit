@@ -188,8 +188,8 @@ library RhinestoneModuleKitLib {
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
 
-    function addValidator(RhinestoneAccount memory instance, address validator) internal {
-        return addValidator(instance, validator, bytes(""));
+    function installValidator(RhinestoneAccount memory instance, address validator) internal {
+        return installValidator(instance, validator, bytes(""));
     }
     /**
      * @dev Adds a validator to the account
@@ -198,7 +198,7 @@ library RhinestoneModuleKitLib {
      * @param validator Validator address
      */
 
-    function addValidator(
+    function installValidator(
         RhinestoneAccount memory instance,
         address validator,
         bytes memory initData
@@ -220,7 +220,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param validator Validator address
      */
-    function removeValidator(RhinestoneAccount memory instance, address validator) internal {
+    function uninstallValidator(RhinestoneAccount memory instance, address validator) internal {
         // get previous executor in sentinel list
         address previous;
 
@@ -257,11 +257,12 @@ library RhinestoneModuleKitLib {
      *
      * @return isEnabled True if validator is enabled
      */
-    function isValidatorEnabled(
+    function isValidatorInstalled(
         RhinestoneAccount memory instance,
         address validator
     )
         internal
+        view
         returns (bool isEnabled)
     {
         return IERC7579Config(instance.account).isValidatorInstalled(validator);
@@ -273,8 +274,8 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param hook Hook address
      */
-    function addHook(RhinestoneAccount memory instance, address hook) internal {
-        return addHook(instance, hook, bytes(""));
+    function installHook(RhinestoneAccount memory instance, address hook) internal {
+        return installHook(instance, hook, bytes(""));
     }
 
     /**
@@ -283,7 +284,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param hook Hook address
      */
-    function addHook(
+    function installHook(
         RhinestoneAccount memory instance,
         address hook,
         bytes memory initData
@@ -305,11 +306,12 @@ library RhinestoneModuleKitLib {
      *
      * @return isEnabled True if hook is enabled
      */
-    function isHookEnabled(
+    function isHookInstalled(
         RhinestoneAccount memory instance,
         address hook
     )
         internal
+        view
         returns (bool isEnabled)
     {
         return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
@@ -321,7 +323,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param executor Executor address
      */
-    function addExecutor(RhinestoneAccount memory instance, address executor) internal {
+    function installExecutor(RhinestoneAccount memory instance, address executor) internal {
         exec4337(
             instance,
             instance.account,
@@ -337,7 +339,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param executor Executor address
      */
-    function removeExecutor(RhinestoneAccount memory instance, address executor) internal {
+    function uninstallExecutor(RhinestoneAccount memory instance, address executor) internal {
         // get previous executor in sentinel list
         address previous;
 
@@ -374,11 +376,12 @@ library RhinestoneModuleKitLib {
      *
      * @return isEnabled True if executor is enabled
      */
-    function isExecutorEnabled(
+    function isExecutorInstalled(
         RhinestoneAccount memory instance,
         address executor
     )
         internal
+        view
         returns (bool isEnabled)
     {
         return IERC7579Config(instance.account).isExecutorInstalled(executor);
@@ -392,7 +395,7 @@ library RhinestoneModuleKitLib {
      * @param isStatic True if function is static
      * @param handler Handler address
      */
-    function addFallback(
+    function installFallback(
         RhinestoneAccount memory instance,
         bytes4 handleFunctionSig,
         bool isStatic,

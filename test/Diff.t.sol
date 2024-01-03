@@ -99,19 +99,19 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     function testAddValidator() public {
         address newValidator = address(new MockValidator());
 
-        instance.addValidator(newValidator);
-        bool validatorEnabled = instance.isValidatorEnabled(newValidator);
+        instance.installValidator(newValidator);
+        bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
     }
 
     function testRemoveValidator() public {
         address newValidator = address(new MockValidator());
-        instance.addValidator(newValidator);
-        bool validatorEnabled = instance.isValidatorEnabled(newValidator);
+        instance.installValidator(newValidator);
+        bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
 
-        instance.removeValidator(newValidator);
-        validatorEnabled = instance.isValidatorEnabled(newValidator);
+        instance.uninstallValidator(newValidator);
+        validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertFalse(validatorEnabled);
     }
 
@@ -152,29 +152,29 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     }
 
     function testAddHook() public {
-        instance.addHook(address(hook));
+        instance.installHook(address(hook));
 
-        bool hookEnabled = instance.isHookEnabled(address(hook));
+        bool hookEnabled = instance.isHookInstalled(address(hook));
         assertTrue(hookEnabled);
     }
 
     function testAddExecutor() public {
         address newExecutor = address(new MockExecutor());
 
-        instance.addExecutor(newExecutor);
-        bool executorEnabled = instance.isExecutorEnabled(newExecutor);
+        instance.installExecutor(newExecutor);
+        bool executorEnabled = instance.isExecutorInstalled(newExecutor);
         assertTrue(executorEnabled);
     }
 
     function testRemoveExecutor() public {
         address newExecutor = address(new MockExecutor());
 
-        instance.addExecutor(newExecutor);
-        bool executorEnabled = instance.isExecutorEnabled(newExecutor);
+        instance.installExecutor(newExecutor);
+        bool executorEnabled = instance.isExecutorInstalled(newExecutor);
         assertTrue(executorEnabled);
 
-        instance.removeExecutor(newExecutor);
-        executorEnabled = instance.isValidatorEnabled(newExecutor);
+        instance.uninstallExecutor(newExecutor);
+        executorEnabled = instance.isValidatorInstalled(newExecutor);
         assertFalse(executorEnabled);
     }
 

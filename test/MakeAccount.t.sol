@@ -16,6 +16,6 @@ contract BaseTest is RhinestoneModuleKit, Test {
     }
 
     function test_isDefaultValidatorEnabled() public {
-        assertTrue(instance.isValidatorEnabled(address(instance.defaultValidator)));
+        assertTrue(instance.isValidatorInstalled(address(instance.defaultValidator)));
     }
 }

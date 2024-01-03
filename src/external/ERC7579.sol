@@ -8,7 +8,8 @@ import {
     IAccountConfig as IERC7579Config,
     IAccountConfig_Hook as IERC7579ConfigHook
 } from "erc7579/interfaces/IMSA.sol";
-import { MSA as ERC7579Account } from "erc7579/accountExamples/MSA_ValidatorInNonce.sol";
+import { MSA as ERC7579AccountNonce } from "erc7579/accountExamples/MSA_ValidatorInNonce.sol";
+import { MSA as ERC7579Account } from "erc7579/accountExamples/MSA_withHookExtension.sol";
 import {
     IModule as IERC7579Module,
     IValidator as IERC7579Validator,
