@@ -1,6 +1,6 @@
-account-abstraction/=lib/erc7579-implementation/lib/account-abstraction/contracts/
-ds-test/=lib/forge-std/lib/ds-test/src/
-erc7579/=lib/erc7579-implementation/src/
-forge-std/=lib/forge-std/src/
-sentinellist/=lib/erc7579-implementation/lib/sentinellist/src/
-solady/=lib/solady/
+account-abstraction/=node_modules/account-abstraction/contracts/
+ds-test/=node_modules/ds-test/src/
+erc7579/=node_modules/erc7579/src/
+forge-std/=node_modules/forge-std/src/
+sentinellist/=node_modules/sentinellist/src/
+solady/=node_modules/solady/
