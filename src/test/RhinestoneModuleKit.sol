@@ -9,6 +9,7 @@ import {
     ERC7579BootstrapConfig,
     IERC7579Validator,
     IERC7579Config,
+    IERC7579Execution,
     IERC7579ConfigHook
 } from "../external/ERC7579.sol";
 
@@ -40,8 +41,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
 
         isInit = true;
         accountImplementationSingleton = new ERC7579Account();
+        label(address(accountImplementationSingleton), "ERC7579AccountImpl");
         accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
+        label(address(accountFactory), "ERC7579AccountFactory");
         defaultValidator = new  MockValidator();
+        label(address(defaultValidator), "DefaultValidator");
     }
 
     function makeRhinestoneAccount(bytes32 salt)
@@ -62,6 +66,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
                 validators, emptyConfig, emptyConfig[0], emptyConfig[0]
                 )
         });
+        label(address(account), "Account");
         instance = RhinestoneAccount({
             account: account,
             aux: auxiliary,
@@ -307,7 +312,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bool isEnabled)
     {
-        return ERC7579Account(instance.account).isHookInstalled(hook);
+        return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
     }
 
     /**
@@ -541,6 +546,6 @@ library ERC4337Wrappers {
         view
         returns (bytes memory erc7579Tx)
     {
-        return abi.encodeCall(ERC7579Account.execute, (target, value, data));
+        return abi.encodeCall(IERC7579Execution.execute, (target, value, data));
     }
 }

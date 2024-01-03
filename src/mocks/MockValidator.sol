@@ -9,7 +9,9 @@ contract MockValidator is ERC7579ValidatorBase {
 
     function onUninstall(bytes calldata data) external override { }
 
-    function isModuleType(uint256 typeID) external view override returns (bool) { }
+    function isModuleType(uint256 typeID) external pure override returns (bool) {
+        return typeID == TYPE_VALIDATOR;
+    }
 
     function validateUserOp(
         UserOperation calldata userOp,
@@ -19,8 +21,7 @@ contract MockValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        return
-            _packValidationData({ sigFailed: false, validUntil: type(uint48).max, validAfter: 0 });
+        return _packValidationData({ sigFailed: false, validUntil: 1000, validAfter: 0 });
     }
 
     function isValidSignatureWithSender(
