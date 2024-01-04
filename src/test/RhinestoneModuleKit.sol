@@ -17,6 +17,7 @@ import { UserOperation } from "../external/ERC4337.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
+import "./utils/GasCalculations.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
 
@@ -49,7 +50,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         label(address(accountImplementationSingleton), "ERC7579AccountImpl");
         accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
         label(address(accountFactory), "ERC7579AccountFactory");
-        defaultValidator = new  MockValidator();
+        defaultValidator = new MockValidator();
         label(address(defaultValidator), "DefaultValidator");
     }
 
@@ -168,11 +169,50 @@ library RhinestoneModuleKitLib {
 
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
-
-        // send userOps to 4337 entrypoint
+        address payable beneficiary = payable(address(0x69));
 
         recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        uint256 totalUserOpGas = gasleft();
+        instance.aux.entrypoint.handleOps(userOps, beneficiary);
+        totalUserOpGas = totalUserOpGas - gasleft();
+
+        bool calculateGas = envOr("WRITE_GAS", false);
+
+        if (calculateGas) {
+            string memory scenarioName = string(abi.encodePacked(address(this)));
+            string memory jsonObj = string(abi.encodePacked(scenarioName));
+
+            // total gas used
+            serializeUint(jsonObj, "Total gas used by UserOp", totalUserOpGas);
+
+            // ERC4337 phases
+            uint256 gasValidation =
+                GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
+            uint256 gasExecution =
+                GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
+
+            string memory phasesObj = "phases";
+            serializeUint(phasesObj, "Validation gas used", gasValidation);
+            string memory phasesOutput =
+                serializeUint(phasesObj, "Execution gas used", gasExecution);
+
+            // L2-L1 calldata gas cost
+            bytes memory userOpCalldata = abi.encodeWithSelector(
+                instance.aux.entrypoint.handleOps.selector, userOps, beneficiary
+            );
+            string memory l2sObj = "l2s";
+            serializeUint(l2sObj, "OP Stack L1 Gas Cost", getArbitrumL1Gas(userOpCalldata));
+            string memory l2sOutput =
+                serializeUint(l2sObj, "Arbitrum L1 Gas Cost", getOpStackL1Gas(userOpCalldata));
+
+            serializeString(jsonObj, "ERC-4337 Phases", phasesOutput);
+            string memory finalJson = serializeString(jsonObj, "L2-L1 calldata", l2sOutput);
+
+            writeJson(
+                finalJson, string.concat("./gas_calculations/", "userOpGas_", scenarioName, ".json")
+            );
+        }
 
         VmSafe.Log[] memory logs = getRecordedLogs();
 
@@ -218,24 +258,6 @@ library RhinestoneModuleKitLib {
         );
 
         emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
-    }
-
-    function log4337Gas(
-        RhinestoneAccount memory instance,
-        string memory label
-    )
-        internal
-        view
-        returns (uint256 gasValidation, uint256 gasExecution)
-    {
-        gasValidation =
-            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
-        gasExecution =
-            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
-
-        console2.log("\nERC-4337 Gas Log:", label);
-        console2.log("Verification:  ", gasValidation);
-        console2.log("Execution:     ", gasExecution);
     }
 
     /**

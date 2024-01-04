@@ -8,6 +8,9 @@ dependencies:
   '@openzeppelin/contracts':
     specifier: 5.0.1
     version: 5.0.1
+  '@prb/math':
+    specifier: ^4.0.2
+    version: 4.0.2
 
 devDependencies:
   account-abstraction:
@@ -787,6 +790,10 @@ packages:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
     dev: true
+
+  /@prb/math@4.0.2:
+    resolution: {integrity: sha512-kJgqvXR6iyU7+N959RzggSFhBdnRuSDnc/bs8u6MzdWw7aYIUaAr+uMVdpP6Dheypjerd7sfJgFOs19FRFhscg==}
+    dev: false
 
   /@scure/base@1.1.5:
     resolution: {integrity: sha512-Brj9FiG2W1MRQSTB212YVPRrcbjkv48FoZi/u4l/zds/ieRrqsh7aUf6CLwkAq61oKXr/ZlTzlY66gLIj3TFTQ==}
