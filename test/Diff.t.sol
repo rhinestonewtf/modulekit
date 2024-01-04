@@ -6,6 +6,8 @@ import "src/ModuleKit.sol";
 import "src/Mocks.sol";
 import { IERC721TokenReceiver } from "forge-std/interfaces/IERC721.sol";
 
+import "forge-std/console2.sol";
+
 contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount;
 
@@ -19,7 +21,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     function setUp() public {
         // Setup account
         instance = makeRhinestoneAccount("1");
-        vm.deal(instance.account, 10 ether);
+        vm.deal(instance.account, 1000 ether);
 
         // Setup modules
         validator = new MockValidator();
@@ -100,6 +102,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         address newValidator = address(new MockValidator());
 
         instance.installValidator(newValidator);
+        instance.log4337Gas("testAddValidator()");
         bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
     }

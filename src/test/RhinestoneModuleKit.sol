@@ -20,6 +20,12 @@ import "./utils/Vm.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
 
+import "forge-std/console2.sol";
+
+interface GasDebug {
+    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
+}
+
 struct RhinestoneAccount {
     address account;
     IERC7579Validator defaultValidator;
@@ -212,6 +218,24 @@ library RhinestoneModuleKitLib {
         );
 
         emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
+    }
+
+    function log4337Gas(
+        RhinestoneAccount memory instance,
+        string memory label
+    )
+        internal
+        view
+        returns (uint256 gasValidation, uint256 gasExecution)
+    {
+        gasValidation =
+            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
+        gasExecution =
+            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
+
+        console2.log("\nERC-4337 Gas Log:", label);
+        console2.log("Verification:  ", gasValidation);
+        console2.log("Execution:     ", gasExecution);
     }
 
     /**

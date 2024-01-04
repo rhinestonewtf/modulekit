@@ -10,5 +10,4 @@ import {
 
 import { UserOperation } from "./external/ERC4337.sol";
 
-import { IExecution as IERC7579Execution } from "erc7579/interfaces/IMSA.sol";
 /* solhint-enable no-unused-import */
