@@ -18,8 +18,7 @@ import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
-
-import { MockValidator } from "../Mocks.sol";
+import "../mocks/MockValidator.sol";
 
 struct RhinestoneAccount {
     address account;

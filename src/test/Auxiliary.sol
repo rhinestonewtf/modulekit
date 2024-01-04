@@ -6,7 +6,7 @@ import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 
-import "../Mocks.sol";
+import "../mocks/MockRegistry.sol";
 
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
