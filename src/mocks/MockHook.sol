@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "../Modules.sol";
-import { UserOperation } from "../external/ERC4337.sol";
 
 contract MockHook is ERC7579HookBase {
     function onInstall(bytes calldata data) external override { }
@@ -22,7 +21,7 @@ contract MockHook is ERC7579HookBase {
         returns (bytes memory hookData)
     { }
 
-    function postCheck(bytes calldata hookData) external override returns (bool success) {
+    function postCheck(bytes calldata) external override returns (bool success) {
         return true;
     }
 

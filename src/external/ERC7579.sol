@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+/* solhint-disable no-unused-import */
 import { MSAFactory as ERC7579AccountFactory } from "erc7579/MSAFactory.sol";
 import {
     IMSA as IERC7579Account,
@@ -22,3 +23,4 @@ import {
     Bootstrap as ERC7579Bootstrap,
     BootstrapConfig as ERC7579BootstrapConfig
 } from "erc7579/utils/Bootstrap.sol";
+/* solhint-enable no-unused-import */

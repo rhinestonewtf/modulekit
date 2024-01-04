@@ -4,14 +4,14 @@ pragma solidity ^0.8.23;
 import {
     UserOperation, _packValidationData as _packValidationData4337
 } from "../external/ERC4337.sol";
-import "./ERC7579ModuleBase.sol";
+import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
 abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
     type ValidationData is uint256;
 
-    ValidationData constant VALIDATION_FAILED = ValidationData.wrap(0);
-    bytes4 constant EIP1271_SUCCESS = 0x1626ba7e;
-    bytes4 constant EIP1271_FAILED = 0xFFFFFFFF;
+    ValidationData internal constant VALIDATION_FAILED = ValidationData.wrap(0);
+    bytes4 internal constant EIP1271_SUCCESS = 0x1626ba7e;
+    bytes4 internal constant EIP1271_FAILED = 0xFFFFFFFF;
 
     /**
      * Helper to pack the return value for validateUserOp, when not using an aggregator.

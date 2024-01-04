@@ -143,7 +143,8 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         // leaves[0] = leaf;
         // leaves[1] = leaf;
         //
-        // bytes32 root = instance.aux.sessionKeyManager.getSessionKeys(instance.account).merkleRoot;
+        // bytes32 root =
+        // instance.aux.sessionKeyManager.getSessionKeys(instance.account).merkleRoot;
         // bytes32[] memory proof = m.getProof(leaves, 1);
         //
         // bool isValidProof = m.verifyProof(root, proof, leaf);
@@ -184,7 +185,8 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     //
     //     address mockCondition = address(new MockCondition());
     //     ConditionConfig[] memory conditions = new ConditionConfig[](1);
-    //     conditions[0] = ConditionConfig({ condition: ICondition(mockCondition), conditionData: "" });
+    //     conditions[0] = ConditionConfig({ condition: ICondition(mockCondition), conditionData: ""
+    // });
     //
     //     bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);
     //

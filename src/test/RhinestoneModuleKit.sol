@@ -137,7 +137,8 @@ library RhinestoneModuleKitLib {
     /**
      * @dev Executes an ERC-4337 transaction
      * @dev this is an internal function that assumes that calldata is already correctly formatted
-     * @dev only use this function if you want to manually encode the calldata, otherwise use the functions above
+     * @dev only use this function if you want to manually encode the calldata, otherwise use the
+     * functions above
      *
      * @param instance RhinestoneAccount
      * @param callData ENcoded callData
@@ -479,7 +480,8 @@ library RhinestoneModuleKitLib {
 
     /**
      * @dev Expects an ERC-4337 transaction to revert
-     * @dev if this is called before an exec4337 call, it will throw an error if the ERC-4337 flow does not revert
+     * @dev if this is called before an exec4337 call, it will throw an error if the ERC-4337 flow
+     * does not revert
      *
      * @param instance RhinestoneAccount
      */

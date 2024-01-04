@@ -4,22 +4,17 @@ out = "out"
 libs = ["lib"]
 fs_permissions = [{ access = "read", path = "out-optimized" }]
 
-[fmt]
-bracket_spacing = true
-line_length = 100
-multiline_func_header = "all"
-number_underscore="thousands"
 
 [rpc_endpoints]
 mainnet = "https://rpc.ankr.com/eth"
 
 
 [fmt]
-  bracket_spacing = true
-  int_types = "long"
-  line_length = 120
-  multiline_func_header = "all"
-  number_underscore = "thousands"
-  quote_style = "double"
-  tab_width = 4
-  wrap_comments = true
+bracket_spacing = true
+int_types = "long"
+line_length = 100
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+tab_width = 4
+wrap_comments = true
