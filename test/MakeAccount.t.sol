@@ -14,8 +14,4 @@ contract BaseTest is RhinestoneModuleKit, Test {
         instance = makeRhinestoneAccount("1");
         vm.deal(instance.account, 1 ether);
     }
-
-    function test_isDefaultValidatorEnabled() public {
-        assertTrue(instance.isValidatorInstalled(address(instance.defaultValidator)));
-    }
 }

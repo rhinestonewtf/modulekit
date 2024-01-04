@@ -1,0 +1,34 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
+import { ISessionValidationModule } from "../core/ISessionValidationModule.sol";
+import { UserOperation } from "../external/ERC4337.sol";
+
+contract MockSessionKeyValidator is ISessionValidationModule {
+    function validateSessionUserOp(
+        UserOperation calldata _op,
+        bytes32 _userOpHash,
+        bytes calldata _sessionKeyData,
+        bytes calldata _sessionKeySignature
+    )
+        external
+        virtual
+        override
+        returns (bool)
+    {
+        return true;
+    }
+
+    function validateSessionParams(
+        address destinationContract,
+        uint256 callValue,
+        bytes calldata funcCallData,
+        bytes calldata sessionKeyData,
+        bytes calldata callSpecificData
+    )
+        external
+        virtual
+        override
+        returns (address)
+    { }
+}

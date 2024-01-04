@@ -12,6 +12,8 @@ import { IERC7579Execution } from "../ModuleKitLib.sol";
 import { IERC1271 } from "../interfaces/IERC1271.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title Session Key Manager module for Biconomy Modular Smart Accounts.
  * @dev Stores the Session Information explicity in the storage, instead of maintainting
@@ -62,6 +64,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         internal
         returns (ValidationData rv)
     {
+        console2.log("sig");
         /*
          * Module Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
@@ -70,6 +73,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
          * 0x1                  | --                | Data depending on the above flag
          */
         bytes calldata moduleSignature = userOp.signature[MODULE_SIGNATURE_OFFSET:];
+        console2.logBytes(moduleSignature);
 
         if (_isSessionEnableTransaction(moduleSignature)) {
             (
