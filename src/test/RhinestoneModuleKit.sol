@@ -17,15 +17,12 @@ import { UserOperation } from "../external/ERC4337.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
+import "./utils/GasCalculations.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
 import { ISessionKeyManager } from "./predeploy/SessionKeyManager.sol";
 
 import "forge-std/console2.sol";
-
-interface GasDebug {
-    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
-}
 
 struct RhinestoneAccount {
     address account;
@@ -50,7 +47,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         label(address(accountImplementationSingleton), "ERC7579AccountImpl");
         accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
         label(address(accountFactory), "ERC7579AccountFactory");
-        defaultValidator = new  MockValidator();
+        defaultValidator = new MockValidator();
         label(address(defaultValidator), "DefaultValidator");
     }
 
@@ -147,7 +144,7 @@ library RhinestoneModuleKitLib {
      * functions above
      *
      * @param instance RhinestoneAccount
-     * @param callData ENcoded callData
+     * @param callData Encoded callData
      * @param signature Signature
      */
     function exec4337(
@@ -170,25 +167,7 @@ library RhinestoneModuleKitLib {
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
 
-        // send userOps to 4337 entrypoint
-
-        recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
-        }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
+        executeUserOps(instance, userOps);
     }
 
     function exec4337(
@@ -211,10 +190,61 @@ library RhinestoneModuleKitLib {
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
 
-        // send userOps to 4337 entrypoint
+        executeUserOps(instance, userOps);
+    }
+
+    function executeUserOps(
+        RhinestoneAccount memory instance,
+        UserOperation[] memory userOps
+    )
+        internal
+    {
+        address payable beneficiary = payable(address(0x69));
 
         recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        uint256 totalUserOpGas = gasleft();
+        instance.aux.entrypoint.handleOps(userOps, beneficiary);
+        totalUserOpGas = totalUserOpGas - gasleft();
+
+        bool calculateGas = envOr("WRITE_GAS", false);
+        string memory gasIdentifier = getGasIdentifier();
+
+        if (calculateGas && bytes(gasIdentifier).length != 0) {
+            string memory jsonObj = string(abi.encodePacked(gasIdentifier));
+
+            // total gas used
+            serializeUint(jsonObj, "Total gas used by UserOp", totalUserOpGas);
+
+            // ERC4337 phases
+            uint256 gasValidation =
+                GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
+            uint256 gasExecution =
+                GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
+
+            string memory phasesObj = "phases";
+            serializeUint(phasesObj, "Validation gas used", gasValidation);
+            string memory phasesOutput =
+                serializeUint(phasesObj, "Execution gas used", gasExecution);
+
+            // L2-L1 calldata gas used
+            bytes memory userOpCalldata = abi.encodeWithSelector(
+                instance.aux.entrypoint.handleOps.selector, userOps, beneficiary
+            );
+            string memory l2sObj = "l2s";
+            serializeUint(l2sObj, "OP Stack L1 Gas Used", getArbitrumL1Gas(userOpCalldata));
+            string memory l2sOutput =
+                serializeUint(l2sObj, "Arbitrum L1 Gas Used", getOpStackL1Gas(userOpCalldata));
+
+            serializeString(jsonObj, "ERC-4337 Phases", phasesOutput);
+            string memory finalJson = serializeString(jsonObj, "L2-L1 calldata", l2sOutput);
+
+            writeJson(
+                finalJson,
+                string.concat("./gas_calculations/", "userOpGas_", gasIdentifier, ".json")
+            );
+            writeGasIdentifier("");
+        }
 
         VmSafe.Log[] memory logs = getRecordedLogs();
 
@@ -229,7 +259,9 @@ library RhinestoneModuleKitLib {
 
         writeExpectRevert(0);
 
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
+        for (uint256 i; i < userOps.length; i++) {
+            emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOps[i].sender);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -260,24 +292,6 @@ library RhinestoneModuleKitLib {
         );
 
         emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
-    }
-
-    function log4337Gas(
-        RhinestoneAccount memory instance,
-        string memory name
-    )
-        internal
-        view
-        returns (uint256 gasValidation, uint256 gasExecution)
-    {
-        gasValidation =
-            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
-        gasExecution =
-            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
-
-        console2.log("\nERC-4337 Gas Log:", name);
-        console2.log("Verification:  ", gasValidation);
-        console2.log("Execution:     ", gasExecution);
     }
 
     /**
@@ -597,6 +611,30 @@ library RhinestoneModuleKitLib {
         writeExpectRevert(1);
     }
 
+    /**
+     * @dev Logs the gas used by an ERC-4337 transaction
+     * @dev needs to be called before an exec4337 call
+     * @dev the id needs to be unique across your tests, otherwise the gas calculations will
+     * overwrite each other
+     *
+     * @param instance RhinestoneAccount
+     * @param id Identifier for the gas calculation, which will be used as the filename
+     */
+    function log4337Gas(RhinestoneAccount memory instance, string memory id) internal {
+        writeGasIdentifier(id);
+    }
+
+    /**
+     * @dev Adds a session key to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param sessionKeyModule Session key module address
+     * @param validUntil Valid until timestamp
+     * @param validAfter Valid after timestamp
+     * @param sessionKeyData Session key data
+     *
+     * @return sessionKeyDigest Digest of the session key
+     */
     function installSessionKey(
         RhinestoneAccount memory instance,
         address sessionKeyModule,

@@ -15,6 +15,20 @@ function getExpectRevert() view returns (uint256 value) {
     }
 }
 
+function writeGasIdentifier(string memory id) {
+    bytes32 slot = keccak256("GasIdentifierSlot");
+    assembly {
+        sstore(slot, id)
+    }
+}
+
+function getGasIdentifier() view returns (string memory id) {
+    bytes32 slot = keccak256("GasIdentifierSlot");
+    assembly {
+        id := sload(slot)
+    }
+}
+
 library ModuleKitLogs {
     event ModuleKit_NewAccount(address account, string accountType);
     event ModuleKit_Exec4337(address account, address sender);

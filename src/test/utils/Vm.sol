@@ -47,3 +47,31 @@ function getRecordedLogs() returns (VmSafe.Log[] memory) {
 function prank(address _addr) {
     Vm(VM_ADDR).prank(_addr);
 }
+
+function envOr(string memory name, bool defaultValue) returns (bool value) {
+    return Vm(VM_ADDR).envOr(name, defaultValue);
+}
+
+function serializeUint(
+    string memory objectKey,
+    string memory valueKey,
+    uint256 value
+)
+    returns (string memory json)
+{
+    return Vm(VM_ADDR).serializeUint(objectKey, valueKey, value);
+}
+
+function serializeString(
+    string memory objectKey,
+    string memory valueKey,
+    string memory value
+)
+    returns (string memory json)
+{
+    return Vm(VM_ADDR).serializeString(objectKey, valueKey, value);
+}
+
+function writeJson(string memory json, string memory path) {
+    Vm(VM_ADDR).writeJson(json, path);
+}
