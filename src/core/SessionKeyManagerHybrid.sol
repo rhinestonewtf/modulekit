@@ -7,10 +7,11 @@ pragma solidity ^0.8.20;
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { ERC7579ValidatorBase } from "../modules/ERC7579ValidatorBase.sol";
 import { UserOperation, UserOperationLib } from "../external/ERC4337.sol";
-import { ISessionKeyManagerModuleHybrid } from "./ISessionKeyManagerHybrid.sol";
+import { ISessionKeyManager } from "./ISessionKeyManager.sol";
 import { IERC7579Execution } from "../ModuleKitLib.sol";
 import { IERC1271 } from "../interfaces/IERC1271.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
+import { ParseCalldataLib } from "../modules/utils/ERC7579ValidatorLib.sol";
 
 import "forge-std/console2.sol";
 
@@ -24,12 +25,12 @@ import "forge-std/console2.sol";
  * session
  * @author Ankur Dubey - <ankur@biconomy.io>
  * @author Fil Makarov - <filipp.makarov@biconomy.io>
- * @author slight modification by zeroknots
+ * @author ERC7579 modification by zeroknots | rhinestone.wtf
  */
-contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579ValidatorBase {
+contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
     using UserOperationLib for UserOperation;
 
-    uint256 private constant MODULE_SIGNATURE_OFFSET = 96;
+    uint256 private constant MODULE_SIGNATURE_OFFSET = 0;
 
     // For a given Session Data Digest and Smart Account, stores
     // - the corresponding Session Data if the Session is enabled
@@ -64,7 +65,6 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         internal
         returns (ValidationData rv)
     {
-        console2.log("sig");
         /*
          * Module Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
@@ -73,7 +73,6 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
          * 0x1                  | --                | Data depending on the above flag
          */
         bytes calldata moduleSignature = userOp.signature[MODULE_SIGNATURE_OFFSET:];
-        console2.logBytes(moduleSignature);
 
         if (_isSessionEnableTransaction(moduleSignature)) {
             (
@@ -238,32 +237,34 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         internal
         returns (ValidationData)
     {
+        console2.log("batch execute");
+        console2.logBytes(userOp.signature);
         // Parse session enable data, signature list and main session signature
         (
             bytes[] calldata sessionEnableDataList,
             bytes[] calldata sessionEnableSignatureList,
             bytes[] calldata sessionInfos,
             bytes calldata sessionKeySignature
-        ) = _parseValidateUserOpBatchSignature(userOp.signature[MODULE_SIGNATURE_OFFSET:]);
+        ) = _parseValidateUserOpBatchSignature(userOp.signature[33:]);
 
+        console2.log("batch execute2");
         // Pre-verify all session enable data signatures
         address userOpSender = userOp.getSender();
         _verifySessionEnableDataSignatures(
             sessionEnableDataList, sessionEnableSignatureList, userOpSender
         );
 
+        console2.log("batch execute3");
         // Calcuate the expected common signer of each operation
-        address expectedSessionKeySigner =
-            ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash), sessionKeySignature);
+        address expectedSessionKeySigner;
+        //     ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash), sessionKeySignature);
 
         // Parse batch call calldata to get to,value,calldatas for every operation
         uint256 length = sessionInfos.length;
-        (
-            address[] calldata destinations,
-            uint256[] calldata callValues,
-            bytes[] calldata operationCalldatas
-        ) = _parseBatchCallCalldata(userOp.callData);
-        require(destinations.length == length, "SKM: SessionInfo length mismatch");
+        IERC7579Execution.Execution[] calldata execs =
+            ParseCalldataLib.parseBatchExecCalldata(userOp.callData);
+        console2.log("batch execute5", length, execs.length);
+        require(execs.length == length, "SKM: SessionInfo length mismatch");
 
         // For each operation in the batch, verify it using the corresponding session key
         // Also find the earliest validUntil and latest validAfter
@@ -280,14 +281,15 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
                 _validateUserOpBatchExecuteSessionEnableTransaction(
                     sessionInfo,
                     sessionEnableDataList,
-                    destinations[i],
-                    callValues[i],
-                    operationCalldatas[i]
+                    execs[i].target,
+                    execs[i].value,
+                    execs[i].callData
                 );
             } else {
+                console2.log("else");
                 (validUntil, validAfter, sessionKeyReturned) =
                 _validateUserOpBatchExecutePreEnabledTransaction(
-                    sessionInfo, destinations[i], callValues[i], operationCalldatas[i], userOpSender
+                    sessionInfo, execs[i].target, execs[i].value, execs[i].callData, userOpSender
                 );
             }
 
@@ -364,6 +366,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         internal
         returns (uint48 validUntil, uint48 validAfter, address sessionKeyReturned)
     {
+        console2.log("pre enabled");
         (bytes32 sessionDataDigest_, bytes calldata callSpecificData) =
             _parseSessionDataPreEnabledSignatureBatchCall(_sessionInfo);
 
@@ -373,6 +376,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         validUntil = sessionData.validUntil;
         validAfter = sessionData.validAfter;
 
+        console2.log("validation with", sessionData.sessionValidationModule);
         sessionKeyReturned = ISessionValidationModule(sessionData.sessionValidationModule)
             .validateSessionParams(
             _destination,
@@ -393,6 +397,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
     {
         uint256 length = sessionEnableDataList.length;
         if (length != sessionEnableSignatureList.length) {
+            console2.log("length", length, sessionEnableSignatureList.length);
             revert("SKM: EDListLengthMismatch");
         }
         for (uint256 i = 0; i < length;) {
@@ -533,42 +538,6 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         }
     }
 
-    function _parseBatchCallCalldata(bytes calldata _userOpCalldata)
-        internal
-        pure
-        returns (
-            address[] calldata destinations,
-            uint256[] calldata callValues,
-            bytes[] calldata operationCalldatas
-        )
-    {
-        /*
-         * Batch Call Calldata Layout
-         * Offset (in bytes)    | Length (in bytes) | Contents
-         * 0x0                  | 0x4               | bytes4 function selector
-        * 0x4                  | -                 | abi.encode(destinations, callValues,
-        operationCalldatas)
-         */
-        assembly ("memory-safe") {
-            let offset := add(_userOpCalldata.offset, 0x4)
-            let baseOffset := offset
-
-            let dataPointer := add(baseOffset, calldataload(offset))
-            destinations.offset := add(dataPointer, 0x20)
-            destinations.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            callValues.offset := add(dataPointer, 0x20)
-            callValues.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            operationCalldatas.offset := add(dataPointer, 0x20)
-            operationCalldatas.length := calldataload(dataPointer)
-        }
-    }
-
     /**
      * Session Management ******************************
      */
@@ -663,6 +632,9 @@ contract SessionKeyManagerHybrid is ISessionKeyManagerModuleHybrid, ERC7579Valid
         view
         returns (SessionData storage sessionData)
     {
+        console2.log(smartAccount);
+        console2.logBytes32(sessionKeyDataDigest);
+
         sessionData = _enabledSessionsData[sessionKeyDataDigest][smartAccount];
         require(
             sessionData.sessionValidationModule != address(0), "SKM: Session key is not enabled"

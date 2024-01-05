@@ -34,6 +34,9 @@ devDependencies:
   solady:
     specifier: github:vectorized/solady
     version: github.com/vectorized/solady/741bda9b2914444bf3060da85c7615f64ce4eee1
+  solarray:
+    specifier: github:sablier-labs/solarray
+    version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
   solhint:
     specifier: ^4.0.0
     version: 4.0.0(typescript@5.3.3)
@@ -3998,6 +4001,12 @@ packages:
     resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/87a2a0afc5fafd6297538a45a52ac19e71a84562}
     name: forge-std
     version: 1.7.4
+    dev: true
+
+  github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
+    resolution: {tarball: https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684}
+    name: solarray
+    version: 1.0.0
     dev: true
 
   github.com/vectorized/solady/741bda9b2914444bf3060da85c7615f64ce4eee1:

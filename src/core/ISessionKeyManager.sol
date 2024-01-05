@@ -13,7 +13,7 @@ pragma solidity ^0.8.20;
  * session
  * @author Ankur Dubey - <ankur@biconomy.io>
  */
-interface ISessionKeyManagerModuleHybrid {
+interface ISessionKeyManager {
     struct SessionData {
         uint48 validUntil;
         uint48 validAfter;

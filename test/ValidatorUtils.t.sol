@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
+import "forge-std/Test.sol";
+import "src/ModuleKit.sol";
+import "src/Modules.sol";
+import "src/Mocks.sol";
+import "src/modules/utils/ERC7579ValidatorLib.sol";
+import { Solarray } from "solarray/Solarray.sol";
+
+contract Validator is ERC7579ValidatorBase {
+    IERC7579Execution.Execution log;
+
+    function set(address to, uint256 value, bytes memory callData) public {
+        log.target = to;
+        log.value = value;
+        log.callData = callData;
+    }
+
+    function onInstall(bytes calldata data) external override { }
+
+    function onUninstall(bytes calldata data) external override { }
+
+    function isModuleType(uint256 typeID) external pure override returns (bool) {
+        return typeID == TYPE_VALIDATOR;
+    }
+
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        override
+        returns (ValidationData)
+    {
+        IERC7579Execution.Execution[] calldata execs =
+            ParseCalldataLib.parseBatchExecCalldata(userOp.callData);
+
+        for (uint256 i; i < execs.length; i++) {
+            console2.log(execs[i].target);
+            console2.log(execs[i].value);
+            console2.logBytes(execs[i].callData);
+        }
+
+        return _packValidationData({ sigFailed: false, validUntil: 1000, validAfter: 0 });
+    }
+
+    function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (bytes4)
+    {
+        return EIP1271_SUCCESS;
+    }
+
+    function name() external pure virtual override returns (string memory) {
+        return "MockValidator";
+    }
+
+    function version() external pure virtual override returns (string memory) {
+        return "0.0.1";
+    }
+}
+
+contract ValTest is RhinestoneModuleKit, Test {
+    using RhinestoneModuleKitLib for RhinestoneAccount;
+
+    RhinestoneAccount instance;
+    Validator validator;
+
+    MockTarget target;
+
+    function setUp() public {
+        instance = makeRhinestoneAccount("1");
+        vm.deal(instance.account, 1 ether);
+
+        validator = new Validator();
+        target = new MockTarget();
+
+        instance.installValidator(address(validator));
+    }
+
+    function test_foo() public {
+        address[] memory targets =
+            Solarray.addresses(address(target), address(target), address(target));
+        uint256[] memory values = Solarray.uint256s(uint256(0), uint256(0), uint256(0));
+        bytes[] memory calldatas = Solarray.bytess(
+            abi.encodeCall(MockTarget.set, (123)),
+            abi.encodeCall(MockTarget.set, (123)),
+            abi.encodeCall(MockTarget.set, (123))
+        );
+        instance.exec4337({
+            targets: targets,
+            values: values,
+            callDatas: calldatas,
+            signature: "",
+            validator: address(validator)
+        });
+    }
+}

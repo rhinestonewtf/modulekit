@@ -4,6 +4,8 @@ pragma solidity ^0.8.23;
 import { ISessionValidationModule } from "../core/ISessionValidationModule.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 
+import "forge-std/console2.sol";
+
 contract MockSessionKeyValidator is ISessionValidationModule {
     function validateSessionUserOp(
         UserOperation calldata _op,

@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
+import "forge-std/Test.sol";
+import "forge-std/console2.sol";
+import "src/ModuleKit.sol";
+import "src/Modules.sol";
+import "src/Mocks.sol";
+import "src/core/ISessionKeyManagerHybrid.sol";
+
+library SessionKeyManagerLib {
+    enum SessionKeyMode {
+        USE,
+        ENABLE
+    }
+
+    function padding(
+        SessionKeyMode mode,
+        uint8 sessionIndex,
+        uint48 validUntil,
+        uint48 validAfter,
+        address sessionValidationModule,
+        bytes memory data
+    )
+        internal
+        pure
+        returns (bytes memory sig)
+    {
+        return abi.encodePacked(
+            uint8(mode), uint8(sessionIndex), validUntil, validAfter, sessionValidationModule, data
+        );
+    }
+}
+
+contract SessionValidatorTest is RhinestoneModuleKit, Test {
+    using RhinestoneModuleKitLib for RhinestoneAccount;
+
+    RhinestoneAccount instance;
+
+    SessionKeyManagerHybrid sessionKeyManager;
+    ISessionKeyManagerModuleHybrid.SessionData sessionData;
+    MockSessionKeyValidator sessionValidator;
+    MockTarget target;
+
+    function setUp() public {
+        instance = makeRhinestoneAccount("1");
+        vm.deal(instance.account, 1 ether);
+
+        sessionKeyManager = new SessionKeyManagerHybrid();
+        sessionValidator = new MockSessionKeyValidator();
+        target = new MockTarget();
+        instance.installValidator(address(sessionKeyManager));
+
+        sessionData = ISessionKeyManagerModuleHybrid.SessionData({
+            validUntil: type(uint48).max,
+            validAfter: 0,
+            sessionValidationModule: address(sessionValidator),
+            sessionKeyData: hex"42424242"
+        });
+        vm.prank(instance.account);
+        sessionKeyManager.enableSession(sessionData);
+    }
+
+    function test_isDefaultValidatorEnabled() public {
+        assertTrue(instance.isValidatorInstalled(address(instance.defaultValidator)));
+    }
+
+    function test_execWithSessionKey() public {
+        bytes memory block =
+            hex"41414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141414141";
+
+        bytes memory sessionKeyData = abi.encode("sessionKeyData", "", "", "");
+        bytes memory signature = SessionKeyManagerLib.padding(
+            SessionKeyManagerLib.SessionKeyMode.USE,
+            0,
+            type(uint48).max,
+            0,
+            address(sessionValidator),
+            sessionKeyData
+        );
+
+        bytes32 digest = sessionKeyManager.sessionDataDigest(sessionData);
+        signature =
+            abi.encodePacked(SessionKeyManagerLib.SessionKeyMode.USE, abi.encode(digest, block));
+
+        instance.exec4337({
+            target: address(target),
+            value: 0,
+            callData: abi.encodeCall(MockTarget.set, (123)),
+            signature: signature,
+            validator: address(sessionKeyManager)
+        });
+    }
+}
