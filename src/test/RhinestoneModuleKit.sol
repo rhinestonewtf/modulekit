@@ -227,14 +227,14 @@ library RhinestoneModuleKitLib {
             string memory phasesOutput =
                 serializeUint(phasesObj, "Execution gas used", gasExecution);
 
-            // L2-L1 calldata gas cost
+            // L2-L1 calldata gas used
             bytes memory userOpCalldata = abi.encodeWithSelector(
                 instance.aux.entrypoint.handleOps.selector, userOps, beneficiary
             );
             string memory l2sObj = "l2s";
-            serializeUint(l2sObj, "OP Stack L1 Gas Cost", getArbitrumL1Gas(userOpCalldata));
+            serializeUint(l2sObj, "OP Stack L1 Gas Used", getArbitrumL1Gas(userOpCalldata));
             string memory l2sOutput =
-                serializeUint(l2sObj, "Arbitrum L1 Gas Cost", getOpStackL1Gas(userOpCalldata));
+                serializeUint(l2sObj, "Arbitrum L1 Gas Used", getOpStackL1Gas(userOpCalldata));
 
             serializeString(jsonObj, "ERC-4337 Phases", phasesOutput);
             string memory finalJson = serializeString(jsonObj, "L2-L1 calldata", l2sOutput);
@@ -243,6 +243,7 @@ library RhinestoneModuleKitLib {
                 finalJson,
                 string.concat("./gas_calculations/", "userOpGas_", gasIdentifier, ".json")
             );
+            writeGasIdentifier("");
         }
 
         VmSafe.Log[] memory logs = getRecordedLogs();
