@@ -23,10 +23,6 @@ import "../mocks/MockValidator.sol";
 
 import "forge-std/console2.sol";
 
-interface GasDebug {
-    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
-}
-
 struct RhinestoneAccount {
     address account;
     IERC7579Validator defaultValidator;
@@ -178,10 +174,10 @@ library RhinestoneModuleKitLib {
         totalUserOpGas = totalUserOpGas - gasleft();
 
         bool calculateGas = envOr("WRITE_GAS", false);
+        string memory gasIdentifier = getGasIdentifier();
 
-        if (calculateGas) {
-            string memory scenarioName = string(abi.encodePacked(address(this)));
-            string memory jsonObj = string(abi.encodePacked(scenarioName));
+        if (calculateGas && bytes(gasIdentifier).length != 0) {
+            string memory jsonObj = string(abi.encodePacked(gasIdentifier));
 
             // total gas used
             serializeUint(jsonObj, "Total gas used by UserOp", totalUserOpGas);
@@ -210,7 +206,8 @@ library RhinestoneModuleKitLib {
             string memory finalJson = serializeString(jsonObj, "L2-L1 calldata", l2sOutput);
 
             writeJson(
-                finalJson, string.concat("./gas_calculations/", "userOpGas_", scenarioName, ".json")
+                finalJson,
+                string.concat("./gas_calculations/", "userOpGas_", gasIdentifier, ".json")
             );
         }
 
@@ -532,6 +529,17 @@ library RhinestoneModuleKitLib {
      */
     function expect4337Revert(RhinestoneAccount memory instance) internal {
         writeExpectRevert(1);
+    }
+
+    /**
+     * @dev Expects an ERC-4337 transaction to revert
+     * @dev if this is called before an exec4337 call, it will throw an error if the ERC-4337 flow
+     * does not revert
+     *
+     * @param instance RhinestoneAccount
+     */
+    function log4337Gas(RhinestoneAccount memory instance, string memory id) internal {
+        writeGasIdentifier(id);
     }
 
     /**

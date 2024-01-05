@@ -28,3 +28,7 @@ function getOpStackL1Gas(bytes memory data) pure returns (uint256 calldataGas) {
         PRBMathCastingUint256.intoUD60x18(getCallDataGas(data)).mul(opStackScalar)
     ) + opStackConstant;
 }
+
+interface GasDebug {
+    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
+}
