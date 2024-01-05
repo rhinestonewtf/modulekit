@@ -19,6 +19,7 @@ import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
+import { ISessionKeyManager } from "./predeploy/SessionKeyManager.sol";
 
 import "forge-std/console2.sol";
 
@@ -222,7 +223,7 @@ library RhinestoneModuleKitLib {
 
     function log4337Gas(
         RhinestoneAccount memory instance,
-        string memory label
+        string memory name
     )
         internal
         view
@@ -233,7 +234,7 @@ library RhinestoneModuleKitLib {
         gasExecution =
             GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
 
-        console2.log("\nERC-4337 Gas Log:", label);
+        console2.log("\nERC-4337 Gas Log:", name);
         console2.log("Verification:  ", gasValidation);
         console2.log("Execution:     ", gasExecution);
     }
@@ -510,6 +511,60 @@ library RhinestoneModuleKitLib {
      */
     function expect4337Revert(RhinestoneAccount memory instance) internal {
         writeExpectRevert(1);
+    }
+
+    function installSessionKey(
+        RhinestoneAccount memory instance,
+        address sessionKeyModule,
+        uint48 validUntil,
+        uint48 validAfter,
+        bytes memory sessionKeyData
+    )
+        internal
+        returns (bytes32 sessionKeyDigest)
+    {
+        // check if SessionKeyManager is installed as IERC7579Validator
+        bool requireSessionKeyInstallation =
+            !isValidatorInstalled(instance, address(instance.aux.sessionKeyManager));
+        if (requireSessionKeyInstallation) {
+            installValidator(instance, address(instance.aux.sessionKeyManager));
+        }
+
+        ISessionKeyManager.SessionData memory sessionData = ISessionKeyManager.SessionData({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: sessionKeyModule,
+            sessionKeyData: sessionKeyData
+        });
+
+        // enable sessionKey
+        exec4337(
+            instance,
+            address(instance.aux.sessionKeyManager),
+            abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
+        );
+
+        // get sessionKey digest
+        sessionKeyDigest = instance.aux.sessionKeyManager.sessionDataDigest(sessionData);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        bytes32 sessionKeyDigest,
+        bytes memory sessionKeySignature
+    )
+        internal
+    {
+        bytes1 MODE_USE = 0x00;
+        bytes memory signature =
+            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
+
+        exec4337(
+            instance, target, value, callData, signature, address(instance.aux.sessionKeyManager)
+        );
     }
 
     /**
