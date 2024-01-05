@@ -6,6 +6,8 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { ParseCalldataLib } from "../utils/ERC7579ValidatorLib.sol";
 import { IERC7579Execution } from "../../ModuleKitLib.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import "forge-std/console2.sol";
+
 /**
  * @title ERC20 Session Validation Module for Biconomy Smart Accounts.
  * @dev Validates userOps for ERC20 transfers and approvals using a session key signature.
@@ -43,11 +45,27 @@ contract ERC20SessionKey is ISessionValidationModule {
         bytes calldata _sessionKeyData,
         bytes calldata /*_callSpecificData*/
     )
-        external
+        public
         virtual
         override
         returns (address)
-    { }
+    {
+        ERC20Transaction memory transaction = abi.decode(_sessionKeyData, (ERC20Transaction));
+
+        // handle single execution
+
+        _enforceSessionKeyConstraint({
+            callTarget: destinationContract,
+            callValue: callValue,
+            callData: _funcCallData,
+            maxAmount: transaction.maxAmount,
+            recipientOnly: transaction.recipient
+        });
+
+        // return ECDSA.recover(ECDSA.toEthSignedMessageHash(_userOpHash), _sessionKeySignature)
+        //     == sessionKey;
+        return address(0);
+    }
 
     /**
      * @dev validates if the _op (UserOperation) matches the SessionKey permissions
@@ -88,17 +106,17 @@ contract ERC20SessionKey is ISessionValidationModule {
         }
         // handle batched execution
         else if (executeSelector == IERC7579Execution.executeBatch.selector) {
-            (address[] calldata targets, uint256[] calldata values, bytes[] calldata callDatas) =
+            IERC7579Execution.Execution[] calldata executions =
                 _op.callData.parseBatchExecCalldata();
 
             uint256 _maxAmount = transaction.maxAmount;
             address recipientOnly = transaction.recipient;
-            uint256 length = targets.length;
+            uint256 length = executions.length;
 
             for (uint256 i; i < length; i++) {
-                address target = targets[i];
-                uint256 value = values[i];
-                bytes calldata callData = callDatas[i];
+                address target = executions[i].target;
+                uint256 value = executions[i].value;
+                bytes calldata callData = executions[i].callData;
 
                 _enforceSessionKeyConstraint({
                     callTarget: target,

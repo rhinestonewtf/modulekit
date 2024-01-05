@@ -18,6 +18,7 @@
     "forge-std": "github:foundry-rs/forge-std",
     "erc7579": "github:erc7579/erc7579-implementation",
     "account-abstraction": "github:eth-infinitism/account-abstraction",
+    "solarray": "github:sablier-labs/solarray",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solhint": "^4.0.0",

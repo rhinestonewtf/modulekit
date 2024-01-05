@@ -191,6 +191,47 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
     }
 
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas,
+        bytes memory signature,
+        address validator
+    )
+        internal
+    {
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
+
+        UserOperation memory userOp = getFormattedUserOp(instance, targets, values, callDatas);
+        userOp.nonce = nonce;
+        userOp.signature = signature;
+
+        UserOperation[] memory userOps = new UserOperation[](1);
+        userOps[0] = userOp;
+
+        // send userOps to 4337 entrypoint
+
+        recordLogs();
+        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        VmSafe.Log[] memory logs = getRecordedLogs();
+
+        for (uint256 i; i < logs.length; i++) {
+            if (
+                logs[i].topics[0]
+                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+            ) {
+                if (getExpectRevert() != 1) revert("UserOperation failed");
+            }
+        }
+
+        writeExpectRevert(0);
+
+        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
@@ -503,6 +544,49 @@ library RhinestoneModuleKitLib {
     }
 
     /**
+     * @dev Gets the formatted UserOperation
+     *
+     * @param instance RhinestoneAccount
+     * @param target Target address
+     * @param value Value to send
+     * @param callData Calldata
+     *
+     * @return userOp Formatted UserOperation
+     */
+    function getFormattedUserOp(
+        RhinestoneAccount memory instance,
+        address[] memory target,
+        uint256[] memory value,
+        bytes[] memory callData
+    )
+        internal
+        returns (UserOperation memory userOp)
+    {
+        bytes memory erc7579Exec =
+            ERC4337Wrappers.getERC7579TxCalldata(instance, target, value, callData);
+
+        // Get account address
+        address smartAccount = address(instance.account);
+
+        // Get nonce from Entrypoint
+        uint256 nonce = instance.aux.entrypoint.getNonce(smartAccount, 0);
+
+        userOp = UserOperation({
+            sender: smartAccount,
+            nonce: nonce,
+            initCode: "", // todo
+            callData: erc7579Exec,
+            callGasLimit: 2e6,
+            verificationGasLimit: 2e6,
+            preVerificationGas: 2e6,
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+    }
+
+    /**
      * @dev Expects an ERC-4337 transaction to revert
      * @dev if this is called before an exec4337 call, it will throw an error if the ERC-4337 flow
      * does not revert
@@ -567,29 +651,22 @@ library RhinestoneModuleKitLib {
         );
     }
 
-    /**
-     * @dev Adds a session key to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param validUntil Valid until timestamp
-     * @param validAfter Valid after timestamp
-     * @param sessionValidationModule Session validation module address
-     * @param sessionKeyData Session key data
-     *
-     * @return root Merkle root of session key manager
-     * @return proof Merkle proof for session key
-     */
-    function addSessionKey(
+    function exec4337(
         RhinestoneAccount memory instance,
-        uint256 validUntil,
-        uint256 validAfter,
-        address sessionValidationModule,
-        bytes memory sessionKeyData
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas,
+        bytes32 sessionKeyDigest,
+        bytes memory sessionKeySignature
     )
         internal
-        returns (bytes32 root, bytes32[] memory proof)
     {
-        revert("not implemented");
+        bytes1 MODE_USE = 0x00;
+        bytes memory signature = abi.encodePacked(MODE_USE, sessionKeyDigest, sessionKeySignature);
+
+        exec4337(
+            instance, targets, values, callDatas, signature, address(instance.aux.sessionKeyManager)
+        );
     }
 
     // /**
@@ -630,5 +707,28 @@ library ERC4337Wrappers {
         returns (bytes memory erc7579Tx)
     {
         return abi.encodeCall(IERC7579Execution.execute, (target, value, data));
+    }
+
+    function getERC7579TxCalldata(
+        RhinestoneAccount memory account,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory data
+    )
+        internal
+        view
+        returns (bytes memory erc7579Tx)
+    {
+        IERC7579Execution.Execution[] memory executions =
+            new IERC7579Execution.Execution[](targets.length);
+
+        for (uint256 i; i < targets.length; i++) {
+            executions[i] = IERC7579Execution.Execution({
+                target: targets[i],
+                value: values[i],
+                callData: data[i]
+            });
+        }
+        return abi.encodeCall(IERC7579Execution.executeBatch, (executions));
     }
 }

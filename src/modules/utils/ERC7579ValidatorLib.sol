@@ -1,25 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
+import "forge-std/console2.sol";
+
 import { IERC7579Execution } from "../../ModuleKitLib.sol";
-import { UserOperation } from "../../ModuleKit.sol";
 
 library ParseCalldataLib {
     function parseBatchExecCalldata(bytes calldata _userOpCalldata)
         internal
         pure
-        returns (
-            address[] calldata destinations,
-            uint256[] calldata callValues,
-            bytes[] calldata operationCalldatas
-        )
+        returns (IERC7579Execution.Execution[] calldata executionBatch)
     {
         /*
          * Batch Call Calldata Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
          * 0x0                  | 0x4               | bytes4 function selector
-        * 0x4                  | -                 | abi.encode(destinations, callValues,
-        operationCalldatas)
+        *  0x4                  | -                 | abi.encode(IERC7579Execution.Execution[])
          */
         assembly ("memory-safe") {
             let offset := add(_userOpCalldata.offset, 0x4)
@@ -27,22 +23,12 @@ library ParseCalldataLib {
 
             let dataPointer := add(baseOffset, calldataload(offset))
 
-            // Extract the destinations
-            destinations.offset := add(dataPointer, 0x20)
-            destinations.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            // Extract the call values
-            dataPointer := add(baseOffset, calldataload(offset))
-            callValues.offset := add(dataPointer, 0x20)
-            callValues.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            // Extract the operation calldatas
-            dataPointer := add(baseOffset, calldataload(offset))
-            operationCalldatas.offset := add(dataPointer, 0x20)
-            operationCalldatas.length := calldataload(dataPointer)
+            // Extract the ERC7579 Executions
+            executionBatch.offset := add(dataPointer, 32)
+            executionBatch.length := calldataload(dataPointer)
         }
+
+        console2.log("exec batch length", executionBatch.length);
     }
 
     function parseSingleExecCalldata(bytes calldata _userOpCalldata)
