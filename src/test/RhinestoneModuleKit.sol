@@ -144,7 +144,7 @@ library RhinestoneModuleKitLib {
      * functions above
      *
      * @param instance RhinestoneAccount
-     * @param callData ENcoded callData
+     * @param callData Encoded callData
      * @param signature Signature
      */
     function exec4337(
@@ -166,6 +166,39 @@ library RhinestoneModuleKitLib {
 
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
+
+        executeUserOps(instance, userOps);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas,
+        bytes memory signature,
+        address validator
+    )
+        internal
+    {
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
+
+        UserOperation memory userOp = getFormattedUserOp(instance, targets, values, callDatas);
+        userOp.nonce = nonce;
+        userOp.signature = signature;
+
+        UserOperation[] memory userOps = new UserOperation[](1);
+        userOps[0] = userOp;
+
+        executeUserOps(instance, userOps);
+    }
+
+    function executeUserOps(
+        RhinestoneAccount memory instance,
+        UserOperation[] memory userOps
+    )
+        internal
+    {
         address payable beneficiary = payable(address(0x69));
 
         recordLogs();
@@ -225,89 +258,9 @@ library RhinestoneModuleKitLib {
 
         writeExpectRevert(0);
 
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
-    }
-
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory callDatas,
-        bytes memory signature,
-        address validator
-    )
-        internal
-    {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-
-        UserOperation memory userOp = getFormattedUserOp(instance, targets, values, callDatas);
-        userOp.nonce = nonce;
-        userOp.signature = signature;
-
-        UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = userOp;
-
-        // send userOps to 4337 entrypoint
-
-        recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
+        for (uint256 i; i < userOps.length; i++) {
+            emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOps[i].sender);
         }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
-    }
-
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory callDatas,
-        bytes memory signature,
-        address validator
-    )
-        internal
-    {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-
-        UserOperation memory userOp = getFormattedUserOp(instance, targets, values, callDatas);
-        userOp.nonce = nonce;
-        userOp.signature = signature;
-
-        UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = userOp;
-
-        // send userOps to 4337 entrypoint
-
-        recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
-        }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -339,7 +292,7 @@ library RhinestoneModuleKitLib {
 
         emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
     }
-    
+
     /**
      * @dev Removes a validator from the account
      *

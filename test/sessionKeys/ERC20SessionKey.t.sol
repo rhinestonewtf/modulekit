@@ -48,6 +48,7 @@ contract ERC20SessionValidatorTest is RhinestoneModuleKit, Test {
     }
 
     function test_execWithSessionKey__ShouldFail() public {
+        vm.expect4337Revert();
         instance.exec4337({
             target: address(target),
             value: 0,
@@ -55,8 +56,6 @@ contract ERC20SessionValidatorTest is RhinestoneModuleKit, Test {
             sessionKeyDigest: sessionValidatorDigest,
             sessionKeySignature: hex"414141414141"
         });
-
-        assertEq(target.value(), 123);
     }
 
     function test_transferBatch() public {
