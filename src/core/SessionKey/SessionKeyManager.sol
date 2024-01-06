@@ -11,6 +11,9 @@ import { IERC1271 } from "../../interfaces/IERC1271.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
+import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+
+import "forge-std/console2.sol";
 
 contract SessionKeyManager is ERC7579ValidatorBase {
     using UserOperationLib for UserOperation;
@@ -91,13 +94,13 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         (address to, uint256 value, bytes calldata callData) =
             ERC7579ValidatorLib.decodeCalldataSingle(userOp.callData);
 
-        address recoveredSigner = userOpHash.recoverSessionKeySigner(sessionKeySignature);
         (address signer, uint48 validUntil, uint48 validAfter) =
             _validateWithSessionKey(to, value, callData, sessionKeySignature, sessionData);
-        bool isValid = recoveredSigner == signer;
-        if (!isValid) return _validatorError();
 
-        if (recoveredSigner != signer) return _validatorError();
+        bool isValid = SignatureCheckerLib.isValidSignatureNowCalldata(
+            signer, sessionKeyDataDigest, sessionKeySignature
+        );
+        if (!isValid) return _validatorError();
 
         vd = _packValidationData(!isValid, validUntil, validAfter);
     }
@@ -119,6 +122,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
 
         uint256 length = sessionKeySignatures.length;
+        console2.log("executions", execs.length, length);
         if (execs.length != length) {
             return _validatorError();
         }
@@ -131,7 +135,6 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             bytes32 sessionKeyDataDigest = sessionKeyDataDigests[i];
             bytes calldata sessionKeySignature = sessionKeySignatures[i];
             // ----------
-            address recoveredSigner = userOpHash.recoverSessionKeySigner(sessionKeySignature);
             SessionData storage sessionData =
                 _enabledSessionsData[sessionKeyDataDigest][smartAccount];
             (address signer, uint48 validUntil, uint48 validAfter) = _validateWithSessionKey(
@@ -141,7 +144,10 @@ contract SessionKeyManager is ERC7579ValidatorBase {
                 sessionKeySignature,
                 sessionData
             );
-            bool isValid = recoveredSigner == signer;
+
+            bool isValid = SignatureCheckerLib.isValidSignatureNowCalldata(
+                signer, sessionKeyDataDigest, sessionKeySignature
+            );
             if (!isValid) return _validatorError();
             if (maxValidUntil < validUntil) {
                 maxValidUntil = validUntil;
@@ -164,6 +170,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         returns (address signer, uint48 validUntil, uint48 validAfter)
     {
         ISessionValidationModule sessionValidationModule = sessionData.sessionValidationModule;
+        console2.log(address(sessionValidationModule));
 
         signer = sessionValidationModule.validateSessionParams({
             to: to,
@@ -172,6 +179,8 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             sessionKeyData: sessionData.sessionKeyData,
             callSpecificData: sessionKeySignature
         });
+
+        console2.log(signer);
 
         validUntil = sessionData.validUntil;
         validAfter = sessionData.validAfter;

@@ -5,8 +5,11 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import "src/ModuleKit.sol";
 import "src/Modules.sol";
+import "src/core/sessionKey/ISessionValidationModule.sol";
+import { SessionData, SessionKeyManagerLib } from "src/core/sessionKey/SessionKeyManagerLib.sol";
 import "src/Mocks.sol";
 import { ERC20SessionKey } from "src/modules/sessionKeys/ERC20SessionKey.sol";
+import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { Solarray } from "solarray/Solarray.sol";
 
 contract ERC20SessionValidatorTest is RhinestoneModuleKit, Test {
@@ -21,6 +24,12 @@ contract ERC20SessionValidatorTest is RhinestoneModuleKit, Test {
 
     address internal recipient;
 
+    address keySigner1;
+    uint256 keySignerPk1;
+
+    address keySigner2;
+    uint256 keySignerPk2;
+
     function setUp() public {
         instance = makeRhinestoneAccount("1");
         vm.deal(instance.account, 1 ether);
@@ -33,30 +42,22 @@ contract ERC20SessionValidatorTest is RhinestoneModuleKit, Test {
         target = new MockTarget();
         recipient = makeAddr("recipient");
 
-        ERC20SessionKey.ERC20Transaction memory _tx = ERC20SessionKey.ERC20Transaction({
+        (keySigner1, keySignerPk1) = makeAddrAndKey("KeySigner1");
+        (keySigner2, keySignerPk2) = makeAddrAndKey("KeySigner1");
+
+        ERC20SessionKey.ERC20Transaction memory _tx1 = ERC20SessionKey.ERC20Transaction({
             token: address(token),
             recipient: recipient,
-            maxAmount: 1000
+            maxAmount: 1000,
+            sessionKeySigner: keySigner1
         });
 
         sessionValidatorDigest = instance.installSessionKey({
-            sessionKeyModule: address(sessionValidator),
+            sessionKeyModule: (address(sessionValidator)),
             validUntil: type(uint48).max,
             validAfter: 0,
-            sessionKeyData: abi.encode(_tx)
+            sessionKeyData: sessionValidator.encode(_tx1)
         });
-    }
-
-    function test_execWithSessionKey__ShouldFail() public {
-        instance.exec4337({
-            target: address(target),
-            value: 0,
-            callData: abi.encodeCall(MockTarget.set, (123)),
-            sessionKeyDigest: sessionValidatorDigest,
-            sessionKeySignature: hex"414141414141"
-        });
-
-        assertEq(target.value(), 123);
     }
 
     function test_transferBatch() public {
@@ -67,29 +68,41 @@ contract ERC20SessionValidatorTest is RhinestoneModuleKit, Test {
             abi.encodeCall(MockERC20.transfer, (recipient, 11))
         );
 
-        bytes[] memory bytes2A = Solarray.bytess(
-            abi.encodePacked(hex"00", sessionValidatorDigest),
-            abi.encodePacked(hex"00", sessionValidatorDigest)
+        bytes32[] memory sessionKeyDigests =
+            Solarray.bytes32s(sessionValidatorDigest, sessionValidatorDigest);
+
+        bytes[] memory sessionKeySignatures = Solarray.bytess(
+            sign(keySignerPk1, sessionValidatorDigest), sign(keySignerPk1, sessionValidatorDigest)
         );
-        bytes[] memory empty = new bytes[](0);
         instance.exec4337({
             targets: targets,
             values: values,
             callDatas: calldatas,
-            sessionKeyDigest: sessionValidatorDigest,
-            sessionKeySignature: abi.encode(empty, empty, bytes2A, hex"42")
+            sessionKeyDigests: sessionKeyDigests,
+            sessionKeySignatures: sessionKeySignatures
         });
 
         assertEq(token.balanceOf(recipient), 33);
     }
 
+    function sign(uint256 privKey, bytes32 digest) internal returns (bytes memory) {
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privKey, digest);
+        return abi.encodePacked(r, s, v);
+    }
+
     function test_transferSingle() public {
+        bytes memory sig = sign(keySignerPk1, sessionValidatorDigest);
+
+        bool isValid =
+            SignatureCheckerLib.isValidSignatureNow(keySigner1, sessionValidatorDigest, sig);
+
+        assertTrue(isValid);
         instance.exec4337({
             target: address(token),
             value: 0,
             callData: abi.encodeCall(MockERC20.transfer, (recipient, 100)),
             sessionKeyDigest: sessionValidatorDigest,
-            sessionKeySignature: hex"414141414141"
+            sessionKeySignature: sig
         });
 
         assertEq(token.balanceOf(recipient), 100);

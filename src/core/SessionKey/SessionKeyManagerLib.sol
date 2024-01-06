@@ -36,6 +36,17 @@ library SessionKeyManagerLib {
         return ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash), signature);
     }
 
+    function recoverSessionKeySignerM(
+        bytes32 userOpHash,
+        bytes memory signature
+    )
+        internal
+        view
+        returns (address)
+    {
+        return ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash), signature);
+    }
+
     function encodeSignature(
         bytes32 digest,
         bytes memory sessionKeySignature
@@ -93,7 +104,7 @@ library SessionKeyManagerLib {
              * Module Signature Layout
              */
             assembly ("memory-safe") {
-                let offset := signature.offset
+                let offset := add(signature.offset, 0x1)
                 let baseOffset := offset
 
                 let dataPointer := add(baseOffset, calldataload(offset))

@@ -603,7 +603,7 @@ library RhinestoneModuleKitLib {
 
     function installSessionKey(
         RhinestoneAccount memory instance,
-        ISessionValidationModule sessionKeyModule,
+        address sessionKeyModule,
         uint48 validUntil,
         uint48 validAfter,
         bytes memory sessionKeyData
@@ -621,7 +621,7 @@ library RhinestoneModuleKitLib {
         SessionData memory sessionData = SessionData({
             validUntil: validUntil,
             validAfter: validAfter,
-            sessionValidationModule: sessionKeyModule,
+            sessionValidationModule: ISessionValidationModule(sessionKeyModule),
             sessionKeyData: sessionKeyData
         });
 
@@ -660,13 +660,14 @@ library RhinestoneModuleKitLib {
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory callDatas,
-        bytes32 sessionKeyDigest,
-        bytes memory sessionKeySignature
+        bytes32[] memory sessionKeyDigests,
+        bytes[] memory sessionKeySignatures
     )
         internal
     {
         bytes1 MODE_USE = 0x00;
-        bytes memory signature = abi.encodePacked(MODE_USE, sessionKeyDigest, sessionKeySignature);
+        bytes memory signature =
+            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigests, sessionKeySignatures));
 
         exec4337(
             instance, targets, values, callDatas, signature, address(instance.aux.sessionKeyManager)
