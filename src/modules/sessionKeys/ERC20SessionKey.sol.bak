@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "../../core/ISessionValidationModule.sol";
+import "../../core/sessionKey/ISessionValidationModule.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { ParseCalldataLib } from "../utils/ERC7579ValidatorLib.sol";
 import { IERC7579Execution } from "../../ModuleKitLib.sol";

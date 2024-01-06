@@ -86,10 +86,7 @@ library SessionKeyManagerLib {
     function decodeSignatureBatch(bytes calldata signature)
         internal
         pure
-        returns (
-            bytes32[] calldata sessionKeyDigests,
-            bytes[] calldata sessionKeySignatures
-        )
+        returns (bytes32[] calldata sessionKeyDigests, bytes[] calldata sessionKeySignatures)
     {
         {
             /*

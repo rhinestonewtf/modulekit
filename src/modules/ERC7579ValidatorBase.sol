@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 import {
-    UserOperation,
-    _packValidationData as _packValidationData4337
+    UserOperation, _packValidationData as _packValidationData4337
 } from "../external/ERC4337.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
@@ -30,9 +29,7 @@ abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
         pure
         returns (ValidationData)
     {
-        return ValidationData.wrap(
-            _packValidationData4337(sigFailed, validUntil, validAfter)
-        );
+        return ValidationData.wrap(_packValidationData4337(sigFailed, validUntil, validAfter));
     }
 
     function validateUserOp(

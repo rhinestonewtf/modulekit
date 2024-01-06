@@ -35,11 +35,8 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
 
     function onInstall(bytes calldata data) external override {
         if (data.length == 0) return;
-        (
-            bytes4[] memory selector,
-            FallBackType[] memory fallbackType,
-            address[] memory handler
-        ) = abi.decode(data, (bytes4[], FallBackType[], address[]));
+        (bytes4[] memory selector, FallBackType[] memory fallbackType, address[] memory handler) =
+            abi.decode(data, (bytes4[], FallBackType[], address[]));
 
         uint256 length = selector.length;
         if (length != fallbackType.length || length != handler.length) revert();
@@ -52,10 +49,7 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
     // --- events ---
 
     event SetFunctionSig(
-        address indexed account,
-        bytes4 selector,
-        FallBackType fallbackType,
-        address handler
+        address indexed account, bytes4 selector, FallBackType fallbackType, address handler
     );
     event RemovedFunctionSelector(address indexed account, bytes4 selector);
 
@@ -83,13 +77,7 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         emit SetFunctionSig(account, selector, fallbackType, handler);
     }
 
-    function setFunctionSig(
-        bytes4 selector,
-        FallBackType fallbackType,
-        address handler
-    )
-        external
-    {
+    function setFunctionSig(bytes4 selector, FallBackType fallbackType, address handler) external {
         _setFunctionSig(msg.sender, selector, fallbackType, handler);
     }
 

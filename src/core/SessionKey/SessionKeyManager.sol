@@ -10,10 +10,7 @@ import { IERC7579Execution } from "../../ModuleKitLib.sol";
 import { IERC1271 } from "../../interfaces/IERC1271.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
-import {
-    ACCOUNT_EXEC_TYPE,
-    ERC7579ValidatorLib
-} from "../../modules/utils/ERC7579ValidatorLib.sol";
+import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
 
 contract SessionKeyManager is ERC7579ValidatorBase {
     using UserOperationLib for UserOperation;
@@ -22,9 +19,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     using SessionKeyManagerLib for SessionData;
     using SessionKeyManagerLib for bytes32;
 
-    event SessionCreated(
-        address indexed sa, bytes32 indexed sessionDataDigest, SessionData data
-    );
+    event SessionCreated(address indexed sa, bytes32 indexed sessionDataDigest, SessionData data);
 
     event SessionDisabled(address indexed sa, bytes32 indexed sessionDataDigest);
 
@@ -43,6 +38,10 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         bytes32 sessionDataDigest_ = sessionData.digest();
         _enabledSessionsData[sessionDataDigest_][msg.sender] = sessionData;
         emit SessionCreated(msg.sender, sessionDataDigest_, sessionData);
+    }
+
+    function digest(SessionData calldata sessionData) external pure returns (bytes32) {
+        return sessionData.digest();
     }
 
     function getSessionData(
@@ -87,8 +86,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         (bytes32 sessionKeyDataDigest, bytes calldata sessionKeySignature) =
             SessionKeyManagerLib.decodeSignatureSingle(userOp.signature);
 
-        SessionData storage sessionData =
-            _enabledSessionsData[sessionKeyDataDigest][smartAccount];
+        SessionData storage sessionData = _enabledSessionsData[sessionKeyDataDigest][smartAccount];
 
         (address to, uint256 value, bytes calldata callData) =
             ERC7579ValidatorLib.decodeCalldataSingle(userOp.callData);
@@ -113,8 +111,8 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     {
         address smartAccount = userOp.getSender();
 
-        (bytes32[] calldata sessionKeyDataDigests, bytes[] calldata sessionKeySignatures)
-        = SessionKeyManagerLib.decodeSignatureBatch(userOp.signature);
+        (bytes32[] calldata sessionKeyDataDigests, bytes[] calldata sessionKeySignatures) =
+            SessionKeyManagerLib.decodeSignatureBatch(userOp.signature);
 
         // get ERC7579 Execution struct array from callData
         IERC7579Execution.Execution[] calldata execs =
@@ -133,12 +131,10 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             bytes32 sessionKeyDataDigest = sessionKeyDataDigests[i];
             bytes calldata sessionKeySignature = sessionKeySignatures[i];
             // ----------
-            address recoveredSigner =
-                userOpHash.recoverSessionKeySigner(sessionKeySignature);
+            address recoveredSigner = userOpHash.recoverSessionKeySigner(sessionKeySignature);
             SessionData storage sessionData =
                 _enabledSessionsData[sessionKeyDataDigest][smartAccount];
-            (address signer, uint48 validUntil, uint48 validAfter) =
-            _validateWithSessionKey(
+            (address signer, uint48 validUntil, uint48 validAfter) = _validateWithSessionKey(
                 execution.target,
                 execution.value,
                 execution.callData,
@@ -167,8 +163,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         internal
         returns (address signer, uint48 validUntil, uint48 validAfter)
     {
-        ISessionValidationModule sessionValidationModule =
-            sessionData.sessionValidationModule;
+        ISessionValidationModule sessionValidationModule = sessionData.sessionValidationModule;
 
         signer = sessionValidationModule.validateSessionParams({
             to: to,

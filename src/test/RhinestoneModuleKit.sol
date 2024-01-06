@@ -19,18 +19,13 @@ import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
-import { ISessionKeyManager } from "./predeploy/SessionKeyManager.sol";
+import { SessionKeyManager, SessionData } from "../core/SessionKey/SessionKeyManager.sol";
+import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
 
 import "forge-std/console2.sol";
 
 interface GasDebug {
-    function getGasConsumed(
-        address acccount,
-        uint256 phase
-    )
-        external
-        view
-        returns (uint256);
+    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
 }
 
 struct RhinestoneAccount {
@@ -54,8 +49,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         isInit = true;
         accountImplementationSingleton = new ERC7579Account();
         label(address(accountImplementationSingleton), "ERC7579AccountImpl");
-        accountFactory =
-            new ERC7579AccountFactory(address(accountImplementationSingleton));
+        accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
         label(address(accountFactory), "ERC7579AccountFactory");
         defaultValidator = new  MockValidator();
         label(address(defaultValidator), "DefaultValidator");
@@ -144,14 +138,7 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        exec4337(
-            instance,
-            target,
-            value,
-            callData,
-            signature,
-            address(instance.defaultValidator)
-        );
+        exec4337(instance, target, value, callData, signature, address(instance.defaultValidator));
     }
 
     /**
@@ -179,8 +166,7 @@ library RhinestoneModuleKitLib {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
 
-        UserOperation memory userOp =
-            getFormattedUserOp(instance, target, value, callData);
+        UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData);
         userOp.nonce = nonce;
         userOp.signature = signature;
 
@@ -221,8 +207,7 @@ library RhinestoneModuleKitLib {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
 
-        UserOperation memory userOp =
-            getFormattedUserOp(instance, targets, values, callDatas);
+        UserOperation memory userOp = getFormattedUserOp(instance, targets, values, callDatas);
         userOp.nonce = nonce;
         userOp.signature = signature;
 
@@ -254,12 +239,7 @@ library RhinestoneModuleKitLib {
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
 
-    function installValidator(
-        RhinestoneAccount memory instance,
-        address validator
-    )
-        internal
-    {
+    function installValidator(RhinestoneAccount memory instance, address validator) internal {
         return installValidator(instance, validator, bytes(""));
     }
     /**
@@ -309,12 +289,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param validator Validator address
      */
-    function uninstallValidator(
-        RhinestoneAccount memory instance,
-        address validator
-    )
-        internal
-    {
+    function uninstallValidator(RhinestoneAccount memory instance, address validator) internal {
         // get previous executor in sentinel list
         address previous;
 
@@ -417,12 +392,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param executor Executor address
      */
-    function installExecutor(
-        RhinestoneAccount memory instance,
-        address executor
-    )
-        internal
-    {
+    function installExecutor(RhinestoneAccount memory instance, address executor) internal {
         exec4337(
             instance,
             instance.account,
@@ -438,12 +408,7 @@ library RhinestoneModuleKitLib {
      * @param instance RhinestoneAccount
      * @param executor Executor address
      */
-    function uninstallExecutor(
-        RhinestoneAccount memory instance,
-        address executor
-    )
-        internal
-    {
+    function uninstallExecutor(RhinestoneAccount memory instance, address executor) internal {
         // get previous executor in sentinel list
         address previous;
 
@@ -512,9 +477,7 @@ library RhinestoneModuleKitLib {
             instance.account,
             abi.encodeCall(IERC7579Config.installFallback, (handler, ""))
         );
-        emit ModuleKitLogs.ModuleKit_SetFallback(
-            instance.account, handleFunctionSig, handler
-        );
+        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
     }
 
     /**
@@ -535,8 +498,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32)
     {
-        UserOperation memory userOp =
-            getFormattedUserOp(instance, target, value, callData);
+        UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData);
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
         return userOpHash;
     }
@@ -641,7 +603,7 @@ library RhinestoneModuleKitLib {
 
     function installSessionKey(
         RhinestoneAccount memory instance,
-        address sessionKeyModule,
+        ISessionValidationModule sessionKeyModule,
         uint48 validUntil,
         uint48 validAfter,
         bytes memory sessionKeyData
@@ -656,7 +618,7 @@ library RhinestoneModuleKitLib {
             installValidator(instance, address(instance.aux.sessionKeyManager));
         }
 
-        ISessionKeyManager.SessionData memory sessionData = ISessionKeyManager.SessionData({
+        SessionData memory sessionData = SessionData({
             validUntil: validUntil,
             validAfter: validAfter,
             sessionValidationModule: sessionKeyModule,
@@ -667,11 +629,11 @@ library RhinestoneModuleKitLib {
         exec4337(
             instance,
             address(instance.aux.sessionKeyManager),
-            abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
+            abi.encodeCall(SessionKeyManager.enableSession, (sessionData))
         );
 
         // get sessionKey digest
-        sessionKeyDigest = instance.aux.sessionKeyManager.sessionDataDigest(sessionData);
+        sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
     }
 
     function exec4337(
@@ -689,12 +651,7 @@ library RhinestoneModuleKitLib {
             abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
 
         exec4337(
-            instance,
-            target,
-            value,
-            callData,
-            signature,
-            address(instance.aux.sessionKeyManager)
+            instance, target, value, callData, signature, address(instance.aux.sessionKeyManager)
         );
     }
 
@@ -709,16 +666,10 @@ library RhinestoneModuleKitLib {
         internal
     {
         bytes1 MODE_USE = 0x00;
-        bytes memory signature =
-            abi.encodePacked(MODE_USE, sessionKeyDigest, sessionKeySignature);
+        bytes memory signature = abi.encodePacked(MODE_USE, sessionKeyDigest, sessionKeySignature);
 
         exec4337(
-            instance,
-            targets,
-            values,
-            callDatas,
-            signature,
-            address(instance.aux.sessionKeyManager)
+            instance, targets, values, callDatas, signature, address(instance.aux.sessionKeyManager)
         );
     }
 

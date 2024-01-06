@@ -73,19 +73,12 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         revert HookInvalidSelector(accountExecSelector);
     }
 
-    function postCheck(bytes calldata hookData)
-        external
-        override
-        returns (bool success)
-    {
+    function postCheck(bytes calldata hookData) external override returns (bool success) {
         if (hookData.length == 0) return true;
         return onPostCheck(hookData);
     }
 
-    function onPostCheck(bytes calldata hookData)
-        internal
-        virtual
-        returns (bool success);
+    function onPostCheck(bytes calldata hookData) internal virtual returns (bool success);
     /////////////////////////////////////////////////////
     // Executions
     ////////////////////////////////////////////////////
