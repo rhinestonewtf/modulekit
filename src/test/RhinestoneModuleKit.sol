@@ -386,17 +386,27 @@ library RhinestoneModuleKitLib {
         return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
     }
 
+    function installExecutor(RhinestoneAccount memory instance, address executor) internal {
+        installExecutor(instance, executor, "");
+    }
     /**
      * @dev Adds an executor to the account
      *
      * @param instance RhinestoneAccount
      * @param executor Executor address
      */
-    function installExecutor(RhinestoneAccount memory instance, address executor) internal {
+
+    function installExecutor(
+        RhinestoneAccount memory instance,
+        address executor,
+        bytes memory init
+    )
+        internal
+    {
         exec4337(
             instance,
             instance.account,
-            abi.encodeCall(IERC7579Config.installExecutor, (executor, ""))
+            abi.encodeCall(IERC7579Config.installExecutor, (executor, init))
         );
 
         emit ModuleKitLogs.ModuleKit_AddExecutor(instance.account, executor);
