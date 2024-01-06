@@ -19,9 +19,11 @@ import "forge-std/console2.sol";
  * @title Session Key Manager module for Biconomy Modular Smart Accounts.
  * @dev Stores the Session Information explicity in the storage, instead of maintainting
  *      a merkle tree.
- *      This reduces the amount of calldata required to validate a session key, making it cheaper on
+ *      This reduces the amount of calldata required to validate a session key, making it
+ * cheaper on
  *      L2s.
- *      Allows for a session to be enabled explicity, or being batched with the first usage of said
+ *      Allows for a session to be enabled explicity, or being batched with the first
+ * usage of said
  * session
  * @author Ankur Dubey - <ankur@biconomy.io>
  * @author Fil Makarov - <filipp.makarov@biconomy.io>
@@ -68,9 +70,10 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         /*
          * Module Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
-        * 0x0                  | 0x1               | 0x01 if sessionEnableTransaction, 0x00
+        * 0x0                  | 0x1               | 0x01 if sessionEnableTransaction,
+        0x00
         otherwise
-         * 0x1                  | --                | Data depending on the above flag
+        * 0x1                  | --                | Data depending on the above flag
          */
         bytes calldata moduleSignature = userOp.signature[MODULE_SIGNATURE_OFFSET:];
 
@@ -100,7 +103,8 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
             );
 
             rv = _packValidationData(
-                //_packValidationData expects true if sig validation has failed, false otherwise
+                //_packValidationData expects true if sig validation has failed, false
+                // otherwise
                 !ISessionValidationModule(sessionValidationModule).validateSessionUserOp(
                     userOp, userOpHash, sessionKeyData, sessionKeySignature
                 ),
@@ -115,8 +119,10 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
                 _validateSessionKeyPreEnabled(userOp.getSender(), sessionDataDigest_);
 
             rv = _packValidationData(
-                //_packValidationData expects true if sig validation has failed, false otherwise
-                !ISessionValidationModule(sessionData.sessionValidationModule).validateSessionUserOp(
+                //_packValidationData expects true if sig validation has failed, false
+                // otherwise
+                !ISessionValidationModule(sessionData.sessionValidationModule)
+                    .validateSessionUserOp(
                     userOp, userOpHash, sessionData.sessionKeyData, sessionKeySignature
                 ),
                 sessionData.validUntil,
@@ -146,13 +152,16 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         /*
          * Session Enable Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
-         * 0x0                  | 0x1               | Is Session Enable Transaction Flag
-        * 0x1                  | 0x1               | Index of Session Key in Session Enable Data
+        * 0x0                  | 0x1               | Is Session Enable Transaction Flag
+        * 0x1                  | 0x1               | Index of Session Key in Session
+        Enable Data
          * 0x2                  | 0x6               | Valid Until
          * 0x8                  | 0x6               | Valid After
-         * 0xe                  | 0x14              | Session Validation Module Address
-        * 0x22                 | --                | abi.encode(sessionKeyData, sessionEnableData,
-        *                      |                   |   sessionEnableSignature, sessionKeySignature)
+        * 0xe                  | 0x14              | Session Validation Module Address
+        * 0x22                 | --                | abi.encode(sessionKeyData,
+        sessionEnableData,
+        *                      |                   |   sessionEnableSignature,
+        sessionKeySignature)
          */
         assembly ("memory-safe") {
             let offset := add(_moduleSignature.offset, 0x1)
@@ -173,10 +182,12 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
             offset := add(offset, 0x14)
 
             // Parse the abi encoded data
-            // baseOffset refers to the starting byte of this section, which starts with a list of
+            // baseOffset refers to the starting byte of this section, which starts with a
+            // list of
             // offsets to the actual data
             // dataPointer refers to the starting byte of the actual data
-            // offset refers to the offset of the "offset" to the actual data in the list of offsets
+            // offset refers to the offset of the "offset" to the actual data in the list
+            // of offsets
 
             let baseOffset := offset
             let dataPointer := add(baseOffset, calldataload(offset))
@@ -201,7 +212,9 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         }
     }
 
-    function _parseSessionDataPreEnabledSignatureSingleCall(bytes calldata _moduleSignature)
+    function _parseSessionDataPreEnabledSignatureSingleCall(
+        bytes calldata _moduleSignature
+    )
         internal
         pure
         returns (bytes32 sessionDataDigest_, bytes calldata sessionKeySignature)
@@ -209,7 +222,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         /*
          * Session Data Pre Enabled Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
-         * 0x0                  | 0x1               | Is Session Enable Transaction Flag
+        * 0x0                  | 0x1               | Is Session Enable Transaction Flag
         * 0x1                  | --                | abi.encode(bytes32 sessionDataDigest,
         sessionKeySignature)
          */
@@ -257,7 +270,8 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         console2.log("batch execute3");
         // Calcuate the expected common signer of each operation
         address expectedSessionKeySigner;
-        //     ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash), sessionKeySignature);
+        //     ECDSA.recover(ECDSA.toEthSignedMessageHash(userOpHash),
+        // sessionKeySignature);
 
         // Parse batch call calldata to get to,value,calldatas for every operation
         uint256 length = sessionInfos.length;
@@ -289,7 +303,11 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
                 console2.log("else");
                 (validUntil, validAfter, sessionKeyReturned) =
                 _validateUserOpBatchExecutePreEnabledTransaction(
-                    sessionInfo, execs[i].target, execs[i].value, execs[i].callData, userOpSender
+                    sessionInfo,
+                    execs[i].target,
+                    execs[i].value,
+                    execs[i].callData,
+                    userOpSender
                 );
             }
 
@@ -347,11 +365,13 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
             sessionKeyIndex,
             sessionValidationModule,
             sessionKeyData,
-            _sessionEnableDataList[sessionKeyEnableDataIndex] // The signature has already been
+            _sessionEnableDataList[sessionKeyEnableDataIndex] // The signature has already
+                // been
                 // verified
         );
 
-        sessionKeyReturned = ISessionValidationModule(sessionValidationModule).validateSessionParams(
+        sessionKeyReturned = ISessionValidationModule(sessionValidationModule)
+            .validateSessionParams(
             _destination, _callValue, _operationCalldata, sessionKeyData, callSpecificData
         );
     }
@@ -427,7 +447,8 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         {
             /*
              * Module Signature Layout
-            * abi.encode(bytes[] sessionEnableDataList, bytes[] sessionEnableSignatureList,
+            * abi.encode(bytes[] sessionEnableDataList, bytes[]
+            sessionEnableSignatureList,
              *   bytes[] sessionInfo, bytes sessionKeySignature)
              */
             assembly ("memory-safe") {
@@ -456,7 +477,9 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         }
     }
 
-    function _parseSessionDataPreEnabledSignatureBatchCall(bytes calldata _moduleSignature)
+    function _parseSessionDataPreEnabledSignatureBatchCall(
+        bytes calldata _moduleSignature
+    )
         internal
         pure
         returns (bytes32 sessionDataDigest_, bytes calldata callSpecificData)
@@ -464,7 +487,7 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         /*
          * Session Data Pre Enabled Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
-         * 0x0                  | 0x1               | Is Session Enable Transaction Flag
+        * 0x0                  | 0x1               | Is Session Enable Transaction Flag
          * 0x1                  | 0x20              | bytes32 sessionDataDigest
          * 0x21                 | ---               | abi.encode(callSpecificData)
          */
@@ -498,14 +521,17 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         /*
          * Session Enable Signature Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
-         * 0x0                  | 0x1               | Is Session Enable Transaction Flag
-        * 0x1                  | 0x1               | Index of Session Enable Data in Session Enable
+        * 0x0                  | 0x1               | Is Session Enable Transaction Flag
+        * 0x1                  | 0x1               | Index of Session Enable Data in
+        Session Enable
         Data List
-        * 0x2                  | 0x1               | Index of Session Key in Session Enable Data
+        * 0x2                  | 0x1               | Index of Session Key in Session
+        Enable Data
          * 0x3                  | 0x6               | Valid Until
          * 0x9                  | 0x6               | Valid After
-         * 0xf                  | 0x14              | Session Validation Module Address
-        * 0x23                 | --                | abi.encode(sessionKeyData, callSpecificData)
+        * 0xf                  | 0x14              | Session Validation Module Address
+        * 0x23                 | --                | abi.encode(sessionKeyData,
+        callSpecificData)
          */
         assembly ("memory-safe") {
             let offset := add(_moduleSignature.offset, 0x1)
@@ -637,7 +663,8 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
 
         sessionData = _enabledSessionsData[sessionKeyDataDigest][smartAccount];
         require(
-            sessionData.sessionValidationModule != address(0), "SKM: Session key is not enabled"
+            sessionData.sessionValidationModule != address(0),
+            "SKM: Session key is not enabled"
         );
     }
 
@@ -651,7 +678,12 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         }
     }
 
-    function sessionDataDigest(SessionData calldata _data) public pure override returns (bytes32) {
+    function sessionDataDigest(SessionData calldata _data)
+        public
+        pure
+        override
+        returns (bytes32)
+    {
         return keccak256(
             abi.encodePacked(
                 _data.validUntil,
@@ -673,7 +705,9 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
         returns (bytes32)
     {
         return keccak256(
-            abi.encodePacked(_validUntil, _validAfter, _sessionValidationModule, _sessionKeyData)
+            abi.encodePacked(
+                _validUntil, _validAfter, _sessionValidationModule, _sessionKeyData
+            )
         );
     }
 
@@ -709,7 +743,8 @@ contract SessionKeyManagerHybrid is ISessionKeyManager, ERC7579ValidatorBase {
             enabledKeysCount := shr(248, calldataload(offset))
             offset := add(offset, 0x1)
 
-            sessionChainId := shr(192, calldataload(add(offset, mul(0x8, _sessionKeyIndex))))
+            sessionChainId :=
+                shr(192, calldataload(add(offset, mul(0x8, _sessionKeyIndex))))
             offset := add(offset, mul(0x8, enabledKeysCount))
 
             sessionDigest := calldataload(add(offset, mul(0x20, _sessionKeyIndex)))

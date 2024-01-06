@@ -5,7 +5,9 @@ import { IEntryPoint } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
-import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
+import {
+    ISessionKeyManager, etchSessionKeyManager
+} from "./predeploy/SessionKeyManager.sol";
 
 import "../mocks/MockRegistry.sol";
 

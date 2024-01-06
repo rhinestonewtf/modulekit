@@ -2,7 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {
-    ERC7579Bootstrap, ERC7579BootstrapConfig, IERC7579Module
+    ERC7579Bootstrap,
+    ERC7579BootstrapConfig,
+    IERC7579Module
 } from "../../external/ERC7579.sol";
 
 contract BootstrapUtil {

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 import {
-    UserOperation, _packValidationData as _packValidationData4337
+    UserOperation,
+    _packValidationData as _packValidationData4337
 } from "../external/ERC4337.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
@@ -16,7 +17,8 @@ abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
     /**
      * Helper to pack the return value for validateUserOp, when not using an aggregator.
      * @param sigFailed  - True for signature failure, false for success.
-     * @param validUntil - Last timestamp this UserOperation is valid (or zero for infinite).
+     * @param validUntil - Last timestamp this UserOperation is valid (or zero for
+     * infinite).
      * @param validAfter - First timestamp this UserOperation is valid.
      */
     function _packValidationData(
@@ -28,7 +30,9 @@ abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
         pure
         returns (ValidationData)
     {
-        return ValidationData.wrap(_packValidationData4337(sigFailed, validUntil, validAfter));
+        return ValidationData.wrap(
+            _packValidationData4337(sigFailed, validUntil, validAfter)
+        );
     }
 
     function validateUserOp(

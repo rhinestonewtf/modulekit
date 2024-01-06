@@ -49,7 +49,9 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         instance.exec4337({ target: address(token), callData: callData });
 
         // Validate userOperation
-        assertEq(token.balanceOf(receiver), value, "Receiver should have 10 gwei in tokens");
+        assertEq(
+            token.balanceOf(receiver), value, "Receiver should have 10 gwei in tokens"
+        );
     }
 
     function testExec4337__Given__ThreeInputs() public {
@@ -188,10 +190,12 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     //
     //     address mockCondition = address(new MockCondition());
     //     ConditionConfig[] memory conditions = new ConditionConfig[](1);
-    //     conditions[0] = ConditionConfig({ condition: ICondition(mockCondition), conditionData: ""
+    //     conditions[0] = ConditionConfig({ condition: ICondition(mockCondition),
+    // conditionData: ""
     // });
     //
-    //     bytes32 digest = instance.aux.compConditionManager._conditionDigest(conditions);
+    //     bytes32 digest =
+    // instance.aux.compConditionManager._conditionDigest(conditions);
     //
     //     instance.setCondition(newExecutor, conditions);
     //
@@ -232,8 +236,11 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         bytes32 userOpHash =
             instance.getUserOpHash({ target: receiver, value: value, callData: callData });
 
-        UserOperation memory userOp =
-            instance.getFormattedUserOp({ target: receiver, value: value, callData: callData });
+        UserOperation memory userOp = instance.getFormattedUserOp({
+            target: receiver,
+            value: value,
+            callData: callData
+        });
         bytes32 entryPointUserOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
 
         // Validate userOperation

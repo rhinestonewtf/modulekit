@@ -33,7 +33,8 @@ contract ERC20SessionKey is ISessionValidationModule {
      * @param callValue value to be sent with the call
      * @param _funcCallData the data for the call. is parsed inside the SVM
      * @param _sessionKeyData SessionKey data, that describes sessionKey permissions
-     * param _callSpecificData additional data, for example some proofs if the SVM utilizes merkle
+     * param _callSpecificData additional data, for example some proofs if the SVM
+     * utilizes merkle
      * trees itself
      * for example to store a list of allowed tokens or receivers
      */
@@ -50,7 +51,8 @@ contract ERC20SessionKey is ISessionValidationModule {
         override
         returns (address)
     {
-        ERC20Transaction memory transaction = abi.decode(_sessionKeyData, (ERC20Transaction));
+        ERC20Transaction memory transaction =
+            abi.decode(_sessionKeyData, (ERC20Transaction));
 
         // handle single execution
 
@@ -62,7 +64,8 @@ contract ERC20SessionKey is ISessionValidationModule {
             recipientOnly: transaction.recipient
         });
 
-        // return ECDSA.recover(ECDSA.toEthSignedMessageHash(_userOpHash), _sessionKeySignature)
+        // return ECDSA.recover(ECDSA.toEthSignedMessageHash(_userOpHash),
+        // _sessionKeySignature)
         //     == sessionKey;
         return address(0);
     }
@@ -89,7 +92,8 @@ contract ERC20SessionKey is ISessionValidationModule {
         returns (bool)
     {
         bytes4 executeSelector = bytes4(_op.callData[:4]);
-        ERC20Transaction memory transaction = abi.decode(_sessionKeyData, (ERC20Transaction));
+        ERC20Transaction memory transaction =
+            abi.decode(_sessionKeyData, (ERC20Transaction));
 
         // handle single execution
         if (executeSelector == IERC7579Execution.execute.selector) {
@@ -128,7 +132,8 @@ contract ERC20SessionKey is ISessionValidationModule {
             }
         }
 
-        // return ECDSA.recover(ECDSA.toEthSignedMessageHash(_userOpHash), _sessionKeySignature)
+        // return ECDSA.recover(ECDSA.toEthSignedMessageHash(_userOpHash),
+        // _sessionKeySignature)
         //     == sessionKey;
         return true;
     }
