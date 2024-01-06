@@ -14,6 +14,17 @@ struct SessionData {
 library SessionKeyManagerLib {
     uint8 internal constant NULL = 0x00;
 
+    enum MODE {
+        USE,
+        INSTALL
+    }
+
+    function decodeMode(bytes calldata signature) internal pure returns (MODE mode) {
+        assembly ("memory-safe") {
+            mode := calldataload(add(signature.offset, 0x1))
+        }
+    }
+
     function digest(SessionData calldata _data) internal pure returns (bytes32) {
         return keccak256(
             abi.encodePacked(
@@ -67,6 +78,35 @@ library SessionKeyManagerLib {
         returns (bytes memory)
     {
         return abi.encodePacked(NULL, abi.encode(digests, sessionKeySignatures));
+    }
+
+    function decodeSessionKeyInstall(bytes calldata signature)
+        internal
+        pure
+        returns (
+            uint48 validUntil,
+            uint48 validAfter,
+            ISessionValidationModule sessionValidationModule,
+            bytes calldata sessionKeyData
+        )
+    {
+        assembly ("memory-safe") {
+            let offset := add(signature.offset, 0x1)
+            let baseOffset := offset
+
+            validUntil := calldataload(offset)
+            offset := add(offset, 0x20)
+
+            validAfter := calldataload(offset)
+            offset := add(offset, 0x20)
+
+            sessionValidationModule := calldataload(offset)
+            offset := add(offset, 0x20)
+
+            let dataPointer := add(baseOffset, calldataload(offset))
+            sessionKeyData.offset := add(dataPointer, 0x20)
+            sessionKeyData.length := calldataload(dataPointer)
+        }
     }
 
     function decodeSignatureSingle(bytes calldata signature)

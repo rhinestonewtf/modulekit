@@ -13,8 +13,6 @@ import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 
-import "forge-std/console2.sol";
-
 contract SessionKeyManager is ERC7579ValidatorBase {
     using UserOperationLib for UserOperation;
     using ERC7579ValidatorLib for UserOperation;
@@ -31,6 +29,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     // - nothing otherwise
     mapping(bytes32 sessionDataDigest => mapping(address sa => SessionData data)) internal
         _enabledSessionsData;
+    mapping(bytes32 sessionDataDigest => mapping(address sa => uint256 nonce)) internal _nonce;
 
     function disableSession(bytes32 _sessionDigest) external {
         delete _enabledSessionsData[_sessionDigest][msg.sender];
@@ -122,7 +121,6 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
 
         uint256 length = sessionKeySignatures.length;
-        console2.log("executions", execs.length, length);
         if (execs.length != length) {
             return _validatorError();
         }
@@ -170,7 +168,6 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         returns (address signer, uint48 validUntil, uint48 validAfter)
     {
         ISessionValidationModule sessionValidationModule = sessionData.sessionValidationModule;
-        console2.log(address(sessionValidationModule));
 
         signer = sessionValidationModule.validateSessionParams({
             to: to,
@@ -179,8 +176,6 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             sessionKeyData: sessionData.sessionKeyData,
             callSpecificData: sessionKeySignature
         });
-
-        console2.log(signer);
 
         validUntil = sessionData.validUntil;
         validAfter = sessionData.validAfter;
