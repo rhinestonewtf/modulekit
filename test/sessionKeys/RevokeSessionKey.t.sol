@@ -41,8 +41,11 @@ contract ERC20RevocationTest is RhinestoneModuleKit, Test {
 
         (keySigner1, keySignerPk1) = makeAddrAndKey("KeySigner1");
 
-        ERC20Revocation.Token memory _tx1 =
-            ERC20Revocation.Token({ token: address(token), sessionKeySigner: keySigner1 });
+        ERC20Revocation.Token memory _tx1 = ERC20Revocation.Token({
+            token: address(token),
+            tokenType: ERC20Revocation.TokenType.ERC20,
+            sessionKeySigner: keySigner1
+        });
 
         sessionValidatorDigest = instance.installSessionKey({
             sessionKeyModule: (address(sessionValidator)),

@@ -3,13 +3,26 @@ pragma solidity ^0.8.23;
 
 import "../../core/sessionKey/ISessionValidationModule.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import "forge-std/console2.sol";
 
 contract ERC20Revocation is ISessionValidationModule {
+    enum TokenType {
+        ERC20,
+        ERC721
+    }
+
     struct Token {
         address token;
+        TokenType tokenType;
         address sessionKeySigner;
     }
+
+    error InvalidMethod(bytes4);
+    error InvalidValue();
+    error InvalidAmount();
+    error InvalidToken();
+    error NotZero();
 
     function encode(Token memory transaction) public pure returns (bytes memory) {
         return abi.encode(transaction);
@@ -28,20 +41,33 @@ contract ERC20Revocation is ISessionValidationModule {
         returns (address)
     {
         Token memory transaction = abi.decode(_sessionKeyData, (Token));
-
-        address spender;
-        uint256 amount;
         bytes4 targetSelector = bytes4(callData[:4]);
-        if (targetSelector == IERC20.approve.selector) {
-            (spender, amount) = abi.decode(callData[4:], (address, uint256));
+
+        if (transaction.token != destinationContract) revert InvalidToken();
+        if (callValue != 0) revert InvalidValue();
+        if (transaction.tokenType == TokenType.ERC20) {
+            // handle ERC20
+            if (targetSelector == IERC20.approve.selector) {
+                (, uint256 amount) = abi.decode(callData[4:], (address, uint256)); // (spender,
+                    // amount)
+                if (amount != 0) revert NotZero();
+            } else {
+                revert InvalidMethod(targetSelector);
+            }
+        } else if (transaction.tokenType == TokenType.ERC721) {
+            // Handle ERC721
+            if (targetSelector == IERC721.approve.selector) {
+                (address spender,) = abi.decode(callData[4:], (address, uint256)); // (spender,tokenId)
+                if (spender != address(0)) revert NotZero();
+            } else if (targetSelector == IERC721.setApprovalForAll.selector) {
+                (, bool approved) = abi.decode(callData[4:], (address, bool)); // (spender,
+                    // approved)
+                if (approved) revert NotZero();
+            } else {
+                revert InvalidMethod(targetSelector);
+            }
         } else {
-            revert("invalid token method");
-        }
-        if (callValue != 0) {
-            revert("ERC20SV Call Value Not Zero");
-        }
-        if (amount != 0) {
-            revert("ERC20SV Wrong Token");
+            revert InvalidToken();
         }
 
         return transaction.sessionKeySigner;

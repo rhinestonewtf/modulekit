@@ -13,6 +13,12 @@ contract ERC20SessionKey is ISessionValidationModule {
         uint256 maxAmount;
     }
 
+    error InvalidMethod(bytes4);
+    error InvalidValue();
+    error InvalidAmount();
+    error InvalidToken();
+    error InvalidRecipient();
+
     function encode(ERC20Transaction memory transaction) public pure returns (bytes memory) {
         return abi.encode(transaction);
     }
@@ -39,20 +45,20 @@ contract ERC20SessionKey is ISessionValidationModule {
         } else if (targetSelector == IERC20.transferFrom.selector) {
             (, recipient, amount) = abi.decode(callData[4:], (address, address, uint256));
         } else {
-            revert("invalid token method");
+            revert InvalidMethod(targetSelector);
         }
 
         if (transaction.recipient != address(0) && recipient != transaction.recipient) {
-            revert("ERC20SV Wrong Recipient");
+            revert InvalidRecipient();
         }
         if (transaction.maxAmount < amount) {
-            revert("ERC20SV Max Amount Exceeded");
+            revert InvalidAmount();
         }
         if (callValue != 0) {
-            revert("ERC20SV Call Value Not Zero");
+            revert InvalidValue();
         }
         if (transaction.token == address(0) || transaction.token != destinationContract) {
-            revert("ERC20SV Wrong Token");
+            revert InvalidToken();
         }
 
         return transaction.sessionKeySigner;
