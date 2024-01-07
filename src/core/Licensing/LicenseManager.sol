@@ -1,0 +1,166 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/* solhint-disable function-max-lines*/
+/* solhint-disable ordering*/
+
+import { ERC7579ValidatorBase } from "../../modules/ERC7579ValidatorBase.sol";
+import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
+import { IERC7579Execution } from "../../ModuleKitLib.sol";
+import { IERC1271 } from "../../interfaces/IERC1271.sol";
+import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
+import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+
+import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
+
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import "forge-std/console2.sol";
+
+interface ILicensedModule {
+    function deductFee(address account, address token) external returns (uint256);
+    function calcFee(address account, address token) external view returns (uint256 amount);
+}
+
+contract LicenseCollector {
+    LicenseValidator public immutable validator;
+    IEntryPoint immutable entrypoint;
+
+    constructor(IEntryPoint _entrypoint) {
+        validator = new LicenseValidator(address(this));
+        entrypoint = _entrypoint;
+    }
+
+    function calcFees(
+        address smartAccount,
+        address token,
+        address[] memory modules
+    )
+        external
+        view
+        returns (uint256)
+    {
+        uint256 total;
+        for (uint256 i; i < modules.length; i++) {
+            ILicensedModule module = ILicensedModule(modules[i]);
+            total += module.calcFee(address(smartAccount), token);
+        }
+        return total;
+    }
+
+    function collectFee(
+        address account,
+        address token,
+        address[] memory modules,
+        uint256 totalAmount
+    )
+        external
+        returns (uint256)
+    {
+        bytes memory data = abi.encodeCall(IERC20.transfer, (address(this), totalAmount));
+        bytes memory erc7579Exec = abi.encodeCall(IERC7579Execution.execute, (token, 0, data));
+
+        // Get nonce from Entrypoint
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        uint256 nonce = entrypoint.getNonce(account, key);
+
+        UserOperation memory userOp = UserOperation({
+            sender: account,
+            nonce: nonce,
+            initCode: "", // todo
+            callData: erc7579Exec,
+            callGasLimit: 2e6,
+            verificationGasLimit: 2e6,
+            preVerificationGas: 2e6,
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
+            paymasterAndData: bytes(""),
+            signature: abi.encode(token, modules)
+        });
+
+        UserOperation[] memory userOps = new UserOperation[](1);
+        userOps[0] = userOp;
+
+        // send userOps to 4337 entrypoint
+        entrypoint.handleOps(userOps, payable(address(0x69)));
+    }
+}
+
+contract LicenseValidator is ERC7579ValidatorBase {
+    using ERC7579ValidatorLib for bytes;
+
+    address licenseRecipient;
+
+    constructor(address _recipient) {
+        licenseRecipient = _recipient;
+    }
+
+    function validateUserOp(
+        UserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        virtual
+        override
+        returns (ValidationData)
+    {
+        (address token, address[] memory modules) =
+            abi.decode(userOp.signature, (address, address[]));
+
+        uint256 total;
+
+        for (uint256 i; i < modules.length; i++) {
+            ILicensedModule module = ILicensedModule(modules[i]);
+            total += module.deductFee(userOp.sender, token);
+        }
+
+
+        // ensure its a ACCOUNT_EXEC_TYPE.EXEC_SINGLE
+        // ACCOUNT_EXEC_TYPE execType = ERC7579ValidatorLib.decodeExecType(userOp.signature);
+        // if (execType != ACCOUNT_EXEC_TYPE.EXEC_SINGLE) {
+        //     console2.log(uint8(execType));
+        //     revert();
+        // }
+
+        (address to, uint256 value, bytes calldata callData) =
+            ERC7579ValidatorLib.decodeCalldataSingle(userOp.callData);
+
+        if (token != to) revert();
+        if (value != 0) revert();
+
+
+        if (bytes4(callData[:4]) != IERC20.transfer.selector) revert();
+        (address recipient, uint256 amount) = abi.decode(callData[4:], (address, uint256));
+        if (total != amount) revert();
+        if (recipient != licenseRecipient) revert();
+
+        return _packValidationData(false, type(uint48).max, 0);
+    }
+
+    function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata data
+    )
+        external
+        view
+        virtual
+        override
+        returns (bytes4)
+    { }
+
+    function name() external pure virtual override returns (string memory) {
+        return "LicenseManager";
+    }
+
+    function version() external pure virtual override returns (string memory) {
+        return "0.0.1";
+    }
+
+    function isModuleType(uint256 _type) external pure virtual override returns (bool) {
+        return _type == TYPE_VALIDATOR;
+    }
+
+    function onInstall(bytes calldata data) external override { }
+
+    function onUninstall(bytes calldata data) external override { }
+}
