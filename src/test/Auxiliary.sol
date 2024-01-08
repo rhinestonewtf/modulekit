@@ -7,6 +7,8 @@ import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
 
+import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
+
 import "../mocks/MockRegistry.sol";
 
 import "./utils/Vm.sol";
@@ -15,6 +17,7 @@ import "./utils/Log.sol";
 struct Auxiliary {
     IEntryPoint entrypoint;
     ISessionKeyManager sessionKeyManager;
+    ExtensibleFallbackHandler fallbackHandler;
     ERC7579Bootstrap bootstrap;
     IERC7484Registry registry;
     address initialTrustedAttester;
@@ -33,5 +36,7 @@ contract AuxiliaryFactory {
         auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");
         auxiliary.sessionKeyManager = etchSessionKeyManager();
         label(address(auxiliary.sessionKeyManager), "SessionKeyManager");
+        auxiliary.fallbackHandler = new ExtensibleFallbackHandler();
+        label(address(auxiliary.fallbackHandler), "FallbackHandler");
     }
 }

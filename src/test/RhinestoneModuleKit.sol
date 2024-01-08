@@ -21,7 +21,7 @@ import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
 import { ISessionKeyManager, SessionData } from "../core/SessionKey/ISessionKeyManager.sol";
 import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
-
+import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import "forge-std/console2.sol";
 
 interface GasDebug {
@@ -139,6 +139,78 @@ library RhinestoneModuleKitLib {
         internal
     {
         exec4337(instance, target, value, callData, signature, address(instance.defaultValidator));
+    }
+
+    function userOp4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        bytes memory signature,
+        address validator
+    )
+        internal
+        returns (UserOperation memory userOp, bytes32 userOpHash)
+    {
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
+
+        userOp = getFormattedUserOp(instance, target, value, callData);
+        userOp.nonce = nonce;
+        userOp.signature = signature;
+
+        // send userOps to 4337 entrypoint
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
+    function exec4337(RhinestoneAccount memory instance, UserOperation memory userOp) internal {
+        UserOperation[] memory userOps = new UserOperation[](1);
+        userOps[0] = userOp;
+
+        // send userOps to 4337 entrypoint
+
+        recordLogs();
+        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        VmSafe.Log[] memory logs = getRecordedLogs();
+
+        for (uint256 i; i < logs.length; i++) {
+            if (
+                logs[i].topics[0]
+                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+            ) {
+                if (getExpectRevert() != 1) revert("UserOperation failed");
+            }
+        }
+
+        writeExpectRevert(0);
+
+        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
+    }
+
+    function exec4337(RhinestoneAccount memory instance, UserOperation[] memory userOps) internal {
+        // send userOps to 4337 entrypoint
+
+        recordLogs();
+        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        VmSafe.Log[] memory logs = getRecordedLogs();
+
+        for (uint256 i; i < logs.length; i++) {
+            if (
+                logs[i].topics[0]
+                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+            ) {
+                if (getExpectRevert() != 1) revert("UserOperation failed");
+            }
+        }
+
+        writeExpectRevert(0);
+
+        for (uint256 i; i < userOps.length; i++) {
+            emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOps[i].sender);
+        }
     }
 
     /**
@@ -482,11 +554,33 @@ library RhinestoneModuleKitLib {
     )
         internal
     {
-        exec4337(
-            instance,
-            instance.account,
-            abi.encodeCall(IERC7579Config.installFallback, (handler, ""))
-        );
+        // check if fallbackhandler is installed on account
+
+        bool enabled = IERC7579Config(instance.account).isFallbackInstalled(handler);
+
+        if (!enabled) {
+            exec4337({
+                instance: instance,
+                target: instance.account,
+                value: 0,
+                callData: abi.encodeCall(
+                    IERC7579Config.installFallback, (address(instance.aux.fallbackHandler), "")
+                    )
+            });
+        }
+
+        ExtensibleFallbackHandler.FallBackType fallbackType = isStatic
+            ? ExtensibleFallbackHandler.FallBackType.Static
+            : ExtensibleFallbackHandler.FallBackType.Dynamic;
+
+        exec4337({
+            instance: instance,
+            target: address(instance.aux.fallbackHandler),
+            value: 0,
+            callData: abi.encodeCall(
+                ExtensibleFallbackHandler.setFunctionSig, (handleFunctionSig, fallbackType, handler)
+                )
+        });
         emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
     }
 
