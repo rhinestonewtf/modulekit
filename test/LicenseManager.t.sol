@@ -53,11 +53,7 @@ contract LicenseManagerTest is RhinestoneModuleKit, Test {
 
         uint256 total = collector.calcFees(instance.account, address(token), modules);
 
-        uint gasL = gasleft();
         collector.collectFee(instance.account, address(token), modules, total);
-        gasL = gasL - gasleft();
-
-        console.log("gas used: ", gasL);
 
         assertEq(token.balanceOf(address(collector)), total);
     }

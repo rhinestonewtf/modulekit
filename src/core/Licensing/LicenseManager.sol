@@ -113,7 +113,6 @@ contract LicenseValidator is ERC7579ValidatorBase {
             total += module.deductFee(userOp.sender, token);
         }
 
-
         // ensure its a ACCOUNT_EXEC_TYPE.EXEC_SINGLE
         // ACCOUNT_EXEC_TYPE execType = ERC7579ValidatorLib.decodeExecType(userOp.signature);
         // if (execType != ACCOUNT_EXEC_TYPE.EXEC_SINGLE) {
@@ -126,7 +125,6 @@ contract LicenseValidator is ERC7579ValidatorBase {
 
         if (token != to) revert();
         if (value != 0) revert();
-
 
         if (bytes4(callData[:4]) != IERC20.transfer.selector) revert();
         (address recipient, uint256 amount) = abi.decode(callData[4:], (address, uint256));

@@ -19,7 +19,7 @@ import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
-import { SessionKeyManager, SessionData } from "../core/SessionKey/SessionKeyManager.sol";
+import { ISessionKeyManager, SessionData } from "../core/SessionKey/ISessionKeyManager.sol";
 import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
 
 import "forge-std/console2.sol";
@@ -639,7 +639,7 @@ library RhinestoneModuleKitLib {
         exec4337(
             instance,
             address(instance.aux.sessionKeyManager),
-            abi.encodeCall(SessionKeyManager.enableSession, (sessionData))
+            abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
         );
 
         // get sessionKey digest
