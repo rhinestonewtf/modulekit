@@ -5,9 +5,10 @@ import { ERC7579HookBase } from "./ERC7579HookBase.sol";
 import { IERC7579Execution } from "../ModuleKitLib.sol";
 
 import { IERC7579Config, IERC7579ConfigHook } from "../external/ERC7579.sol";
+import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "./utils/ERC7579ValidatorLib.sol";
 
 abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
-    error HookInvalidSelector(bytes4);
+    error HookInvalidSelector();
 
     function preCheck(
         address msgSender,
@@ -17,60 +18,37 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         override
         returns (bytes memory hookData)
     {
-        bytes4 accountExecSelector = bytes4(msgData[0:4]);
-        if (IERC7579Execution.execute.selector == accountExecSelector) {
-            address to = address(bytes20(msgData[16:36]));
-            uint256 value = uint256(bytes32(msgData[36:68]));
-            bytes calldata callData = msgData[132:msgData.length - 28];
+        ACCOUNT_EXEC_TYPE execType = ERC7579ValidatorLib.decodeExecType(msgData);
+
+        if (execType == ACCOUNT_EXEC_TYPE.EXEC_SINGLE) {
+            (address to, uint256 value, bytes calldata callData) =
+                ERC7579ValidatorLib.decodeCalldataSingle(msgData);
             return onExecute(msgSender, to, value, callData);
+        } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_BATCH) {
+            IERC7579Execution.Execution[] calldata execs =
+                ERC7579ValidatorLib.decodeCalldataBatch(msgData);
+            return onExecuteBatch(msgSender, execs);
+        } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_SINGLE_FROM_EXECUTOR) {
+            (address to, uint256 value, bytes calldata callData) =
+                ERC7579ValidatorLib.decodeCalldataSingle(msgData);
+            return onExecuteFromExecutor(msgSender, to, value, callData);
+        } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_BATCH_FROM_EXECUTOR) {
+            IERC7579Execution.Execution[] calldata execs =
+                ERC7579ValidatorLib.decodeCalldataBatch(msgData);
+            return onExecuteBatchFromExecutor(msgSender, execs);
+        } else if (execType == ACCOUNT_EXEC_TYPE.INSTALL_VALIDATOR) {
+            (address module, bytes calldata callData) = ERC7579ValidatorLib.decodeConfig(msgData);
+            return onInstallValidator(msgSender, module, callData);
+        } else if (execType == ACCOUNT_EXEC_TYPE.INSTALL_EXECUTOR) {
+            (address module, bytes calldata callData) = ERC7579ValidatorLib.decodeConfig(msgData);
+            return onInstallExecutor(msgSender, module, callData);
+        } else if (execType == ACCOUNT_EXEC_TYPE.UNINSTALL_HOOK) {
+            (address module, bytes calldata callData) = ERC7579ValidatorLib.decodeConfig(msgData);
+            if (module == address(this)) return ""; // always allow uninstalling this hook
+            return onUninstallHook(msgSender, module, callData);
+        } else {
+            revert HookInvalidSelector();
         }
-
-        if (IERC7579Execution.executeBatch.selector == accountExecSelector) {
-            bytes calldata _executions = msgData[4:];
-            IERC7579Execution.Execution[] memory executions =
-                abi.decode(_executions, (IERC7579Execution.Execution[]));
-
-            return onExecuteBatchFromModule(msgSender, executions);
-        }
-
-        if (IERC7579Execution.executeFromExecutor.selector == accountExecSelector) {
-            address to = address(bytes20(msgData[16:36]));
-            uint256 value = uint256(bytes32(msgData[36:68]));
-            bytes calldata callData = msgData[132:];
-            return onExecuteFromModule(msgSender, to, value, callData);
-        }
-
-        if (IERC7579Execution.executeBatchFromExecutor.selector == accountExecSelector) {
-            bytes calldata _executions = msgData[4:];
-            IERC7579Execution.Execution[] memory executions =
-                abi.decode(_executions, (IERC7579Execution.Execution[]));
-
-            return onExecuteBatchFromModule(msgSender, executions);
-        }
-
-        if (IERC7579ConfigHook.uninstallHook.selector == accountExecSelector) {
-            address hook = address(bytes20(msgData[4:24]));
-            bytes calldata data = msgData[24:];
-            // always allow removal of this hook. Avoid dev error
-            if (hook == address(this)) {
-                return "";
-            } else {
-                return onDisableHook(msgSender, hook, data);
-            }
-        }
-        if (IERC7579Config.installValidator.selector == accountExecSelector) {
-            address validator = address(bytes20(msgData[4:24]));
-            bytes calldata data = msgData[24:];
-            return onEnableValidator(msgSender, validator, data);
-        }
-
-        if (IERC7579Config.installExecutor.selector == accountExecSelector) {
-            address executor = address(bytes20(msgData[4:24]));
-            bytes calldata data = msgData[24:];
-            return onEnableExecutor(msgSender, executor, data);
-        }
-
-        revert HookInvalidSelector(accountExecSelector);
     }
 
     function postCheck(bytes calldata hookData) external override returns (bool success) {
@@ -100,7 +78,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    function onExecuteFromModule(
+    function onExecuteFromExecutor(
         address msgSender,
         address target,
         uint256 value,
@@ -110,30 +88,9 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    function onExecuteBatchFromModule(
+    function onExecuteBatchFromExecutor(
         address msgSender,
-        IERC7579Execution.Execution[] memory
-    )
-        internal
-        virtual
-        returns (bytes memory hookData);
-
-    /////////////////////////////////////////////////////
-    // Unsafe Executions
-    ////////////////////////////////////////////////////
-    function onExecuteDelegateCall(
-        address msgSender,
-        address target,
-        bytes calldata callData
-    )
-        internal
-        virtual
-        returns (bytes memory hookData);
-
-    function onExecuteDelegateCallFromModule(
-        address msgSender,
-        address target,
-        bytes calldata callData
+        IERC7579Execution.Execution[] calldata
     )
         internal
         virtual
@@ -143,7 +100,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
     // IAccountConfig
     ////////////////////////////////////////////////////
 
-    function onEnableExecutor(
+    function onInstallExecutor(
         address msgSender,
         address executor,
         bytes calldata callData
@@ -152,7 +109,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    function onDisableExecutor(
+    function onUninstallExecutor(
         address msgSender,
         address executor,
         bytes calldata callData
@@ -161,7 +118,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    function onEnableValidator(
+    function onInstallValidator(
         address msgSender,
         address validator,
         bytes calldata callData
@@ -170,7 +127,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    function onDisableValidator(
+    function onUninstallValidator(
         address msgSender,
         address validator,
         bytes calldata callData
@@ -182,7 +139,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
     /////////////////////////////////////////////////////
     // IAccountConfig_Hook
     ////////////////////////////////////////////////////
-    function onDisableHook(
+    function onUninstallHook(
         address msgSender,
         address hookModule,
         bytes calldata callData
@@ -191,7 +148,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    function onEnableHook(
+    function onInstallHook(
         address msgSender,
         address hookModule,
         bytes calldata callData
