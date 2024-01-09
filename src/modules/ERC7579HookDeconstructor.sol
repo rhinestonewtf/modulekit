@@ -6,6 +6,7 @@ import { IERC7579Execution } from "../ModuleKitLib.sol";
 
 import { IERC7579Config, IERC7579ConfigHook } from "../external/ERC7579.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "./utils/ERC7579ValidatorLib.sol";
+import "forge-std/console2.sol";
 
 abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
     error HookInvalidSelector();
@@ -23,6 +24,7 @@ abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
         if (execType == ACCOUNT_EXEC_TYPE.EXEC_SINGLE) {
             (address to, uint256 value, bytes calldata callData) =
                 ERC7579ValidatorLib.decodeCalldataSingle(msgData);
+            console2.log("execute single");
             return onExecute(msgSender, to, value, callData);
         } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_BATCH) {
             IERC7579Execution.Execution[] calldata execs =

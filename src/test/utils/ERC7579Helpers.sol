@@ -296,16 +296,16 @@ library ERC7579Helpers {
         }
     }
 
-    function emptyUserOp(
-        address account,
-        bytes memory callData
+    function toUserOp(
+        bytes memory callData,
+        address forAccount
     )
         internal
         pure
         returns (UserOperation memory userOp)
     {
         userOp = UserOperation({
-            sender: account,
+            sender: forAccount,
             nonce: 0,
             initCode: "", // todo
             callData: callData,

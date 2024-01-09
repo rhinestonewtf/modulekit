@@ -83,7 +83,7 @@ library ERC7579ValidatorLib {
         bytes calldata accountExecCallData = userOpCalldata[4:];
         destination = address(bytes20(accountExecCallData[12:32]));
         value = uint256(bytes32(accountExecCallData[32:64]));
-        callData = accountExecCallData[128:];
+        callData = accountExecCallData[128:userOpCalldata.length - 32];
     }
 
     function decodeConfig(bytes calldata callData)

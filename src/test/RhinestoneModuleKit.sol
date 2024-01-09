@@ -13,7 +13,8 @@ import {
     IERC7579ConfigHook
 } from "../external/ERC7579.sol";
 
-import "./utils/ERC7579Helpers.sol";
+import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
+import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 import { IEntryPoint, Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import "./utils/BootstrapUtil.sol";
@@ -40,9 +41,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
     ERC7579AccountFactory public accountFactory;
     ERC7579Account public accountImplementationSingleton;
 
-    using ERC4337Helper for *;
+    using ERC4337Helpers for *;
 
     bool isInit;
+
+    uint256 singNonce;
 
     MockValidator public defaultValidator;
 
@@ -76,7 +79,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
                 validators, emptyConfig, emptyConfig[0], emptyConfig[0]
                 )
         });
-        label(address(account), "Account");
+        label(address(account), bytes32ToString(salt));
         instance = RhinestoneAccount({
             account: account,
             aux: auxiliary,
@@ -85,142 +88,17 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         });
     }
 
-    function foobar(
-        RhinestoneAccount memory instance,
-        UserOperation memory userOp
-    )
-        internal
-        returns (UserOperation memory)
-    {
-        userOp.map(signOp);
-    }
-
-    function signOp(UserOperation memory userOp) internal pure returns (UserOperation memory) {
-        return userOp;
-    }
-}
-
-library ERC4337Helper {
-    // function sign(
-    //     RhinestoneAccount memory account,
-    //     UserOperation memory userOp,
-    //     bytes memory signature,
-    //     address memory validator
-    // )
-    //     internal
-    //     pure
-    //     returns (bytes32 userOpHash, UserOperation memory signedOp)
-    // {
-    //     uint192 key = uint192(bytes24(bytes20(address(validator))));
-    //     uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-    //
-    //     userOp = getFormattedUserOp(instance, target, value, callData);
-    //     userOp.nonce = nonce;
-    //     userOp.signature = signature;
-    //
-    //     // send userOps to 4337 entrypoint
-    //
-    //     userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-    // }
-
-    function exec4337(
-        address account,
-        IEntryPoint entrypoint,
-        UserOperation[] memory userOps
-    )
-        internal
-    {
-        recordLogs();
-        entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
+    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+        bytes memory _bytes = new bytes(32);
+        for (uint256 i = 0; i < 32; i++) {
+            _bytes[i] = _bytes32[i];
         }
-
-        writeExpectRevert(0);
-
-        for (uint256 i; i < userOps.length; i++) {
-            emit ModuleKitLogs.ModuleKit_Exec4337(account, userOps[i].sender);
-        }
-    }
-
-    function exec4337(
-        address account,
-        IEntryPoint entrypoint,
-        UserOperation memory userOp
-    )
-        internal
-    {
-        UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = userOp;
-        exec4337(account, entrypoint, userOps);
-    }
-
-    function map(
-        UserOperation[] memory self,
-        function(UserOperation memory) returns (UserOperation memory) f
-    )
-        internal
-        returns (UserOperation[] memory)
-    {
-        UserOperation[] memory result = new UserOperation[](self.length);
-        for (uint256 i; i < self.length; i++) {
-            result[i] = f(self[i]);
-        }
-        return result;
-    }
-
-    function map(
-        UserOperation memory self,
-        function(UserOperation memory) internal  returns (UserOperation memory) fn
-    )
-        internal
-        returns (UserOperation memory)
-    {
-        return fn(self);
-    }
-
-    function reduce(
-        UserOperation[] memory self,
-        function(UserOperation memory, UserOperation memory)  returns (UserOperation memory) f
-    )
-        internal
-        returns (UserOperation memory r)
-    {
-        r = self[0];
-        for (uint256 i = 1; i < self.length; i++) {
-            r = f(r, self[i]);
-        }
-    }
-
-    function array(UserOperation memory op) internal pure returns (UserOperation[] memory ops) {
-        ops = new UserOperation[](1);
-        ops[0] = op;
-    }
-
-    function array(
-        UserOperation memory op1,
-        UserOperation memory op2
-    )
-        internal
-        pure
-        returns (UserOperation[] memory ops)
-    {
-        ops = new UserOperation[](2);
-        ops[0] = op1;
-        ops[0] = op2;
+        return string(_bytes);
     }
 }
 
 library RhinestoneModuleKitLib {
-    using ERC4337Helper for *;
+    using ERC4337Helpers for *;
     using ERC7579Helpers for *;
 
     function installValidator(
@@ -241,15 +119,15 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: instance.account.configModule(
                 validator,
                 initData,
                 ERC7579Helpers.installValidator // <--
             )
         });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -275,15 +153,15 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: instance.account.configModule(
                 validator,
                 initData,
                 ERC7579Helpers.uninstallValidator // <--
             )
         });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -309,11 +187,11 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: instance.account.configModule(executor, initData, ERC7579Helpers.installExecutor) // <--
          });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -339,15 +217,15 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: instance.account.configModule(
                 executor,
                 initData,
                 ERC7579Helpers.uninstallExecutor // <--
             )
         });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -373,15 +251,15 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: instance.account.configModule(
                 hook,
                 initData,
                 ERC7579Helpers.installHook // <--
             )
         });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -407,15 +285,15 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: instance.account.configModule(
                 hook,
                 initData,
                 ERC7579Helpers.uninstallHook // <--
             )
         });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -445,7 +323,9 @@ library RhinestoneModuleKitLib {
     {
         // check if fallbackhandler is installed on account
 
-        bool enabled = IERC7579Config(instance.account).isFallbackInstalled(handler);
+        bool enabled = IERC7579Config(instance.account).isFallbackInstalled(
+            address(instance.aux.fallbackHandler)
+        );
 
         IERC7579Execution.Execution[] memory executions;
 
@@ -477,11 +357,11 @@ library RhinestoneModuleKitLib {
                 )
         });
 
-        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
-            account: instance.account,
+        UserOperation memory userOp = ERC7579Helpers.toUserOp({
+            forAccount: instance.account,
             callData: executions.encodeExecution()
         });
-        userOpHash = exec4337({
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: address(instance.defaultValidator),
@@ -491,7 +371,85 @@ library RhinestoneModuleKitLib {
         emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
     }
 
+    function installSessionKey(
+        RhinestoneAccount memory instance,
+        address sessionKeyModule,
+        uint48 validUntil,
+        uint48 validAfter,
+        bytes memory sessionKeyData
+    )
+        internal
+        returns (bytes32 sessionKeyDigest)
+    {
+        // check if SessionKeyManager is installed as IERC7579Validator
+        bool requireSessionKeyInstallation =
+            !isValidatorInstalled(instance, address(instance.aux.sessionKeyManager));
+        if (requireSessionKeyInstallation) {
+            installValidator(instance, address(instance.aux.sessionKeyManager));
+        }
+
+        SessionData memory sessionData = SessionData({
+            validUntil: validUntil,
+            validAfter: validAfter,
+            sessionValidationModule: ISessionValidationModule(sessionKeyModule),
+            sessionKeyData: sessionKeyData
+        });
+
+        // enable sessionKey
+        exec4337(
+            instance,
+            address(instance.aux.sessionKeyManager),
+            abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
+        );
+
+        // get sessionKey digest
+        sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
+    }
+
     function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        bytes32 sessionKeyDigest,
+        bytes memory sessionKeySignature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
+        UserOperation memory userOp =
+            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: singleExec });
+        bytes1 MODE_USE = 0x00;
+        bytes memory signature =
+            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
+
+        return signAndExec4337(instance, userOp, address(instance.aux.sessionKeyManager), signature);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas,
+        bytes32[] memory sessionKeyDigests,
+        bytes[] memory sessionKeySignatures
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        bytes1 MODE_USE = 0x00;
+        bytes memory signature =
+            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigests, sessionKeySignatures));
+
+        bytes memory batchedTx = ERC7579Helpers.encodeExecution(targets, values, callDatas);
+        UserOperation memory userOp =
+            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: batchedTx });
+
+        return signAndExec4337(instance, userOp, address(instance.aux.sessionKeyManager), signature);
+    }
+
+    function signAndExec4337(
         RhinestoneAccount memory instance,
         UserOperation memory userOp,
         address validator,
@@ -504,7 +462,19 @@ library RhinestoneModuleKitLib {
             instance.account, instance.aux.entrypoint, userOp, validator, signature
         );
 
-        ERC4337Helper.exec4337(instance.account, instance.aux.entrypoint, userOp);
+        ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        UserOperation memory userOp,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return signAndExec4337(instance, userOp, validator, signature);
     }
 
     function exec4337(
@@ -543,8 +513,8 @@ library RhinestoneModuleKitLib {
     {
         bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
         UserOperation memory userOp =
-            ERC7579Helpers.emptyUserOp({ account: instance.account, callData: singleExec });
-        userOpHash = exec4337({
+            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: singleExec });
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
             validator: validator,
@@ -561,16 +531,31 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
+        return
+            exec4337(instance, targets, values, callDatas, address(instance.defaultValidator), "");
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
         IERC7579Execution.Execution[] memory executions =
             ERC7579Helpers.toExecutions(targets, values, callDatas);
         bytes memory batchedCallData = executions.encodeExecution();
         UserOperation memory userOp =
-            ERC7579Helpers.emptyUserOp({ account: instance.account, callData: batchedCallData });
-        userOpHash = exec4337({
+            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: batchedCallData });
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
-            validator: address(instance.defaultValidator),
-            signature: ""
+            validator: validator,
+            signature: signature
         });
     }
 
@@ -581,14 +566,26 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
+        return exec4337(instance, executions, address(instance.defaultValidator), "");
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        IERC7579Execution.Execution[] memory executions,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
         bytes memory batchedCallData = executions.encodeExecution();
         UserOperation memory userOp =
-            ERC7579Helpers.emptyUserOp({ account: instance.account, callData: batchedCallData });
-        userOpHash = exec4337({
+            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: batchedCallData });
+        userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
-            validator: address(instance.defaultValidator),
-            signature: ""
+            validator: validator,
+            signature: signature
         });
     }
 
@@ -650,5 +647,16 @@ library RhinestoneModuleKitLib {
         returns (bool isEnabled)
     {
         return IERC7579Config(instance.account).isExecutorInstalled(executor);
+    }
+
+    function hashUserOp(
+        RhinestoneAccount memory instance,
+        UserOperation memory userOp
+    )
+        internal
+        returns (bytes32)
+    {
+        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+        return userOpHash;
     }
 }
