@@ -4,6 +4,7 @@ out = "out"
 libs = ["lib"]
 #via_ir = true
 fs_permissions = [{ access = "read", path = "out-optimized" }]
+allow_paths = ["*", "/"]
 
 
 [rpc_endpoints]

@@ -3,6 +3,7 @@ pragma solidity ^0.8.21;
 
 import "../utils/Vm.sol";
 import { IEntryPoint } from "../../external/ERC4337.sol";
+import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
 
 import "forge-std/console2.sol";
 
@@ -20,23 +21,35 @@ bytes constant Deployed =
 
 contract EntryPointFactory {
     function etchEntrypoint() public returns (IEntryPoint) {
-        address _tmpEntrypoint;
-
-        uint256 salt = 1;
-
-        bytes memory _code = EntryPointCodeDebug;
-
-        address entryPoint = getAddress(_code, salt);
-        (, bytes32[] memory writes) = accesses(entryPoint);
-        deploy(_code, salt);
+        address payable entryPoint = payable(address(new EntryPoint()));
+        address senderCreator = address(EntryPoint(entryPoint).senderCreator());
         etch(ENTRYPOINT_ADDR, entryPoint.code);
 
-        console2.log("detected writes", writes.length);
-        for (uint256 i; i < writes.length; i++) {
-            store(ENTRYPOINT_ADDR, writes[0], writes[1]);
-        }
+        EntryPoint(payable(ENTRYPOINT_ADDR)).setSenderCreator(senderCreator);
+
         return IEntryPoint(ENTRYPOINT_ADDR);
     }
+    // function etchEntrypoint() public returns (IEntryPoint) {
+    //     uint256 salt = 1;
+    //
+    //     bytes memory _code = EntryPointCodeDebug;
+    //
+    //     address entryPoint = getAddress(_code, salt);
+    //     deploy(_code, salt);
+    //     etch(ENTRYPOINT_ADDR, entryPoint.code);
+    //
+    //     bytes32 one = load(address(entryPoint), bytes32(uint256(1)));
+    //     store(ENTRYPOINT_ADDR, hex"01", one);
+    //     one = load(address(entryPoint), bytes32(uint256(2)));
+    //     store(ENTRYPOINT_ADDR, hex"02", one);
+    //     one = load(address(entryPoint), bytes32(uint256(3)));
+    //     store(ENTRYPOINT_ADDR, hex"03", one);
+    //     one = load(address(entryPoint), bytes32(uint256(4)));
+    //     store(ENTRYPOINT_ADDR, hex"04", one);
+    //     console2.logBytes32(one);
+    //
+    //     return IEntryPoint(ENTRYPOINT_ADDR);
+    // }
 
     function getAddress(bytes memory bytecode, uint256 _salt) public view returns (address) {
         bytes32 hash =

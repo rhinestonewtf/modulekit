@@ -694,9 +694,14 @@ library RhinestoneModuleKitLib {
         bytes memory callData
     )
         internal
-        pure
+        view
         returns (UserOperation memory userOp)
     {
+        bool alreadyDeployed = instance.account.code.length > 0;
+        if (alreadyDeployed) {
+            instance.initCode = "";
+        }
+
         userOp = UserOperation({
             sender: instance.account,
             nonce: 0,
@@ -710,6 +715,5 @@ library RhinestoneModuleKitLib {
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
-        instance.initCode = "";
     }
 }

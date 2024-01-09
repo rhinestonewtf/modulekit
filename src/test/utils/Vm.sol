@@ -55,3 +55,11 @@ function accesses(address _addr) returns (bytes32[] memory, bytes32[] memory) {
 function store(address account, bytes32 key, bytes32 entry) {
     Vm(VM_ADDR).store(account, key, entry);
 }
+
+function record() {
+    Vm(VM_ADDR).record();
+}
+
+function load(address account, bytes32 key) view returns (bytes32) {
+    return Vm(VM_ADDR).load(account, key);
+}

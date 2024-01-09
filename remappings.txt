@@ -1,4 +1,5 @@
 account-abstraction/=node_modules/account-abstraction/contracts/
+@openzeppelin/=node_modules/@openzeppelin/
 ds-test/=node_modules/ds-test/src/
 erc7579/=node_modules/erc7579/src/
 forge-std/=node_modules/forge-std/src/

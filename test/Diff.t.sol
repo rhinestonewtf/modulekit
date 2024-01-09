@@ -103,7 +103,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         address newValidator = address(new MockValidator());
 
         instance.installValidator(newValidator);
-        instance.log4337Gas("testAddValidator()");
+        // instance.log4337Gas("testAddValidator()");
         bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
     }
