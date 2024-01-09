@@ -18,7 +18,7 @@ devDependencies:
     version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
   erc7579:
     specifier: github:erc7579/erc7579-implementation
-    version: github.com/erc7579/erc7579-implementation/63f835567684eb6eb525f761abc46e986819242e
+    version: github.com/erc7579/erc7579-implementation/6c8d385a9f38bdc6db183a3579e812741e4f813d
   forge-std:
     specifier: github:foundry-rs/forge-std
     version: github.com/foundry-rs/forge-std/87a2a0afc5fafd6297538a45a52ac19e71a84562
@@ -30,13 +30,13 @@ devDependencies:
     version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
   solady:
     specifier: github:vectorized/solady
-    version: github.com/vectorized/solady/741bda9b2914444bf3060da85c7615f64ce4eee1
+    version: github.com/vectorized/solady/ac6d2cc13807e7e30b3c689af900d01150b03534
   solarray:
     specifier: github:sablier-labs/solarray
     version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
   solhint:
-    specifier: ^4.0.0
-    version: 4.0.0
+    specifier: ^4.1.1
+    version: 4.1.1
 
 packages:
 
@@ -331,7 +331,7 @@ packages:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 5.0.1
+      minimatch: 5.1.6
       once: 1.4.0
     dev: true
 
@@ -489,8 +489,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /minimatch@5.0.1:
-    resolution: {integrity: sha512-nLDxIFRyhDblz3qMuq+SoRZED4+miJ/G+tdDrjkkkRnjAsBexeGpgjLEQ0blJy7rHhR2b93rhQY4SvyWu9v03g==}
+  /minimatch@5.1.6:
+    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
@@ -635,8 +635,8 @@ packages:
       is-fullwidth-code-point: 3.0.0
     dev: true
 
-  /solhint@4.0.0:
-    resolution: {integrity: sha512-bFViMcFvhqVd/HK3Roo7xZXX5nbujS7Bxeg5vnZc9QvH0yCWCrQ38Yrn1pbAY9tlKROc6wFr+rK1mxYgYrjZgA==}
+  /solhint@4.1.1:
+    resolution: {integrity: sha512-7G4iF8H5hKHc0tR+/uyZesSKtfppFIMvPSW+Ku6MSL25oVRuyFeqNhOsXHfkex64wYJyXs4fe+pvhB069I19Tw==}
     hasBin: true
     dependencies:
       '@solidity-parser/parser': 0.16.2
@@ -733,8 +733,8 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/erc7579/erc7579-implementation/63f835567684eb6eb525f761abc46e986819242e:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/63f835567684eb6eb525f761abc46e986819242e}
+  github.com/erc7579/erc7579-implementation/6c8d385a9f38bdc6db183a3579e812741e4f813d:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/6c8d385a9f38bdc6db183a3579e812741e4f813d}
     name: erc7579-implementation
     version: 0.0.0
     dev: true
@@ -751,10 +751,10 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/vectorized/solady/741bda9b2914444bf3060da85c7615f64ce4eee1:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/741bda9b2914444bf3060da85c7615f64ce4eee1}
+  github.com/vectorized/solady/ac6d2cc13807e7e30b3c689af900d01150b03534:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/ac6d2cc13807e7e30b3c689af900d01150b03534}
     name: solady
-    version: 0.0.155
+    version: 0.0.158
     dev: true
 
   github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61:

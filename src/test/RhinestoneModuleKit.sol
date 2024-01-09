@@ -50,8 +50,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
 
     MockValidator public defaultValidator;
 
+    constructor() {
+        init();
+    }
+
     function init() internal virtual override {
-        super.init();
+        if (!isInit) {
+            super.init();
+            isInit = true;
+        }
 
         isInit = true;
         accountImplementationSingleton = new ERC7579Account();
@@ -89,7 +96,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         internal
         returns (RhinestoneAccount memory instance)
     {
-        if (!isInit) init();
         bytes memory bootstrapCalldata =
             auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
         address account = accountFactory.getAddress(salt, bootstrapCalldata);
@@ -101,14 +107,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
 
         bytes memory initCode4337 = abi.encodePacked(factory, createAccountOnFactory);
         label(address(account), bytes32ToString(salt));
-        return makeRhinestoneAccount(salt, account, initCode4337);
+        deal(account, 1 ether);
+        instance = makeRhinestoneAccount(salt, account, initCode4337);
+        instance.defaultValidator = IERC7579Validator(validators[0].module);
     }
 
     function makeRhinestoneAccount(bytes32 salt)
         internal
         returns (RhinestoneAccount memory instance)
     {
-        if (!isInit) init();
         ERC7579BootstrapConfig[] memory validators =
             makeBootstrapConfig(address(defaultValidator), "");
 
@@ -117,7 +124,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         ERC7579BootstrapConfig memory hook = _emptyConfig();
 
         ERC7579BootstrapConfig memory fallBack = _emptyConfig();
-        return makeRhinestoneAccount(salt, validators, executors, hook, fallBack);
+        instance = makeRhinestoneAccount(salt, validators, executors, hook, fallBack);
     }
 
     function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {

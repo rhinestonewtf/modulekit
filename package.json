@@ -14,7 +14,7 @@
     "@openzeppelin/contracts": "5.0.1"
   },
   "devDependencies": {
-    "account-abstraction": "link:../account-abstraction-debug",
+    "account-abstraction": "github:zeroknots/account-abstraction#develop",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
@@ -22,7 +22,7 @@
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^4.0.0"
+    "solhint": "^4.1.1"
   },
   "files": [
     "artifacts",

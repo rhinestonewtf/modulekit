@@ -32,6 +32,10 @@ function label(address _addr, string memory _label) {
     Vm(VM_ADDR).label(_addr, _label);
 }
 
+function deal(address _addr, uint256 amount) {
+    Vm(VM_ADDR).deal(_addr, amount);
+}
+
 function expectEmit() {
     Vm(VM_ADDR).expectEmit();
 }

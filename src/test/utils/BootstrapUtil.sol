@@ -17,8 +17,8 @@ contract BootstrapUtil {
         pure
         returns (ERC7579BootstrapConfig memory config)
     {
-        config.module = IERC7579Module(module);
-        config.data = abi.encodeCall(IERC7579Module.onInstall, data);
+        config.module = module;
+        config.data = data;
     }
 
     function makeBootstrapConfig(
@@ -30,8 +30,8 @@ contract BootstrapUtil {
         returns (ERC7579BootstrapConfig[] memory config)
     {
         config = new ERC7579BootstrapConfig[](1);
-        config[0].module = IERC7579Module(module);
-        config[0].data = abi.encodeCall(IERC7579Module.onInstall, data);
+        config[0].module = module;
+        config[0].data = data;
     }
 
     function makeBootstrapConfig(
