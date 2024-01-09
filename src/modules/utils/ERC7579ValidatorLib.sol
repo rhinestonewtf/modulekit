@@ -95,3 +95,39 @@ library ERC7579ValidatorLib {
         _callData = callData[32:];
     }
 }
+
+abstract contract Decoder {
+    using ERC7579ValidatorLib for *;
+    using UserOperationLib for *;
+
+    function validate(UserOperation calldata userOp) internal {
+        ACCOUNT_EXEC_TYPE accountExecType = userOp.callData.decodeExecType();
+        address smartAccount = userOp.getSender();
+
+        if (ACCOUNT_EXEC_TYPE.EXEC_SINGLE == accountExecType) {
+            (address target, uint256 value, bytes calldata data) =
+                ERC7579ValidatorLib.decodeCalldataSingle(userOp.callData);
+            onValidate(smartAccount, target, value, data);
+        } else if (ACCOUNT_EXEC_TYPE.EXEC_BATCH == accountExecType) {
+            IERC7579Execution.Execution[] calldata executionBatch =
+                ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
+            uint256 length;
+            for (uint256 i; i < length; i++) {
+                IERC7579Execution.Execution calldata execution = executionBatch[i];
+                onValidate(smartAccount, execution.target, execution.value, execution.callData);
+            }
+        } else {
+            revert();
+        }
+    }
+
+    function onValidate(
+        address smartAccount,
+        address target,
+        uint256 value,
+        bytes calldata data
+    )
+        internal
+        virtual
+        returns (bytes[] memory);
+}

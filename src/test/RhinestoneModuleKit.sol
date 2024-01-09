@@ -13,8 +13,9 @@ import {
     IERC7579ConfigHook
 } from "../external/ERC7579.sol";
 
+import "./utils/ERC7579Helpers.sol";
 import { UserOperation } from "../external/ERC4337.sol";
-import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
+import { IEntryPoint, Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
@@ -38,6 +39,8 @@ struct RhinestoneAccount {
 contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
     ERC7579AccountFactory public accountFactory;
     ERC7579Account public accountImplementationSingleton;
+
+    using ERC4337Helper for *;
 
     bool isInit;
 
@@ -81,119 +84,54 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
             defaultValidator: IERC7579Validator(address(defaultValidator))
         });
     }
+
+    function foobar(
+        RhinestoneAccount memory instance,
+        UserOperation memory userOp
+    )
+        internal
+        returns (UserOperation memory)
+    {
+        userOp.map(signOp);
+    }
+
+    function signOp(UserOperation memory userOp) internal pure returns (UserOperation memory) {
+        return userOp;
+    }
 }
 
-library RhinestoneModuleKitLib {
-    /**
-     * @dev Executes an ERC-4337 transaction
-     *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param callData Calldata
-     */
+library ERC4337Helper {
+    // function sign(
+    //     RhinestoneAccount memory account,
+    //     UserOperation memory userOp,
+    //     bytes memory signature,
+    //     address memory validator
+    // )
+    //     internal
+    //     pure
+    //     returns (bytes32 userOpHash, UserOperation memory signedOp)
+    // {
+    //     uint192 key = uint192(bytes24(bytes20(address(validator))));
+    //     uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
+    //
+    //     userOp = getFormattedUserOp(instance, target, value, callData);
+    //     userOp.nonce = nonce;
+    //     userOp.signature = signature;
+    //
+    //     // send userOps to 4337 entrypoint
+    //
+    //     userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    // }
+
     function exec4337(
-        RhinestoneAccount memory instance,
-        address target,
-        bytes memory callData
+        address account,
+        IEntryPoint entrypoint,
+        UserOperation[] memory userOps
     )
         internal
     {
-        exec4337(instance, target, 0, callData);
-    }
-
-    /**
-     * @dev Executes an ERC-4337 transaction
-     *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param value Value
-     * @param callData Calldata
-     */
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData
-    )
-        internal
-    {
-        exec4337(instance, target, value, callData, bytes(""));
-    }
-
-    /**
-     * @dev Executes an ERC-4337 transaction
-     *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param value Value
-     * @param callData Calldata
-     * @param signature Signature
-     */
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData,
-        bytes memory signature
-    )
-        internal
-    {
-        exec4337(instance, target, value, callData, signature, address(instance.defaultValidator));
-    }
-
-    function userOp4337(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData,
-        bytes memory signature,
-        address validator
-    )
-        internal
-        returns (UserOperation memory userOp, bytes32 userOpHash)
-    {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-
-        userOp = getFormattedUserOp(instance, target, value, callData);
-        userOp.nonce = nonce;
-        userOp.signature = signature;
-
-        // send userOps to 4337 entrypoint
-
-        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-    }
-
-    function exec4337(RhinestoneAccount memory instance, UserOperation memory userOp) internal {
-        UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = userOp;
-
-        // send userOps to 4337 entrypoint
-
         recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
-        }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
-    }
-
-    function exec4337(RhinestoneAccount memory instance, UserOperation[] memory userOps) internal {
-        // send userOps to 4337 entrypoint
-
-        recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
+        entrypoint.handleOps(userOps, payable(address(0x69)));
 
         VmSafe.Log[] memory logs = getRecordedLogs();
 
@@ -209,117 +147,91 @@ library RhinestoneModuleKitLib {
         writeExpectRevert(0);
 
         for (uint256 i; i < userOps.length; i++) {
-            emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOps[i].sender);
+            emit ModuleKitLogs.ModuleKit_Exec4337(account, userOps[i].sender);
         }
-    }
-
-    /**
-     * @dev Executes an ERC-4337 transaction
-     * @dev this is an internal function that assumes that calldata is already correctly
-     * formatted
-     * @dev only use this function if you want to manually encode the calldata, otherwise
-     * use the
-     * functions above
-     *
-     * @param instance RhinestoneAccount
-     * @param callData ENcoded callData
-     * @param signature Signature
-     */
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData,
-        bytes memory signature,
-        address validator
-    )
-        internal
-    {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-
-        UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData);
-        userOp.nonce = nonce;
-        userOp.signature = signature;
-
-        UserOperation[] memory userOps = new UserOperation[](1);
-        userOps[0] = userOp;
-
-        // send userOps to 4337 entrypoint
-
-        recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
-        }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
     }
 
     function exec4337(
-        RhinestoneAccount memory instance,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory callDatas,
-        bytes memory signature,
-        address validator
+        address account,
+        IEntryPoint entrypoint,
+        UserOperation memory userOp
     )
         internal
     {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        uint256 nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-
-        UserOperation memory userOp = getFormattedUserOp(instance, targets, values, callDatas);
-        userOp.nonce = nonce;
-        userOp.signature = signature;
-
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
+        exec4337(account, entrypoint, userOps);
+    }
 
-        // send userOps to 4337 entrypoint
-
-        recordLogs();
-        instance.aux.entrypoint.handleOps(userOps, payable(address(0x69)));
-
-        VmSafe.Log[] memory logs = getRecordedLogs();
-
-        for (uint256 i; i < logs.length; i++) {
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
-            }
+    function map(
+        UserOperation[] memory self,
+        function(UserOperation memory) returns (UserOperation memory) f
+    )
+        internal
+        returns (UserOperation[] memory)
+    {
+        UserOperation[] memory result = new UserOperation[](self.length);
+        for (uint256 i; i < self.length; i++) {
+            result[i] = f(self[i]);
         }
-
-        writeExpectRevert(0);
-
-        emit ModuleKitLogs.ModuleKit_Exec4337(instance.account, userOp.sender);
+        return result;
     }
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                MODULES
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function installValidator(RhinestoneAccount memory instance, address validator) internal {
-        return installValidator(instance, validator, bytes(""));
+    function map(
+        UserOperation memory self,
+        function(UserOperation memory) internal  returns (UserOperation memory) fn
+    )
+        internal
+        returns (UserOperation memory)
+    {
+        return fn(self);
     }
-    /**
-     * @dev Adds a validator to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param validator Validator address
-     */
+
+    function reduce(
+        UserOperation[] memory self,
+        function(UserOperation memory, UserOperation memory)  returns (UserOperation memory) f
+    )
+        internal
+        returns (UserOperation memory r)
+    {
+        r = self[0];
+        for (uint256 i = 1; i < self.length; i++) {
+            r = f(r, self[i]);
+        }
+    }
+
+    function array(UserOperation memory op) internal pure returns (UserOperation[] memory ops) {
+        ops = new UserOperation[](1);
+        ops[0] = op;
+    }
+
+    function array(
+        UserOperation memory op1,
+        UserOperation memory op2
+    )
+        internal
+        pure
+        returns (UserOperation[] memory ops)
+    {
+        ops = new UserOperation[](2);
+        ops[0] = op1;
+        ops[0] = op2;
+    }
+}
+
+library RhinestoneModuleKitLib {
+    using ERC4337Helper for *;
+    using ERC7579Helpers for *;
+
+    function installValidator(
+        RhinestoneAccount memory instance,
+        address validator
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return installValidator(instance, validator, "");
+    }
 
     function installValidator(
         RhinestoneAccount memory instance,
@@ -327,14 +239,361 @@ library RhinestoneModuleKitLib {
         bytes memory initData
     )
         internal
+        returns (bytes32 userOpHash)
     {
-        exec4337(
-            instance,
-            instance.account,
-            abi.encodeCall(IERC7579Config.installValidator, (validator, initData))
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: instance.account.configModule(
+                validator,
+                initData,
+                ERC7579Helpers.installValidator // <--
+            )
+        });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function uninstallValidator(
+        RhinestoneAccount memory instance,
+        address validator
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return uninstallValidator(instance, validator, "");
+    }
+
+    function uninstallValidator(
+        RhinestoneAccount memory instance,
+        address validator,
+        bytes memory initData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: instance.account.configModule(
+                validator,
+                initData,
+                ERC7579Helpers.uninstallValidator // <--
+            )
+        });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function installExecutor(
+        RhinestoneAccount memory instance,
+        address executor
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return installExecutor(instance, executor, "");
+    }
+
+    function installExecutor(
+        RhinestoneAccount memory instance,
+        address executor,
+        bytes memory initData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: instance.account.configModule(executor, initData, ERC7579Helpers.installExecutor) // <--
+         });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function uninstallExecutor(
+        RhinestoneAccount memory instance,
+        address executor
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return uninstallExecutor(instance, executor, "");
+    }
+
+    function uninstallExecutor(
+        RhinestoneAccount memory instance,
+        address executor,
+        bytes memory initData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: instance.account.configModule(
+                executor,
+                initData,
+                ERC7579Helpers.uninstallExecutor // <--
+            )
+        });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function installHook(
+        RhinestoneAccount memory instance,
+        address hook
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return installHook(instance, hook, "");
+    }
+
+    function installHook(
+        RhinestoneAccount memory instance,
+        address hook,
+        bytes memory initData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: instance.account.configModule(
+                hook,
+                initData,
+                ERC7579Helpers.installHook // <--
+            )
+        });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function uninstallHook(
+        RhinestoneAccount memory instance,
+        address hook
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return uninstallHook(instance, hook, "");
+    }
+
+    function uninstallHook(
+        RhinestoneAccount memory instance,
+        address hook,
+        bytes memory initData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: instance.account.configModule(
+                hook,
+                initData,
+                ERC7579Helpers.uninstallHook // <--
+            )
+        });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function isHookInstalled(
+        RhinestoneAccount memory instance,
+        address hook
+    )
+        internal
+        view
+        returns (bool isEnabled)
+    {
+        return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
+    }
+
+    function installFallback(
+        RhinestoneAccount memory instance,
+        bytes4 handleFunctionSig,
+        bool isStatic,
+        address handler
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        // check if fallbackhandler is installed on account
+
+        bool enabled = IERC7579Config(instance.account).isFallbackInstalled(handler);
+
+        IERC7579Execution.Execution[] memory executions;
+
+        if (!enabled) {
+            executions = new IERC7579Execution.Execution[](2);
+
+            executions[0] = IERC7579Execution.Execution({
+                target: instance.account,
+                value: 0,
+                callData: instance.account.configModule(
+                    address(instance.aux.fallbackHandler),
+                    "",
+                    ERC7579Helpers.installFallback // <--
+                )
+            });
+        } else {
+            executions = new IERC7579Execution.Execution[](1);
+        }
+
+        ExtensibleFallbackHandler.FallBackType fallbackType = isStatic
+            ? ExtensibleFallbackHandler.FallBackType.Static
+            : ExtensibleFallbackHandler.FallBackType.Dynamic;
+
+        executions[executions.length - 1] = IERC7579Execution.Execution({
+            target: address(instance.aux.fallbackHandler),
+            value: 0,
+            callData: abi.encodeCall(
+                ExtensibleFallbackHandler.setFunctionSig, (handleFunctionSig, fallbackType, handler)
+                )
+        });
+
+        UserOperation memory userOp = ERC7579Helpers.emptyUserOp({
+            account: instance.account,
+            callData: executions.encodeExecution()
+        });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+
+        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        UserOperation memory userOp,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        (userOpHash, userOp) = ERC7579Helpers.signUserOp(
+            instance.account, instance.aux.entrypoint, userOp, validator, signature
         );
 
-        emit ModuleKitLogs.ModuleKit_AddValidator(instance.account, validator);
+        ERC4337Helper.exec4337(instance.account, instance.aux.entrypoint, userOp);
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        bytes memory callData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return exec4337(instance, target, 0, callData, address(instance.defaultValidator), "");
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        return exec4337(instance, target, value, callData, address(instance.defaultValidator), "");
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
+        UserOperation memory userOp =
+            ERC7579Helpers.emptyUserOp({ account: instance.account, callData: singleExec });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: validator,
+            signature: signature
+        });
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        IERC7579Execution.Execution[] memory executions =
+            ERC7579Helpers.toExecutions(targets, values, callDatas);
+        bytes memory batchedCallData = executions.encodeExecution();
+        UserOperation memory userOp =
+            ERC7579Helpers.emptyUserOp({ account: instance.account, callData: batchedCallData });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function exec4337(
+        RhinestoneAccount memory instance,
+        IERC7579Execution.Execution[] memory executions
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        bytes memory batchedCallData = executions.encodeExecution();
+        UserOperation memory userOp =
+            ERC7579Helpers.emptyUserOp({ account: instance.account, callData: batchedCallData });
+        userOpHash = exec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
+    }
+
+    function expect4337Revert(RhinestoneAccount memory) internal {
+        writeExpectRevert(1);
     }
 
     function log4337Gas(
@@ -353,41 +612,6 @@ library RhinestoneModuleKitLib {
         console2.log("\nERC-4337 Gas Log:", name);
         console2.log("Verification:  ", gasValidation);
         console2.log("Execution:     ", gasExecution);
-    }
-
-    /**
-     * @dev Removes a validator from the account
-     *
-     * @param instance RhinestoneAccount
-     * @param validator Validator address
-     */
-    function uninstallValidator(RhinestoneAccount memory instance, address validator) internal {
-        // get previous executor in sentinel list
-        address previous;
-
-        (address[] memory array, address next) =
-            ERC7579Account(instance.account).getValidatorPaginated(address(0x1), 100);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == validator) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
-            }
-        }
-
-        exec4337({
-            instance: instance,
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeCall(
-                IERC7579Config.uninstallValidator, (validator, abi.encode(previous, ""))
-                )
-        });
-
-        emit ModuleKitLogs.ModuleKit_RemoveValidator(address(instance.account), validator);
     }
 
     /**
@@ -410,116 +634,6 @@ library RhinestoneModuleKitLib {
     }
 
     /**
-     * @dev Adds a hook to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param hook Hook address
-     */
-    function installHook(RhinestoneAccount memory instance, address hook) internal {
-        return installHook(instance, hook, bytes(""));
-    }
-
-    /**
-     * @dev Adds a hook to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param hook Hook address
-     */
-    function installHook(
-        RhinestoneAccount memory instance,
-        address hook,
-        bytes memory initData
-    )
-        internal
-    {
-        exec4337(
-            instance,
-            instance.account,
-            abi.encodeCall(IERC7579ConfigHook.installHook, (hook, initData))
-        );
-    }
-
-    /**
-     * @dev Checks if a hook is enabled
-     *
-     * @param instance RhinestoneAccount
-     * @param hook Hook address
-     *
-     * @return isEnabled True if hook is enabled
-     */
-    function isHookInstalled(
-        RhinestoneAccount memory instance,
-        address hook
-    )
-        internal
-        view
-        returns (bool isEnabled)
-    {
-        return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
-    }
-
-    function installExecutor(RhinestoneAccount memory instance, address executor) internal {
-        installExecutor(instance, executor, "");
-    }
-    /**
-     * @dev Adds an executor to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param executor Executor address
-     */
-
-    function installExecutor(
-        RhinestoneAccount memory instance,
-        address executor,
-        bytes memory init
-    )
-        internal
-    {
-        exec4337(
-            instance,
-            instance.account,
-            abi.encodeCall(IERC7579Config.installExecutor, (executor, init))
-        );
-
-        emit ModuleKitLogs.ModuleKit_AddExecutor(instance.account, executor);
-    }
-
-    /**
-     * @dev Removes an executor from the account
-     *
-     * @param instance RhinestoneAccount
-     * @param executor Executor address
-     */
-    function uninstallExecutor(RhinestoneAccount memory instance, address executor) internal {
-        // get previous executor in sentinel list
-        address previous;
-
-        (address[] memory array,) =
-            ERC7579Account(instance.account).getExecutorsPaginated(address(0x1), 100);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == executor) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == executor) previous = array[i - 1];
-            }
-        }
-
-        exec4337({
-            instance: instance,
-            target: instance.account,
-            value: 0,
-            callData: abi.encodeCall(
-                IERC7579Config.uninstallExecutor, (executor, abi.encode(previous, ""))
-                )
-        });
-
-        emit ModuleKitLogs.ModuleKit_RemoveExecutor(instance.account, executor);
-    }
-
-    /**
      * @dev Checks if an executor is enabled
      *
      * @param instance RhinestoneAccount
@@ -536,309 +650,5 @@ library RhinestoneModuleKitLib {
         returns (bool isEnabled)
     {
         return IERC7579Config(instance.account).isExecutorInstalled(executor);
-    }
-
-    /**
-     * @dev Adds a fallback handler to the account
-     *
-     * @param instance RhinestoneAccount
-     * @param handleFunctionSig Function signature
-     * @param isStatic True if function is static
-     * @param handler Handler address
-     */
-    function installFallback(
-        RhinestoneAccount memory instance,
-        bytes4 handleFunctionSig,
-        bool isStatic,
-        address handler
-    )
-        internal
-    {
-        // check if fallbackhandler is installed on account
-
-        bool enabled = IERC7579Config(instance.account).isFallbackInstalled(handler);
-
-        if (!enabled) {
-            exec4337({
-                instance: instance,
-                target: instance.account,
-                value: 0,
-                callData: abi.encodeCall(
-                    IERC7579Config.installFallback, (address(instance.aux.fallbackHandler), "")
-                    )
-            });
-        }
-
-        ExtensibleFallbackHandler.FallBackType fallbackType = isStatic
-            ? ExtensibleFallbackHandler.FallBackType.Static
-            : ExtensibleFallbackHandler.FallBackType.Dynamic;
-
-        exec4337({
-            instance: instance,
-            target: address(instance.aux.fallbackHandler),
-            value: 0,
-            callData: abi.encodeCall(
-                ExtensibleFallbackHandler.setFunctionSig, (handleFunctionSig, fallbackType, handler)
-                )
-        });
-        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
-    }
-
-    /**
-     * @dev Gets the user operation hash
-     *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param callData Calldata
-     *
-     * @return userOpHash User operation hash
-     */
-    function getUserOpHash(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData
-    )
-        internal
-        returns (bytes32)
-    {
-        UserOperation memory userOp = getFormattedUserOp(instance, target, value, callData);
-        bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-        return userOpHash;
-    }
-
-    /**
-     * @dev Gets the formatted UserOperation
-     *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param value Value to send
-     * @param callData Calldata
-     *
-     * @return userOp Formatted UserOperation
-     */
-    function getFormattedUserOp(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData
-    )
-        internal
-        returns (UserOperation memory userOp)
-    {
-        bytes memory erc7579Exec =
-            ERC4337Wrappers.getERC7579TxCalldata(instance, target, value, callData);
-
-        // Get account address
-        address smartAccount = address(instance.account);
-
-        // Get nonce from Entrypoint
-        uint256 nonce = instance.aux.entrypoint.getNonce(smartAccount, 0);
-
-        userOp = UserOperation({
-            sender: smartAccount,
-            nonce: nonce,
-            initCode: "", // todo
-            callData: erc7579Exec,
-            callGasLimit: 2e6,
-            verificationGasLimit: 2e6,
-            preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-    }
-
-    /**
-     * @dev Gets the formatted UserOperation
-     *
-     * @param instance RhinestoneAccount
-     * @param target Target address
-     * @param value Value to send
-     * @param callData Calldata
-     *
-     * @return userOp Formatted UserOperation
-     */
-    function getFormattedUserOp(
-        RhinestoneAccount memory instance,
-        address[] memory target,
-        uint256[] memory value,
-        bytes[] memory callData
-    )
-        internal
-        returns (UserOperation memory userOp)
-    {
-        bytes memory erc7579Exec =
-            ERC4337Wrappers.getERC7579TxCalldata(instance, target, value, callData);
-
-        // Get account address
-        address smartAccount = address(instance.account);
-
-        // Get nonce from Entrypoint
-        uint256 nonce = instance.aux.entrypoint.getNonce(smartAccount, 0);
-
-        userOp = UserOperation({
-            sender: smartAccount,
-            nonce: nonce,
-            initCode: "", // todo
-            callData: erc7579Exec,
-            callGasLimit: 2e6,
-            verificationGasLimit: 2e6,
-            preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-    }
-
-    /**
-     * @dev Expects an ERC-4337 transaction to revert
-     * @dev if this is called before an exec4337 call, it will throw an error if the
-     * ERC-4337 flow
-     * does not revert
-     *
-     * @param instance RhinestoneAccount
-     */
-    function expect4337Revert(RhinestoneAccount memory instance) internal {
-        writeExpectRevert(1);
-    }
-
-    function installSessionKey(
-        RhinestoneAccount memory instance,
-        address sessionKeyModule,
-        uint48 validUntil,
-        uint48 validAfter,
-        bytes memory sessionKeyData
-    )
-        internal
-        returns (bytes32 sessionKeyDigest)
-    {
-        // check if SessionKeyManager is installed as IERC7579Validator
-        bool requireSessionKeyInstallation =
-            !isValidatorInstalled(instance, address(instance.aux.sessionKeyManager));
-        if (requireSessionKeyInstallation) {
-            installValidator(instance, address(instance.aux.sessionKeyManager));
-        }
-
-        SessionData memory sessionData = SessionData({
-            validUntil: validUntil,
-            validAfter: validAfter,
-            sessionValidationModule: ISessionValidationModule(sessionKeyModule),
-            sessionKeyData: sessionKeyData
-        });
-
-        // enable sessionKey
-        exec4337(
-            instance,
-            address(instance.aux.sessionKeyManager),
-            abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
-        );
-
-        // get sessionKey digest
-        sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
-    }
-
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address target,
-        uint256 value,
-        bytes memory callData,
-        bytes32 sessionKeyDigest,
-        bytes memory sessionKeySignature
-    )
-        internal
-    {
-        bytes1 MODE_USE = 0x00;
-        bytes memory signature =
-            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
-
-        exec4337(
-            instance, target, value, callData, signature, address(instance.aux.sessionKeyManager)
-        );
-    }
-
-    function exec4337(
-        RhinestoneAccount memory instance,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory callDatas,
-        bytes32[] memory sessionKeyDigests,
-        bytes[] memory sessionKeySignatures
-    )
-        internal
-    {
-        bytes1 MODE_USE = 0x00;
-        bytes memory signature =
-            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigests, sessionKeySignatures));
-
-        exec4337(
-            instance, targets, values, callDatas, signature, address(instance.aux.sessionKeyManager)
-        );
-    }
-
-    // /**
-    //  * @dev Adds a condition to the Condition Manager
-    //  *
-    //  * @param instance RhinestoneAccount
-    //  * @param forExecutor Executor address for which the condition is used
-    //  * @param conditions Condition config
-    //  */
-    // function setCondition(
-    //     RhinestoneAccount memory instance,
-    //     address forExecutor,
-    //     ConditionConfig[] memory conditions
-    // )
-    //     internal
-    // {
-    //     exec4337({
-    //         instance: instance,
-    //         target: address(instance.aux.compConditionManager),
-    //         value: 0,
-    //         callData: abi.encodeCall(
-    //             instance.aux.compConditionManager.setHash, (forExecutor, conditions)
-    //             )
-    //     });
-    //     emit ModuleKitLogs.ModuleKit_SetCondition(address(instance.account),
-    // forExecutor);
-    // }
-}
-
-library ERC4337Wrappers {
-    function getERC7579TxCalldata(
-        RhinestoneAccount memory account,
-        address target,
-        uint256 value,
-        bytes memory data
-    )
-        internal
-        view
-        returns (bytes memory erc7579Tx)
-    {
-        return abi.encodeCall(IERC7579Execution.execute, (target, value, data));
-    }
-
-    function getERC7579TxCalldata(
-        RhinestoneAccount memory account,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory data
-    )
-        internal
-        view
-        returns (bytes memory erc7579Tx)
-    {
-        IERC7579Execution.Execution[] memory executions =
-            new IERC7579Execution.Execution[](targets.length);
-
-        for (uint256 i; i < targets.length; i++) {
-            executions[i] = IERC7579Execution.Execution({
-                target: targets[i],
-                value: values[i],
-                callData: data[i]
-            });
-        }
-        return abi.encodeCall(IERC7579Execution.executeBatch, (executions));
     }
 }

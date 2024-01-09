@@ -113,6 +113,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     {
         address smartAccount = userOp.getSender();
 
+        // do we need to check userOpHash
         (bytes32[] calldata sessionKeyDataDigests, bytes[] calldata sessionKeySignatures) =
             SessionKeyManagerLib.decodeSignatureBatch(userOp.signature);
 

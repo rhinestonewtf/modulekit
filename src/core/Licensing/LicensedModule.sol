@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
 import { ILicensedModule } from "./LicenseManager.sol";
 import { ERC7579ExecutorBase } from "../../modules/ERC7579ExecutorBase.sol";
 
