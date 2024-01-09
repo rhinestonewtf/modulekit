@@ -6,6 +6,9 @@ import {
 } from "../../external/ERC7579.sol";
 
 contract BootstrapUtil {
+    function _emptyConfig() internal pure returns (ERC7579BootstrapConfig memory config) { }
+    function _emptyConfigs() internal pure returns (ERC7579BootstrapConfig[] memory config) { }
+
     function _makeBootstrapConfig(
         address module,
         bytes memory data

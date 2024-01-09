@@ -35,13 +35,11 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
 
     function onInstall(bytes calldata data) external override {
         if (data.length == 0) return;
-        (bytes4[] memory selector, FallBackType[] memory fallbackType, address[] memory handler) =
-            abi.decode(data, (bytes4[], FallBackType[], address[]));
+        Params[] memory params = abi.decode(data, (Params[]));
 
-        uint256 length = selector.length;
-        if (length != fallbackType.length || length != handler.length) revert();
+        uint256 length = params.length;
         for (uint256 i; i < length; i++) {
-            _setFunctionSig(msg.sender, selector[i], fallbackType[i], handler[i]);
+            _setFunctionSig(msg.sender, params[i]);
         }
     }
 
@@ -60,25 +58,24 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         address handler;
     }
 
+    struct Params {
+        bytes4 selector;
+        FallBackType fallbackType;
+        address handler;
+    }
+
     mapping(address account => mapping(bytes4 => FallbackConfig)) public fallbackHandlers;
 
     // --- internal ---
 
-    function _setFunctionSig(
-        address account,
-        bytes4 selector,
-        FallBackType fallbackType,
-        address handler
-    )
-        internal
-    {
-        fallbackHandlers[account][selector] =
-            FallbackConfig({ fallbackType: fallbackType, handler: handler });
-        emit SetFunctionSig(account, selector, fallbackType, handler);
+    function _setFunctionSig(address account, Params memory params) internal {
+        fallbackHandlers[account][params.selector] =
+            FallbackConfig({ fallbackType: params.fallbackType, handler: params.handler });
+        emit SetFunctionSig(account, params.selector, params.fallbackType, params.handler);
     }
 
-    function setFunctionSig(bytes4 selector, FallBackType fallbackType, address handler) external {
-        _setFunctionSig(msg.sender, selector, fallbackType, handler);
+    function setFunctionSig(Params memory params) external {
+        _setFunctionSig(msg.sender, params);
     }
 
     fallback(bytes calldata) external returns (bytes memory result) {

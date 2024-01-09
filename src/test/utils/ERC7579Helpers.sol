@@ -296,29 +296,6 @@ library ERC7579Helpers {
         }
     }
 
-    function toUserOp(
-        bytes memory callData,
-        address forAccount
-    )
-        internal
-        pure
-        returns (UserOperation memory userOp)
-    {
-        userOp = UserOperation({
-            sender: forAccount,
-            nonce: 0,
-            initCode: "", // todo
-            callData: callData,
-            callGasLimit: 2e6,
-            verificationGasLimit: 2e6,
-            preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-    }
-
     function signUserOp(
         address account,
         IEntryPoint entrypoint,

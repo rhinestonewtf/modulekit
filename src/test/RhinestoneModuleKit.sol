@@ -35,6 +35,7 @@ struct RhinestoneAccount {
     IERC7579Validator defaultValidator;
     Auxiliary aux;
     bytes32 salt;
+    bytes initCode;
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
@@ -61,31 +62,62 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         label(address(defaultValidator), "DefaultValidator");
     }
 
+    function makeRhinestoneAccount(
+        bytes32 salt,
+        address counterFactualAddress,
+        bytes memory initCode4337
+    )
+        internal
+        returns (RhinestoneAccount memory instance)
+    {
+        instance = RhinestoneAccount({
+            account: counterFactualAddress,
+            aux: auxiliary,
+            salt: salt,
+            defaultValidator: IERC7579Validator(address(defaultValidator)),
+            initCode: initCode4337
+        });
+    }
+
+    function makeRhinestoneAccount(
+        bytes32 salt,
+        ERC7579BootstrapConfig[] memory validators,
+        ERC7579BootstrapConfig[] memory executors,
+        ERC7579BootstrapConfig memory hook,
+        ERC7579BootstrapConfig memory fallBack
+    )
+        internal
+        returns (RhinestoneAccount memory instance)
+    {
+        if (!isInit) init();
+        bytes memory bootstrapCalldata =
+            auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
+        address account = accountFactory.getAddress(salt, bootstrapCalldata);
+
+        bytes memory createAccountOnFactory =
+            abi.encodeCall(accountFactory.createAccount, (salt, bootstrapCalldata));
+
+        address factory = address(accountFactory);
+
+        bytes memory initCode4337 = abi.encodePacked(factory, createAccountOnFactory);
+        label(address(account), bytes32ToString(salt));
+        return makeRhinestoneAccount(salt, account, initCode4337);
+    }
+
     function makeRhinestoneAccount(bytes32 salt)
         internal
         returns (RhinestoneAccount memory instance)
     {
         if (!isInit) init();
-
         ERC7579BootstrapConfig[] memory validators =
-            makeBootstrapConfig(address(defaultValidator), bytes(""));
+            makeBootstrapConfig(address(defaultValidator), "");
 
-        ERC7579BootstrapConfig[] memory emptyConfig = new ERC7579BootstrapConfig[](1);
-        emptyConfig[0] = ERC7579BootstrapConfig(IERC7579Module(address(0)), bytes(""));
+        ERC7579BootstrapConfig[] memory executors = _emptyConfigs();
 
-        address account = accountFactory.createAccount({
-            salt: salt,
-            initCode: auxiliary.bootstrap._getInitMSACalldata(
-                validators, emptyConfig, emptyConfig[0], emptyConfig[0]
-                )
-        });
-        label(address(account), bytes32ToString(salt));
-        instance = RhinestoneAccount({
-            account: account,
-            aux: auxiliary,
-            salt: salt,
-            defaultValidator: IERC7579Validator(address(defaultValidator))
-        });
+        ERC7579BootstrapConfig memory hook = _emptyConfig();
+
+        ERC7579BootstrapConfig memory fallBack = _emptyConfig();
+        return makeRhinestoneAccount(salt, validators, executors, hook, fallBack);
     }
 
     function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
@@ -119,8 +151,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
             callData: instance.account.configModule(
                 validator,
                 initData,
@@ -153,8 +185,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
             callData: instance.account.configModule(
                 validator,
                 initData,
@@ -187,8 +219,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
             callData: instance.account.configModule(executor, initData, ERC7579Helpers.installExecutor) // <--
          });
         userOpHash = signAndExec4337({
@@ -217,8 +249,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
             callData: instance.account.configModule(
                 executor,
                 initData,
@@ -251,8 +283,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
             callData: instance.account.configModule(
                 hook,
                 initData,
@@ -285,8 +317,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
             callData: instance.account.configModule(
                 hook,
                 initData,
@@ -349,18 +381,20 @@ library RhinestoneModuleKitLib {
             ? ExtensibleFallbackHandler.FallBackType.Static
             : ExtensibleFallbackHandler.FallBackType.Dynamic;
 
+        ExtensibleFallbackHandler.Params memory params = ExtensibleFallbackHandler.Params({
+            selector: handleFunctionSig,
+            fallbackType: fallbackType,
+            handler: handler
+        });
+
         executions[executions.length - 1] = IERC7579Execution.Execution({
             target: address(instance.aux.fallbackHandler),
             value: 0,
-            callData: abi.encodeCall(
-                ExtensibleFallbackHandler.setFunctionSig, (handleFunctionSig, fallbackType, handler)
-                )
+            callData: abi.encodeCall(ExtensibleFallbackHandler.setFunctionSig, (params))
         });
 
-        UserOperation memory userOp = ERC7579Helpers.toUserOp({
-            forAccount: instance.account,
-            callData: executions.encodeExecution()
-        });
+        UserOperation memory userOp =
+            toUserOp({ instance: instance, callData: executions.encodeExecution() });
         userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
@@ -418,8 +452,7 @@ library RhinestoneModuleKitLib {
         returns (bytes32 userOpHash)
     {
         bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
-        UserOperation memory userOp =
-            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: singleExec });
+        UserOperation memory userOp = toUserOp({ instance: instance, callData: singleExec });
         bytes1 MODE_USE = 0x00;
         bytes memory signature =
             abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
@@ -443,8 +476,7 @@ library RhinestoneModuleKitLib {
             abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigests, sessionKeySignatures));
 
         bytes memory batchedTx = ERC7579Helpers.encodeExecution(targets, values, callDatas);
-        UserOperation memory userOp =
-            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: batchedTx });
+        UserOperation memory userOp = toUserOp({ instance: instance, callData: batchedTx });
 
         return signAndExec4337(instance, userOp, address(instance.aux.sessionKeyManager), signature);
     }
@@ -512,8 +544,7 @@ library RhinestoneModuleKitLib {
         returns (bytes32 userOpHash)
     {
         bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
-        UserOperation memory userOp =
-            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: singleExec });
+        UserOperation memory userOp = toUserOp({ instance: instance, callData: singleExec });
         userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
@@ -549,8 +580,7 @@ library RhinestoneModuleKitLib {
         IERC7579Execution.Execution[] memory executions =
             ERC7579Helpers.toExecutions(targets, values, callDatas);
         bytes memory batchedCallData = executions.encodeExecution();
-        UserOperation memory userOp =
-            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: batchedCallData });
+        UserOperation memory userOp = toUserOp({ instance: instance, callData: batchedCallData });
         userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
@@ -579,8 +609,7 @@ library RhinestoneModuleKitLib {
         returns (bytes32 userOpHash)
     {
         bytes memory batchedCallData = executions.encodeExecution();
-        UserOperation memory userOp =
-            ERC7579Helpers.toUserOp({ forAccount: instance.account, callData: batchedCallData });
+        UserOperation memory userOp = toUserOp({ instance: instance, callData: batchedCallData });
         userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
@@ -658,5 +687,29 @@ library RhinestoneModuleKitLib {
     {
         bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
         return userOpHash;
+    }
+
+    function toUserOp(
+        RhinestoneAccount memory instance,
+        bytes memory callData
+    )
+        internal
+        pure
+        returns (UserOperation memory userOp)
+    {
+        userOp = UserOperation({
+            sender: instance.account,
+            nonce: 0,
+            initCode: instance.initCode,
+            callData: callData,
+            callGasLimit: 2e6,
+            verificationGasLimit: 2e6,
+            preVerificationGas: 2e6,
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+        instance.initCode = "";
     }
 }
