@@ -86,6 +86,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         });
     }
 
+    // TODO inject defaultValidator here
     function makeRhinestoneAccount(
         bytes32 salt,
         ERC7579BootstrapConfig[] memory validators,
