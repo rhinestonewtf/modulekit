@@ -2,6 +2,9 @@
 pragma solidity ^0.8.21;
 
 import {
+    ERC7579Bootstrap, ERC7579BootstrapConfig, IERC7579Module
+} from "../../external/ERC7579.sol";
+import {
     IERC7579Account,
     ERC7579Account,
     ERC7579AccountFactory,
@@ -53,10 +56,10 @@ library ERC7579Helpers {
             fn
     )
         internal
-        returns (bytes memory installCalldata)
+        returns (bytes memory erc7579Tx)
     {
         (address to, uint256 value, bytes memory callData) = fn(account, module, initData);
-        installCalldata = execute(to, value, callData);
+        erc7579Tx = encode(to, value, callData);
     }
 
     function installValidator(
@@ -207,18 +210,6 @@ library ERC7579Helpers {
         callData = abi.encodeCall(IERC7579Config.installFallback, (address(0), initData));
     }
 
-    function execute(
-        address target,
-        uint256 value,
-        bytes memory data
-    )
-        internal
-        pure
-        returns (bytes memory callData)
-    {
-        return abi.encodeCall(IERC7579Execution.execute, (target, value, data));
-    }
-
     function installModule(
         function(address,uint,bytes memory) internal pure returns(address , uint256 , bytes memory )
             fn,
@@ -227,47 +218,25 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (bytes memory erc7579Tx)
     {
         (address target, uint256 value, bytes memory data) = fn(module, 0, initData);
-        return encodeExecution(target, value, data);
+        return encode(target, value, data);
     }
 
-    function encodeExecution(
+    function encode(
         address target,
         uint256 value,
-        bytes memory data
+        bytes memory callData
     )
         internal
         pure
         returns (bytes memory erc7579Tx)
     {
-        return abi.encodeCall(IERC7579Execution.execute, (target, value, data));
+        return abi.encodeCall(IERC7579Execution.execute, (target, value, callData));
     }
 
-    function encodeExecution(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory data
-    )
-        internal
-        pure
-        returns (bytes memory erc7579Tx)
-    {
-        IERC7579Execution.Execution[] memory executions =
-            new IERC7579Execution.Execution[](targets.length);
-
-        for (uint256 i; i < targets.length; i++) {
-            executions[i] = IERC7579Execution.Execution({
-                target: targets[i],
-                value: values[i],
-                callData: data[i]
-            });
-        }
-        return encodeExecution(executions);
-    }
-
-    function encodeExecution(IERC7579Execution.Execution[] memory executions)
+    function encode(IERC7579Execution.Execution[] memory executions)
         internal
         pure
         returns (bytes memory erc7579Tx)
@@ -278,20 +247,20 @@ library ERC7579Helpers {
     function toExecutions(
         address[] memory targets,
         uint256[] memory values,
-        bytes[] memory data
+        bytes[] memory callDatas
     )
         internal
         pure
         returns (IERC7579Execution.Execution[] memory executions)
     {
         executions = new IERC7579Execution.Execution[](targets.length);
-        if (targets.length != values.length && values.length != data.length) revert();
+        if (targets.length != values.length && values.length != callDatas.length) revert();
 
         for (uint256 i; i < targets.length; i++) {
             executions[i] = IERC7579Execution.Execution({
                 target: targets[i],
                 value: values[i],
-                callData: data[i]
+                callData: callDatas[i]
             });
         }
     }
@@ -315,5 +284,50 @@ library ERC7579Helpers {
 
         userOpHash = entrypoint.getUserOpHash(userOp);
         return (userOpHash, userOp);
+    }
+}
+
+contract BootstrapUtil {
+    function _emptyConfig() internal pure returns (ERC7579BootstrapConfig memory config) { }
+    function _emptyConfigs() internal pure returns (ERC7579BootstrapConfig[] memory config) { }
+
+    function _makeBootstrapConfig(
+        address module,
+        bytes memory data
+    )
+        public
+        pure
+        returns (ERC7579BootstrapConfig memory config)
+    {
+        config.module = module;
+        config.data = data;
+    }
+
+    function makeBootstrapConfig(
+        address module,
+        bytes memory data
+    )
+        public
+        pure
+        returns (ERC7579BootstrapConfig[] memory config)
+    {
+        config = new ERC7579BootstrapConfig[](1);
+        config[0].module = module;
+        config[0].data = data;
+    }
+
+    function makeBootstrapConfig(
+        address[] memory modules,
+        bytes[] memory datas
+    )
+        public
+        pure
+        returns (ERC7579BootstrapConfig[] memory configs)
+    {
+        configs = new ERC7579BootstrapConfig[](modules.length);
+
+        for (uint256 i; i < modules.length; i++) {
+            configs[i] = _makeBootstrapConfig(modules[i], datas[i]);
+        }
     }
 }

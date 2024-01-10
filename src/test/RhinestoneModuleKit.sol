@@ -13,11 +13,10 @@ import {
     IERC7579ConfigHook
 } from "../external/ERC7579.sol";
 
-import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
+import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 import { IEntryPoint, Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import "./utils/BootstrapUtil.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 import "../mocks/MockValidator.sol";
@@ -42,6 +41,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
     ERC7579AccountFactory public accountFactory;
     ERC7579Account public accountImplementationSingleton;
 
+    using RhinestoneModuleKitLib for RhinestoneAccount;
     using ERC4337Helpers for *;
 
     bool isInit;
@@ -86,7 +86,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         });
     }
 
-    // TODO inject defaultValidator here
     function makeRhinestoneAccount(
         bytes32 salt,
         ERC7579BootstrapConfig[] memory validators,
@@ -97,6 +96,20 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         internal
         returns (RhinestoneAccount memory instance)
     {
+        init();
+
+        if (validators.length == 0) revert();
+        if (validators[0].module != address(0) && validators[0].module != address(defaultValidator))
+        {
+            ERC7579BootstrapConfig[] memory _validators =
+                new ERC7579BootstrapConfig[](validators.length + 1);
+            _validators[0] = ERC7579BootstrapConfig({ module: address(defaultValidator), data: "" });
+            for (uint256 i = 0; i < validators.length; i++) {
+                _validators[i + 1] = validators[i];
+            }
+            validators = _validators;
+        }
+
         bytes memory bootstrapCalldata =
             auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
         address account = accountFactory.getAddress(salt, bootstrapCalldata);
@@ -110,13 +123,13 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         label(address(account), bytes32ToString(salt));
         deal(account, 1 ether);
         instance = makeRhinestoneAccount(salt, account, initCode4337);
-        instance.defaultValidator = IERC7579Validator(validators[0].module);
     }
 
     function makeRhinestoneAccount(bytes32 salt)
         internal
         returns (RhinestoneAccount memory instance)
     {
+        init();
         ERC7579BootstrapConfig[] memory validators =
             makeBootstrapConfig(address(defaultValidator), "");
 
@@ -138,6 +151,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
 }
 
 library RhinestoneModuleKitLib {
+    using RhinestoneModuleKitLib for *;
     using ERC4337Helpers for *;
     using ERC7579Helpers for *;
 
@@ -402,7 +416,7 @@ library RhinestoneModuleKitLib {
         });
 
         UserOperation memory userOp =
-            toUserOp({ instance: instance, callData: executions.encodeExecution() });
+            toUserOp({ instance: instance, callData: executions.encode() });
         userOpHash = signAndExec4337({
             instance: instance,
             userOp: userOp,
@@ -421,13 +435,24 @@ library RhinestoneModuleKitLib {
         bytes memory sessionKeyData
     )
         internal
-        returns (bytes32 sessionKeyDigest)
+        returns (bytes32 userOpHash, bytes32 sessionKeyDigest)
     {
-        // check if SessionKeyManager is installed as IERC7579Validator
-        bool requireSessionKeyInstallation =
-            !isValidatorInstalled(instance, address(instance.aux.sessionKeyManager));
-        if (requireSessionKeyInstallation) {
-            installValidator(instance, address(instance.aux.sessionKeyManager));
+        IERC7579Execution.Execution[] memory executions;
+
+        if (
+            instance.initCode.length > 0
+                || !isValidatorInstalled(instance, address(instance.aux.sessionKeyManager))
+        ) {
+            executions = new IERC7579Execution.Execution[](2);
+            executions[0] = IERC7579Execution.Execution({
+                target: instance.account,
+                value: 0,
+                callData: instance.account.configModule(
+                    address(instance.aux.sessionKeyManager),
+                    "",
+                    ERC7579Helpers.installValidator // <--
+                )
+            });
         }
 
         SessionData memory sessionData = SessionData({
@@ -436,13 +461,21 @@ library RhinestoneModuleKitLib {
             sessionValidationModule: ISessionValidationModule(sessionKeyModule),
             sessionKeyData: sessionKeyData
         });
+        executions[executions.length - 1] = IERC7579Execution.Execution({
+            target: address(instance.aux.sessionKeyManager),
+            value: 0,
+            callData: abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
+        });
 
-        // enable sessionKey
-        exec4337(
-            instance,
-            address(instance.aux.sessionKeyManager),
-            abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
-        );
+        UserOperation memory userOp =
+            toUserOp({ instance: instance, callData: executions.encode() });
+
+        userOpHash = signAndExec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
 
         // get sessionKey digest
         sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
@@ -459,7 +492,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
+        bytes memory singleExec = ERC7579Helpers.encode(target, value, callData);
         UserOperation memory userOp = toUserOp({ instance: instance, callData: singleExec });
         bytes1 MODE_USE = 0x00;
         bytes memory signature =
@@ -483,7 +516,7 @@ library RhinestoneModuleKitLib {
         bytes memory signature =
             abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigests, sessionKeySignatures));
 
-        bytes memory batchedTx = ERC7579Helpers.encodeExecution(targets, values, callDatas);
+        bytes memory batchedTx = ERC7579Helpers.toExecutions(targets, values, callDatas).encode();
         UserOperation memory userOp = toUserOp({ instance: instance, callData: batchedTx });
 
         return signAndExec4337(instance, userOp, address(instance.aux.sessionKeyManager), signature);
@@ -551,7 +584,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        bytes memory singleExec = ERC7579Helpers.encodeExecution(target, value, callData);
+        bytes memory singleExec = ERC7579Helpers.encode(target, value, callData);
         UserOperation memory userOp = toUserOp({ instance: instance, callData: singleExec });
         userOpHash = signAndExec4337({
             instance: instance,
@@ -585,9 +618,8 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        IERC7579Execution.Execution[] memory executions =
-            ERC7579Helpers.toExecutions(targets, values, callDatas);
-        bytes memory batchedCallData = executions.encodeExecution();
+        bytes memory batchedCallData =
+            ERC7579Helpers.toExecutions(targets, values, callDatas).encode();
         UserOperation memory userOp = toUserOp({ instance: instance, callData: batchedCallData });
         userOpHash = signAndExec4337({
             instance: instance,
@@ -616,7 +648,7 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        bytes memory batchedCallData = executions.encodeExecution();
+        bytes memory batchedCallData = executions.encode();
         UserOperation memory userOp = toUserOp({ instance: instance, callData: batchedCallData });
         userOpHash = signAndExec4337({
             instance: instance,
