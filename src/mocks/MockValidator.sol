@@ -22,7 +22,8 @@ contract MockValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        return _packValidationData({ sigFailed: false, validUntil: 1000, validAfter: 0 });
+        return
+            _packValidationData({ sigFailed: false, validUntil: type(uint48).max, validAfter: 0 });
     }
 
     function isValidSignatureWithSender(

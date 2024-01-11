@@ -18,6 +18,17 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
     }
 
     function _execute(
+        address to,
+        uint256 value,
+        bytes memory data
+    )
+        internal
+        returns (bytes memory result)
+    {
+        return IERC7579Execution(msg.sender).executeFromExecutor(to, value, data);
+    }
+
+    function _execute(
         address account,
         IERC7579Execution.Execution[] memory execs
     )
@@ -25,5 +36,12 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
         returns (bytes[] memory results)
     {
         return IERC7579Execution(account).executeBatchFromExecutor(execs);
+    }
+
+    function _execute(IERC7579Execution.Execution[] memory execs)
+        internal
+        returns (bytes[] memory results)
+    {
+        return IERC7579Execution(msg.sender).executeBatchFromExecutor(execs);
     }
 }

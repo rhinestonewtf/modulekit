@@ -318,6 +318,8 @@ library RhinestoneModuleKitLib {
             validator: address(instance.defaultValidator),
             signature: ""
         });
+        bool isEnabled = instance.isExecutorInstalled(executor);
+        if (!isEnabled) revert("Executor Not Enabled");
     }
 
     // executes uninstallExecutor with initData:0
@@ -657,8 +659,11 @@ library RhinestoneModuleKitLib {
 
         ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
     }
+    /**
+     * Execute with sessionkey signature
+     * wrapper for signAndExec4337,
+     */
 
-    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address target,

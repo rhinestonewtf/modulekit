@@ -8,6 +8,7 @@ import { EntryPointFactory } from "./predeploy/EntryPoint.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
+import { MockFactory } from "./predeploy/MockFactory.sol";
 
 /* solhint-disable no-global-import */
 import "./utils/Vm.sol";
@@ -20,12 +21,15 @@ struct Auxiliary {
     ERC7579Bootstrap bootstrap;
     IERC7484Registry registry;
     address initialTrustedAttester;
+    MockFactory mockFactory;
 }
 
 contract AuxiliaryFactory {
     Auxiliary public auxiliary;
 
     function init() internal virtual {
+        auxiliary.mockFactory = new MockFactory();
+        label(address(auxiliary.mockFactory), "Mock Factory");
         EntryPointFactory entryPointFactory = new EntryPointFactory();
         auxiliary.entrypoint = entryPointFactory.etchEntrypoint();
         label(address(auxiliary.entrypoint), "EntryPoint");
