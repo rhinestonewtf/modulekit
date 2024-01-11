@@ -17,6 +17,8 @@ enum ACCOUNT_EXEC_TYPE {
 }
 
 library ERC7579ValidatorLib {
+    error InvalidExecutionType();
+
     function decodeExecType(UserOperation calldata _ops)
         internal
         pure
@@ -63,6 +65,7 @@ library ERC7579ValidatorLib {
         *  0x4                  | -                 |
         abi.encode(IERC7579Execution.Execution[])
          */
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             let offset := add(userOpCalldata.offset, 0x4)
             let baseOffset := offset
@@ -97,7 +100,7 @@ library ERC7579ValidatorLib {
 
     function validateWith(
         UserOperation calldata userOp,
-        function(UserOperation calldata,address,uint,bytes calldata) internal returns(uint48,uint48)
+        function(UserOperation calldata,address,uint256,bytes calldata) internal returns(uint48,uint48)
             validationFunction
     )
         internal
@@ -124,7 +127,7 @@ library ERC7579ValidatorLib {
                     getValidUntil(validUntil, validAfter, _newValidUntil, _newValidAfter);
             }
         } else {
-            revert();
+            revert InvalidExecutionType();
         }
     }
 }
@@ -150,7 +153,7 @@ abstract contract Decoder {
                 onValidate(smartAccount, execution.target, execution.value, execution.callData);
             }
         } else {
-            revert();
+            revert ERC7579ValidatorLib.InvalidExecutionType();
         }
     }
 

@@ -2,15 +2,14 @@
 pragma solidity ^0.8.23;
 
 import { IEntryPoint } from "../external/ERC4337.sol";
-import { ERC7579Bootstrap, ERC7579BootstrapConfig } from "../external/ERC7579.sol";
+import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { EntryPointFactory } from "./predeploy/EntryPoint.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
-
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
+import { MockRegistry } from "../mocks/MockRegistry.sol";
 
-import "../mocks/MockRegistry.sol";
-
+/* solhint-disable no-global-import */
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 

@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+/* solhint-disable no-global-import */
 import "forge-std/Test.sol";
-import "forge-std/console2.sol";
 import "src/ModuleKit.sol";
 import "src/Modules.sol";
 import "src/core/sessionKey/ISessionValidationModule.sol";
 import "src/Mocks.sol";
 import { LicenseValidator, LicenseCollector } from "src/core/Licensing/LicenseManager.sol";
 import { LicensedModule } from "src/core/Licensing/LicensedModule.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { Solarray } from "solarray/Solarray.sol";
+/* solhint-enable no-global-import */
 
 contract LicenseManagerTest is RhinestoneModuleKit, Test {
     using RhinestoneModuleKitLib for RhinestoneAccount;
@@ -25,8 +25,8 @@ contract LicenseManagerTest is RhinestoneModuleKit, Test {
     MockTarget internal target;
     MockERC20 internal token;
 
-    address keySigner1;
-    uint256 keySignerPk1;
+    address internal keySigner1;
+    uint256 internal keySignerPk1;
 
     function setUp() public {
         instance = makeRhinestoneAccount("1");

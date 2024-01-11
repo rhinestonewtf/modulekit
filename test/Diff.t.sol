@@ -1,22 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+/* solhint-disable no-global-import */
 import { Test } from "forge-std/Test.sol";
 import "src/ModuleKit.sol";
 import "src/Mocks.sol";
-import { IERC721TokenReceiver } from "forge-std/interfaces/IERC721.sol";
-
-import "forge-std/console2.sol";
+/* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     using RhinestoneModuleKitLib for RhinestoneAccount;
 
-    RhinestoneAccount instance;
-    MockValidator validator;
-    MockHook hook;
-    MockExecutor executor;
+    RhinestoneAccount internal instance;
+    MockValidator internal validator;
+    MockHook internal hook;
+    MockExecutor internal executor;
 
-    MockERC20 token;
+    MockERC20 internal token;
 
     function setUp() public {
         // Setup account

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
-import { ISessionValidationModule } from "../core/sessionKey/ISessionValidationModule.sol";
+import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
 
-abstract contract ERC7579SessionKeyBase is ISessionValidationModule, ERC7579ModuleBase {
+abstract contract SessionKeyBase is ISessionValidationModule, ERC7579ModuleBase {
     error InvalidMethod(bytes4);
     error InvalidValue();
     error InvalidAmount();

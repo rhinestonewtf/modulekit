@@ -12,7 +12,6 @@ abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
     ValidationData internal constant VALIDATION_FAILED = ValidationData.wrap(0);
     bytes4 internal constant EIP1271_SUCCESS = 0x1626ba7e;
     bytes4 internal constant EIP1271_FAILED = 0xFFFFFFFF;
-    mapping(bytes32 id => mapping(address smartAccount => uint256 nonce)) internal _nonce;
 
     /**
      * Helper to pack the return value for validateUserOp, when not using an aggregator.

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IERC7579Executor, IERC7579Execution } from "../external/ERC7579.sol";
-import "./ERC7579ModuleBase.sol";
+import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
 abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
     function _execute(

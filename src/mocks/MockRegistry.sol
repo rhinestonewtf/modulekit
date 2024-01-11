@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../interfaces/IERC7484Registry.sol";
+/* solhint-disable no-unused-vars */
+import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 /// @title MockRegistry
 /// @author zeroknots
 

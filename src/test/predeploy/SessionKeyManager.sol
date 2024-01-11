@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
+/* solhint-disable max-line-length*/
 import { ISessionKeyManager } from "../../core/SessionKey/ISessionKeyManager.sol";
 
 bytes constant sessionKeyManager =
@@ -9,6 +10,7 @@ bytes constant sessionKeyManager =
 function etchSessionKeyManager() returns (ISessionKeyManager) {
     address _addr;
     bytes memory _code = sessionKeyManager;
+    // solhint-disable-next-line no-inline-assembly
     assembly {
         _addr := create(0, add(_code, 0x20), mload(_code))
     }

@@ -20,6 +20,7 @@ library SessionKeyManagerLib {
     }
 
     function decodeMode(bytes calldata signature) internal pure returns (MODE mode) {
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             mode := calldataload(add(signature.offset, 0x1))
         }
@@ -90,6 +91,7 @@ library SessionKeyManagerLib {
             bytes calldata sessionKeyData
         )
     {
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             let offset := add(signature.offset, 0x1)
             let baseOffset := offset
@@ -121,6 +123,7 @@ library SessionKeyManagerLib {
         * 0x1                  | --                | abi.encode(bytes32 sessionDataDigest,
         sessionKeySignature)
          */
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             let offset := add(signature.offset, 0x1)
             let baseOffset := offset
@@ -143,6 +146,7 @@ library SessionKeyManagerLib {
             /*
              * Module Signature Layout
              */
+            // solhint-disable-next-line no-inline-assembly
             assembly ("memory-safe") {
                 let offset := add(signature.offset, 0x1)
                 let baseOffset := offset

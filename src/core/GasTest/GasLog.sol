@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC7579Account } from "../../external/ERC7579.sol";
-
 abstract contract GasLog {
     event GasLogEvent(bytes32 key, bytes32 id, uint256 gas);
 

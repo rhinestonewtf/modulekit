@@ -19,6 +19,7 @@ function decodeCondition(bytes calldata _conditions)
     pure
     returns (ConditionConfig[] calldata conditions)
 {
+    // solhint-disable-next-line no-inline-assembly
     assembly ("memory-safe") {
         let offset := add(_conditions.offset, 0)
         let baseOffset := offset
@@ -48,7 +49,7 @@ contract ConditionManager is IConditionManager {
         ConditionConfig[] calldata conditions = decodeCondition(conditionData);
         bytes32 _digest = digest(conditions);
         if (_conditions[smartAccount][msg.sender] != _digest) {
-            revert();
+            revert("Invalid Conditions");
         }
         for (uint256 i = 0; i < conditions.length; i++) {
             bytes calldata _conditionData = conditions[i].conditionData;

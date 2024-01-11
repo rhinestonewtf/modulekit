@@ -2,10 +2,8 @@
 pragma solidity ^0.8.21;
 
 import {
-    IERC7579Account,
     ERC7579Account,
     ERC7579AccountFactory,
-    ERC7579Bootstrap,
     ERC7579BootstrapConfig,
     IERC7579Validator,
     IERC7579Config,
@@ -16,14 +14,17 @@ import {
 import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { UserOperation } from "../external/ERC4337.sol";
-import { IEntryPoint, Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import "./utils/Vm.sol";
-import "./utils/Log.sol";
-import "../mocks/MockValidator.sol";
+import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
+import { MockValidator } from "../mocks/MockValidator.sol";
 import { ISessionKeyManager, SessionData } from "../core/SessionKey/ISessionKeyManager.sol";
 import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
+
+/* solhint-disable no-global-import */
+// solhint-disable no-console
 import "forge-std/console2.sol";
+import "./utils/Vm.sol";
+import "./utils/Log.sol";
 
 interface GasDebug {
     function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
@@ -38,15 +39,13 @@ struct RhinestoneAccount {
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
-    ERC7579AccountFactory public accountFactory;
-    ERC7579Account public accountImplementationSingleton;
-
     using RhinestoneModuleKitLib for RhinestoneAccount;
     using ERC4337Helpers for *;
 
-    bool isInit;
+    ERC7579AccountFactory public accountFactory;
+    ERC7579Account public accountImplementationSingleton;
 
-    uint256 singNonce;
+    bool internal isInit;
 
     MockValidator public defaultValidator;
 
@@ -119,7 +118,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
     {
         init();
 
-        if (validators.length == 0) revert();
+        if (validators.length == 0) validators = new ERC7579BootstrapConfig[](1);
 
         // inject the defaultValidator if it is not already in the list
         // defaultValidator is used a lot in ModuleKit, to make it easier to use
@@ -652,33 +651,11 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        (userOpHash, userOp) = signUserOpWithFunction({
-            instance: instance,
-            unsignedUserOp: userOp,
-            validator: validator,
-            signature: signature,
-            signFn: ERC7579Helpers.signUserOp // selecting ERC7579Helpers.signUserOp fn to sign
-         });
+        (userOpHash, userOp) = ERC7579Helpers.signatureInNonce(
+            instance.account, instance.aux.entrypoint, userOp, validator, signature
+        );
 
         ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
-    }
-
-    /**
-     * signs a user op with supplied function
-     */
-    function signUserOpWithFunction(
-        RhinestoneAccount memory instance,
-        UserOperation memory unsignedUserOp,
-        address validator,
-        bytes memory signature,
-        function(address, IEntryPoint, UserOperation memory, address, bytes memory) internal  returns (bytes32, UserOperation memory)
-            signFn
-    )
-        internal
-        returns (bytes32 userOpHash, UserOperation memory signedUserOp)
-    {
-        return
-            signFn(instance.account, instance.aux.entrypoint, unsignedUserOp, validator, signature);
     }
 
     // wrapper for signAndExec4337

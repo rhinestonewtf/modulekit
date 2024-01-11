@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity ^0.8.23;
 
+/* solhint-disable payable-fallback */
+/* solhint-disable no-complex-fallback */
+
 import { ERC7579FallbackBase } from "../modules/ERC7579FallbackBase.sol";
 import { ERC2771Handler } from "./ERC2771Handler.sol";
 
@@ -82,7 +85,7 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         require(msg.data.length >= 24, "invalid method selector");
         FallbackConfig memory fallbackConfig = fallbackHandlers[msg.sender][msg.sig];
         address erc2771Sender = _msgSender();
-        if (fallbackConfig.handler == address(0)) revert();
+        if (fallbackConfig.handler == address(0)) revert("Invalid Method");
 
         if (fallbackConfig.fallbackType == FallBackType.Static) {
             result = IStaticFallbackMethod(fallbackConfig.handler).handle(

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
+/* solhint-disable no-global-import */
 import "./Vm.sol";
 import "./Log.sol";
 

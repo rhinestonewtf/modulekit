@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
+/* solhint-disable max-line-length */
+/* solhint-disable no-global-import */
 import "../utils/Vm.sol";
 import { IEntryPoint } from "../../external/ERC4337.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
-
-import "forge-std/console2.sol";
 
 address constant ENTRYPOINT_ADDR = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 // solhint-disable max-line-length
@@ -61,6 +61,7 @@ contract EntryPointFactory {
     function deploy(bytes memory bytecode, uint256 _salt) public payable {
         address addr;
 
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             addr :=
                 create2(

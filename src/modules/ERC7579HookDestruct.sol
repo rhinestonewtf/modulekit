@@ -3,10 +3,9 @@ pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "./ERC7579HookBase.sol";
 import { IERC7579Execution } from "../Accounts.sol";
-import { IERC7579Config, IERC7579ConfigHook } from "../external/ERC7579.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "./utils/ERC7579ValidatorLib.sol";
 
-abstract contract ERC7579HookDeconstructor is ERC7579HookBase {
+abstract contract ERC7579HookDestruct is ERC7579HookBase {
     error HookInvalidSelector();
 
     function preCheck(

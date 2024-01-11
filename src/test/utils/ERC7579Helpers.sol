@@ -2,15 +2,8 @@
 pragma solidity ^0.8.21;
 
 import {
-    ERC7579Bootstrap, ERC7579BootstrapConfig, IERC7579Module
-} from "../../external/ERC7579.sol";
-import {
-    IERC7579Account,
     ERC7579Account,
-    ERC7579AccountFactory,
-    ERC7579Bootstrap,
     ERC7579BootstrapConfig,
-    IERC7579Validator,
     IERC7579Config,
     IERC7579Execution,
     IERC7579ConfigHook
@@ -84,8 +77,7 @@ library ERC7579Helpers {
         // get previous executor in sentinel list
         address previous;
 
-        (address[] memory array, address next) =
-            ERC7579Account(account).getValidatorPaginated(address(0x1), 100);
+        (address[] memory array,) = ERC7579Account(account).getValidatorPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -136,8 +128,7 @@ library ERC7579Helpers {
         // get previous executor in sentinel list
         address previous;
 
-        (address[] memory array, address next) =
-            ERC7579Account(account).getExecutorsPaginated(address(0x1), 100);
+        (address[] memory array,) = ERC7579Account(account).getExecutorsPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -185,6 +176,7 @@ library ERC7579Helpers {
         view
         returns (address to, uint256 value, bytes memory callData)
     {
+        hook = hook; // avoid solhint-no-unused-vars
         to = account;
         value = 0;
         callData = abi.encodeCall(IERC7579ConfigHook.installHook, (address(0), initData));
@@ -219,6 +211,7 @@ library ERC7579Helpers {
         view
         returns (address to, uint256 value, bytes memory callData)
     {
+        fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
         to = account;
         value = 0;
         callData = abi.encodeCall(IERC7579Config.installFallback, (address(0), initData));
@@ -267,7 +260,9 @@ library ERC7579Helpers {
         returns (IERC7579Execution.Execution[] memory executions)
     {
         executions = new IERC7579Execution.Execution[](targets.length);
-        if (targets.length != values.length && values.length != callDatas.length) revert();
+        if (targets.length != values.length && values.length != callDatas.length) {
+            revert("Length Mismatch");
+        }
 
         for (uint256 i; i < targets.length; i++) {
             executions[i] = IERC7579Execution.Execution({
@@ -278,7 +273,7 @@ library ERC7579Helpers {
         }
     }
 
-    function signUserOp(
+    function signatureInNonce(
         address account,
         IEntryPoint entrypoint,
         UserOperation memory userOp,
