@@ -54,6 +54,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         init();
     }
 
+    /**
+     * Initializes Auxiliary and /src/core
+     * This function will run before any accounts can be created
+     */
     function init() internal virtual override {
         if (!isInit) {
             super.init();
@@ -77,6 +81,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         internal
         returns (RhinestoneAccount memory instance)
     {
+        // Create RhinestoneAccount struct with counterFactualAddress and initCode
+        // The initcode will be set to 0, once the account was created by EntryPoint.sol
         instance = RhinestoneAccount({
             account: counterFactualAddress,
             aux: auxiliary,
@@ -86,6 +92,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         });
     }
 
+    /**
+     * create new RhinestoneAccount with ERC7579BootstrapConfig
+     */
     function makeRhinestoneAccount(
         bytes32 salt,
         ERC7579BootstrapConfig[] memory validators,
@@ -99,6 +108,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         init();
 
         if (validators.length == 0) revert();
+
+        // inject the defaultValidator if it is not already in the list
+        // defaultValidator is used a lot in ModuleKit, to make it easier to use
+        // if defaultValidator isnt available on the account, a lot of ModuleKit Abstractions would
+        // break
         if (validators[0].module != address(0) && validators[0].module != address(defaultValidator))
         {
             ERC7579BootstrapConfig[] memory _validators =
@@ -114,14 +128,16 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
             auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
         address account = accountFactory.getAddress(salt, bootstrapCalldata);
 
+        // using MSAFactory from ERC7579 repo.
         bytes memory createAccountOnFactory =
             abi.encodeCall(accountFactory.createAccount, (salt, bootstrapCalldata));
 
         address factory = address(accountFactory);
-
+        // encode pack factory and account initCode to comply with SenderCreater (EntryPoint.sol)
         bytes memory initCode4337 = abi.encodePacked(factory, createAccountOnFactory);
         label(address(account), bytes32ToString(salt));
         deal(account, 1 ether);
+
         instance = makeRhinestoneAccount(salt, account, initCode4337);
     }
 
@@ -150,11 +166,20 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
     }
 }
 
+/**
+ * ERC7579 Native library that can be used by Module Developers.
+ * This Library implements abstractions for account managements
+ */
 library RhinestoneModuleKitLib {
     using RhinestoneModuleKitLib for *;
     using ERC4337Helpers for *;
     using ERC7579Helpers for *;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                MANAGE MODULES ON ACCOUNT
+    //////////////////////////////////////////////////////////////////////////*/
+
+    // will call installValidator with initData:0
     function installValidator(
         RhinestoneAccount memory instance,
         address validator
@@ -165,6 +190,14 @@ library RhinestoneModuleKitLib {
         return installValidator(instance, validator, "");
     }
 
+    /**
+     * @dev installs a validator to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validator ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the validator oninstall by the account
+     */
     function installValidator(
         RhinestoneAccount memory instance,
         address validator,
@@ -189,6 +222,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // executes uninstallValidator with initData:0
     function uninstallValidator(
         RhinestoneAccount memory instance,
         address validator
@@ -199,6 +233,14 @@ library RhinestoneModuleKitLib {
         return uninstallValidator(instance, validator, "");
     }
 
+    /**
+     * @dev uninstalls a validator to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param validator ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the validator onuninstall by the account
+     */
     function uninstallValidator(
         RhinestoneAccount memory instance,
         address validator,
@@ -223,6 +265,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // executes installExecutor with initData:0
     function installExecutor(
         RhinestoneAccount memory instance,
         address executor
@@ -233,6 +276,14 @@ library RhinestoneModuleKitLib {
         return installExecutor(instance, executor, "");
     }
 
+    /**
+     * @dev installs an executor to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param executor ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the executor oninstall by the account
+     */
     function installExecutor(
         RhinestoneAccount memory instance,
         address executor,
@@ -253,6 +304,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // executes uninstallExecutor with initData:0
     function uninstallExecutor(
         RhinestoneAccount memory instance,
         address executor
@@ -263,6 +315,14 @@ library RhinestoneModuleKitLib {
         return uninstallExecutor(instance, executor, "");
     }
 
+    /**
+     * @dev uninstalls an executor to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param executor ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the executor onUninstall by the account
+     */
     function uninstallExecutor(
         RhinestoneAccount memory instance,
         address executor,
@@ -287,6 +347,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // executes installHook with initData:0
     function installHook(
         RhinestoneAccount memory instance,
         address hook
@@ -297,6 +358,14 @@ library RhinestoneModuleKitLib {
         return installHook(instance, hook, "");
     }
 
+    /**
+     * @dev installs a Hook to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param hook ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the hook oninstall by the account
+     */
     function installHook(
         RhinestoneAccount memory instance,
         address hook,
@@ -321,6 +390,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // calls uninstallHook with initData:0
     function uninstallHook(
         RhinestoneAccount memory instance,
         address hook
@@ -331,6 +401,14 @@ library RhinestoneModuleKitLib {
         return uninstallHook(instance, hook, "");
     }
 
+    /**
+     * @dev installs a Hook to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param hook ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the hook oninstall by the account
+     */
     function uninstallHook(
         RhinestoneAccount memory instance,
         address hook,
@@ -355,22 +433,52 @@ library RhinestoneModuleKitLib {
         });
     }
 
-    function isHookInstalled(
+    /**
+     * @dev installs a Fallback to the account
+     *
+     * @param instance RhinestoneAccount
+     * @param fallbackHandler ERC7579 Module address
+     * @param initData bytes encoded initialization data.
+     *       This data will be passed to the fallbackHandler oninstall by the account
+     */
+    function installFallback(
         RhinestoneAccount memory instance,
-        address hook
+        address fallbackHandler,
+        bytes memory initData
     )
         internal
-        view
-        returns (bool isEnabled)
+        returns (bytes32 userOpHash)
     {
-        return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
+        UserOperation memory userOp = toUserOp({
+            instance: instance,
+            callData: instance.account.configModule(
+                fallbackHandler,
+                initData,
+                ERC7579Helpers.installFallback // <--
+            )
+        });
+        userOpHash = signAndExec4337({
+            instance: instance,
+            userOp: userOp,
+            validator: address(instance.defaultValidator),
+            signature: ""
+        });
     }
 
+    /**
+     * @dev Installs ExtensibleFallbackHandler on the account if not already installed, and
+     * configures
+     *
+     * @param instance RhinestoneAccount
+     * @param handleFunctionSig function sig that should be handled
+     * @param isStatic is function staticcall or call
+     * @param subHandler ExtensibleFallbackHandler subhandler to handle this function sig
+     */
     function installFallback(
         RhinestoneAccount memory instance,
         bytes4 handleFunctionSig,
         bool isStatic,
-        address handler
+        address subHandler
     )
         internal
         returns (bytes32 userOpHash)
@@ -384,37 +492,44 @@ library RhinestoneModuleKitLib {
         IERC7579Execution.Execution[] memory executions;
 
         if (!enabled) {
+            // length: 2 (install of ExtensibleFallbackHandler + configuration of subhandler)
             executions = new IERC7579Execution.Execution[](2);
 
+            //  get Execution struct to install ExtensibleFallbackHandler on account
             executions[0] = IERC7579Execution.Execution({
                 target: instance.account,
                 value: 0,
                 callData: instance.account.configModule(
-                    address(instance.aux.fallbackHandler),
+                    address(instance.aux.fallbackHandler), // ExtensibleFallbackHandler from Auxiliary
                     "",
                     ERC7579Helpers.installFallback // <--
                 )
             });
         } else {
+            // length: 1 (configuration of subhandler. ExtensibleFallbackHandler is already
+            // installed as the FallbackHandler on the Account)
             executions = new IERC7579Execution.Execution[](1);
         }
 
+        // Follow ExtensibleFallbackHandler ABI
         ExtensibleFallbackHandler.FallBackType fallbackType = isStatic
             ? ExtensibleFallbackHandler.FallBackType.Static
             : ExtensibleFallbackHandler.FallBackType.Dynamic;
-
         ExtensibleFallbackHandler.Params memory params = ExtensibleFallbackHandler.Params({
             selector: handleFunctionSig,
             fallbackType: fallbackType,
-            handler: handler
+            handler: subHandler
         });
 
+        // set the function selector on the ExtensibleFallbackHandler
+        // using executions.length -1 here because we want this to be the last execution
         executions[executions.length - 1] = IERC7579Execution.Execution({
             target: address(instance.aux.fallbackHandler),
             value: 0,
             callData: abi.encodeCall(ExtensibleFallbackHandler.setFunctionSig, (params))
         });
 
+        // form UserOp of batched Execution
         UserOperation memory userOp =
             toUserOp({ instance: instance, callData: executions.encode() });
         userOpHash = signAndExec4337({
@@ -424,9 +539,20 @@ library RhinestoneModuleKitLib {
             signature: ""
         });
 
-        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, handler);
+        emit ModuleKitLogs.ModuleKit_SetFallback(instance.account, handleFunctionSig, subHandler);
     }
 
+    /**
+     * @dev Installs core/SessionKeyManager on the account if not already installed, and
+     * configures it with the given sessionKeyModule and sessionKeyData
+     *
+     * @param instance RhinestoneAccount
+     * @param sessionKeyModule the SessionKeyManager SessionKeyModule address that will handle this
+     * sessionkeyData
+     * @param validUntil timestamp until which the sessionKey is valid
+     * @param validAfter timestamp after which the sessionKey is valid
+     * @param sessionKeyData bytes encoded data that will be passed to the sessionKeyModule
+     */
     function installSessionKey(
         RhinestoneAccount memory instance,
         address sessionKeyModule,
@@ -439,11 +565,13 @@ library RhinestoneModuleKitLib {
     {
         IERC7579Execution.Execution[] memory executions;
 
+        // detect if account was not created yet, or if SessionKeyManager is not installed
         if (
             instance.initCode.length > 0
                 || !isValidatorInstalled(instance, address(instance.aux.sessionKeyManager))
         ) {
             executions = new IERC7579Execution.Execution[](2);
+            // install core/SessionKeyManager first
             executions[0] = IERC7579Execution.Execution({
                 target: instance.account,
                 value: 0,
@@ -455,12 +583,15 @@ library RhinestoneModuleKitLib {
             });
         }
 
+        // configure SessionKeyManager/SessionData according to params
         SessionData memory sessionData = SessionData({
             validUntil: validUntil,
             validAfter: validAfter,
             sessionValidationModule: ISessionValidationModule(sessionKeyModule),
             sessionKeyData: sessionKeyData
         });
+
+        // configure the sessionKeyData on the core/SessionKeyManager
         executions[executions.length - 1] = IERC7579Execution.Execution({
             target: address(instance.aux.sessionKeyManager),
             value: 0,
@@ -481,6 +612,37 @@ library RhinestoneModuleKitLib {
         sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                Execute Transactions on the account
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * Sign and execute a UserOperation
+     * this uses the ERC7579Helpers.signUserOp function to sign the UserOperation
+     * validator selection will be encoded in the UserOp nonce
+     *
+     * @param instance RhinestoneAccount
+     * @param userOp UserOperation
+     * @param validator address of ERC7579 validator module
+     * @param signature bytes encoded signature
+     */
+    function signAndExec4337(
+        RhinestoneAccount memory instance,
+        UserOperation memory userOp,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes32 userOpHash)
+    {
+        (userOpHash, userOp) = ERC7579Helpers.signUserOp(
+            instance.account, instance.aux.entrypoint, userOp, validator, signature
+        );
+
+        ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
+    }
+
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -501,6 +663,7 @@ library RhinestoneModuleKitLib {
         return signAndExec4337(instance, userOp, address(instance.aux.sessionKeyManager), signature);
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address[] memory targets,
@@ -522,22 +685,7 @@ library RhinestoneModuleKitLib {
         return signAndExec4337(instance, userOp, address(instance.aux.sessionKeyManager), signature);
     }
 
-    function signAndExec4337(
-        RhinestoneAccount memory instance,
-        UserOperation memory userOp,
-        address validator,
-        bytes memory signature
-    )
-        internal
-        returns (bytes32 userOpHash)
-    {
-        (userOpHash, userOp) = ERC7579Helpers.signUserOp(
-            instance.account, instance.aux.entrypoint, userOp, validator, signature
-        );
-
-        ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
-    }
-
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         UserOperation memory userOp,
@@ -550,6 +698,7 @@ library RhinestoneModuleKitLib {
         return signAndExec4337(instance, userOp, validator, signature);
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -561,6 +710,7 @@ library RhinestoneModuleKitLib {
         return exec4337(instance, target, 0, callData, address(instance.defaultValidator), "");
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -573,6 +723,7 @@ library RhinestoneModuleKitLib {
         return exec4337(instance, target, value, callData, address(instance.defaultValidator), "");
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address target,
@@ -594,6 +745,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address[] memory targets,
@@ -607,6 +759,7 @@ library RhinestoneModuleKitLib {
             exec4337(instance, targets, values, callDatas, address(instance.defaultValidator), "");
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         address[] memory targets,
@@ -629,6 +782,7 @@ library RhinestoneModuleKitLib {
         });
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         IERC7579Execution.Execution[] memory executions
@@ -639,6 +793,7 @@ library RhinestoneModuleKitLib {
         return exec4337(instance, executions, address(instance.defaultValidator), "");
     }
 
+    // wrapper for signAndExec4337
     function exec4337(
         RhinestoneAccount memory instance,
         IERC7579Execution.Execution[] memory executions,
@@ -697,6 +852,25 @@ library RhinestoneModuleKitLib {
         returns (bool isEnabled)
     {
         return IERC7579Config(instance.account).isValidatorInstalled(validator);
+    }
+
+    /**
+     * @dev Checks if hook is enabled
+     *
+     * @param instance RhinestoneAccount
+     * @param hook Hook address
+     *
+     * @return isEnabled True if hook is enabled
+     */
+    function isHookInstalled(
+        RhinestoneAccount memory instance,
+        address hook
+    )
+        internal
+        view
+        returns (bool isEnabled)
+    {
+        return IERC7579ConfigHook(instance.account).isHookInstalled(hook);
     }
 
     /**

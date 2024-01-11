@@ -5,7 +5,7 @@ import { SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE } from "../helpers/MainnetAdd
 import { ISwapRouter } from "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ERC20Integration } from "../../ERC20.sol";
-import { IERC7579Execution } from "../../../ModuleKitLib.sol";
+import { IERC7579Execution } from "../../../Accounts.sol";
 
 /// @author zeroknots
 

@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 
 import { ERC7579ValidatorBase } from "../../modules/ERC7579ValidatorBase.sol";
 import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
-import { IERC7579Execution } from "../../ModuleKitLib.sol";
+import { IERC7579Execution } from "../../Accounts.sol";
 import { IERC1271 } from "../../interfaces/IERC1271.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
