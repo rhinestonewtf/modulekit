@@ -73,6 +73,12 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         label(address(defaultValidator), "DefaultValidator");
     }
 
+    /**
+     * create new RhinestoneAccount with initCode
+     * @param salt account salt / name
+     * @param counterFactualAddress of the account
+     * @param initCode4337 to be added to userOp:initCode
+     */
     function makeRhinestoneAccount(
         bytes32 salt,
         address counterFactualAddress,
@@ -94,6 +100,12 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
 
     /**
      * create new RhinestoneAccount with ERC7579BootstrapConfig
+     *
+     * @param salt account salt / name
+     * @param validators ERC7549 validators to be installed on the account
+     * @param executors ERC7549 executors to be installed on the account
+     * @param hook ERC7549 hook to be installed on the account
+     * @param fallBack ERC7549 fallbackHandler to be installed on the account
      */
     function makeRhinestoneAccount(
         bytes32 salt,
@@ -141,6 +153,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         instance = makeRhinestoneAccount(salt, account, initCode4337);
     }
 
+    /**
+     * create new RhinestoneAccount with modulekit defaults
+     *
+     * @param salt account salt / name
+     */
     function makeRhinestoneAccount(bytes32 salt)
         internal
         returns (RhinestoneAccount memory instance)
@@ -635,11 +652,33 @@ library RhinestoneModuleKitLib {
         internal
         returns (bytes32 userOpHash)
     {
-        (userOpHash, userOp) = ERC7579Helpers.signUserOp(
-            instance.account, instance.aux.entrypoint, userOp, validator, signature
-        );
+        (userOpHash, userOp) = signUserOpWithFunction({
+            instance: instance,
+            unsignedUserOp: userOp,
+            validator: validator,
+            signature: signature,
+            signFn: ERC7579Helpers.signUserOp // selecting ERC7579Helpers.signUserOp fn to sign
+         });
 
         ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
+    }
+
+    /**
+     * signs a user op with supplied function
+     */
+    function signUserOpWithFunction(
+        RhinestoneAccount memory instance,
+        UserOperation memory unsignedUserOp,
+        address validator,
+        bytes memory signature,
+        function(address, IEntryPoint, UserOperation memory, address, bytes memory) internal  returns (bytes32, UserOperation memory)
+            signFn
+    )
+        internal
+        returns (bytes32 userOpHash, UserOperation memory signedUserOp)
+    {
+        return
+            signFn(instance.account, instance.aux.entrypoint, unsignedUserOp, validator, signature);
     }
 
     // wrapper for signAndExec4337

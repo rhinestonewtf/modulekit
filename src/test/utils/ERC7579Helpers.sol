@@ -18,36 +18,26 @@ import {
 import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 
 library ERC7579Helpers {
-    function map(
-        IERC7579Execution.Execution[] memory self,
-        function(IERC7579Execution.Execution memory) internal  returns (IERC7579Execution.Execution memory)
-            f
-    )
-        internal
-        returns (IERC7579Execution.Execution[] memory result)
-    {
-        result = new IERC7579Execution.Execution[](self.length);
-        for (uint256 i; i < self.length; i++) {
-            result[i] = f(self[i]);
-        }
-        return result;
-    }
-
-    function reduce(
-        IERC7579Execution.Execution[] memory self,
-        function(IERC7579Execution.Execution memory, IERC7579Execution.Execution memory) 
-        internal  returns (IERC7579Execution.Execution memory) f
-    )
-        internal
-        returns (IERC7579Execution.Execution memory result)
-    {
-        result = self[0];
-        for (uint256 i = 1; i < self.length; i++) {
-            result = f(result, self[i]);
-        }
-        return result;
-    }
-
+    /**
+     * @dev install/uninstall a module on an ERC7579 account
+     *
+     * @param account IERC7579Account address
+     * @param module IERC7579Module address
+     * @param initData bytes encoded initialization data.
+     *               initData will be passed to fn
+     * @param fn function parameter that will yield the initData
+     *
+     * @return erc7579Tx bytes encoded single ERC7579Execution
+     *
+     *
+     *
+     *   can be used like so:
+     *   bytes memory installCallData = configModule(
+     *                        validator,
+     *                        initData,
+     *                        ERC7579Helpers.installValidator);
+     *
+     */
     function configModule(
         address account,
         address module,
@@ -62,6 +52,9 @@ library ERC7579Helpers {
         erc7579Tx = encode(to, value, callData);
     }
 
+    /**
+     * get callData to install validator on ERC7579 Account
+     */
     function installValidator(
         address account,
         address validator,
@@ -76,6 +69,9 @@ library ERC7579Helpers {
         callData = abi.encodeCall(IERC7579Config.installValidator, (validator, initData));
     }
 
+    /**
+     * get callData to uninstall validator on ERC7579 Account
+     */
     function uninstallValidator(
         address account,
         address validator,
@@ -108,9 +104,12 @@ library ERC7579Helpers {
         );
     }
 
+    /**
+     * get callData to install executor on ERC7579 Account
+     */
     function installExecutor(
         address account,
-        address validator,
+        address executor,
         bytes memory initData
     )
         internal
@@ -119,9 +118,12 @@ library ERC7579Helpers {
     {
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579Config.installExecutor, (validator, initData));
+        callData = abi.encodeCall(IERC7579Config.installExecutor, (executor, initData));
     }
 
+    /**
+     * get callData to uninstall executor on ERC7579 Account
+     */
     function uninstallExecutor(
         address account,
         address executor,
@@ -154,6 +156,9 @@ library ERC7579Helpers {
         );
     }
 
+    /**
+     * get callData to install hook on ERC7579 Account
+     */
     function installHook(
         address account,
         address hook,
@@ -168,6 +173,9 @@ library ERC7579Helpers {
         callData = abi.encodeCall(IERC7579ConfigHook.installHook, (hook, initData));
     }
 
+    /**
+     * get callData to uninstall hook on ERC7579 Account
+     */
     function uninstallHook(
         address account,
         address hook,
@@ -182,6 +190,9 @@ library ERC7579Helpers {
         callData = abi.encodeCall(IERC7579ConfigHook.installHook, (address(0), initData));
     }
 
+    /**
+     * get callData to install fallback on ERC7579 Account
+     */
     function installFallback(
         address account,
         address fallbackHandler,
@@ -196,6 +207,9 @@ library ERC7579Helpers {
         callData = abi.encodeCall(IERC7579Config.installFallback, (fallbackHandler, initData));
     }
 
+    /**
+     * get callData to uninstall fallback on ERC7579 Account
+     */
     function uninstallFallback(
         address account,
         address fallbackHandler,
@@ -210,20 +224,12 @@ library ERC7579Helpers {
         callData = abi.encodeCall(IERC7579Config.installFallback, (address(0), initData));
     }
 
-    function installModule(
-        function(address,uint,bytes memory) internal pure returns(address , uint256 , bytes memory )
-            fn,
-        address module,
-        bytes memory initData
-    )
-        internal
-        pure
-        returns (bytes memory erc7579Tx)
-    {
-        (address target, uint256 value, bytes memory data) = fn(module, 0, initData);
-        return encode(target, value, data);
-    }
-
+    /**
+     * Encode a single ERC7579 Execution Transaction
+     * @param target target of the call
+     * @param value the value of the call
+     * @param callData the calldata of the call
+     */
     function encode(
         address target,
         uint256 value,
@@ -236,6 +242,10 @@ library ERC7579Helpers {
         return abi.encodeCall(IERC7579Execution.execute, (target, value, callData));
     }
 
+    /**
+     * Encode a batched ERC7579 Execution Transaction
+     * @param executions ERC7579 batched executions
+     */
     function encode(IERC7579Execution.Execution[] memory executions)
         internal
         pure
@@ -244,6 +254,9 @@ library ERC7579Helpers {
         return abi.encodeCall(IERC7579Execution.executeBatch, (executions));
     }
 
+    /**
+     * convert arrays to batched IERC7579Execution
+     */
     function toExecutions(
         address[] memory targets,
         uint256[] memory values,
@@ -385,5 +398,35 @@ library ArrayLib {
         array[1] = _2;
         array[2] = _3;
         array[3] = _4;
+    }
+
+    function map(
+        IERC7579Execution.Execution[] memory self,
+        function(IERC7579Execution.Execution memory) internal  returns (IERC7579Execution.Execution memory)
+            f
+    )
+        internal
+        returns (IERC7579Execution.Execution[] memory result)
+    {
+        result = new IERC7579Execution.Execution[](self.length);
+        for (uint256 i; i < self.length; i++) {
+            result[i] = f(self[i]);
+        }
+        return result;
+    }
+
+    function reduce(
+        IERC7579Execution.Execution[] memory self,
+        function(IERC7579Execution.Execution memory, IERC7579Execution.Execution memory) 
+        internal  returns (IERC7579Execution.Execution memory) f
+    )
+        internal
+        returns (IERC7579Execution.Execution memory result)
+    {
+        result = self[0];
+        for (uint256 i = 1; i < self.length; i++) {
+            result = f(result, self[i]);
+        }
+        return result;
     }
 }
