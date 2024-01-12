@@ -68,8 +68,7 @@ contract LicenseCollector {
             nonce: nonce,
             initCode: "", // todo
             callData: erc7579Exec,
-            callGasLimit: 2e6,
-            verificationGasLimit: 2e6,
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
             maxFeePerGas: 1,
             maxPriorityFeePerGas: 1,
