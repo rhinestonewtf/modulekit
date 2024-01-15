@@ -69,15 +69,15 @@ contract UserOpGasLog {
         bytes memory initCode
     )
         external
-        returns (uint gasValidation, uint256 gasExecution)
+        returns (uint256 gasValidation, uint256 gasExecution)
     {
         IEntryPointSimulations.ExecutionResult memory executionResult =
             simulation.simulateHandleOp(userOp, sender, initCode);
 
         gasExecution = executionResult.paid;
-        gasValidation = executionResult.gasUsedInValidation;
+        // gasValidation = executionResult.gasUsedInValidation;
 
-        _log[userOpHash].gasValidation = executionResult.gasUsedInValidation;
+        // _log[userOpHash].gasValidation = executionResult.gasUsedInValidation;
         _log[userOpHash].gasExecution = gasExecution;
     }
 }

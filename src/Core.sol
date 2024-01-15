@@ -2,6 +2,11 @@
 pragma solidity ^0.8.19;
 
 /* solhint-disable no-unused-import */
-import { SessionKeyManagerLib, SessionData } from "./core/SessionKey/SessionKeyManagerLib.sol";
-import { ISessionKeyManager } from "./core/SessionKey/ISessionKeyManager.sol";
+import { ISessionValidationModule } from
+    "@rhinestone/sessionkeymanager/ISessionValidationModule.sol";
+
+import { ISessionKeyManager } from "@rhinestone/sessionkeymanager/ISessionKeyManager.sol";
+import { SESSIONKEYMANAGER_BYTECODE } from
+    "@rhinestone/sessionkeymanager/SessionKeyManagerBytecode.sol";
+import { SessionKeyManagerLib } from "@rhinestone/sessionkeymanager/SessionKeyManagerLib.sol";
 import { ExtensibleFallbackHandler } from "./core/ExtensibleFallbackHandler.sol";

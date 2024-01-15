@@ -10,9 +10,12 @@ dependencies:
     version: 5.0.1
 
 devDependencies:
+  '@rhinestone/sessionkeymanager':
+    specifier: github:rhinestonewtf/sessionkeymanager
+    version: git@github.com+rhinestonewtf/sessionkeymanager/340a24c0e038a651bd860a38653ab0c98028e4a8
   account-abstraction:
     specifier: github:eth-infinitism/account-abstraction#develop
-    version: github.com/eth-infinitism/account-abstraction/63fb07a4714055052716ac1c3dbad29e10215fe7(ethers@5.7.2)(hardhat@2.19.4)(lodash@4.17.21)(typechain@5.2.0)
+    version: github.com/eth-infinitism/account-abstraction/9879c931ce92f0bee1bca1d1b1352eeb98b9a120(ethers@5.7.2)(hardhat@2.19.4)(lodash@4.17.21)(typechain@5.2.0)
   ds-test:
     specifier: github:dapphub/ds-test
     version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
@@ -21,7 +24,7 @@ devDependencies:
     version: github.com/erc7579/erc7579-implementation/b60760535a71339605246f04ea44b664ddaf9b87
   forge-std:
     specifier: github:foundry-rs/forge-std
-    version: github.com/foundry-rs/forge-std/87a2a0afc5fafd6297538a45a52ac19e71a84562
+    version: github.com/foundry-rs/forge-std/36c303b7ffdd842d06b1ec2744c9b9b5fb3083f3
   prettier:
     specifier: ^2.8.8
     version: 2.8.8
@@ -30,7 +33,7 @@ devDependencies:
     version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
   solady:
     specifier: github:vectorized/solady
-    version: github.com/vectorized/solady/ac6d2cc13807e7e30b3c689af900d01150b03534
+    version: github.com/vectorized/solady/03fe77af044c61cf61b7fe1d5e496aef613b7c7a
   solarray:
     specifier: github:sablier-labs/solarray
     version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
@@ -934,20 +937,20 @@ packages:
   /@types/bn.js@4.11.6:
     resolution: {integrity: sha512-pqr857jrp2kPuO9uRjZ3PwnJTjoQy+fcdxvBTvHm6dkmEL9q+hDD/2j/0ELOBPtPnS8LjCX0gI9nbl8lVkadpg==}
     dependencies:
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
     dev: true
 
   /@types/bn.js@5.1.5:
     resolution: {integrity: sha512-V46N0zwKRF5Q00AZ6hWtN0T8gGmDUaUzLWQvHFo5yThtVwK/VCenFY3wXVbOvNfajEpsTfQM4IN9k/d6gUVX3A==}
     dependencies:
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
     dev: true
 
   /@types/glob@7.2.0:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
     dev: true
 
   /@types/http-cache-semantics@4.0.4:
@@ -966,8 +969,8 @@ packages:
     resolution: {integrity: sha512-Z61JK7DKDtdKTWwLeElSEBcWGRLY8g95ic5FoQqI9CMx0ns/Ghep3B4DfcEimiKMvtamNVULVNKEsiwV3aQmXw==}
     dev: true
 
-  /@types/node@20.11.0:
-    resolution: {integrity: sha512-o9bjXmDNcF7GbM4CNQpmi+TutCgap/K3w1JyKgxAjqx41zp9qlIAVFi0IhCNsJcXolEqLWhbFbEeL0PvYm4pcQ==}
+  /@types/node@20.11.1:
+    resolution: {integrity: sha512-DsXojJUES2M+FE8CpptJTKpg+r54moV9ZEncPstni1WHFmTcCzeFLnMFfyhCVS8XNOy/OQG+8lVxRLRrVHmV5A==}
     dependencies:
       undici-types: 5.26.5
     dev: true
@@ -975,7 +978,7 @@ packages:
   /@types/pbkdf2@3.1.2:
     resolution: {integrity: sha512-uRwJqmiXmh9++aSu1VNEn3iIxWOhd8AHXNSdlaLfdAAdSTY9jYVeGWnzejM3dvrkbqE3/hyQkQQ29IFATEGlew==}
     dependencies:
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
     dev: true
 
   /@types/prettier@2.7.3:
@@ -989,14 +992,14 @@ packages:
   /@types/readable-stream@2.3.15:
     resolution: {integrity: sha512-oM5JSKQCcICF1wvGgmecmHldZ48OZamtMxcGGVICOJA8o8cahXC1zEVAif8iwoc5j8etxFaRFnf095+CDsuoFQ==}
     dependencies:
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
       safe-buffer: 5.1.2
     dev: true
 
   /@types/secp256k1@4.0.6:
     resolution: {integrity: sha512-hHxJU6PAEUn0TP4S/ZOzuTUvJWuZ6eIKeNKb5RBpODvSl6hp1Wrw4s7ATY50rklRCScUDpHzVA/DQdSjJ3UoYQ==}
     dependencies:
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
     dev: true
 
   /abbrev@1.0.9:
@@ -1183,7 +1186,7 @@ packages:
   /axios@0.21.4(debug@4.3.4):
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.4(debug@4.3.4)
+      follow-redirects: 1.15.5(debug@4.3.4)
     transitivePeerDependencies:
       - debug
     dev: true
@@ -1341,7 +1344,7 @@ packages:
     dependencies:
       function-bind: 1.1.2
       get-intrinsic: 1.2.2
-      set-function-length: 1.1.1
+      set-function-length: 1.2.0
     dev: true
 
   /callsites@3.1.0:
@@ -1950,8 +1953,8 @@ packages:
       imul: 1.0.1
     dev: true
 
-  /follow-redirects@1.15.4(debug@4.3.4):
-    resolution: {integrity: sha512-Cr4D/5wlrb0z9dgERpUL3LrmPKVDsETIJhaCMeDfuFYcqa5bldGV6wBsAN6X/vxlXQtFBMrXdXxdL8CbDTGniw==}
+  /follow-redirects@1.15.5(debug@4.3.4):
+    resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -1983,7 +1986,7 @@ packages:
   /fs-extra@0.30.0:
     resolution: {integrity: sha512-UvSPKyhMn6LEd/WpUaV9C9t3zATuqoqfWc3QdPhPLb58prN9tqYPlPWi8Krxi44loBoUzlobqZ3+8tGpxxSzwA==}
     dependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       jsonfile: 2.4.0
       klaw: 1.3.1
       path-is-absolute: 1.0.1
@@ -1994,7 +1997,7 @@ packages:
     resolution: {integrity: sha512-oRXApq54ETRj4eMiFzGnHWGy+zo5raudjuxN0b8H7s/RU2oW0Wvsx9O0ACRN/kRq9E8Vu/ReskGB5o3ji+FzHQ==}
     engines: {node: '>=12'}
     dependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       jsonfile: 6.1.0
       universalify: 2.0.1
     dev: true
@@ -2003,7 +2006,7 @@ packages:
     resolution: {integrity: sha512-YJDaCJZEnBmcbw13fvdAM9AwNOJwOzrE4pqMqBq5nFiEqXUqHwlK4B+3pUw6JNvfSPtX05xFHtYy/1ni01eGCw==}
     engines: {node: '>=6 <7 || >=8'}
     dependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       jsonfile: 4.0.0
       universalify: 0.1.2
     dev: true
@@ -2012,7 +2015,7 @@ packages:
     resolution: {integrity: sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==}
     engines: {node: '>=6 <7 || >=8'}
     dependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       jsonfile: 4.0.0
       universalify: 0.1.2
     dev: true
@@ -2022,7 +2025,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       at-least-node: 1.0.0
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       jsonfile: 6.1.0
       universalify: 2.0.1
     dev: true
@@ -2179,6 +2182,10 @@ packages:
 
   /graceful-fs@4.2.10:
     resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
+    dev: true
+
+  /graceful-fs@4.2.11:
+    resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
     dev: true
 
   /handlebars@4.7.8:
@@ -2581,13 +2588,13 @@ packages:
   /jsonfile@2.4.0:
     resolution: {integrity: sha512-PKllAqbgLgxHaj8TElYymKCAgrASebJrWpTnEkOaTowt23VKXXN0sUeriJ+eh7y6ufb/CC5ap11pz71/cM0hUw==}
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: true
 
   /jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: true
 
   /jsonfile@6.1.0:
@@ -2595,7 +2602,7 @@ packages:
     dependencies:
       universalify: 2.0.1
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: true
 
   /jsonschema@1.4.1:
@@ -2626,7 +2633,7 @@ packages:
   /klaw@1.3.1:
     resolution: {integrity: sha512-TED5xi9gGQjGpNnvRWknrwAB1eL5GciPfVFOt3Vk1OJCVDQbzuSfrF3hkUQKlsgKrG1F+0t5W0m+Fje1jIt8rw==}
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: true
 
   /latest-version@7.0.0:
@@ -2735,7 +2742,7 @@ packages:
     resolution: {integrity: sha512-90Tvmg2NXwnKMgTafA01PRELsYNNRb/F2bj3nzdByTLLMUmgkgL8H/oeWcjZtVVffnBJyNjDcYxY7cdOE/WoHg==}
     engines: {node: '>=14.17'}
     dependencies:
-      '@types/node': 20.11.0
+      '@types/node': 20.11.1
     dev: true
 
   /md5.js@1.3.5:
@@ -3283,7 +3290,7 @@ packages:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
     hasBin: true
     dependencies:
-      glob: 7.2.3
+      glob: 7.2.0
     dev: true
 
   /ripemd160@2.0.2:
@@ -3386,11 +3393,12 @@ packages:
       randombytes: 2.1.0
     dev: true
 
-  /set-function-length@1.1.1:
-    resolution: {integrity: sha512-VoaqjbBJKiWtg4yRcKBQ7g7wnGnLV3M8oLvVWwOk2PdYY6PEFegR1vezXR0tw6fZGF9csVakIRjrJiy2veSBFQ==}
+  /set-function-length@1.2.0:
+    resolution: {integrity: sha512-4DBHDoyHlM1IRPGYcoxexgh67y4ueR53FKV1yyxwFMY7aCqcN/38M1+SwZ/qJQ8iLv7+ck385ot4CcisOAPT9w==}
     engines: {node: '>= 0.4'}
     dependencies:
       define-data-property: 1.1.1
+      function-bind: 1.1.2
       get-intrinsic: 1.2.2
       gopd: 1.0.1
       has-property-descriptors: 1.0.1
@@ -3451,7 +3459,7 @@ packages:
     dependencies:
       command-exists: 1.2.9
       commander: 3.0.2
-      follow-redirects: 1.15.4(debug@4.3.4)
+      follow-redirects: 1.15.5(debug@4.3.4)
       fs-extra: 0.30.0
       js-sha3: 0.8.0
       memorystream: 0.3.1
@@ -3946,6 +3954,12 @@ packages:
       ethers: 5.7.2
     dev: true
 
+  git@github.com+rhinestonewtf/sessionkeymanager/340a24c0e038a651bd860a38653ab0c98028e4a8:
+    resolution: {commit: 340a24c0e038a651bd860a38653ab0c98028e4a8, repo: git@github.com:rhinestonewtf/sessionkeymanager.git, type: git}
+    name: sessionkeyManager
+    version: 1.0.0
+    dev: true
+
   github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0:
     resolution: {tarball: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0}
     name: ds-test
@@ -3958,9 +3972,9 @@ packages:
     version: 0.0.0
     dev: true
 
-  github.com/eth-infinitism/account-abstraction/63fb07a4714055052716ac1c3dbad29e10215fe7(ethers@5.7.2)(hardhat@2.19.4)(lodash@4.17.21)(typechain@5.2.0):
-    resolution: {tarball: https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/63fb07a4714055052716ac1c3dbad29e10215fe7}
-    id: github.com/eth-infinitism/account-abstraction/63fb07a4714055052716ac1c3dbad29e10215fe7
+  github.com/eth-infinitism/account-abstraction/9879c931ce92f0bee1bca1d1b1352eeb98b9a120(ethers@5.7.2)(hardhat@2.19.4)(lodash@4.17.21)(typechain@5.2.0):
+    resolution: {tarball: https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/9879c931ce92f0bee1bca1d1b1352eeb98b9a120}
+    id: github.com/eth-infinitism/account-abstraction/9879c931ce92f0bee1bca1d1b1352eeb98b9a120
     name: accountabstraction
     version: 0.6.0
     dependencies:
@@ -3988,10 +4002,10 @@ packages:
       - utf-8-validate
     dev: true
 
-  github.com/foundry-rs/forge-std/87a2a0afc5fafd6297538a45a52ac19e71a84562:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/87a2a0afc5fafd6297538a45a52ac19e71a84562}
+  github.com/foundry-rs/forge-std/36c303b7ffdd842d06b1ec2744c9b9b5fb3083f3:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/36c303b7ffdd842d06b1ec2744c9b9b5fb3083f3}
     name: forge-std
-    version: 1.7.4
+    version: 1.7.5
     dev: true
 
   github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
@@ -4000,10 +4014,10 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/vectorized/solady/ac6d2cc13807e7e30b3c689af900d01150b03534:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/ac6d2cc13807e7e30b3c689af900d01150b03534}
+  github.com/vectorized/solady/03fe77af044c61cf61b7fe1d5e496aef613b7c7a:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/03fe77af044c61cf61b7fe1d5e496aef613b7c7a}
     name: solady
-    version: 0.0.158
+    version: 0.0.161
     dev: true
 
   github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61:

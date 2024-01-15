@@ -16,8 +16,7 @@ import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
-import { ISessionKeyManager, SessionData } from "../core/SessionKey/ISessionKeyManager.sol";
-import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
+import { ISessionKeyManager, ISessionValidationModule } from "../Core.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 
 /* solhint-disable no-global-import */
@@ -601,7 +600,7 @@ library RhinestoneModuleKitLib {
         }
 
         // configure SessionKeyManager/SessionData according to params
-        SessionData memory sessionData = SessionData({
+        ISessionKeyManager.SessionData memory sessionData = ISessionKeyManager.SessionData({
             validUntil: validUntil,
             validAfter: validAfter,
             sessionValidationModule: ISessionValidationModule(sessionKeyModule),

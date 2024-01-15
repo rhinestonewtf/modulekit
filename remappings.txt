@@ -2,6 +2,7 @@ account-abstraction/=node_modules/account-abstraction/contracts/
 @openzeppelin/=node_modules/@openzeppelin/
 ds-test/=node_modules/ds-test/src/
 erc7579/=node_modules/erc7579/src/
+@rhinestone/sessionkeymanager/=node_modules/@rhinestone/sessionkeymanager/src/
 forge-std/=node_modules/forge-std/src/
 sentinellist/=node_modules/sentinellist/src/
 solady/=node_modules/solady/
