@@ -100,9 +100,13 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     function testAddValidator() public {
         address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
 
         instance.installValidator(newValidator);
         // instance.log4337Gas("testAddValidator()");
+        instance.enableGasLog();
+        instance.installValidator(newValidator1);
         bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
     }

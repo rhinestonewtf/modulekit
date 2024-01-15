@@ -31,6 +31,7 @@ library Actions {
         Liquidate, // liquidate an undercollateralized or expiring account
         Vaporize, // use excess tokens to zero-out a completely negative account
         Call // send arbitrary data to an address
+
     }
 
     enum AccountLayout {
@@ -223,11 +224,13 @@ library Types {
     enum AssetDenomination {
         Wei, // the amount is denominated in wei
         Par // the amount is denominated in par
+
     }
 
     enum AssetReference {
         Delta, // the amount is given as a delta from the current value
         Target // the amount is given as an exact number to end up at
+
     }
 
     struct AssetAmount {

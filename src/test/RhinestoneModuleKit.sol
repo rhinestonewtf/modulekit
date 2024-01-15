@@ -13,7 +13,7 @@ import {
 
 import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
-import { UserOperation } from "../external/ERC4337.sol";
+import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { MockValidator } from "../mocks/MockValidator.sol";
 import { ISessionKeyManager, SessionData } from "../core/SessionKey/ISessionKeyManager.sol";
@@ -26,16 +26,13 @@ import "forge-std/console2.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 
-interface GasDebug {
-    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
-}
-
 struct RhinestoneAccount {
     address account;
     IERC7579Validator defaultValidator;
     Auxiliary aux;
     bytes32 salt;
     bytes initCode;
+    bool gasLog;
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
@@ -68,7 +65,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         label(address(accountImplementationSingleton), "ERC7579AccountImpl");
         accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
         label(address(accountFactory), "ERC7579AccountFactory");
-        defaultValidator = new  MockValidator();
+        defaultValidator = new MockValidator();
         label(address(defaultValidator), "DefaultValidator");
     }
 
@@ -84,6 +81,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
         bytes memory initCode4337
     )
         internal
+        view
         returns (RhinestoneAccount memory instance)
     {
         // Create RhinestoneAccount struct with counterFactualAddress and initCode
@@ -93,7 +91,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory, BootstrapUtil {
             aux: auxiliary,
             salt: salt,
             defaultValidator: IERC7579Validator(address(defaultValidator)),
-            initCode: initCode4337
+            initCode: initCode4337,
+            gasLog: false
         });
     }
 
@@ -656,8 +655,38 @@ library RhinestoneModuleKitLib {
         (userOpHash, userOp) = ERC7579Helpers.signatureInNonce(
             instance.account, instance.aux.entrypoint, userOp, validator, signature
         );
+        (uint256 gasValidation, uint256 gasExecution) =
+            _gasCalc(instance, userOp, validator, signature, userOpHash);
+        console2.log(gasValidation, gasExecution);
 
         ERC4337Helpers.exec4337(instance.account, instance.aux.entrypoint, userOp);
+    }
+
+    function _gasCalc(
+        RhinestoneAccount memory instance,
+        UserOperation memory userOp,
+        address validator,
+        bytes memory signature,
+        bytes32 userOpHash
+    )
+        internal
+        returns (uint256 gasValidation, uint256 gasExecution)
+    {
+        if (instance.account.code.length != 0) {
+            (, UserOperation memory sim) = ERC7579Helpers.signatureInNonce(
+                instance.account,
+                IEntryPoint(address(instance.aux.gasSimulation.simulation())),
+                userOp,
+                validator,
+                signature
+            );
+
+            (gasValidation, gasExecution) =
+                instance.aux.gasSimulation.calcExecutionGas(sim, userOpHash, address(0), "");
+            (, userOp) = ERC7579Helpers.signatureInNonce(
+                instance.account, instance.aux.entrypoint, userOp, validator, signature
+            );
+        }
     }
     /**
      * Execute with sessionkey signature
@@ -838,22 +867,26 @@ library RhinestoneModuleKitLib {
         writeExpectRevert(1);
     }
 
-    function log4337Gas(
-        RhinestoneAccount memory instance,
-        string memory name
-    )
-        internal
-        view
-        returns (uint256 gasValidation, uint256 gasExecution)
-    {
-        gasValidation =
-            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
-        gasExecution =
-            GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
+    // function log4337Gas(
+    //     RhinestoneAccount memory instance,
+    //     string memory name
+    // )
+    //     internal
+    //     view
+    //     returns (uint256 gasValidation, uint256 gasExecution)
+    // {
+    //     gasValidation =
+    //         GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
+    //     gasExecution =
+    //         GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
+    //
+    //     console2.log("\nERC-4337 Gas Log:", name);
+    //     console2.log("Verification:  ", gasValidation);
+    //     console2.log("Execution:     ", gasExecution);
+    // }
 
-        console2.log("\nERC-4337 Gas Log:", name);
-        console2.log("Verification:  ", gasValidation);
-        console2.log("Execution:     ", gasExecution);
+    function enableGasLog(RhinestoneAccount memory instance) internal {
+        instance.gasLog = true;
     }
 
     /**
@@ -929,18 +962,18 @@ library RhinestoneModuleKitLib {
         bytes memory callData
     )
         internal
-        view
         returns (UserOperation memory userOp)
     {
-        bool alreadyDeployed = instance.account.code.length > 0;
-        if (alreadyDeployed) {
-            instance.initCode = "";
+        bytes memory initCode;
+        bool notDeployedYet = instance.account.code.length == 0;
+        if (notDeployedYet) {
+            initCode = instance.initCode;
         }
 
         userOp = UserOperation({
             sender: instance.account,
             nonce: 0,
-            initCode: instance.initCode,
+            initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,

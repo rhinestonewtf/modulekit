@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IEntryPoint } from "../external/ERC4337.sol";
+import { IEntryPoint, UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { EntryPointFactory } from "./predeploy/EntryPoint.sol";
+import { EntryPointSimulations } from "account-abstraction/core/EntryPointSimulations.sol";
+import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPointSimulations.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";
@@ -16,12 +18,68 @@ import "./utils/Log.sol";
 
 struct Auxiliary {
     IEntryPoint entrypoint;
+    UserOpGasLog gasSimulation;
     ISessionKeyManager sessionKeyManager;
     ExtensibleFallbackHandler fallbackHandler;
     ERC7579Bootstrap bootstrap;
     IERC7484Registry registry;
     address initialTrustedAttester;
     MockFactory mockFactory;
+}
+
+contract UserOpGasLog {
+    EntryPointSimulations public immutable simulation = new EntryPointSimulations();
+
+    struct GasLog {
+        uint256 gasValidation;
+        uint256 gasExecution;
+    }
+
+    mapping(bytes32 userOpHash => GasLog log) internal _log;
+
+    function getLog(bytes32 userOpHash)
+        external
+        returns (uint256 gasValidation, uint256 gasExecution)
+    {
+        GasLog memory log = _log[userOpHash];
+        return (log.gasValidation, log.gasExecution);
+    }
+
+    function calcValidationGas(
+        UserOperation memory userOp,
+        bytes32 userOpHash,
+        address sender,
+        bytes memory initCode
+    )
+        external
+        returns (uint256 gasValidation)
+    {
+        IEntryPointSimulations.ValidationResult memory validationResult =
+            simulation.simulateValidation(userOp);
+
+        gasValidation = validationResult.returnInfo.preOpGas;
+
+        _log[userOpHash].gasValidation = gasValidation;
+    }
+
+    function calcExecutionGas(
+        UserOperation memory userOp,
+        bytes32 userOpHash,
+        address sender,
+        bytes memory initCode
+    )
+        external
+        returns (uint gasValidation, uint256 gasExecution)
+    {
+        IEntryPointSimulations.ExecutionResult memory executionResult =
+            simulation.simulateHandleOp(userOp, sender, initCode);
+
+        gasExecution = executionResult.paid;
+        gasValidation = executionResult.gasUsedInValidation;
+
+        _log[userOpHash].gasValidation = executionResult.gasUsedInValidation;
+        _log[userOpHash].gasExecution = gasExecution;
+    }
 }
 
 contract AuxiliaryFactory {
@@ -31,6 +89,7 @@ contract AuxiliaryFactory {
         auxiliary.mockFactory = new MockFactory();
         label(address(auxiliary.mockFactory), "Mock Factory");
         EntryPointFactory entryPointFactory = new EntryPointFactory();
+        auxiliary.gasSimulation = new UserOpGasLog();
         auxiliary.entrypoint = entryPointFactory.etchEntrypoint();
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();

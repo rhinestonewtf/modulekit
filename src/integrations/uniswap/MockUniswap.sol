@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
 import "../interfaces/uniswap/v3/ISwapRouter.sol";
 
 contract MockUniswap is ISwapRouter {

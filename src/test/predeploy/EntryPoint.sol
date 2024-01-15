@@ -6,9 +6,8 @@ pragma solidity ^0.8.21;
 import "../utils/Vm.sol";
 import { IEntryPoint } from "../../external/ERC4337.sol";
 import { EntryPoint } from "account-abstraction/core/EntryPoint.sol";
-import { GasDebug } from "../utils/GasDebug.sol";
-
-contract EntryPointGas is EntryPoint, GasDebug { }
+import { EntryPointSimulations } from "account-abstraction/core/EntryPointSimulations.sol";
+import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPointSimulations.sol";
 
 address constant ENTRYPOINT_ADDR = 0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789;
 // solhint-disable max-line-length
