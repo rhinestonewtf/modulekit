@@ -211,38 +211,84 @@ library RhinestoneModuleKitLib {
         string memory gasIdentifier = getGasIdentifier();
 
         if (calculateGas && bytes(gasIdentifier).length != 0) {
+            string memory fileName = string.concat("./gas_calculations/", gasIdentifier, ".json");
             string memory jsonObj = string(abi.encodePacked(gasIdentifier));
 
-            // total gas used
-            serializeUint(jsonObj, "Total gas used by UserOp", totalUserOpGas);
-
-            // ERC4337 phases
-            uint256 gasValidation =
-                GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 1);
-            uint256 gasExecution =
-                GasDebug(address(instance.aux.entrypoint)).getGasConsumed(instance.account, 2);
-
-            string memory phasesObj = "phases";
-            serializeUint(phasesObj, "Validation gas used", gasValidation);
-            string memory phasesOutput =
-                serializeUint(phasesObj, "Execution gas used", gasExecution);
-
-            // L2-L1 calldata gas used
             bytes memory userOpCalldata = abi.encodeWithSelector(
                 instance.aux.entrypoint.handleOps.selector, userOps, beneficiary
             );
-            string memory l2sObj = "l2s";
-            serializeUint(l2sObj, "OP Stack L1 Gas Used", getArbitrumL1Gas(userOpCalldata));
-            string memory l2sOutput =
-                serializeUint(l2sObj, "Arbitrum L1 Gas Used", getOpStackL1Gas(userOpCalldata));
 
-            serializeString(jsonObj, "ERC-4337 Phases", phasesOutput);
-            string memory finalJson = serializeString(jsonObj, "L2-L1 calldata", l2sOutput);
+            GasCalculations memory gasCalculations = GasCalculations({
+                validation: GasDebug(address(instance.aux.entrypoint)).getGasConsumed(
+                    instance.account, 1
+                    ),
+                execution: GasDebug(address(instance.aux.entrypoint)).getGasConsumed(
+                    instance.account, 2
+                    ),
+                total: totalUserOpGas,
+                arbitrum: getArbitrumL1Gas(userOpCalldata),
+                opStack: getOpStackL1Gas(userOpCalldata)
+            });
 
-            writeJson(
-                finalJson,
-                string.concat("./gas_calculations/", "userOpGas_", gasIdentifier, ".json")
+            GasCalculations memory prevGasCalculations;
+
+            if (exists(fileName)) {
+                string memory fileContent = readFile(fileName);
+                prevGasCalculations = parsePrevGasReport(fileContent);
+            }
+
+            // total gas used
+            serializeString(
+                jsonObj,
+                "Total",
+                formatGasValue({
+                    prevValue: prevGasCalculations.total,
+                    newValue: gasCalculations.total
+                })
             );
+
+            // ERC-4337 phases gas used
+            string memory phasesObj = "phases";
+            serializeString(
+                phasesObj,
+                "Validation",
+                formatGasValue({
+                    prevValue: prevGasCalculations.validation,
+                    newValue: gasCalculations.validation
+                })
+            );
+            string memory phasesOutput = serializeString(
+                phasesObj,
+                "Execution",
+                formatGasValue({
+                    prevValue: prevGasCalculations.execution,
+                    newValue: gasCalculations.execution
+                })
+            );
+
+            // L2-L1 calldata gas used
+            string memory l2sObj = "l2s";
+            serializeString(
+                l2sObj,
+                "OP-Stack",
+                formatGasValue({
+                    prevValue: prevGasCalculations.opStack,
+                    newValue: gasCalculations.opStack
+                })
+            );
+            string memory l2sOutput = serializeString(
+                l2sObj,
+                "Arbitrum",
+                formatGasValue({
+                    prevValue: prevGasCalculations.arbitrum,
+                    newValue: gasCalculations.arbitrum
+                })
+            );
+
+            serializeString(jsonObj, "Phases", phasesOutput);
+            string memory finalJson = serializeString(jsonObj, "Calldata", l2sOutput);
+
+            writeJson(finalJson, fileName);
             writeGasIdentifier("");
         }
 
