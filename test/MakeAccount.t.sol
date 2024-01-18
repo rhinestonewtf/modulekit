@@ -8,7 +8,7 @@ import "src/Mocks.sol";
 /* solhint-enable no-global-import */
 
 contract BaseTest is RhinestoneModuleKit, Test {
-    using ModuleKitHelper for RhinestoneAccount;
+    using ModuleKitHelpers for RhinestoneAccount;
 
     RhinestoneAccount internal instance;
 

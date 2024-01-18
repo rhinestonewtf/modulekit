@@ -7,7 +7,7 @@ struct TmpStorage {
     mapping(address account => IEntryPoint entrypoint) entrypoint;
 }
 
-bytes32 constant STORAGE_SLOT = keccak256("forge.rhinestone.ModuleKitHelper");
+bytes32 constant STORAGE_SLOT = keccak256("forge.rhinestone.ModuleKitHelpers");
 
 library ModuleKitCache {
     function getStorage() internal pure returns (TmpStorage storage _str) {

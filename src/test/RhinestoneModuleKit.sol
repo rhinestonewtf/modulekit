@@ -10,7 +10,7 @@ import {
 } from "../external/ERC7579.sol";
 
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
-import { ModuleKitHelper } from "./ModuleKitHelper.sol";
+import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
 import { MockValidator } from "../Mocks.sol";
 
 import "./utils/Vm.sol";

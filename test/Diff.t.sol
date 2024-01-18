@@ -8,7 +8,7 @@ import "src/Mocks.sol";
 /* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
-    using ModuleKitHelper for *;
+    using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     RhinestoneAccount internal instance;
@@ -73,12 +73,12 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         bytes memory signature = "";
 
         // Create userOperation
-        instance.exec({
+        instance.getExecOps({
             target: receiver,
             value: value,
             callData: callData,
             txValidator: address(instance.defaultValidator)
-        }).handleUserOp();
+        }).execUserOps();
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");

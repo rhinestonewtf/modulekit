@@ -9,13 +9,14 @@ import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert } from "./utils/Log.sol";
 
-library ModuleKitHelper {
+library ModuleKitHelpers {
     using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelper for UserOpData;
+    using ModuleKitHelpers for RhinestoneAccount;
+    using ModuleKitHelpers for UserOpData;
 
     // will call installValidator with initData:0
 
-    function handleUserOp(UserOpData memory userOpData) internal {
+    function execUserOps(UserOpData memory userOpData) internal {
         // send userOp to entrypoint
 
         IEntryPoint entrypoint = ModuleKitCache.getEntrypoint(userOpData.userOp.sender);
@@ -34,11 +35,23 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.installValidator(module, "", address(instance.defaultValidator));
+        return instance.installValidator(module, "");
+    }
+
+    function installValidator(
+        RhinestoneAccount memory instance,
+        address module,
+        bytes memory initData
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        userOpData =
+            instance.getInstallValidatorOps(module, initData, address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
     // will call uninstallValidator with initData:0
@@ -49,15 +62,28 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.uninstallValidator(module, "", address(instance.defaultValidator));
+        return instance.uninstallValidator(module, "");
+    }
+    // will call uninstallValidator with initData:0
+
+    function uninstallValidator(
+        RhinestoneAccount memory instance,
+        address module,
+        bytes memory initData
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        userOpData =
+            instance.getUninstallValidatorOps(module, initData, address(instance.defaultValidator));
 
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
-
     // will call installValidator with initData:0
+
     function installExecutor(
         RhinestoneAccount memory instance,
         address module
@@ -65,15 +91,27 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.installExecutor(module, "", address(instance.defaultValidator));
+        return instance.installExecutor(module, "");
+    }
+
+    // will call installValidator with initData:0
+    function installExecutor(
+        RhinestoneAccount memory instance,
+        address module,
+        bytes memory initData
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        userOpData =
+            instance.getInstallExecutorOps(module, initData, address(instance.defaultValidator));
 
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
-    // will call uninstallExecutor with initData:0
     function uninstallExecutor(
         RhinestoneAccount memory instance,
         address module
@@ -81,15 +119,27 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.uninstallExecutor(module, "", address(instance.defaultValidator));
+        return instance.uninstallExecutor(module, "");
+    }
+
+    // will call uninstallExecutor with initData:0
+    function uninstallExecutor(
+        RhinestoneAccount memory instance,
+        address module,
+        bytes memory initData
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        userOpData =
+            instance.getUninstallExecutorOps(module, initData, address(instance.defaultValidator));
 
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
-    // executes installHook with initData:0
     function installHook(
         RhinestoneAccount memory instance,
         address module
@@ -97,12 +147,25 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.installHook(module, "", address(instance.defaultValidator));
+        return instance.installHook(module, "");
+    }
+    // executes installHook with initData:0
+
+    function installHook(
+        RhinestoneAccount memory instance,
+        address module,
+        bytes memory initData
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        userOpData =
+            instance.getInstallHookOps(module, initData, address(instance.defaultValidator));
 
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
     // executes uninstallHook with initData:0
@@ -113,11 +176,11 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.uninstallHook(module, "", address(instance.defaultValidator));
+        userOpData = instance.getUninstallHookOps(module, "", address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
     // executes installFallback with initData:0
@@ -128,11 +191,11 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.installFallback(module, "", address(instance.defaultValidator));
+        userOpData = instance.getInstallFallbackOps(module, "", address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
     // executes installFallback wiith initData:0
@@ -143,11 +206,11 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.installFallback(module, "", address(instance.defaultValidator));
+        userOpData = instance.getInstallFallbackOps(module, "", address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
     function exec(
@@ -159,11 +222,12 @@ library ModuleKitHelper {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.exec(target, value, callData, address(instance.defaultValidator));
+        userOpData =
+            instance.getExecOps(target, value, callData, address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        userOpData.handleUserOp();
+        userOpData.execUserOps();
     }
 
     function exec(

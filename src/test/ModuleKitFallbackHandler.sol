@@ -7,11 +7,11 @@ import { UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
-import { ModuleKitHelper } from "./ModuleKitHelper.sol";
+import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
 
 library ModuleKitFallbackHandler {
     using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelper for RhinestoneAccount;
+    using ModuleKitHelpers for RhinestoneAccount;
     /**
      * @dev Installs ExtensibleFallbackHandler on the account if not already installed, and
      * configures
@@ -78,7 +78,7 @@ library ModuleKitFallbackHandler {
             callData: abi.encodeCall(ExtensibleFallbackHandler.setFunctionSig, (params))
         });
 
-        userOpData = instance.exec({
+        userOpData = instance.getExecOps({
             executions: executions,
             txValidator: address(instance.defaultValidator)
         });

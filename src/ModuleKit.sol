@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 /* solhint-disable no-unused-import */
 import { UserOpData, RhinestoneAccount, RhinestoneModuleKit } from "./test/RhinestoneModuleKit.sol";
 
-import { ModuleKitHelper } from "./test/ModuleKitHelper.sol";
+import { ModuleKitHelpers } from "./test/ModuleKitHelpers.sol";
 import { ModuleKitSCM } from "./test/ModuleKitSCM.sol";
 import { ModuleKitFallbackHandler } from "./test/ModuleKitFallbackHandler.sol";
 

@@ -7,7 +7,7 @@ import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { IERC7579Execution } from "../external/ERC7579.sol";
 
 library ModuleKitUserOp {
-    function installValidator(
+    function getInstallValidatorOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -26,7 +26,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function uninstallValidator(
+    function getUninstallValidatorOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -45,7 +45,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function installExecutor(
+    function getInstallExecutorOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -64,7 +64,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function uninstallExecutor(
+    function getUninstallExecutorOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -83,7 +83,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function installHook(
+    function getInstallHookOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -102,7 +102,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function uninstallHook(
+    function getUninstallHookOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -121,7 +121,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function installFallback(
+    function getInstallFallbackOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -140,7 +140,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function uninstallFallback(
+    function getUninstallFallbackOps(
         RhinestoneAccount memory instance,
         address module,
         bytes memory initData,
@@ -159,7 +159,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function exec(
+    function getExecOps(
         RhinestoneAccount memory instance,
         address target,
         uint256 value,
@@ -178,7 +178,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function exec(
+    function getExecOps(
         RhinestoneAccount memory instance,
         IERC7579Execution.Execution[] memory executions,
         address txValidator
@@ -195,7 +195,7 @@ library ModuleKitUserOp {
         });
     }
 
-    function exec(
+    function getExecOps(
         RhinestoneAccount memory instance,
         address[] memory targets,
         uint256[] memory values,
@@ -208,6 +208,6 @@ library ModuleKitUserOp {
     {
         IERC7579Execution.Execution[] memory executions =
             ERC7579Helpers.toExecutions(targets, values, initDatas);
-        return exec(instance, executions, txValidator);
+        return getExecOps(instance, executions, txValidator);
     }
 }

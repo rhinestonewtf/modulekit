@@ -7,12 +7,12 @@ import { UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
-import { ModuleKitHelper } from "./ModuleKitHelper.sol";
+import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
 import { ISessionKeyManager, ISessionValidationModule } from "../Core.sol";
 
 library ModuleKitSCM {
     using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelper for RhinestoneAccount;
+    using ModuleKitHelpers for RhinestoneAccount;
     /**
      * @dev Installs core/SessionKeyManager on the account if not already installed, and
      * configures it with the given sessionKeyModule and sessionKeyData
@@ -71,11 +71,11 @@ library ModuleKitSCM {
             callData: abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
         });
 
-        userOpData = instance.exec(executions, address(instance.defaultValidator));
+        userOpData = instance.getExecOps(executions, address(instance.defaultValidator));
         sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
     }
 
-    function exec(
+    function getExecOps(
         RhinestoneAccount memory instance,
         address target,
         uint256 value,
@@ -86,10 +86,33 @@ library ModuleKitSCM {
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData = instance.exec(target, value, callData, address(instance.defaultValidator));
+        userOpData =
+            instance.getExecOps(target, value, callData, address(instance.defaultValidator));
         bytes1 MODE_USE = 0x00;
         bytes memory signature =
             abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
+        userOpData.userOp.signature = signature;
+    }
+
+    // wrapper for signAndExec4337
+    function getExecOps(
+        RhinestoneAccount memory instance,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas,
+        bytes32[] memory sessionKeyDigests,
+        bytes[] memory sessionKeySignatures
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        userOpData = instance.getExecOps(
+            ERC7579Helpers.toExecutions(targets, values, callDatas),
+            address(instance.defaultValidator)
+        );
+        bytes1 MODE_USE = 0x00;
+        bytes memory signature =
+            abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigests, sessionKeySignatures));
         userOpData.userOp.signature = signature;
     }
 }
