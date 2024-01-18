@@ -5,6 +5,8 @@ pragma solidity ^0.8.19;
 import { UserOpData, RhinestoneAccount, RhinestoneModuleKit } from "./test/RhinestoneModuleKit.sol";
 
 import { ModuleKitHelper } from "./test/ModuleKitHelper.sol";
+import { ModuleKitSCM } from "./test/ModuleKitSCM.sol";
+import { ModuleKitFallbackHandler } from "./test/ModuleKitFallbackHandler.sol";
 
 import { ModuleKitUserOp } from "./test/ModuleKitUserOp.sol";
 
