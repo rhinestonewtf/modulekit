@@ -30,7 +30,8 @@ library ModuleKitSCM {
         address sessionKeyModule,
         uint48 validUntil,
         uint48 validAfter,
-        bytes memory sessionKeyData
+        bytes memory sessionKeyData,
+        address txValidator
     )
         internal
         returns (UserOpData memory userOpData, bytes32 sessionKeyDigest)
@@ -71,7 +72,7 @@ library ModuleKitSCM {
             callData: abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))
         });
 
-        userOpData = instance.getExecOps(executions, address(instance.defaultValidator));
+        userOpData = instance.getExecOps(executions, txValidator);
         sessionKeyDigest = instance.aux.sessionKeyManager.digest(sessionData);
     }
 
@@ -81,13 +82,13 @@ library ModuleKitSCM {
         uint256 value,
         bytes memory callData,
         bytes32 sessionKeyDigest,
-        bytes memory sessionKeySignature
+        bytes memory sessionKeySignature,
+        address txValidator
     )
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData =
-            instance.getExecOps(target, value, callData, address(instance.defaultValidator));
+        userOpData = instance.getExecOps(target, value, callData, txValidator);
         bytes1 MODE_USE = 0x00;
         bytes memory signature =
             abi.encodePacked(MODE_USE, abi.encode(sessionKeyDigest, sessionKeySignature));
@@ -101,14 +102,14 @@ library ModuleKitSCM {
         uint256[] memory values,
         bytes[] memory callDatas,
         bytes32[] memory sessionKeyDigests,
-        bytes[] memory sessionKeySignatures
+        bytes[] memory sessionKeySignatures,
+        address txValidator
     )
         internal
         returns (UserOpData memory userOpData)
     {
         userOpData = instance.getExecOps(
-            ERC7579Helpers.toExecutions(targets, values, callDatas),
-            address(instance.defaultValidator)
+            ERC7579Helpers.toExecutions(targets, values, callDatas), txValidator
         );
         bytes1 MODE_USE = 0x00;
         bytes memory signature =
