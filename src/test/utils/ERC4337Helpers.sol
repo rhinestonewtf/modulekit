@@ -7,15 +7,9 @@ import "./Vm.sol";
 import "./Log.sol";
 
 library ERC4337Helpers {
-    function exec4337(
-        address account,
-        IEntryPoint entrypoint,
-        UserOperation[] memory userOps
-    )
-        internal
-    {
+    function exec4337(UserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
         recordLogs();
-        entrypoint.handleOps(userOps, payable(address(0x69)));
+        onEntryPoint.handleOps(userOps, payable(address(0x69)));
 
         VmSafe.Log[] memory logs = getRecordedLogs();
 
@@ -31,20 +25,14 @@ library ERC4337Helpers {
         writeExpectRevert(0);
 
         for (uint256 i; i < userOps.length; i++) {
-            emit ModuleKitLogs.ModuleKit_Exec4337(account, userOps[i].sender);
+            emit ModuleKitLogs.ModuleKit_Exec4337(userOps[i].sender);
         }
     }
 
-    function exec4337(
-        address account,
-        IEntryPoint entrypoint,
-        UserOperation memory userOp
-    )
-        internal
-    {
+    function exec4337(UserOperation memory userOp, IEntryPoint onEntryPoint) internal {
         UserOperation[] memory userOps = new UserOperation[](1);
         userOps[0] = userOp;
-        exec4337(account, entrypoint, userOps);
+        exec4337(userOps, onEntryPoint);
     }
 
     function map(

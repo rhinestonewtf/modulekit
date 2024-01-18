@@ -20,7 +20,7 @@ function getExpectRevert() view returns (uint256 value) {
 library ModuleKitLogs {
     /* solhint-disable event-name-camelcase */
     event ModuleKit_NewAccount(address account, string accountType);
-    event ModuleKit_Exec4337(address account, address sender);
+    event ModuleKit_Exec4337(address sender);
 
     event ModuleKit_AddExecutor(address account, address executor);
     event ModuleKit_RemoveExecutor(address account, address executor);

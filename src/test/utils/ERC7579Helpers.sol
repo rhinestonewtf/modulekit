@@ -9,6 +9,7 @@ import {
     IERC7579ConfigHook
 } from "../../external/ERC7579.sol";
 import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
+import { RhinestoneAccount } from "../RhinestoneModuleKit.sol";
 
 library ERC7579Helpers {
     /**
@@ -45,6 +46,70 @@ library ERC7579Helpers {
         erc7579Tx = encode(to, value, callData);
     }
 
+    function configModuleUserOp(
+        RhinestoneAccount memory instance,
+        address module,
+        bytes memory initData,
+        function(address, address, bytes memory) internal  returns (address, uint256, bytes memory)
+            fn,
+        address txValidator
+    )
+        internal
+        returns (UserOperation memory userOp, bytes32 userOpHash)
+    {
+        bytes memory initCode;
+        bool notDeployedYet = instance.account.code.length == 0;
+        if (notDeployedYet) {
+            initCode = instance.initCode;
+        }
+
+        userOp = UserOperation({
+            sender: instance.account,
+            nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
+            initCode: initCode,
+            callData: configModule(instance.account, module, initData, fn),
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
+    function execUserOp(
+        RhinestoneAccount memory instance,
+        bytes memory callData,
+        address txValidator
+    )
+        internal
+        view
+        returns (UserOperation memory userOp, bytes32 userOpHash)
+    {
+        bytes memory initCode;
+        bool notDeployedYet = instance.account.code.length == 0;
+        if (notDeployedYet) {
+            initCode = instance.initCode;
+        }
+
+        userOp = UserOperation({
+            sender: instance.account,
+            nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
+            initCode: initCode,
+            callData: callData,
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
     /**
      * get callData to install validator on ERC7579 Account
      */
@@ -54,7 +119,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        view
+        pure
         returns (address to, uint256 value, bytes memory callData)
     {
         to = account;
@@ -105,7 +170,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        view
+        pure
         returns (address to, uint256 value, bytes memory callData)
     {
         to = account;
@@ -156,7 +221,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        view
+        pure
         returns (address to, uint256 value, bytes memory callData)
     {
         to = account;
@@ -173,7 +238,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        view
+        pure
         returns (address to, uint256 value, bytes memory callData)
     {
         hook = hook; // avoid solhint-no-unused-vars
@@ -191,7 +256,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        view
+        pure
         returns (address to, uint256 value, bytes memory callData)
     {
         to = account;
@@ -208,7 +273,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        view
+        pure
         returns (address to, uint256 value, bytes memory callData)
     {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
@@ -273,6 +338,19 @@ library ERC7579Helpers {
         }
     }
 
+    function getNonce(
+        address account,
+        IEntryPoint entrypoint,
+        address validator
+    )
+        internal
+        view
+        returns (uint256 nonce)
+    {
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        nonce = entrypoint.getNonce(address(account), key);
+    }
+
     function signatureInNonce(
         address account,
         IEntryPoint entrypoint,
@@ -284,10 +362,7 @@ library ERC7579Helpers {
         view
         returns (bytes32 userOpHash, UserOperation memory)
     {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        uint256 nonce = entrypoint.getNonce(address(account), key);
-
-        userOp.nonce = nonce;
+        userOp.nonce = getNonce(account, entrypoint, validator);
         userOp.signature = signature;
 
         userOpHash = entrypoint.getUserOpHash(userOp);
@@ -295,7 +370,7 @@ library ERC7579Helpers {
     }
 }
 
-contract BootstrapUtil {
+abstract contract BootstrapUtil {
     function _emptyConfig() internal pure returns (ERC7579BootstrapConfig memory config) { }
     function _emptyConfigs() internal pure returns (ERC7579BootstrapConfig[] memory config) { }
 

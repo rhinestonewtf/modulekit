@@ -6,6 +6,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579FallbackBase } from "../modules/ERC7579FallbackBase.sol";
 import { ERC2771Handler } from "./ERC2771Handler.sol";
+import "forge-std/console2.sol";
 
 interface IFallbackMethod {
     function handle(

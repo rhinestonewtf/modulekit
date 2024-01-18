@@ -1,20 +1,28 @@
-import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
-import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.21;
 
 import {
-    ERC7579BootstrapConfig,
     ERC7579Account,
     ERC7579AccountFactory,
-    IERC7579Validator
+    ERC7579BootstrapConfig,
+    IERC7579Validator,
+    IERC7579Config,
+    IERC7579Execution,
+    IERC7579ConfigHook
 } from "../external/ERC7579.sol";
 
-import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
-import { ModuleKitHelper } from "./ModuleKitHelper.sol";
-import { MockValidator } from "../Mocks.sol";
+import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
+import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
+import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
+import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
+import { MockValidator } from "../mocks/MockValidator.sol";
+import { ISessionKeyManager, ISessionValidationModule } from "../Core.sol";
+import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 
+/* solhint-disable no-global-import */
+// solhint-disable no-console
+import "forge-std/console2.sol";
 import "./utils/Vm.sol";
-import "./utils/ModuleKitCache.sol";
 import "./utils/Log.sol";
 
 struct RhinestoneAccount {
@@ -26,12 +34,9 @@ struct RhinestoneAccount {
     bool gasLog;
 }
 
-struct UserOpData {
-    UserOperation userOp;
-    bytes32 userOpHash;
-}
+contract RhinestoneModuleKit is BootstrapUtil, AuxiliaryFactory {
+    using ERC4337Helpers for *;
 
-contract RhinestoneModuleKit is AuxiliaryFactory {
     ERC7579AccountFactory public accountFactory;
     ERC7579Account public accountImplementationSingleton;
 
@@ -74,6 +79,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         bytes memory initCode4337
     )
         internal
+        view
         returns (RhinestoneAccount memory instance)
     {
         // Create RhinestoneAccount struct with counterFactualAddress and initCode
@@ -86,8 +92,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             initCode: initCode4337,
             gasLog: false
         });
-
-        ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);
     }
 
     /**
@@ -172,48 +176,5 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             _bytes[i] = _bytes32[i];
         }
         return string(_bytes);
-    }
-
-    function _emptyConfig() internal pure returns (ERC7579BootstrapConfig memory config) { }
-    function _emptyConfigs() internal pure returns (ERC7579BootstrapConfig[] memory config) { }
-
-    function _makeBootstrapConfig(
-        address module,
-        bytes memory data
-    )
-        public
-        pure
-        returns (ERC7579BootstrapConfig memory config)
-    {
-        config.module = module;
-        config.data = data;
-    }
-
-    function makeBootstrapConfig(
-        address module,
-        bytes memory data
-    )
-        public
-        pure
-        returns (ERC7579BootstrapConfig[] memory config)
-    {
-        config = new ERC7579BootstrapConfig[](1);
-        config[0].module = module;
-        config[0].data = data;
-    }
-
-    function makeBootstrapConfig(
-        address[] memory modules,
-        bytes[] memory datas
-    )
-        public
-        pure
-        returns (ERC7579BootstrapConfig[] memory configs)
-    {
-        configs = new ERC7579BootstrapConfig[](modules.length);
-
-        for (uint256 i; i < modules.length; i++) {
-            configs[i] = _makeBootstrapConfig(modules[i], datas[i]);
-        }
     }
 }

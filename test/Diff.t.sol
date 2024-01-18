@@ -8,7 +8,8 @@ import "src/Mocks.sol";
 /* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
-    using RhinestoneModuleKitLib for RhinestoneAccount;
+    using ModuleKitHelper for *;
+    using ModuleKitUserOp for *;
 
     RhinestoneAccount internal instance;
     MockValidator internal validator;
@@ -34,10 +35,10 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                EXEC4337
+                                exec
     //////////////////////////////////////////////////////////////////////////*/
 
-    function testExec4337__Given__TwoInputs() public {
+    function testexec__Given__TwoInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -45,26 +46,26 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
             abi.encodeWithSignature("transfer(address,uint256)", receiver, value);
 
         // Create userOperation
-        instance.exec4337({ target: address(token), callData: callData });
+        instance.exec({ target: address(token), callData: callData });
 
         // Validate userOperation
         assertEq(token.balanceOf(receiver), value, "Receiver should have 10 gwei in tokens");
     }
 
-    function testExec4337__Given__ThreeInputs() public {
+    function testexec__Given__ThreeInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
         bytes memory callData = "";
 
         // Create userOperation
-        instance.exec4337({ target: receiver, value: value, callData: callData });
+        instance.exec({ target: receiver, value: value, callData: callData });
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
 
-    function testExec4337__Given__FourInputs() public {
+    function testexec__Given__FourInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -72,26 +73,25 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         bytes memory signature = "";
 
         // Create userOperation
-        instance.exec4337({
+        instance.exec({
             target: receiver,
             value: value,
             callData: callData,
-            validator: address(instance.defaultValidator),
-            signature: signature
-        });
+            txValidator: address(instance.defaultValidator)
+        }).handleUserOp();
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
 
-    function testExec4337__RevertWhen__UserOperationFails() public {
+    function testexec__RevertWhen__UserOperationFails() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 100_000 ether;
 
         // Create userOperation
         instance.expect4337Revert();
-        instance.exec4337({ target: receiver, callData: "", value: value });
+        instance.exec({ target: receiver, callData: "", value: value });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
         instance.installValidator(newValidator);
         // instance.log4337Gas("testAddValidator()");
-        instance.enableGasLog();
+        // instance.enableGasLog();
         instance.installValidator(newValidator1);
         bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
