@@ -65,6 +65,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
 
+
     function testexec__Given__FourInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
