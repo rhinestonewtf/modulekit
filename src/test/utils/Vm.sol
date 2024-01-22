@@ -41,6 +41,14 @@ function expectEmit() {
     Vm(VM_ADDR).expectEmit();
 }
 
+function expectRevert() {
+    Vm(VM_ADDR).expectRevert();
+}
+
+function expectRevert(bytes4 message) {
+    Vm(VM_ADDR).expectRevert(message);
+}
+
 function recordLogs() {
     Vm(VM_ADDR).recordLogs();
 }
@@ -67,4 +75,24 @@ function record() {
 
 function load(address account, bytes32 key) view returns (bytes32) {
     return Vm(VM_ADDR).load(account, key);
+}
+
+function snapshot() returns (uint256) {
+    return Vm(VM_ADDR).snapshot();
+}
+
+function revertTo(uint256 id) returns (bool) {
+    return Vm(VM_ADDR).revertTo(id);
+}
+
+function startStateDiffRecording() {
+    Vm(VM_ADDR).startStateDiffRecording();
+}
+
+function stopAndReturnStateDiff() returns (VmSafe.AccountAccess[] memory) {
+    return Vm(VM_ADDR).stopAndReturnStateDiff();
+}
+
+function envOr(string memory name, bool defaultValue) view returns (bool value) {
+    return Vm(VM_ADDR).envOr(name, defaultValue);
 }
