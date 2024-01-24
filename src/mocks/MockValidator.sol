@@ -6,9 +6,9 @@ import { ERC7579ValidatorBase } from "../Modules.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 
 contract MockValidator is ERC7579ValidatorBase {
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external virtual override { }
 
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external virtual override { }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
