@@ -20,25 +20,16 @@ library ERC4337Helpers {
         // Record logs to determine if a revert happened
         recordLogs();
 
-        // Get current gas left
-        uint256 totalUserOpGas = gasleft();
-
         // Execute userOps
         address beneficiary = address(0x69);
         onEntryPoint.handleOps(userOps, payable(beneficiary));
 
-        // Get remaining gas
-        totalUserOpGas = totalUserOpGas - gasleft();
-
-        // Calculate gas for userOp
-        if (envOr("GAS", false)) {
-            calculateGas(userOps, onEntryPoint, beneficiary, totalUserOpGas);
-        }
-
         // Parse logs and determine if a revert happened
         VmSafe.Log[] memory logs = getRecordedLogs();
         uint256 expectRevert = getExpectRevert();
+        uint256 totalUserOpGas = 0;
         for (uint256 i; i < logs.length; i++) {
+            // UserOperationRevertReason(bytes32,address,uint256,bytes)
             if (
                 logs[i].topics[0]
                     == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
@@ -51,9 +42,23 @@ library ERC4337Helpers {
                     );
                 }
             }
+            // UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)
+            if (
+                logs[i].topics[0]
+                    == 0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f
+            ) {
+                (,,, uint256 actualGasUsed) =
+                    abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
+                totalUserOpGas = actualGasUsed;
+            }
         }
         if (expectRevert == 1) revert("UserOperation did not revert");
         writeExpectRevert(0);
+
+        // Calculate gas for userOp
+        if (envOr("GAS", false)) {
+            calculateGas(userOps, onEntryPoint, beneficiary, totalUserOpGas);
+        }
 
         for (uint256 i; i < userOps.length; i++) {
             emit ModuleKitLogs.ModuleKit_Exec4337(userOps[i].sender);

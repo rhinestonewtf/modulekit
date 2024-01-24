@@ -245,4 +245,12 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         // // Validate userOperation
         // assertEq(userOpHash, entryPointUserOpHash);
     }
+
+    function testWriteGas() public {
+        // instance.log4337Gas("testWriteGas()");
+        // instance.enableGasLog();
+        // instance.log4337Gas("testWriteGas()");
+    }
+
+    function testSimulateUserOp() public { }
 }
