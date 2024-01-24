@@ -11,12 +11,13 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "5.0.1"
+    "@openzeppelin/contracts": "5.0.1",
+    "@prb/math": "^4.0.2"
   },
   "devDependencies": {
+    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
     "ds-test": "github:dapphub/ds-test",
-    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "erc7579": "github:erc7579/erc7579-implementation#feature/executeUserOp",
     "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",

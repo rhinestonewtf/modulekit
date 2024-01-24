@@ -20,7 +20,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     function setUp() public {
         // Setup account
-        instance = makeRhinestoneAccount("1");
+        instance = makeRhinestoneAccount("account1");
         vm.deal(instance.account, 1000 ether);
 
         // Setup modules
@@ -64,7 +64,6 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
-
 
     function testexec__Given__FourInputs() public {
         // Create userOperation fields

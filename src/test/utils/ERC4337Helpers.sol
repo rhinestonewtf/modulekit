@@ -5,27 +5,54 @@ import { UserOperation, IEntryPoint, IEntryPointSimulations } from "../../extern
 /* solhint-disable no-global-import */
 import "./Vm.sol";
 import "./Log.sol";
+import "./GasCalculations.sol";
 
 library ERC4337Helpers {
+    error UserOperationReverted(
+        bytes32 userOpHash, address sender, uint256 nonce, bytes revertReason
+    );
+
     function exec4337(UserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
-        bool shouldSimulateUserOp = envOr("SIMULATE", false);
-        if (shouldSimulateUserOp) {
+        // ERC-4337 specs validation
+        if (envOr("SIMULATE", false)) {
             simulateUserOps(userOps, onEntryPoint);
         }
+        // Record logs to determine if a revert happened
         recordLogs();
-        onEntryPoint.handleOps(userOps, payable(address(0x69)));
 
+        // Get current gas left
+        uint256 totalUserOpGas = gasleft();
+
+        // Execute userOps
+        address beneficiary = address(0x69);
+        onEntryPoint.handleOps(userOps, payable(beneficiary));
+
+        // Get remaining gas
+        totalUserOpGas = totalUserOpGas - gasleft();
+
+        // Calculate gas for userOp
+        if (envOr("GAS", false)) {
+            calculateGas(userOps, onEntryPoint, beneficiary, totalUserOpGas);
+        }
+
+        // Parse logs and determine if a revert happened
         VmSafe.Log[] memory logs = getRecordedLogs();
-
+        uint256 expectRevert = getExpectRevert();
         for (uint256 i; i < logs.length; i++) {
             if (
                 logs[i].topics[0]
                     == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
             ) {
-                if (getExpectRevert() != 1) revert("UserOperation failed");
+                if (expectRevert != 1) {
+                    (uint256 nonce, bytes memory revertReason) =
+                        abi.decode(logs[i].data, (uint256, bytes));
+                    revert UserOperationReverted(
+                        logs[i].topics[1], address(bytes20(logs[i].topics[2])), nonce, revertReason
+                    );
+                }
             }
         }
-
+        if (expectRevert == 1) revert("UserOperation did not revert");
         writeExpectRevert(0);
 
         for (uint256 i; i < userOps.length; i++) {
@@ -51,6 +78,28 @@ library ERC4337Helpers {
             ERC4337SpecsParser.parseValidation(accesses);
         }
         revertTo(snapShotId);
+    }
+
+    function calculateGas(
+        UserOperation[] memory userOps,
+        IEntryPoint onEntryPoint,
+        address beneficiary,
+        uint256 totalUserOpGas
+    )
+        internal
+    {
+        string memory gasIdentifier = getGasIdentifier();
+        if (bytes(gasIdentifier).length != 0) {
+            bytes memory userOpCalldata =
+                abi.encodeWithSelector(onEntryPoint.handleOps.selector, userOps, beneficiary);
+            GasParser.parseAndWriteGas(
+                userOpCalldata,
+                address(onEntryPoint),
+                gasIdentifier,
+                userOps[0].sender,
+                totalUserOpGas
+            );
+        }
     }
 
     function map(
@@ -136,5 +185,100 @@ library ERC4337SpecsParser {
 
     function validateDisallowedCreate(VmSafe.AccountAccess[] memory accesses) internal pure {
         // not supported yet
+    }
+}
+
+library GasParser {
+    function parseAndWriteGas(
+        bytes memory userOpCalldata,
+        address entrypoint,
+        string memory gasIdentifier,
+        address sender,
+        uint256 totalUserOpGas
+    )
+        internal
+    {
+        string memory fileName = string.concat("./gas_calculations/", gasIdentifier, ".json");
+
+        GasCalculations memory gasCalculations = GasCalculations({
+            // todo
+            validation: GasDebug(entrypoint).getGasConsumed(sender, 1),
+            execution: GasDebug(entrypoint).getGasConsumed(sender, 2),
+            total: totalUserOpGas,
+            arbitrum: getArbitrumL1Gas(userOpCalldata),
+            opStack: getOpStackL1Gas(userOpCalldata)
+        });
+
+        GasCalculations memory prevGasCalculations;
+
+        if (exists(fileName)) {
+            string memory fileContent = readFile(fileName);
+            prevGasCalculations = parsePrevGasReport(fileContent);
+        }
+
+        string memory finalJson =
+            formatGasToWrite(gasIdentifier, prevGasCalculations, gasCalculations);
+
+        writeJson(finalJson, fileName);
+        writeGasIdentifier("");
+    }
+
+    function formatGasToWrite(
+        string memory gasIdentifier,
+        GasCalculations memory prevGasCalculations,
+        GasCalculations memory gasCalculations
+    )
+        internal
+        returns (string memory finalJson)
+    {
+        string memory jsonObj = string(abi.encodePacked(gasIdentifier));
+
+        // total gas used
+        serializeString(
+            jsonObj,
+            "Total",
+            formatGasValue({ prevValue: prevGasCalculations.total, newValue: gasCalculations.total })
+        );
+
+        // ERC-4337 phases gas used
+        string memory phasesObj = "phases";
+        serializeString(
+            phasesObj,
+            "Validation",
+            formatGasValue({
+                prevValue: prevGasCalculations.validation,
+                newValue: gasCalculations.validation
+            })
+        );
+        string memory phasesOutput = serializeString(
+            phasesObj,
+            "Execution",
+            formatGasValue({
+                prevValue: prevGasCalculations.execution,
+                newValue: gasCalculations.execution
+            })
+        );
+
+        // L2-L1 calldata gas used
+        string memory l2sObj = "l2s";
+        serializeString(
+            l2sObj,
+            "OP-Stack",
+            formatGasValue({
+                prevValue: prevGasCalculations.opStack,
+                newValue: gasCalculations.opStack
+            })
+        );
+        string memory l2sOutput = serializeString(
+            l2sObj,
+            "Arbitrum",
+            formatGasValue({
+                prevValue: prevGasCalculations.arbitrum,
+                newValue: gasCalculations.arbitrum
+            })
+        );
+
+        serializeString(jsonObj, "Phases", phasesOutput);
+        finalJson = serializeString(jsonObj, "Calldata", l2sOutput);
     }
 }
