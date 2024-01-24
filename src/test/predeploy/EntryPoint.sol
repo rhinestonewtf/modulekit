@@ -12,6 +12,8 @@ import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPoi
 contract EntryPointSimulationsPatch is EntryPointSimulations {
     address _entrypointAddr = address(this);
 
+    SenderCreator _newSenderCreator;
+
     function init(address entrypointAddr) public {
         _entrypointAddr = entrypointAddr;
         initSenderCreator();
@@ -22,7 +24,11 @@ contract EntryPointSimulationsPatch is EntryPointSimulations {
         address createdObj = address(
             uint160(uint256(keccak256(abi.encodePacked(hex"d694", _entrypointAddr, hex"01"))))
         );
-        _senderCreator = SenderCreator(createdObj);
+        _newSenderCreator = SenderCreator(createdObj);
+    }
+
+    function senderCreator() internal view virtual override returns (SenderCreator) {
+        return _newSenderCreator;
     }
 }
 
