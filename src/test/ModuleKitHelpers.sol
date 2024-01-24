@@ -7,7 +7,7 @@ import { IERC7579Account, IERC7579ConfigHook } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
-import { writeExpectRevert } from "./utils/Log.sol";
+import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for RhinestoneAccount;
@@ -283,5 +283,18 @@ library ModuleKitHelpers {
 
     function expect4337Revert(RhinestoneAccount memory) internal {
         writeExpectRevert(1);
+    }
+
+    /**
+     * @dev Logs the gas used by an ERC-4337 transaction
+     * @dev needs to be called before an exec4337 call
+     * @dev the id needs to be unique across your tests, otherwise the gas calculations will
+     * overwrite each other
+     *
+     * @param instance RhinestoneAccount
+     * @param id Identifier for the gas calculation, which will be used as the filename
+     */
+    function log4337Gas(RhinestoneAccount memory instance, string memory id) internal {
+        writeGasIdentifier(id);
     }
 }
