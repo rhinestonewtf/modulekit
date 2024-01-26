@@ -26,7 +26,7 @@ library ERC4337Helpers {
 
         // Parse logs and determine if a revert happened
         VmSafe.Log[] memory logs = getRecordedLogs();
-        uint256 expectRevert = getExpectRevert();
+        uint256 isExpectRevert = getExpectRevert();
         uint256 totalUserOpGas = 0;
         for (uint256 i; i < logs.length; i++) {
             // UserOperationRevertReason(bytes32,address,uint256,bytes)
@@ -34,7 +34,7 @@ library ERC4337Helpers {
                 logs[i].topics[0]
                     == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
             ) {
-                if (expectRevert != 1) {
+                if (isExpectRevert != 1) {
                     (uint256 nonce, bytes memory revertReason) =
                         abi.decode(logs[i].data, (uint256, bytes));
                     revert UserOperationReverted(
@@ -52,12 +52,16 @@ library ERC4337Helpers {
                 totalUserOpGas = actualGasUsed;
             }
         }
-        if (expectRevert == 1) revert("UserOperation did not revert");
+        if (isExpectRevert == 1) revert("UserOperation did not revert");
         writeExpectRevert(0);
 
         // Calculate gas for userOp
-        if (envOr("GAS", false)) {
-            calculateGas(userOps, onEntryPoint, beneficiary, totalUserOpGas);
+        string memory gasIdentifier = getGasIdentifier();
+        if (
+            envOr("GAS", false) && bytes(gasIdentifier).length > 0
+                && bytes(gasIdentifier).length < 50
+        ) {
+            calculateGas(userOps, onEntryPoint, beneficiary, gasIdentifier, totalUserOpGas);
         }
 
         for (uint256 i; i < userOps.length; i++) {
@@ -89,22 +93,16 @@ library ERC4337Helpers {
         UserOperation[] memory userOps,
         IEntryPoint onEntryPoint,
         address beneficiary,
+        string memory gasIdentifier,
         uint256 totalUserOpGas
     )
         internal
     {
-        string memory gasIdentifier = getGasIdentifier();
-        if (bytes(gasIdentifier).length != 0) {
-            bytes memory userOpCalldata =
-                abi.encodeWithSelector(onEntryPoint.handleOps.selector, userOps, beneficiary);
-            GasParser.parseAndWriteGas(
-                userOpCalldata,
-                address(onEntryPoint),
-                gasIdentifier,
-                userOps[0].sender,
-                totalUserOpGas
-            );
-        }
+        bytes memory userOpCalldata =
+            abi.encodeWithSelector(onEntryPoint.handleOps.selector, userOps, beneficiary);
+        GasParser.parseAndWriteGas(
+            userOpCalldata, address(onEntryPoint), gasIdentifier, userOps[0].sender, totalUserOpGas
+        );
     }
 
     function map(
@@ -206,7 +204,7 @@ library GasParser {
         string memory fileName = string.concat("./gas_calculations/", gasIdentifier, ".json");
 
         GasCalculations memory gasCalculations = GasCalculations({
-            // todo
+            creation: GasDebug(entrypoint).getGasConsumed(sender, 0),
             validation: GasDebug(entrypoint).getGasConsumed(sender, 1),
             execution: GasDebug(entrypoint).getGasConsumed(sender, 2),
             total: totalUserOpGas,
@@ -247,6 +245,14 @@ library GasParser {
 
         // ERC-4337 phases gas used
         string memory phasesObj = "phases";
+        serializeString(
+            phasesObj,
+            "Creation",
+            formatGasValue({
+                prevValue: prevGasCalculations.creation,
+                newValue: gasCalculations.creation
+            })
+        );
         serializeString(
             phasesObj,
             "Validation",

@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
-    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
+    "account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation#feature/executeUserOp",
     "forge-std": "github:foundry-rs/forge-std",

@@ -7,6 +7,7 @@ import { LibZip } from "solady/src/utils/LibZip.sol";
 import { parseJson, toString } from "./Vm.sol";
 
 struct GasCalculations {
+    uint256 creation;
     uint256 validation;
     uint256 execution;
     uint256 total;
@@ -43,6 +44,7 @@ function parsePrevGasReport(string memory fileContent)
     returns (GasCalculations memory prevGasCalculations)
 {
     prevGasCalculations.total = parseUintFromASCII(parseJson(fileContent, ".Total"));
+    prevGasCalculations.creation = parseUintFromASCII(parseJson(fileContent, ".Phases.Creation"));
     prevGasCalculations.validation =
         parseUintFromASCII(parseJson(fileContent, ".Phases.Validation"));
     prevGasCalculations.execution = parseUintFromASCII(parseJson(fileContent, ".Phases.Execution"));
@@ -88,5 +90,5 @@ function formatGasValue(
 }
 
 interface GasDebug {
-    function getGasConsumed(address acccount, uint256 phase) external view returns (uint256);
+    function getGasConsumed(address account, uint256 phase) external view returns (uint256);
 }

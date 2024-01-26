@@ -247,9 +247,20 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     }
 
     function testWriteGas() public {
-        // instance.log4337Gas("testWriteGas()");
-        // instance.enableGasLog();
-        // instance.log4337Gas("testWriteGas()");
+        string memory gasIdentifier = "testWriteGas";
+        string memory rootDir = "gas_calculations";
+        string memory fileName = string.concat(rootDir, "/", gasIdentifier, ".json");
+        assertTrue(vm.isDir("gas_calculations"));
+        if (vm.isFile(fileName)) {
+            vm.removeFile(fileName);
+        }
+        assertFalse(vm.isFile(fileName));
+
+        vm.setEnv("GAS", "true");
+
+        instance.log4337Gas("testWriteGas");
+        testexec__Given__TwoInputs();
+        assertTrue(vm.isFile(fileName));
     }
 
     function testSimulateUserOp() public { }
