@@ -153,7 +153,7 @@ library ERC7579Helpers {
         view
         returns (address to, uint256 value, bytes memory callData)
     {
-        // get previous executor in sentinel list
+        // get previous validator in sentinel list
         address previous;
 
         (address[] memory array,) =
