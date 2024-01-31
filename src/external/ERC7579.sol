@@ -24,6 +24,8 @@ import {
     EXECTYPE_DEFAULT,
     MODE_DEFAULT
 } from "umsa/lib/ModeLib.sol";
+import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "umsa/lib/ModuleTypeLib.sol";
+import { Execution, ExecutionLib as ERC7579ExecutionLib } from "umsa/lib/ExecutionLib.sol";
 
 import {
     Bootstrap as ERC7579Bootstrap,

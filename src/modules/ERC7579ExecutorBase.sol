@@ -20,8 +20,9 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
             mode: MODE_DEFAULT,
             payload: ModePayload.wrap(bytes22(0))
         });
-        return
-            IERC7579Account(account).executeFromExecutor(modeCode, abi.encode(to, value, data))[0];
+        return IERC7579Account(account).executeFromExecutor(
+            modeCode, ERC7579ExecutionLib.encodeSingle(to, value, data)
+        )[0];
     }
 
     function _execute(
@@ -48,7 +49,9 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
             mode: MODE_DEFAULT,
             payload: ModePayload.wrap(bytes22(0))
         });
-        results = IERC7579Account(account).executeFromExecutor(modeCode, abi.encode(execs));
+        results = IERC7579Account(account).executeFromExecutor(
+            modeCode, ERC7579ExecutionLib.encodeBatch(execs)
+        );
     }
 
     function _execute(Execution[] memory execs) internal returns (bytes[] memory results) {
