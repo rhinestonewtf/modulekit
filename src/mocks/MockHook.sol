@@ -8,7 +8,11 @@ contract MockHook is ERC7579HookBase {
 
     function onUninstall(bytes calldata data) external override { }
 
-    function isModuleType(uint256 typeID) external pure override returns (bool) {
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
+    }
+
+    function isModuleType(uint256 typeID) external pure returns (bool) {
         return typeID == TYPE_HOOK;
     }
 
@@ -25,11 +29,7 @@ contract MockHook is ERC7579HookBase {
         return true;
     }
 
-    function name() external pure virtual override returns (string memory) {
-        return "MockHook";
-    }
-
-    function version() external pure virtual override returns (string memory) {
-        return "0.0.1";
+    function moduleId() external pure virtual override returns (string memory) {
+        return "MockHook.v0.0.1";
     }
 }

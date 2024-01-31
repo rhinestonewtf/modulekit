@@ -18,18 +18,18 @@ contract MockExecutor is ERC7579ExecutorBase {
         external
         returns (bytes memory)
     {
-        return IERC7579Account(account).executeFromExecutor(to, value, callData);
+        return _execute(account, to, value, callData);
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
 
-    function name() external pure virtual override returns (string memory) {
-        return "MockExecutor";
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
     }
 
-    function version() external pure virtual override returns (string memory) {
-        return "0.0.1";
+    function moduleId() external pure virtual override returns (string memory) {
+        return "MockExecutor.v0.0.1";
     }
 }

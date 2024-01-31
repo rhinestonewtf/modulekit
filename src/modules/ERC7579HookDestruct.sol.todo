@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "./ERC7579HookBase.sol";
-import { IERC7579Execution } from "../Accounts.sol";
+import { IERC7579Account } from "../Accounts.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "./utils/ERC7579ValidatorLib.sol";
 
 abstract contract ERC7579HookDestruct is ERC7579HookBase {
@@ -23,16 +23,14 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                 ERC7579ValidatorLib.decodeCalldataSingle(msgData);
             return onExecute(msgSender, to, value, callData);
         } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_BATCH) {
-            IERC7579Execution.Execution[] calldata execs =
-                ERC7579ValidatorLib.decodeCalldataBatch(msgData);
+            Execution[] calldata execs = ERC7579ValidatorLib.decodeCalldataBatch(msgData);
             return onExecuteBatch(msgSender, execs);
         } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_SINGLE_FROM_EXECUTOR) {
             (address to, uint256 value, bytes calldata callData) =
                 ERC7579ValidatorLib.decodeCalldataSingle(msgData);
             return onExecuteFromExecutor(msgSender, to, value, callData);
         } else if (execType == ACCOUNT_EXEC_TYPE.EXEC_BATCH_FROM_EXECUTOR) {
-            IERC7579Execution.Execution[] calldata execs =
-                ERC7579ValidatorLib.decodeCalldataBatch(msgData);
+            Execution[] calldata execs = ERC7579ValidatorLib.decodeCalldataBatch(msgData);
             return onExecuteBatchFromExecutor(msgSender, execs);
         } else if (execType == ACCOUNT_EXEC_TYPE.INSTALL_VALIDATOR) {
             (address module, bytes calldata callData) = ERC7579ValidatorLib.decodeConfig(msgData);
@@ -70,7 +68,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
     function onExecuteBatch(
         address msgSender,
-        IERC7579Execution.Execution[] calldata
+        Execution[] calldata
     )
         internal
         virtual
@@ -88,7 +86,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
     function onExecuteBatchFromExecutor(
         address msgSender,
-        IERC7579Execution.Execution[] calldata
+        Execution[] calldata
     )
         internal
         virtual

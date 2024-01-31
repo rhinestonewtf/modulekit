@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IERC7579Executor, IERC7579Execution } from "../external/ERC7579.sol";
+import "../external/ERC7579.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
 abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
@@ -14,7 +14,14 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
         internal
         returns (bytes memory result)
     {
-        return IERC7579Execution(account).executeFromExecutor(to, value, data);
+        ModeCode modeCode = ERC7579ModeLib.encode({
+            callType: CALLTYPE_SINGLE,
+            execType: EXECTYPE_DEFAULT,
+            mode: MODE_DEFAULT,
+            payload: ModePayload.wrap(bytes22(0))
+        });
+        return
+            IERC7579Account(account).executeFromExecutor(modeCode, abi.encode(to, value, data))[0];
     }
 
     function _execute(
@@ -25,23 +32,26 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
         internal
         returns (bytes memory result)
     {
-        return IERC7579Execution(msg.sender).executeFromExecutor(to, value, data);
+        return _execute(msg.sender, to, value, data);
     }
 
     function _execute(
         address account,
-        IERC7579Execution.Execution[] memory execs
+        Execution[] memory execs
     )
         internal
         returns (bytes[] memory results)
     {
-        return IERC7579Execution(account).executeBatchFromExecutor(execs);
+        ModeCode modeCode = ERC7579ModeLib.encode({
+            callType: CALLTYPE_BATCH,
+            execType: EXECTYPE_DEFAULT,
+            mode: MODE_DEFAULT,
+            payload: ModePayload.wrap(bytes22(0))
+        });
+        results = IERC7579Account(account).executeFromExecutor(modeCode, abi.encode(execs));
     }
 
-    function _execute(IERC7579Execution.Execution[] memory execs)
-        internal
-        returns (bytes[] memory results)
-    {
-        return IERC7579Execution(msg.sender).executeBatchFromExecutor(execs);
+    function _execute(Execution[] memory execs) internal returns (bytes[] memory results) {
+        return _execute(msg.sender, execs);
     }
 }

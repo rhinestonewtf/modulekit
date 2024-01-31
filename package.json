@@ -18,6 +18,7 @@
     "ds-test": "github:dapphub/ds-test",
     "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "erc7579": "github:erc7579/erc7579-implementation#feature/executeUserOp",
+    "uMSA": "github:erc7579/uMSA",
     "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",

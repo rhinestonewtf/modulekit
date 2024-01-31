@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { IERC7579Execution } from "../../Accounts.sol";
-import { IERC7579Config, IERC7579ConfigHook } from "../../external/ERC7579.sol";
+import { IERC7579Account, Execution } from "../../Accounts.sol";
 import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
 
 enum ACCOUNT_EXEC_TYPE {
@@ -34,19 +33,19 @@ library ERC7579ValidatorLib {
     {
         bytes4 functionSig = bytes4(userOpCalldata[:4]);
 
-        if (IERC7579Execution.execute.selector == functionSig) {
+        if (IERC7579Account.execute.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.EXEC_SINGLE;
-        } else if (IERC7579Execution.executeBatch.selector == functionSig) {
+        } else if (IERC7579Account.executeBatch.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.EXEC_BATCH;
-        } else if (IERC7579Execution.executeFromExecutor.selector == functionSig) {
+        } else if (IERC7579Account.executeFromExecutor.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.EXEC_SINGLE_FROM_EXECUTOR;
-        } else if (IERC7579Execution.executeBatchFromExecutor.selector == functionSig) {
+        } else if (IERC7579Account.executeBatchFromExecutor.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.EXEC_BATCH_FROM_EXECUTOR;
-        } else if (IERC7579Config.installValidator.selector == functionSig) {
+        } else if (IERC7579Account.installValidator.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.INSTALL_VALIDATOR;
-        } else if (IERC7579Config.installExecutor.selector == functionSig) {
+        } else if (IERC7579Account.installExecutor.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.INSTALL_EXECUTOR;
-        } else if (IERC7579ConfigHook.uninstallHook.selector == functionSig) {
+        } else if (IERC7579Account.uninstallHook.selector == functionSig) {
             _type = ACCOUNT_EXEC_TYPE.UNINSTALL_HOOK;
         } else {
             _type = ACCOUNT_EXEC_TYPE.ERROR;
@@ -56,14 +55,14 @@ library ERC7579ValidatorLib {
     function decodeCalldataBatch(bytes calldata userOpCalldata)
         internal
         pure
-        returns (IERC7579Execution.Execution[] calldata executionBatch)
+        returns (Execution[] calldata executionBatch)
     {
         /*
          * Batch Call Calldata Layout
          * Offset (in bytes)    | Length (in bytes) | Contents
          * 0x0                  | 0x4               | bytes4 function selector
         *  0x4                  | -                 |
-        abi.encode(IERC7579Execution.Execution[])
+        abi.encode(Execution[])
          */
         // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
@@ -115,11 +114,10 @@ library ERC7579ValidatorLib {
             (target, value, callData) = decodeCalldataSingle(userOp.callData);
             (validUntil, validAfter) = validationFunction(userOp, target, value, callData);
         } else if (ACCOUNT_EXEC_TYPE.EXEC_BATCH == _type) {
-            IERC7579Execution.Execution[] calldata executionBatch =
-                decodeCalldataBatch(userOp.callData);
+            Execution[] calldata executionBatch = decodeCalldataBatch(userOp.callData);
             uint256 length = executionBatch.length;
             for (uint256 i; i < length; i++) {
-                IERC7579Execution.Execution calldata execution = executionBatch[i];
+                Execution calldata execution = executionBatch[i];
                 (target, value, callData) = (execution.target, execution.value, execution.callData);
                 (uint256 _newValidUntil, uint256 _newValidAfter) =
                     validationFunction(userOp, target, value, callData);
@@ -145,11 +143,11 @@ abstract contract Decoder {
                 ERC7579ValidatorLib.decodeCalldataSingle(userOp.callData);
             onValidate(smartAccount, target, value, data);
         } else if (ACCOUNT_EXEC_TYPE.EXEC_BATCH == accountExecType) {
-            IERC7579Execution.Execution[] calldata executionBatch =
+            Execution[] calldata executionBatch =
                 ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
             uint256 length;
             for (uint256 i; i < length; i++) {
-                IERC7579Execution.Execution calldata execution = executionBatch[i];
+                Execution calldata execution = executionBatch[i];
                 onValidate(smartAccount, execution.target, execution.value, execution.callData);
             }
         } else {

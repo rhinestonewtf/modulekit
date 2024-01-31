@@ -105,15 +105,15 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         }
     }
 
-    function version() external pure virtual override returns (string memory) {
-        return "1.0.0";
-    }
-
-    function name() external pure virtual override returns (string memory) {
-        return "ExtensibleFallbackHandler";
-    }
-
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_FALLBACK;
+    }
+
+    function moduleId() external pure virtual override returns (string memory) {
+        return "fallbackmanager.v0.0.1";
+    }
+
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
     }
 }

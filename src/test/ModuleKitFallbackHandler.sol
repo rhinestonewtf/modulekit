@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { IERC7579Execution, IERC7579Config } from "../external/ERC7579.sol";
+import { IERC7579Account, Execution } from "../external/ERC7579.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
@@ -33,18 +33,16 @@ library ModuleKitFallbackHandler {
     {
         // check if fallbackhandler is installed on account
 
-        bool enabled = IERC7579Config(instance.account).isFallbackInstalled(
-            address(instance.aux.fallbackHandler)
-        );
+        bool enabled = instance.isFallbackInstalled(address(instance.aux.fallbackHandler));
 
-        IERC7579Execution.Execution[] memory executions;
+        Execution[] memory executions;
 
         if (!enabled) {
             // length: 2 (install of ExtensibleFallbackHandler + configuration of subhandler)
-            executions = new IERC7579Execution.Execution[](2);
+            executions = new Execution[](2);
 
             //  get Execution struct to install ExtensibleFallbackHandler on account
-            executions[0] = IERC7579Execution.Execution({
+            executions[0] = Execution({
                 target: instance.account,
                 value: 0,
                 callData: ERC7579Helpers.configModule(
@@ -57,7 +55,7 @@ library ModuleKitFallbackHandler {
         } else {
             // length: 1 (configuration of subhandler. ExtensibleFallbackHandler is already
             // installed as the FallbackHandler on the Account)
-            executions = new IERC7579Execution.Execution[](1);
+            executions = new Execution[](1);
         }
 
         // Follow ExtensibleFallbackHandler ABI
@@ -72,7 +70,7 @@ library ModuleKitFallbackHandler {
 
         // set the function selector on the ExtensibleFallbackHandler
         // using executions.length -1 here because we want this to be the last execution
-        executions[executions.length - 1] = IERC7579Execution.Execution({
+        executions[executions.length - 1] = Execution({
             target: address(instance.aux.fallbackHandler),
             value: 0,
             callData: abi.encodeCall(ExtensibleFallbackHandler.setFunctionSig, (params))

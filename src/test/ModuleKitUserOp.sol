@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
-import { IERC7579Execution } from "../external/ERC7579.sol";
+import { Execution } from "../external/ERC7579.sol";
 
 library ModuleKitUserOp {
     function getInstallValidatorOps(
@@ -180,7 +180,7 @@ library ModuleKitUserOp {
 
     function getExecOps(
         RhinestoneAccount memory instance,
-        IERC7579Execution.Execution[] memory executions,
+        Execution[] memory executions,
         address txValidator
     )
         internal
@@ -206,8 +206,7 @@ library ModuleKitUserOp {
         view
         returns (UserOpData memory userOpData)
     {
-        IERC7579Execution.Execution[] memory executions =
-            ERC7579Helpers.toExecutions(targets, values, initDatas);
+        Execution[] memory executions = ERC7579Helpers.toExecutions(targets, values, initDatas);
         return getExecOps(instance, executions, txValidator);
     }
 }
