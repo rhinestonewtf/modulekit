@@ -18,7 +18,6 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
     function preCheck(
         address msgSender,
-        uint256 msgValue,
         bytes calldata msgData
     )
         external
