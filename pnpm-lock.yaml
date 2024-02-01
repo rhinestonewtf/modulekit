@@ -8,6 +8,9 @@ dependencies:
   '@openzeppelin/contracts':
     specifier: 5.0.1
     version: 5.0.1
+  uMSA:
+    specifier: github:erc7579/uMSA
+    version: github.com/erc7579/uMSA/3f17ca510d4f134d1a45a584534f2195726bc92f
 
 devDependencies:
   '@rhinestone/sessionkeymanager':
@@ -33,16 +36,13 @@ devDependencies:
     version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
   solady:
     specifier: github:vectorized/solady
-    version: github.com/vectorized/solady/5fb6c905cb2ebb73226b81dd4c9369d8e1ba3d0b
+    version: github.com/vectorized/solady/8919f61d14a5e7b32f3d809c9f5fe3ea2ebcbc50
   solarray:
     specifier: github:sablier-labs/solarray
     version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
   solhint:
     specifier: ^4.1.1
     version: 4.1.1(typescript@5.3.3)
-  uMSA:
-    specifier: github:erc7579/uMSA
-    version: github.com/erc7579/uMSA/07ad177612c241ad6703b7a818cdda3204b7add5
 
 packages:
 
@@ -944,20 +944,20 @@ packages:
   /@types/bn.js@4.11.6:
     resolution: {integrity: sha512-pqr857jrp2kPuO9uRjZ3PwnJTjoQy+fcdxvBTvHm6dkmEL9q+hDD/2j/0ELOBPtPnS8LjCX0gI9nbl8lVkadpg==}
     dependencies:
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
     dev: true
 
   /@types/bn.js@5.1.5:
     resolution: {integrity: sha512-V46N0zwKRF5Q00AZ6hWtN0T8gGmDUaUzLWQvHFo5yThtVwK/VCenFY3wXVbOvNfajEpsTfQM4IN9k/d6gUVX3A==}
     dependencies:
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
     dev: true
 
   /@types/glob@7.2.0:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
     dev: true
 
   /@types/http-cache-semantics@4.0.4:
@@ -976,8 +976,8 @@ packages:
     resolution: {integrity: sha512-Z61JK7DKDtdKTWwLeElSEBcWGRLY8g95ic5FoQqI9CMx0ns/Ghep3B4DfcEimiKMvtamNVULVNKEsiwV3aQmXw==}
     dev: true
 
-  /@types/node@20.11.13:
-    resolution: {integrity: sha512-5G4zQwdiQBSWYTDAH1ctw2eidqdhMJaNsiIDKHFr55ihz5Trl2qqR8fdrT732yPBho5gkNxXm67OxWFBqX9aPg==}
+  /@types/node@20.11.14:
+    resolution: {integrity: sha512-w3yWCcwULefjP9DmDDsgUskrMoOy5Z8MiwKHr1FvqGPtx7CvJzQvxD7eKpxNtklQxLruxSXWddyeRtyud0RcXQ==}
     dependencies:
       undici-types: 5.26.5
     dev: true
@@ -985,7 +985,7 @@ packages:
   /@types/pbkdf2@3.1.2:
     resolution: {integrity: sha512-uRwJqmiXmh9++aSu1VNEn3iIxWOhd8AHXNSdlaLfdAAdSTY9jYVeGWnzejM3dvrkbqE3/hyQkQQ29IFATEGlew==}
     dependencies:
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
     dev: true
 
   /@types/prettier@2.7.3:
@@ -999,14 +999,14 @@ packages:
   /@types/readable-stream@2.3.15:
     resolution: {integrity: sha512-oM5JSKQCcICF1wvGgmecmHldZ48OZamtMxcGGVICOJA8o8cahXC1zEVAif8iwoc5j8etxFaRFnf095+CDsuoFQ==}
     dependencies:
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
       safe-buffer: 5.1.2
     dev: true
 
   /@types/secp256k1@4.0.6:
     resolution: {integrity: sha512-hHxJU6PAEUn0TP4S/ZOzuTUvJWuZ6eIKeNKb5RBpODvSl6hp1Wrw4s7ATY50rklRCScUDpHzVA/DQdSjJ3UoYQ==}
     dependencies:
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
     dev: true
 
   /abbrev@1.0.9:
@@ -2184,7 +2184,7 @@ packages:
       dir-glob: 3.0.1
       fast-glob: 3.3.2
       glob: 7.2.3
-      ignore: 5.3.0
+      ignore: 5.3.1
       merge2: 1.4.1
       slash: 3.0.0
     dev: true
@@ -2459,8 +2459,8 @@ packages:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
     dev: true
 
-  /ignore@5.3.0:
-    resolution: {integrity: sha512-g7dmpshy+gD7mh88OC9NwSGTKoc3kyLAZQRU1mt53Aw/vnvfXnbC+F/7F7QoYVKbV+KNvJx8wArewKy1vXMtlg==}
+  /ignore@5.3.1:
+    resolution: {integrity: sha512-5Fytz/IraMjqpwfd34ke28PTVMjZjJG2MPn5t7OE4eUCUNf8BAa7b5WUS9/Qvr6mwOQS7Mk6vdsMno5he+T8Xw==}
     engines: {node: '>= 4'}
     dev: true
 
@@ -2776,7 +2776,7 @@ packages:
     resolution: {integrity: sha512-90Tvmg2NXwnKMgTafA01PRELsYNNRb/F2bj3nzdByTLLMUmgkgL8H/oeWcjZtVVffnBJyNjDcYxY7cdOE/WoHg==}
     engines: {node: '>=14.17'}
     dependencies:
-      '@types/node': 20.11.13
+      '@types/node': 20.11.14
     dev: true
 
   /md5.js@1.3.5:
@@ -3517,7 +3517,7 @@ packages:
       cosmiconfig: 8.3.6(typescript@5.3.3)
       fast-diff: 1.3.0
       glob: 8.1.0
-      ignore: 5.3.0
+      ignore: 5.3.1
       js-yaml: 4.1.0
       latest-version: 7.0.0
       lodash: 4.17.21
@@ -4012,13 +4012,13 @@ packages:
     version: 0.0.0
     dev: true
 
-  github.com/erc7579/uMSA/07ad177612c241ad6703b7a818cdda3204b7add5:
-    resolution: {tarball: https://codeload.github.com/erc7579/uMSA/tar.gz/07ad177612c241ad6703b7a818cdda3204b7add5}
+  github.com/erc7579/uMSA/3f17ca510d4f134d1a45a584534f2195726bc92f:
+    resolution: {tarball: https://codeload.github.com/erc7579/uMSA/tar.gz/3f17ca510d4f134d1a45a584534f2195726bc92f}
     name: micro-msa
     version: 0.3.1
     dependencies:
       '@openzeppelin/contracts': 5.0.1
-    dev: true
+    dev: false
 
   github.com/eth-infinitism/account-abstraction/0766b38ad165bfaecdd60b46cf72db93aa6793a9(ethers@5.7.2)(hardhat@2.19.5)(lodash@4.17.21)(typechain@5.2.0):
     resolution: {tarball: https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/0766b38ad165bfaecdd60b46cf72db93aa6793a9}
@@ -4068,8 +4068,8 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/vectorized/solady/5fb6c905cb2ebb73226b81dd4c9369d8e1ba3d0b:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/5fb6c905cb2ebb73226b81dd4c9369d8e1ba3d0b}
+  github.com/vectorized/solady/8919f61d14a5e7b32f3d809c9f5fe3ea2ebcbc50:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/8919f61d14a5e7b32f3d809c9f5fe3ea2ebcbc50}
     name: solady
     version: 0.0.166
     dev: true

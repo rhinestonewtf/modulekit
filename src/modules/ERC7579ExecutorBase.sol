@@ -20,6 +20,7 @@ abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {
             mode: MODE_DEFAULT,
             payload: ModePayload.wrap(bytes22(0))
         });
+
         return IERC7579Account(account).executeFromExecutor(
             modeCode, ERC7579ExecutionLib.encodeSingle(to, value, data)
         )[0];
