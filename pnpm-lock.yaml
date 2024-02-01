@@ -10,7 +10,7 @@ dependencies:
     version: 5.0.1
   uMSA:
     specifier: github:erc7579/uMSA
-    version: github.com/erc7579/uMSA/3f17ca510d4f134d1a45a584534f2195726bc92f
+    version: github.com/erc7579/uMSA/d373e8687c377ce97e62514fee4281336b48879c
 
 devDependencies:
   '@rhinestone/sessionkeymanager':
@@ -4012,8 +4012,8 @@ packages:
     version: 0.0.0
     dev: true
 
-  github.com/erc7579/uMSA/3f17ca510d4f134d1a45a584534f2195726bc92f:
-    resolution: {tarball: https://codeload.github.com/erc7579/uMSA/tar.gz/3f17ca510d4f134d1a45a584534f2195726bc92f}
+  github.com/erc7579/uMSA/d373e8687c377ce97e62514fee4281336b48879c:
+    resolution: {tarball: https://codeload.github.com/erc7579/uMSA/tar.gz/d373e8687c377ce97e62514fee4281336b48879c}
     name: micro-msa
     version: 0.3.1
     dependencies:
