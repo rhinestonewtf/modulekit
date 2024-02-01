@@ -6,7 +6,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579FallbackBase } from "../modules/ERC7579FallbackBase.sol";
 import { ERC2771Handler } from "./ERC2771Handler.sol";
-import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "umsa/lib/ModuleTypeLib.sol";
+import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 import "forge-std/console2.sol";
 

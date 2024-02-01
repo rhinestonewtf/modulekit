@@ -11,21 +11,19 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "5.0.1",
-    "uMSA": "github:erc7579/uMSA"
+    "@openzeppelin/contracts": "5.0.1"
   },
   "devDependencies": {
     "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
     "ds-test": "github:dapphub/ds-test",
-    "erc7579": "github:erc7579/erc7579-implementation#feature/executeUserOp",
+    "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^4.1.1",
-    "uMSA": "github:erc7579/uMSA"
+    "solhint": "^4.1.1"
   },
   "files": [
     "artifacts",

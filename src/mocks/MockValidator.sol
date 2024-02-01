@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 /* solhint-disable no-unused-vars */
 import { ERC7579ValidatorBase } from "../Modules.sol";
 import { UserOperation } from "../external/ERC4337.sol";
-import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "umsa/lib/ModuleTypeLib.sol";
+import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract MockValidator is ERC7579ValidatorBase {
     EncodedModuleTypes immutable MODULE_TYPES;

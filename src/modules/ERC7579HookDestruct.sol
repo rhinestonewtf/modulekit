@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "./ERC7579HookBase.sol";
 import { IERC7579Account } from "../Accounts.sol";
-import { ExecutionLib, Execution } from "umsa/lib/ExecutionLib.sol";
+import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 import {
     ModeLib,
     CallType,
@@ -11,7 +11,7 @@ import {
     CALLTYPE_SINGLE,
     CALLTYPE_BATCH,
     CALLTYPE_DELEGATECALL
-} from "umsa/lib/ModeLib.sol";
+} from "erc7579/lib/ModeLib.sol";
 
 abstract contract ERC7579HookDestruct is ERC7579HookBase {
     error HookInvalidSelector();

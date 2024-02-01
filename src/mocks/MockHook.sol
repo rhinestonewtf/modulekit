@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "../Modules.sol";
-import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "umsa/lib/ModuleTypeLib.sol";
+import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract MockHook is ERC7579HookBase {
     EncodedModuleTypes immutable MODULE_TYPES;

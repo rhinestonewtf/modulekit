@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ExecutorBase } from "../Modules.sol";
 import { IERC7579Account } from "../external/ERC7579.sol";
-import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "umsa/lib/ModuleTypeLib.sol";
+import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract MockExecutor is ERC7579ExecutorBase {
     EncodedModuleTypes immutable MODULE_TYPES;
