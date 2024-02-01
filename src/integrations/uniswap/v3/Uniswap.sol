@@ -5,7 +5,7 @@ import { SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE } from "../helpers/MainnetAdd
 import { ISwapRouter } from "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ERC20Integration } from "../../ERC20.sol";
-import { IERC7579Execution } from "../../../Accounts.sol";
+import { IERC7579Account, Execution } from "../../../Accounts.sol";
 
 /// @author zeroknots
 
@@ -21,9 +21,9 @@ library UniswapV3Integration {
     )
         internal
         view
-        returns (IERC7579Execution.Execution[] memory exec)
+        returns (Execution[] memory exec)
     {
-        exec = new IERC7579Execution.Execution[](2);
+        exec = new Execution[](2);
         exec[0] = ERC20Integration.approve(tokenIn, SWAPROUTER_ADDRESS, amountIn);
         exec[1] = swapExactInputSingle(smartAccount, tokenIn, tokenOut, amountIn, sqrtPriceLimitX96);
     }
@@ -37,9 +37,9 @@ library UniswapV3Integration {
     )
         internal
         view
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: SWAPROUTER_ADDRESS,
             value: 0,
             callData: abi.encodeCall(
@@ -69,9 +69,9 @@ library UniswapV3Integration {
     )
         internal
         view
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: SWAPROUTER_ADDRESS,
             value: 0,
             callData: abi.encodeCall(

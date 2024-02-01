@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { IERC7579Execution } from "../Accounts.sol";
+import { IERC7579Account, Execution } from "../Accounts.sol";
 
 library ERC20Integration {
     function approve(
@@ -12,9 +12,9 @@ library ERC20Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(token),
             value: 0,
             callData: abi.encodeCall(IERC20.approve, (spender, amount))
@@ -28,9 +28,9 @@ library ERC20Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(token),
             value: 0,
             callData: abi.encodeCall(IERC20.transfer, (to, amount))
@@ -45,9 +45,9 @@ library ERC20Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(token),
             value: 0,
             callData: abi.encodeCall(IERC20.transferFrom, (from, to, amount))

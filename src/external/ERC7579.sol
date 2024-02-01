@@ -3,21 +3,29 @@ pragma solidity ^0.8.23;
 
 /* solhint-disable no-unused-import */
 import { MSAFactory as ERC7579AccountFactory } from "erc7579/MSAFactory.sol";
-import {
-    IMSA as IERC7579Account,
-    IExecution as IERC7579Execution,
-    IAccountConfig as IERC7579Config,
-    IAccountConfig_Hook as IERC7579ConfigHook
-} from "erc7579/interfaces/IMSA.sol";
-import { MSA as ERC7579AccountNonce } from "erc7579/accountExamples/MSA_ValidatorInNonce.sol";
-import { MSA as ERC7579Account } from "erc7579/accountExamples/MSA_withHookExtension.sol";
+import { MSAAdvanced as ERC7579Account } from "erc7579/uMSAAdvanced.sol";
+import { Execution, IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
 import {
     IModule as IERC7579Module,
     IValidator as IERC7579Validator,
     IExecutor as IERC7579Executor,
     IHook as IERC7579Hook,
     IFallback as IERC7579Fallback
-} from "erc7579/interfaces/IModule.sol";
+} from "erc7579/interfaces/IERC7579Module.sol";
+
+import {
+    ModeLib as ERC7579ModeLib,
+    ModeCode,
+    CallType,
+    ExecType,
+    ModePayload,
+    CALLTYPE_SINGLE,
+    CALLTYPE_BATCH,
+    EXECTYPE_DEFAULT,
+    MODE_DEFAULT
+} from "erc7579/lib/ModeLib.sol";
+import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
+import { Execution, ExecutionLib as ERC7579ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
 import {
     Bootstrap as ERC7579Bootstrap,

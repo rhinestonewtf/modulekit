@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
-import { IERC7579Execution } from "../Accounts.sol";
+import { IERC7579Account, Execution } from "../Accounts.sol";
 
 library ERC4626Integration {
     function deposit(
@@ -12,9 +12,9 @@ library ERC4626Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(vault),
             value: 0,
             callData: abi.encodeCall(IERC4626.deposit, (assets, receiver))
@@ -28,9 +28,9 @@ library ERC4626Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(vault),
             value: 0,
             callData: abi.encodeCall(IERC4626.mint, (shares, receiver))
@@ -45,9 +45,9 @@ library ERC4626Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(vault),
             value: 0,
             callData: abi.encodeCall(IERC4626.withdraw, (assets, receiver, owner))
@@ -62,9 +62,9 @@ library ERC4626Integration {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution memory exec)
+        returns (Execution memory exec)
     {
-        exec = IERC7579Execution.Execution({
+        exec = Execution({
             target: address(vault),
             value: 0,
             callData: abi.encodeCall(IERC4626.redeem, (shares, receiver, owner))

@@ -1,9 +1,13 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
 import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
 
 import {
     ERC7579BootstrapConfig,
+    IERC7579Account,
     ERC7579Account,
     ERC7579AccountFactory,
     IERC7579Validator
@@ -33,7 +37,7 @@ struct UserOpData {
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
     ERC7579AccountFactory public accountFactory;
-    ERC7579Account public accountImplementationSingleton;
+    IERC7579Account public accountImplementationSingleton;
 
     bool internal isInit;
 

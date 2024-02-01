@@ -32,6 +32,17 @@ abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
         return ValidationData.wrap(_packValidationData4337(sigFailed, validUntil, validAfter));
     }
 
+    function _unpackValidationData(ValidationData _packedData)
+        internal
+        pure
+        returns (bool sigFailed, uint48 validUntil, uint48 validAfter)
+    {
+        uint256 packedData = ValidationData.unwrap(_packedData);
+        sigFailed = (packedData & 1) == 1;
+        validUntil = uint48((packedData >> 160) & ((1 << 48) - 1));
+        validAfter = uint48((packedData >> (160 + 48)) & ((1 << 48) - 1));
+    }
+
     function validateUserOp(
         UserOperation calldata userOp,
         bytes32 userOpHash

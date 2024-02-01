@@ -9,7 +9,7 @@ import "src/modules/utils/ERC7579ValidatorLib.sol";
 import { Solarray } from "solarray/Solarray.sol";
 
 contract Validator is ERC7579ValidatorBase {
-    IERC7579Execution.Execution log;
+    Execution log;
 
     function set(address to, uint256 value, bytes memory callData) public {
         log.target = to;
@@ -33,7 +33,7 @@ contract Validator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        IERC7579Execution.Execution[] calldata execs =
+        Execution[] calldata execs =
             ParseCalldataLib.parseBatchExecCalldata(userOp.callData);
 
         for (uint256 i; i < execs.length; i++) {
