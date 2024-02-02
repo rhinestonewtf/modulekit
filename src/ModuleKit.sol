@@ -10,6 +10,6 @@ import { ModuleKitFallbackHandler } from "./test/ModuleKitFallbackHandler.sol";
 
 import { ModuleKitUserOp } from "./test/ModuleKitUserOp.sol";
 
-import { UserOperation } from "./external/ERC4337.sol";
+import { PackedUserOperation } from "./external/ERC4337.sol";
 
 /* solhint-enable no-unused-import */

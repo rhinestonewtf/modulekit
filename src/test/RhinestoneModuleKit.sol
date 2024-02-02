@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
+import { PackedUserOperation, IEntryPoint } from "../external/ERC4337.sol";
 import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
 
 import {
@@ -31,7 +31,7 @@ struct RhinestoneAccount {
 }
 
 struct UserOpData {
-    UserOperation userOp;
+    PackedUserOperation userOp;
     bytes32 userOpHash;
 }
 

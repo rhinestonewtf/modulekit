@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
+import { IEntryPoint } from "../external/ERC4337.sol";
 import { IERC7579Account } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
@@ -111,7 +111,6 @@ library ModuleKitHelpers {
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        console2.log("\n\n\n\n\n\n------");
         userOpData.execUserOps();
     }
 

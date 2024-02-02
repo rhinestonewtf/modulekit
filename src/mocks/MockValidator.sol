@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 /* solhint-disable no-unused-vars */
 import { ERC7579ValidatorBase } from "../Modules.sol";
-import { UserOperation } from "../external/ERC4337.sol";
+import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract MockValidator is ERC7579ValidatorBase {
@@ -20,7 +20,7 @@ contract MockValidator is ERC7579ValidatorBase {
     function onUninstall(bytes calldata data) external virtual override { }
 
     function validateUserOp(
-        UserOperation calldata userOp,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         external

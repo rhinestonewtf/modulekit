@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { UserOperation, IEntryPoint, IEntryPointSimulations } from "../../external/ERC4337.sol";
+import {
+    PackedUserOperation, IEntryPoint, IEntryPointSimulations
+} from "../../external/ERC4337.sol";
 /* solhint-disable no-global-import */
 import "./Vm.sol";
 import "./Log.sol";
 import "./GasCalculations.sol";
+import "forge-std/console2.sol";
 
 library ERC4337Helpers {
     error UserOperationReverted(
         bytes32 userOpHash, address sender, uint256 nonce, bytes revertReason
     );
 
-    function exec4337(UserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
+    function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
         // ERC-4337 specs validation
         if (envOr("SIMULATE", false)) {
             simulateUserOps(userOps, onEntryPoint);
@@ -29,30 +32,29 @@ library ERC4337Helpers {
         uint256 isExpectRevert = getExpectRevert();
         uint256 totalUserOpGas = 0;
         for (uint256 i; i < logs.length; i++) {
-            // UserOperationRevertReason(bytes32,address,uint256,bytes)
-            if (
-                logs[i].topics[0]
-                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
-            ) {
-                if (isExpectRevert != 1) {
-                    (uint256 nonce, bytes memory revertReason) =
-                        abi.decode(logs[i].data, (uint256, bytes));
-                    revert UserOperationReverted(
-                        logs[i].topics[1], address(bytes20(logs[i].topics[2])), nonce, revertReason
-                    );
-                }
-            }
             // UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)
             if (
                 logs[i].topics[0]
                     == 0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f
             ) {
-                (,,, uint256 actualGasUsed) =
+                (uint256 nonce, bool success,, uint256 actualGasUsed) =
                     abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
                 totalUserOpGas = actualGasUsed;
+                if (!success) {
+                    if (isExpectRevert == 0) {
+                        bytes32 userOpHash = logs[i].topics[1];
+                        bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
+                        revert UserOperationReverted(
+                            userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
+                        );
+                    } else {
+                        writeExpectRevert(0);
+                    }
+                }
             }
         }
-        if (isExpectRevert == 1) revert("UserOperation did not revert");
+        isExpectRevert = getExpectRevert();
+        if (isExpectRevert != 0) revert("UserOperation did not revert");
         writeExpectRevert(0);
 
         // Calculate gas for userOp
@@ -69,17 +71,22 @@ library ERC4337Helpers {
         }
     }
 
-    function exec4337(UserOperation memory userOp, IEntryPoint onEntryPoint) internal {
-        UserOperation[] memory userOps = new UserOperation[](1);
+    function exec4337(PackedUserOperation memory userOp, IEntryPoint onEntryPoint) internal {
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
         exec4337(userOps, onEntryPoint);
     }
 
-    function simulateUserOps(UserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
+    function simulateUserOps(
+        PackedUserOperation[] memory userOps,
+        IEntryPoint onEntryPoint
+    )
+        internal
+    {
         uint256 snapShotId = snapshot();
         IEntryPointSimulations simulationEntryPoint = IEntryPointSimulations(address(onEntryPoint));
         for (uint256 i; i < userOps.length; i++) {
-            UserOperation memory userOp = userOps[i];
+            PackedUserOperation memory userOp = userOps[i];
             startStateDiffRecording();
             IEntryPointSimulations.ValidationResult memory result =
                 simulationEntryPoint.simulateValidation(userOp);
@@ -89,8 +96,26 @@ library ERC4337Helpers {
         revertTo(snapShotId);
     }
 
+    function getUserOpRevertReason(
+        VmSafe.Log[] memory logs,
+        bytes32 userOpHash
+    )
+        internal
+        returns (bytes memory revertReason)
+    {
+        for (uint256 i; i < logs.length; i++) {
+            // UserOperationRevertReason(bytes32,address,uint256,bytes)
+            if (
+                logs[i].topics[0]
+                    == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+            ) {
+                (, revertReason) = abi.decode(logs[i].data, (uint256, bytes));
+            }
+        }
+    }
+
     function calculateGas(
-        UserOperation[] memory userOps,
+        PackedUserOperation[] memory userOps,
         IEntryPoint onEntryPoint,
         address beneficiary,
         string memory gasIdentifier,
@@ -106,13 +131,13 @@ library ERC4337Helpers {
     }
 
     function map(
-        UserOperation[] memory self,
-        function(UserOperation memory) returns (UserOperation memory) f
+        PackedUserOperation[] memory self,
+        function(PackedUserOperation memory) returns (PackedUserOperation memory) f
     )
         internal
-        returns (UserOperation[] memory)
+        returns (PackedUserOperation[] memory)
     {
-        UserOperation[] memory result = new UserOperation[](self.length);
+        PackedUserOperation[] memory result = new PackedUserOperation[](self.length);
         for (uint256 i; i < self.length; i++) {
             result[i] = f(self[i]);
         }
@@ -120,21 +145,22 @@ library ERC4337Helpers {
     }
 
     function map(
-        UserOperation memory self,
-        function(UserOperation memory) internal  returns (UserOperation memory) fn
+        PackedUserOperation memory self,
+        function(PackedUserOperation memory) internal  returns (PackedUserOperation memory) fn
     )
         internal
-        returns (UserOperation memory)
+        returns (PackedUserOperation memory)
     {
         return fn(self);
     }
 
     function reduce(
-        UserOperation[] memory self,
-        function(UserOperation memory, UserOperation memory)  returns (UserOperation memory) f
+        PackedUserOperation[] memory self,
+        function(PackedUserOperation memory, PackedUserOperation memory)  returns (PackedUserOperation memory)
+            f
     )
         internal
-        returns (UserOperation memory r)
+        returns (PackedUserOperation memory r)
     {
         r = self[0];
         for (uint256 i = 1; i < self.length; i++) {
@@ -142,20 +168,24 @@ library ERC4337Helpers {
         }
     }
 
-    function array(UserOperation memory op) internal pure returns (UserOperation[] memory ops) {
-        ops = new UserOperation[](1);
+    function array(PackedUserOperation memory op)
+        internal
+        pure
+        returns (PackedUserOperation[] memory ops)
+    {
+        ops = new PackedUserOperation[](1);
         ops[0] = op;
     }
 
     function array(
-        UserOperation memory op1,
-        UserOperation memory op2
+        PackedUserOperation memory op1,
+        PackedUserOperation memory op2
     )
         internal
         pure
-        returns (UserOperation[] memory ops)
+        returns (PackedUserOperation[] memory ops)
     {
-        ops = new UserOperation[](2);
+        ops = new PackedUserOperation[](2);
         ops[0] = op1;
         ops[0] = op2;
     }

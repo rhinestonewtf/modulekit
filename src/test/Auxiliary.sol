@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IEntryPoint, UserOperation } from "../external/ERC4337.sol";
+import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { EntryPointFactory } from "./predeploy/EntryPoint.sol";
@@ -46,7 +46,7 @@ contract UserOpGasLog {
     }
 
     function calcValidationGas(
-        UserOperation memory userOp,
+        PackedUserOperation memory userOp,
         bytes32 userOpHash,
         address sender,
         bytes memory initCode
@@ -63,7 +63,7 @@ contract UserOpGasLog {
     }
 
     function calcExecutionGas(
-        UserOperation memory userOp,
+        PackedUserOperation memory userOp,
         bytes32 userOpHash,
         address sender,
         bytes memory initCode

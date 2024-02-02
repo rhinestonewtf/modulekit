@@ -15,6 +15,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     MockValidator internal validator;
     MockHook internal hook;
     MockExecutor internal executor;
+    MockTarget internal mockTarget;
 
     MockERC20 internal token;
 
@@ -32,6 +33,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         token = new MockERC20();
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
+        mockTarget = new MockTarget();
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -86,12 +88,11 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     function testexec__RevertWhen__UserOperationFails() public {
         // Create userOperation fields
-        address receiver = makeAddr("receiver");
-        uint256 value = 100_000 ether;
+        bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
 
         // Create userOperation
         instance.expect4337Revert();
-        instance.exec({ target: receiver, callData: "", value: value });
+        instance.exec({ target: address(mockTarget), callData: callData, value: 0 });
     }
 
     /*//////////////////////////////////////////////////////////////////////////

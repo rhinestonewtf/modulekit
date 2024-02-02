@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import { Execution, IERC7579Account, ERC7579BootstrapConfig } from "../../external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
-import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
+import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { RhinestoneAccount } from "../RhinestoneModuleKit.sol";
 
 interface IAccountModulesPaginated {
@@ -69,7 +69,7 @@ library ERC7579Helpers {
         address txValidator
     )
         internal
-        returns (UserOperation memory userOp, bytes32 userOpHash)
+        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
         bool notDeployedYet = instance.account.code.length == 0;
@@ -77,14 +77,15 @@ library ERC7579Helpers {
             initCode = instance.initCode;
         }
 
-        userOp = UserOperation({
+        userOp = PackedUserOperation({
             sender: instance.account,
             nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
             initCode: initCode,
             callData: configModule(instance.account, module, initData, fn),
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
-            gasFees: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
@@ -99,7 +100,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (UserOperation memory userOp, bytes32 userOpHash)
+        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
         bool notDeployedYet = instance.account.code.length == 0;
@@ -107,14 +108,15 @@ library ERC7579Helpers {
             initCode = instance.initCode;
         }
 
-        userOp = UserOperation({
+        userOp = PackedUserOperation({
             sender: instance.account,
             nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
-            gasFees: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            maxFeePerGas: 1,
+            maxPriorityFeePerGas: 1,
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
@@ -386,13 +388,13 @@ library ERC7579Helpers {
     function signatureInNonce(
         address account,
         IEntryPoint entrypoint,
-        UserOperation memory userOp,
+        PackedUserOperation memory userOp,
         address validator,
         bytes memory signature
     )
         internal
         view
-        returns (bytes32 userOpHash, UserOperation memory)
+        returns (bytes32 userOpHash, PackedUserOperation memory)
     {
         userOp.nonce = getNonce(account, entrypoint, validator);
         userOp.signature = signature;
