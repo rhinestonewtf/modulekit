@@ -206,10 +206,14 @@ library ERC4337SpecsParser {
         view
     {
         validateBannedOpcodes();
-        validateBannedStorageLocations(accesses, userOp);
-        validateDisallowedCalls(accesses, userOp);
-        validateDisallowedExtOpCodes(accesses);
-        validateDisallowedCreate(accesses, userOp);
+        uint256 numOfCreates;
+        for (uint256 i; i < accesses.length; i++) {
+            VmSafe.AccountAccess memory currentAccess = accesses[i];
+            validateBannedStorageLocations(currentAccess, userOp);
+            validateDisallowedCalls(currentAccess, userOp);
+            validateDisallowedExtOpCodes(currentAccess);
+            numOfCreates = validateDisallowedCreate(currentAccess, userOp, numOfCreates);
+        }
     }
 
     function validateBannedOpcodes() internal pure {
@@ -217,40 +221,40 @@ library ERC4337SpecsParser {
     }
 
     function validateBannedStorageLocations(
-        VmSafe.AccountAccess[] memory accesses,
+        VmSafe.AccountAccess memory currentAccess,
         PackedUserOperation memory userOp
     )
         internal
         view
     {
-        for (uint256 i; i < accesses.length; i++) {
-            if (accesses[i].account == userOp.sender || accesses[i].account == ENTRYPOINT_ADDR) {
+        if (
+            currentAccess.account == userOp.sender || currentAccess.account == ENTRYPOINT_ADDR
+                || currentAccess.account == address(this)
+        ) {
+            // all g
+        } else {
+            if (isStaked(currentAccess.account)) {
                 // all g
             } else {
-                if (isStaked(accesses[i].account)) {
-                    // all g
-                } else {
-                    for (uint256 j; j < accesses[i].storageAccesses.length; j++) {
-                        if (accesses[i].storageAccesses[j].slot == bytes32(bytes20(userOp.sender)))
-                        {
-                            // all g
-                        } else {
-                            // todo
-                            // Slots of type keccak256(A || X) + n on any other address. (to cover
-                            // mapping(address =>
-                            // value), which is usually used for balance in ERC-20 tokens). n is an
-                            // offset
-                            // value up to
-                            // 128, to allow accessing fields in the format mapping(address =>
-                            // struct)
-                            revert InvalidStorageLocation(
-                                accesses[i].account,
-                                accesses[i].storageAccesses[j].slot,
-                                accesses[i].storageAccesses[j].previousValue,
-                                accesses[i].storageAccesses[j].newValue,
-                                accesses[i].storageAccesses[j].isWrite
-                            );
-                        }
+                for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
+                    if (currentAccess.storageAccesses[j].slot == bytes32(bytes20(userOp.sender))) {
+                        // all g
+                    } else {
+                        // todo
+                        // Slots of type keccak256(A || X) + n on any other address. (to cover
+                        // mapping(address =>
+                        // value), which is usually used for balance in ERC-20 tokens). n is an
+                        // offset
+                        // value up to
+                        // 128, to allow accessing fields in the format mapping(address =>
+                        // struct)
+                        revert InvalidStorageLocation(
+                            currentAccess.account,
+                            currentAccess.storageAccesses[j].slot,
+                            currentAccess.storageAccesses[j].previousValue,
+                            currentAccess.storageAccesses[j].newValue,
+                            currentAccess.storageAccesses[j].isWrite
+                        );
                     }
                 }
             }
@@ -258,80 +262,81 @@ library ERC4337SpecsParser {
     }
 
     function validateDisallowedCalls(
-        VmSafe.AccountAccess[] memory accesses,
+        VmSafe.AccountAccess memory currentAccess,
         PackedUserOperation memory userOp
     )
         internal
         view
     {
-        for (uint256 i; i < accesses.length; i++) {
+        if (
+            currentAccess.kind == VmSafe.AccountAccessKind.Call
+                || currentAccess.kind == VmSafe.AccountAccessKind.DelegateCall
+                || currentAccess.kind == VmSafe.AccountAccessKind.CallCode
+                || currentAccess.kind == VmSafe.AccountAccessKind.StaticCall
+        ) {
             if (
-                accesses[i].kind == VmSafe.AccountAccessKind.Call
-                    || accesses[i].kind == VmSafe.AccountAccessKind.DelegateCall
-                    || accesses[i].kind == VmSafe.AccountAccessKind.CallCode
-                    || accesses[i].kind == VmSafe.AccountAccessKind.StaticCall
+                currentAccess.account.code.length == 0
+                    && uint256(uint160(currentAccess.account)) > 0x09
             ) {
+                revert("Cannot call addresses without code");
+            }
+            bool calleeIsEntryPoint = currentAccess.account == ENTRYPOINT_ADDR;
+            bool callerIsAccount = currentAccess.accessor == userOp.sender;
+            bool callerIsTest = currentAccess.accessor == address(this);
+            bool callerIsEntryPoint = currentAccess.accessor == ENTRYPOINT_ADDR;
+            if (currentAccess.value > 0) {
+                if (calleeIsEntryPoint && callerIsAccount) {
+                    // todo: change conditional
+                } else {
+                    revert("Cannot use value except to EntryPoint");
+                }
+            }
+            if (calleeIsEntryPoint && !callerIsTest && !callerIsEntryPoint) {
                 if (
-                    accesses[i].account.code.length == 0
-                        && uint256(uint160(accesses[i].account)) > 0x09
+                    currentAccess.data.length > 4
+                        && bytes4(currentAccess.data) != bytes4(0xb760faf9)
                 ) {
-                    revert("Cannot call addresses without code");
-                }
-                bool isEntryPoint = accesses[i].account == ENTRYPOINT_ADDR;
-                bool callerIsAccount = accesses[i].accessor == userOp.sender;
-                if (accesses[i].value > 0) {
-                    if (isEntryPoint && callerIsAccount) {
-                        // todo: change conditional
-                    } else {
-                        revert("Cannot use value except to EntryPoint");
-                    }
-                }
-                if (isEntryPoint) {
-                    if (
-                        accesses[i].data.length > 4
-                            && bytes4(accesses[i].data) != bytes4(0xb760faf9)
-                    ) {
-                        revert("Cannot call EntryPoint except depositTo");
-                    }
+                    revert("Cannot call EntryPoint except depositTo");
                 }
             }
         }
     }
 
-    function validateDisallowedExtOpCodes(VmSafe.AccountAccess[] memory accesses) internal view {
-        for (uint256 i; i < accesses.length; i++) {
+    function validateDisallowedExtOpCodes(VmSafe.AccountAccess memory currentAccess)
+        internal
+        view
+    {
+        if (
+            currentAccess.kind == VmSafe.AccountAccessKind.Extcodesize
+                || currentAccess.kind == VmSafe.AccountAccessKind.Extcodehash
+                || currentAccess.kind == VmSafe.AccountAccessKind.Extcodecopy
+        ) {
             if (
-                accesses[i].kind == VmSafe.AccountAccessKind.Extcodesize
-                    || accesses[i].kind == VmSafe.AccountAccessKind.Extcodehash
-                    || accesses[i].kind == VmSafe.AccountAccessKind.Extcodecopy
+                currentAccess.account.code.length == 0
+                    && uint256(uint160(currentAccess.account)) > 0x09
             ) {
-                if (
-                    accesses[i].account.code.length == 0
-                        && uint256(uint160(accesses[i].account)) > 0x09
-                ) {
-                    revert("EXT* opcodes cannot access addresses without code");
-                }
+                revert("EXT* opcodes cannot access addresses without code");
             }
         }
     }
 
     function validateDisallowedCreate(
-        VmSafe.AccountAccess[] memory accesses,
-        PackedUserOperation memory userOp
+        VmSafe.AccountAccess memory currentAccess,
+        PackedUserOperation memory userOp,
+        uint256 numOfCreates
     )
         internal
         pure
+        returns (uint256 _numOfCreates)
     {
-        uint256 numOfCreates;
-        for (uint256 i; i < accesses.length; i++) {
-            if (accesses[i].kind == VmSafe.AccountAccessKind.Create) {
-                if (userOp.initCode.length == 0 || numOfCreates != 0) {
-                    revert(
-                        "Only one CREATE2 opcode is allowed in a user operation, to deploy the account"
-                    );
-                }
-                numOfCreates++;
+        _numOfCreates = numOfCreates;
+        if (currentAccess.kind == VmSafe.AccountAccessKind.Create) {
+            if (userOp.initCode.length == 0 || numOfCreates != 0) {
+                revert(
+                    "Only one CREATE2 opcode is allowed in a user operation, to deploy the account"
+                );
             }
+            _numOfCreates++;
         }
     }
 
