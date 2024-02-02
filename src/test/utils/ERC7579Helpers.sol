@@ -1,15 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import {
-    ERC7579Account,
-    ERC7579BootstrapConfig,
-    IERC7579Config,
-    IERC7579Execution,
-    IERC7579ConfigHook
-} from "../../external/ERC7579.sol";
+import { Execution, IERC7579Account, ERC7579BootstrapConfig } from "../../external/ERC7579.sol";
+import "erc7579/lib/ModeLib.sol";
+import "erc7579/interfaces/IERC7579Module.sol";
 import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { RhinestoneAccount } from "../RhinestoneModuleKit.sol";
+
+interface IAccountModulesPaginated {
+    function getValidatorPaginated(
+        address,
+        uint256
+    )
+        external
+        view
+        returns (address[] memory, address);
+
+    function getExecutorsPaginated(
+        address,
+        uint256
+    )
+        external
+        view
+        returns (address[] memory, address);
+}
 
 library ERC7579Helpers {
     /**
@@ -70,8 +84,7 @@ library ERC7579Helpers {
             callData: configModule(instance.account, module, initData, fn),
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
+            gasFees: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
@@ -101,8 +114,7 @@ library ERC7579Helpers {
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
+            gasFees: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
@@ -124,7 +136,9 @@ library ERC7579Helpers {
     {
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579Config.installValidator, (validator, initData));
+        callData = abi.encodeCall(
+            IERC7579Account.installModule, (MODULE_TYPE_VALIDATOR, validator, initData)
+        );
     }
 
     /**
@@ -139,10 +153,11 @@ library ERC7579Helpers {
         view
         returns (address to, uint256 value, bytes memory callData)
     {
-        // get previous executor in sentinel list
+        // get previous validator in sentinel list
         address previous;
 
-        (address[] memory array,) = ERC7579Account(account).getValidatorPaginated(address(0x1), 100);
+        (address[] memory array,) =
+            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -157,7 +172,8 @@ library ERC7579Helpers {
         to = account;
         value = 0;
         callData = abi.encodeCall(
-            IERC7579Config.uninstallValidator, (validator, abi.encode(previous, initData))
+            IERC7579Account.uninstallModule,
+            (MODULE_TYPE_VALIDATOR, validator, abi.encode(previous, initData))
         );
     }
 
@@ -175,7 +191,9 @@ library ERC7579Helpers {
     {
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579Config.installExecutor, (executor, initData));
+        callData = abi.encodeCall(
+            IERC7579Account.installModule, (MODULE_TYPE_EXECUTOR, executor, initData)
+        );
     }
 
     /**
@@ -193,7 +211,8 @@ library ERC7579Helpers {
         // get previous executor in sentinel list
         address previous;
 
-        (address[] memory array,) = ERC7579Account(account).getExecutorsPaginated(address(0x1), 100);
+        (address[] memory array,) =
+            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
@@ -208,7 +227,8 @@ library ERC7579Helpers {
         to = account;
         value = 0;
         callData = abi.encodeCall(
-            IERC7579Config.uninstallExecutor, (executor, abi.encode(previous, initData))
+            IERC7579Account.uninstallModule,
+            (MODULE_TYPE_EXECUTOR, executor, abi.encode(previous, initData))
         );
     }
 
@@ -226,7 +246,7 @@ library ERC7579Helpers {
     {
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579ConfigHook.installHook, (hook, initData));
+        callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -244,7 +264,9 @@ library ERC7579Helpers {
         hook = hook; // avoid solhint-no-unused-vars
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579ConfigHook.installHook, (address(0), initData));
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
+        );
     }
 
     /**
@@ -261,7 +283,9 @@ library ERC7579Helpers {
     {
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579Config.installFallback, (fallbackHandler, initData));
+        callData = abi.encodeCall(
+            IERC7579Account.installModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+        );
     }
 
     /**
@@ -279,7 +303,9 @@ library ERC7579Helpers {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
         to = account;
         value = 0;
-        callData = abi.encodeCall(IERC7579Config.installFallback, (address(0), initData));
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
+        );
     }
 
     /**
@@ -297,23 +323,32 @@ library ERC7579Helpers {
         pure
         returns (bytes memory erc7579Tx)
     {
-        return abi.encodeCall(IERC7579Execution.execute, (target, value, callData));
+        ModeCode mode = ModeLib.encode({
+            callType: CALLTYPE_SINGLE,
+            execType: EXECTYPE_DEFAULT,
+            mode: MODE_DEFAULT,
+            payload: ModePayload.wrap(bytes22(0))
+        });
+        bytes memory data = abi.encodePacked(target, value, callData);
+        return abi.encodeCall(IERC7579Account.execute, (mode, data));
     }
 
     /**
      * Encode a batched ERC7579 Execution Transaction
      * @param executions ERC7579 batched executions
      */
-    function encode(IERC7579Execution.Execution[] memory executions)
-        internal
-        pure
-        returns (bytes memory erc7579Tx)
-    {
-        return abi.encodeCall(IERC7579Execution.executeBatch, (executions));
+    function encode(Execution[] memory executions) internal pure returns (bytes memory erc7579Tx) {
+        ModeCode mode = ModeLib.encode({
+            callType: CALLTYPE_BATCH,
+            execType: EXECTYPE_DEFAULT,
+            mode: MODE_DEFAULT,
+            payload: ModePayload.wrap(bytes22(0))
+        });
+        return abi.encodeCall(IERC7579Account.execute, (mode, abi.encode(executions)));
     }
 
     /**
-     * convert arrays to batched IERC7579Execution
+     * convert arrays to batched IERC7579Account
      */
     function toExecutions(
         address[] memory targets,
@@ -322,19 +357,16 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (IERC7579Execution.Execution[] memory executions)
+        returns (Execution[] memory executions)
     {
-        executions = new IERC7579Execution.Execution[](targets.length);
+        executions = new Execution[](targets.length);
         if (targets.length != values.length && values.length != callDatas.length) {
             revert("Length Mismatch");
         }
 
         for (uint256 i; i < targets.length; i++) {
-            executions[i] = IERC7579Execution.Execution({
-                target: targets[i],
-                value: values[i],
-                callData: callDatas[i]
-            });
+            executions[i] =
+                Execution({ target: targets[i], value: values[i], callData: callDatas[i] });
         }
     }
 
@@ -416,54 +448,50 @@ abstract contract BootstrapUtil {
 }
 
 library ArrayLib {
-    function executions(IERC7579Execution.Execution memory _1)
-        internal
-        pure
-        returns (IERC7579Execution.Execution[] memory array)
-    {
-        array = new IERC7579Execution.Execution[](1);
+    function executions(Execution memory _1) internal pure returns (Execution[] memory array) {
+        array = new Execution[](1);
         array[0] = _1;
     }
 
     function executions(
-        IERC7579Execution.Execution memory _1,
-        IERC7579Execution.Execution memory _2
+        Execution memory _1,
+        Execution memory _2
     )
         internal
         pure
-        returns (IERC7579Execution.Execution[] memory array)
+        returns (Execution[] memory array)
     {
-        array = new IERC7579Execution.Execution[](2);
+        array = new Execution[](2);
         array[0] = _1;
         array[1] = _2;
     }
 
     function executions(
-        IERC7579Execution.Execution memory _1,
-        IERC7579Execution.Execution memory _2,
-        IERC7579Execution.Execution memory _3
+        Execution memory _1,
+        Execution memory _2,
+        Execution memory _3
     )
         internal
         pure
-        returns (IERC7579Execution.Execution[] memory array)
+        returns (Execution[] memory array)
     {
-        array = new IERC7579Execution.Execution[](3);
+        array = new Execution[](3);
         array[0] = _1;
         array[1] = _2;
         array[2] = _3;
     }
 
     function executions(
-        IERC7579Execution.Execution memory _1,
-        IERC7579Execution.Execution memory _2,
-        IERC7579Execution.Execution memory _3,
-        IERC7579Execution.Execution memory _4
+        Execution memory _1,
+        Execution memory _2,
+        Execution memory _3,
+        Execution memory _4
     )
         internal
         pure
-        returns (IERC7579Execution.Execution[] memory array)
+        returns (Execution[] memory array)
     {
-        array = new IERC7579Execution.Execution[](4);
+        array = new Execution[](4);
         array[0] = _1;
         array[1] = _2;
         array[2] = _3;
@@ -471,14 +499,13 @@ library ArrayLib {
     }
 
     function map(
-        IERC7579Execution.Execution[] memory self,
-        function(IERC7579Execution.Execution memory) internal  returns (IERC7579Execution.Execution memory)
-            f
+        Execution[] memory self,
+        function(Execution memory) internal  returns (Execution memory) f
     )
         internal
-        returns (IERC7579Execution.Execution[] memory result)
+        returns (Execution[] memory result)
     {
-        result = new IERC7579Execution.Execution[](self.length);
+        result = new Execution[](self.length);
         for (uint256 i; i < self.length; i++) {
             result[i] = f(self[i]);
         }
@@ -486,12 +513,12 @@ library ArrayLib {
     }
 
     function reduce(
-        IERC7579Execution.Execution[] memory self,
-        function(IERC7579Execution.Execution memory, IERC7579Execution.Execution memory) 
-        internal  returns (IERC7579Execution.Execution memory) f
+        Execution[] memory self,
+        function(Execution memory, Execution memory) 
+        internal  returns (Execution memory) f
     )
         internal
-        returns (IERC7579Execution.Execution memory result)
+        returns (Execution memory result)
     {
         result = self[0];
         for (uint256 i = 1; i < self.length; i++) {

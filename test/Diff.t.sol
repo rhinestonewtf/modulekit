@@ -107,8 +107,11 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         // instance.log4337Gas("testAddValidator()");
         // instance.enableGasLog();
         instance.installValidator(newValidator1);
+
         bool validatorEnabled = instance.isValidatorInstalled(newValidator);
         assertTrue(validatorEnabled);
+        bool validator1Enabled = instance.isValidatorInstalled(newValidator1);
+        assertTrue(validator1Enabled);
     }
 
     function testRemoveValidator() public {
@@ -182,7 +185,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertTrue(executorEnabled);
 
         instance.uninstallExecutor(newExecutor);
-        executorEnabled = instance.isValidatorInstalled(newExecutor);
+        executorEnabled = instance.isExecutorInstalled(newExecutor);
         assertFalse(executorEnabled);
     }
 

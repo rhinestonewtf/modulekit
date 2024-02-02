@@ -6,6 +6,8 @@ pragma solidity ^0.8.23;
 
 import { ERC7579FallbackBase } from "../modules/ERC7579FallbackBase.sol";
 import { ERC2771Handler } from "./ERC2771Handler.sol";
+import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
+
 import "forge-std/console2.sol";
 
 interface IFallbackMethod {
@@ -35,6 +37,14 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
     enum FallBackType {
         Static,
         Dynamic
+    }
+
+    EncodedModuleTypes immutable MODULE_TYPES;
+
+    constructor() {
+        ModuleType[] memory moduleTypes = new ModuleType[](1);
+        moduleTypes[0] = ModuleType.wrap(TYPE_FALLBACK);
+        MODULE_TYPES = ModuleTypeLib.bitEncode(moduleTypes);
     }
 
     function onInstall(bytes calldata data) external override {
@@ -105,15 +115,15 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         }
     }
 
-    function version() external pure virtual override returns (string memory) {
-        return "1.0.0";
-    }
-
-    function name() external pure virtual override returns (string memory) {
-        return "ExtensibleFallbackHandler";
-    }
-
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_FALLBACK;
+    }
+
+    function getModuleTypes() external view returns (EncodedModuleTypes) {
+        return MODULE_TYPES;
+    }
+
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
     }
 }

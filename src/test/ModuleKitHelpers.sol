@@ -3,11 +3,13 @@ pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
 import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
-import { IERC7579Account, IERC7579ConfigHook } from "../external/ERC7579.sol";
+import { IERC7579Account } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
+
+import "forge-std/console2.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for RhinestoneAccount;
@@ -82,8 +84,8 @@ library ModuleKitHelpers {
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
-    // will call installValidator with initData:0
 
+    // will call installValidator with initData:0
     function installExecutor(
         RhinestoneAccount memory instance,
         address module
@@ -109,6 +111,7 @@ library ModuleKitHelpers {
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
+        console2.log("\n\n\n\n\n\n------");
         userOpData.execUserOps();
     }
 
@@ -248,7 +251,7 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return IERC7579Account(instance.account).isValidatorInstalled(module);
+        return IERC7579Account(instance.account).isModuleInstalled(1, module, "");
     }
 
     function isExecutorInstalled(
@@ -258,7 +261,7 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return IERC7579Account(instance.account).isExecutorInstalled(module);
+        return IERC7579Account(instance.account).isModuleInstalled(2, module, "");
     }
 
     function isHookInstalled(
@@ -268,7 +271,7 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return IERC7579ConfigHook(instance.account).isHookInstalled(module);
+        return IERC7579Account(instance.account).isModuleInstalled(4, module, "");
     }
 
     function isFallbackInstalled(
@@ -278,7 +281,7 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return IERC7579Account(instance.account).isFallbackInstalled(module);
+        return IERC7579Account(instance.account).isModuleInstalled(3, module, "");
     }
 
     function expect4337Revert(RhinestoneAccount memory) internal {

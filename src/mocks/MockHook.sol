@@ -2,15 +2,20 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579HookBase } from "../Modules.sol";
+import { ModuleTypeLib, EncodedModuleTypes, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract MockHook is ERC7579HookBase {
+    EncodedModuleTypes immutable MODULE_TYPES;
+
+    constructor() {
+        ModuleType[] memory moduleTypes = new ModuleType[](1);
+        moduleTypes[0] = ModuleType.wrap(TYPE_HOOK);
+        MODULE_TYPES = ModuleTypeLib.bitEncode(moduleTypes);
+    }
+
     function onInstall(bytes calldata data) external override { }
 
     function onUninstall(bytes calldata data) external override { }
-
-    function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_HOOK;
-    }
 
     function preCheck(
         address msgSender,
@@ -25,11 +30,15 @@ contract MockHook is ERC7579HookBase {
         return true;
     }
 
-    function name() external pure virtual override returns (string memory) {
-        return "MockHook";
+    function isInitialized(address smartAccount) external pure returns (bool) {
+        return false;
     }
 
-    function version() external pure virtual override returns (string memory) {
-        return "0.0.1";
+    function isModuleType(uint256 typeID) external pure returns (bool) {
+        return typeID == TYPE_HOOK;
+    }
+
+    function getModuleTypes() external view returns (EncodedModuleTypes) {
+        return MODULE_TYPES;
     }
 }

@@ -13,23 +13,20 @@ abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
     bytes4 internal constant EIP1271_SUCCESS = 0x1626ba7e;
     bytes4 internal constant EIP1271_FAILED = 0xFFFFFFFF;
 
-    address public immutable MAIN_VALIDATOR;
+    modifier notInitialized() virtual;
+    modifier alreadyInitialized() virtual;
 
-    /**
-     * If this Validator can be used as a "subvalidator", by a Main Validator / Validation
-     * MultiPlexer / Validation, make sure to set MAIN_VALIDATOR to the address of the Main
-     * Validator.
-     * @param mainValidator - The address of the Main Validator, or zero if this Validator is not a
-     * subvalidator.
-     */
-    constructor(address mainValidator) {
-        MAIN_VALIDATOR = mainValidator;
+    // Modules may be intalled without being added to the account
+    function onInstall(bytes calldata data) external virtual override notInitialized {
+        _onInstall(data);
     }
 
-    modifier onlyMainValidator() {
-        require(msg.sender == MAIN_VALIDATOR, "NOT_MAIN_VALIDATOR");
-        _;
+    function onUninstall(bytes calldata data) external virtual override alreadyInitialized {
+        _onUninstall(data);
     }
+
+    function _onInstall(bytes calldata data) internal virtual;
+    function _onUninstall(bytes calldata data) internal virtual;
 
     /**
      * Helper to pack the return value for validateUserOp, when not using an aggregator.

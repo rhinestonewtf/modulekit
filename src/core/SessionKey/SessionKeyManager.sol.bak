@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 
 import { ERC7579ValidatorBase } from "../../modules/ERC7579ValidatorBase.sol";
 import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
-import { IERC7579Execution } from "../../ModuleKitLib.sol";
+import { IERC7579Account } from "../../ModuleKitLib.sol";
 import { IERC1271 } from "../../interfaces/IERC1271.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
@@ -118,7 +118,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             SessionKeyManagerLib.decodeSignatureBatch(userOp.signature);
 
         // get ERC7579 Execution struct array from callData
-        IERC7579Execution.Execution[] calldata execs =
+        Execution[] calldata execs =
             ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
 
         uint256 length = sessionKeySignatures.length;
@@ -130,7 +130,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         uint48 minValidAfter;
         for (uint256 i; i < length; i++) {
             // ----- Cached Data -----
-            IERC7579Execution.Execution calldata execution = execs[i];
+            Execution calldata execution = execs[i];
             bytes32 sessionKeyDataDigest = sessionKeyDataDigests[i];
             bytes calldata sessionKeySignature = sessionKeySignatures[i];
             // ----------

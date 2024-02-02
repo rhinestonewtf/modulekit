@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { IERC7579Execution, IERC7579Config } from "../external/ERC7579.sol";
+import { IERC7579Account, Execution } from "../external/ERC7579.sol";
 import { UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
@@ -36,16 +36,16 @@ library ModuleKitSCM {
         internal
         returns (UserOpData memory userOpData, bytes32 sessionKeyDigest)
     {
-        IERC7579Execution.Execution[] memory executions;
+        Execution[] memory executions;
 
         // detect if account was not created yet, or if SessionKeyManager is not installed
         if (
             instance.initCode.length > 0
                 || !instance.isValidatorInstalled(address(instance.aux.sessionKeyManager))
         ) {
-            executions = new IERC7579Execution.Execution[](2);
+            executions = new Execution[](2);
             // install core/SessionKeyManager first
-            executions[0] = IERC7579Execution.Execution({
+            executions[0] = Execution({
                 target: instance.account,
                 value: 0,
                 callData: ERC7579Helpers.configModule(
@@ -66,7 +66,7 @@ library ModuleKitSCM {
         });
 
         // configure the sessionKeyData on the core/SessionKeyManager
-        executions[executions.length - 1] = IERC7579Execution.Execution({
+        executions[executions.length - 1] = Execution({
             target: address(instance.aux.sessionKeyManager),
             value: 0,
             callData: abi.encodeCall(ISessionKeyManager.enableSession, (sessionData))

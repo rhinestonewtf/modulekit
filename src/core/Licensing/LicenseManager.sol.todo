@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 
 import { ERC7579ValidatorBase } from "../../modules/ERC7579ValidatorBase.sol";
 import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
-import { IERC7579Execution } from "../../Accounts.sol";
+import { IERC7579Account } from "../../Accounts.sol";
 import { IERC1271 } from "../../interfaces/IERC1271.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
@@ -57,7 +57,7 @@ contract LicenseCollector {
         returns (uint256)
     {
         bytes memory data = abi.encodeCall(IERC20.transfer, (address(this), totalAmount));
-        bytes memory erc7579Exec = abi.encodeCall(IERC7579Execution.execute, (token, 0, data));
+        bytes memory erc7579Exec = abi.encodeCall(IERC7579Account.execute, (token, 0, data));
 
         // Get nonce from Entrypoint
         uint192 key = uint192(bytes24(bytes20(address(validator))));
