@@ -285,9 +285,7 @@ library ERC4337SpecsParser {
             bool callerIsTest = currentAccess.accessor == address(this);
             bool callerIsEntryPoint = currentAccess.accessor == ENTRYPOINT_ADDR;
             if (currentAccess.value > 0) {
-                if (calleeIsEntryPoint && callerIsAccount) {
-                    // todo: change conditional
-                } else {
+                if (!calleeIsEntryPoint || !callerIsAccount) {
                     revert("Cannot use value except to EntryPoint");
                 }
             }
