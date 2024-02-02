@@ -206,18 +206,21 @@ library ERC4337SpecsParser {
         view
     {
         validateBannedOpcodes();
-        uint256 numOfCreates;
         for (uint256 i; i < accesses.length; i++) {
             VmSafe.AccountAccess memory currentAccess = accesses[i];
             validateBannedStorageLocations(currentAccess, userOp);
             validateDisallowedCalls(currentAccess, userOp);
             validateDisallowedExtOpCodes(currentAccess);
-            numOfCreates = validateDisallowedCreate(currentAccess, userOp, numOfCreates);
+            validateDisallowedCreate(currentAccess, userOp);
         }
     }
 
     function validateBannedOpcodes() internal pure {
-        // not supported yet
+        // todo
+        // forbidden opcodes are GASPRICE, GASLIMIT, DIFFICULTY, TIMESTAMP, BASEFEE, BLOCKHASH,
+        // NUMBER, SELFBALANCE, BALANCE, ORIGIN, GAS, CREATE, COINBASE, SELFDESTRUCT
+        // Exception: GAS is allowed if followed immediately by one of { CALL, DELEGATECALL,
+        // CALLCODE, STATICCALL }]
     }
 
     function validateBannedStorageLocations(
@@ -242,12 +245,9 @@ library ERC4337SpecsParser {
                     } else {
                         // todo
                         // Slots of type keccak256(A || X) + n on any other address. (to cover
-                        // mapping(address =>
-                        // value), which is usually used for balance in ERC-20 tokens). n is an
-                        // offset
-                        // value up to
-                        // 128, to allow accessing fields in the format mapping(address =>
-                        // struct)
+                        // mapping(address => value), which is usually used for balance in ERC-20
+                        // tokens). n is an offset value up to 128, to allow accessing fields in the
+                        // format mapping(address => struct)
                         revert InvalidStorageLocation(
                             currentAccess.account,
                             currentAccess.storageAccesses[j].slot,
@@ -320,21 +320,17 @@ library ERC4337SpecsParser {
 
     function validateDisallowedCreate(
         VmSafe.AccountAccess memory currentAccess,
-        PackedUserOperation memory userOp,
-        uint256 numOfCreates
+        PackedUserOperation memory userOp
     )
         internal
         pure
-        returns (uint256 _numOfCreates)
     {
-        _numOfCreates = numOfCreates;
         if (currentAccess.kind == VmSafe.AccountAccessKind.Create) {
-            if (userOp.initCode.length == 0 || numOfCreates != 0) {
+            if (userOp.initCode.length == 0 || currentAccess.account != userOp.sender) {
                 revert(
                     "Only one CREATE2 opcode is allowed in a user operation, to deploy the account"
                 );
             }
-            _numOfCreates++;
         }
     }
 
