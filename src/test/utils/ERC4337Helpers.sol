@@ -4,11 +4,13 @@ pragma solidity ^0.8.23;
 import {
     PackedUserOperation, IEntryPoint, IEntryPointSimulations
 } from "../../external/ERC4337.sol";
+import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 /* solhint-disable no-global-import */
 import "./Vm.sol";
 import "./Log.sol";
 import "./GasCalculations.sol";
 import "forge-std/console2.sol";
+import { IStakeManager } from "account-abstraction/interfaces/IStakeManager.sol";
 
 library ERC4337Helpers {
     error UserOperationReverted(
@@ -17,7 +19,7 @@ library ERC4337Helpers {
 
     function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
         // ERC-4337 specs validation
-        if (envOr("SIMULATE", false)) {
+        if (envOr("SIMULATE", false) || getSimulateUserOp()) {
             simulateUserOps(userOps, onEntryPoint);
         }
         // Record logs to determine if a revert happened
@@ -91,7 +93,7 @@ library ERC4337Helpers {
             IEntryPointSimulations.ValidationResult memory result =
                 simulationEntryPoint.simulateValidation(userOp);
             VmSafe.AccountAccess[] memory accesses = stopAndReturnStateDiff();
-            ERC4337SpecsParser.parseValidation(accesses);
+            ERC4337SpecsParser.parseValidation(accesses, userOp);
         }
         revertTo(snapShotId);
     }
@@ -192,32 +194,151 @@ library ERC4337Helpers {
 }
 
 library ERC4337SpecsParser {
-    function parseValidation(VmSafe.AccountAccess[] memory accesses) internal pure {
+    error InvalidStorageLocation(
+        address contractAddress, bytes32 slot, bytes32 previousValue, bytes32 newValue, bool isWrite
+    );
+
+    function parseValidation(
+        VmSafe.AccountAccess[] memory accesses,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+    {
         validateBannedOpcodes();
-        validateBannedStorageLocations(accesses);
-        validateDisallowedCalls(accesses);
+        validateBannedStorageLocations(accesses, userOp);
+        validateDisallowedCalls(accesses, userOp);
         validateDisallowedExtOpCodes(accesses);
-        validateDisallowedCreate(accesses);
+        validateDisallowedCreate(accesses, userOp);
     }
 
     function validateBannedOpcodes() internal pure {
         // not supported yet
     }
 
-    function validateBannedStorageLocations(VmSafe.AccountAccess[] memory accesses) internal pure {
-        // not supported yet
+    function validateBannedStorageLocations(
+        VmSafe.AccountAccess[] memory accesses,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+    {
+        for (uint256 i; i < accesses.length; i++) {
+            if (accesses[i].account == userOp.sender || accesses[i].account == ENTRYPOINT_ADDR) {
+                // all g
+            } else {
+                if (isStaked(accesses[i].account)) {
+                    // all g
+                } else {
+                    for (uint256 j; j < accesses[i].storageAccesses.length; j++) {
+                        if (accesses[i].storageAccesses[j].slot == bytes32(bytes20(userOp.sender)))
+                        {
+                            // all g
+                        } else {
+                            // todo
+                            // Slots of type keccak256(A || X) + n on any other address. (to cover
+                            // mapping(address =>
+                            // value), which is usually used for balance in ERC-20 tokens). n is an
+                            // offset
+                            // value up to
+                            // 128, to allow accessing fields in the format mapping(address =>
+                            // struct)
+                            revert InvalidStorageLocation(
+                                accesses[i].account,
+                                accesses[i].storageAccesses[j].slot,
+                                accesses[i].storageAccesses[j].previousValue,
+                                accesses[i].storageAccesses[j].newValue,
+                                accesses[i].storageAccesses[j].isWrite
+                            );
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    function validateDisallowedCalls(VmSafe.AccountAccess[] memory accesses) internal pure {
-        // not supported yet
+    function validateDisallowedCalls(
+        VmSafe.AccountAccess[] memory accesses,
+        PackedUserOperation memory userOp
+    )
+        internal
+        view
+    {
+        for (uint256 i; i < accesses.length; i++) {
+            if (
+                accesses[i].kind == VmSafe.AccountAccessKind.Call
+                    || accesses[i].kind == VmSafe.AccountAccessKind.DelegateCall
+                    || accesses[i].kind == VmSafe.AccountAccessKind.CallCode
+                    || accesses[i].kind == VmSafe.AccountAccessKind.StaticCall
+            ) {
+                if (
+                    accesses[i].account.code.length == 0
+                        && uint256(uint160(accesses[i].account)) > 0x09
+                ) {
+                    revert("Cannot call addresses without code");
+                }
+                bool isEntryPoint = accesses[i].account == ENTRYPOINT_ADDR;
+                bool callerIsAccount = accesses[i].accessor == userOp.sender;
+                if (accesses[i].value > 0) {
+                    if (isEntryPoint && callerIsAccount) {
+                        // todo: change conditional
+                    } else {
+                        revert("Cannot use value except to EntryPoint");
+                    }
+                }
+                if (isEntryPoint) {
+                    if (
+                        accesses[i].data.length > 4
+                            && bytes4(accesses[i].data) != bytes4(0xb760faf9)
+                    ) {
+                        revert("Cannot call EntryPoint except depositTo");
+                    }
+                }
+            }
+        }
     }
 
-    function validateDisallowedExtOpCodes(VmSafe.AccountAccess[] memory accesses) internal pure {
-        // not supported yet
+    function validateDisallowedExtOpCodes(VmSafe.AccountAccess[] memory accesses) internal view {
+        for (uint256 i; i < accesses.length; i++) {
+            if (
+                accesses[i].kind == VmSafe.AccountAccessKind.Extcodesize
+                    || accesses[i].kind == VmSafe.AccountAccessKind.Extcodehash
+                    || accesses[i].kind == VmSafe.AccountAccessKind.Extcodecopy
+            ) {
+                if (
+                    accesses[i].account.code.length == 0
+                        && uint256(uint160(accesses[i].account)) > 0x09
+                ) {
+                    revert("EXT* opcodes cannot access addresses without code");
+                }
+            }
+        }
     }
 
-    function validateDisallowedCreate(VmSafe.AccountAccess[] memory accesses) internal pure {
-        // not supported yet
+    function validateDisallowedCreate(
+        VmSafe.AccountAccess[] memory accesses,
+        PackedUserOperation memory userOp
+    )
+        internal
+        pure
+    {
+        uint256 numOfCreates;
+        for (uint256 i; i < accesses.length; i++) {
+            if (accesses[i].kind == VmSafe.AccountAccessKind.Create) {
+                if (userOp.initCode.length == 0 || numOfCreates != 0) {
+                    revert(
+                        "Only one CREATE2 opcode is allowed in a user operation, to deploy the account"
+                    );
+                }
+                numOfCreates++;
+            }
+        }
+    }
+
+    function isStaked(address entity) internal view returns (bool) {
+        IStakeManager.DepositInfo memory deposit =
+            IStakeManager(ENTRYPOINT_ADDR).getDepositInfo(entity);
+        return deposit.stake > 0;
     }
 }
 

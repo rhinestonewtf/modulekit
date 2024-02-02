@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import { Test } from "forge-std/Test.sol";
 import "src/ModuleKit.sol";
 import "src/Mocks.sol";
+import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 /* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
@@ -267,5 +268,8 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertTrue(vm.isFile(fileName));
     }
 
-    function testSimulateUserOp() public { }
+    function testSimulateUserOp() public {
+        writeSimulateUserOp(true);
+        testexec__Given__TwoInputs();
+    }
 }

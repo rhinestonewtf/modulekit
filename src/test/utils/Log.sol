@@ -31,6 +31,20 @@ function getGasIdentifier() view returns (string memory id) {
     }
 }
 
+function writeSimulateUserOp(bool value) {
+    bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
+    assembly {
+        sstore(slot, value)
+    }
+}
+
+function getSimulateUserOp() view returns (bool value) {
+    bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
+    assembly {
+        value := sload(slot)
+    }
+}
+
 library ModuleKitLogs {
     /* solhint-disable event-name-camelcase */
     event ModuleKit_NewAccount(address account, string accountType);
