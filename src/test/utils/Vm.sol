@@ -33,6 +33,10 @@ function label(address _addr, string memory _label) {
     Vm(VM_ADDR).label(_addr, _label);
 }
 
+function getLabel(address addr) view returns (string memory) {
+    return Vm(VM_ADDR).getLabel(addr);
+}
+
 function deal(address _addr, uint256 amount) {
     Vm(VM_ADDR).deal(_addr, amount);
 }
@@ -159,4 +163,20 @@ function parseJsonKeys(string memory json, string memory key) pure returns (stri
 
 function parseUint(string memory stringifiedValue) pure returns (uint256 parsedValue) {
     return Vm(VM_ADDR).parseUint(stringifiedValue);
+}
+
+function startMappingRecording() {
+    Vm(VM_ADDR).startMappingRecording();
+}
+
+function stopMappingRecording() {
+    Vm(VM_ADDR).stopMappingRecording();
+}
+
+function getMappingKeyAndParentOf(address target, bytes32 slot) returns (bool, bytes32, bytes32) {
+    return Vm(VM_ADDR).getMappingKeyAndParentOf(target, slot);
+}
+
+function getMappingSlotAt(address target, bytes32 slot, uint256 idx) returns (bytes32) {
+    return Vm(VM_ADDR).getMappingSlotAt(target, slot, idx);
 }

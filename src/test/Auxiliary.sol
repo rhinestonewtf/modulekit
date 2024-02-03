@@ -93,7 +93,7 @@ contract AuxiliaryFactory {
         auxiliary.entrypoint = entryPointFactory.etchEntrypoint();
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();
-        label(address(auxiliary.bootstrap), "ERC7579BootStrap");
+        label(address(auxiliary.bootstrap), "ERC7579Bootstrap");
         auxiliary.registry = new MockRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
         auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");

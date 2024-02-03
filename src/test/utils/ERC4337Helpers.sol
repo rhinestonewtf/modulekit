@@ -2,7 +2,10 @@
 pragma solidity ^0.8.23;
 
 import {
-    PackedUserOperation, IEntryPoint, IEntryPointSimulations
+    PackedUserOperation,
+    IEntryPoint,
+    IEntryPointSimulations,
+    IStakeManager
 } from "../../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 /* solhint-disable no-global-import */
@@ -10,7 +13,6 @@ import "./Vm.sol";
 import "./Log.sol";
 import "./GasCalculations.sol";
 import "forge-std/console2.sol";
-import { IStakeManager } from "account-abstraction/interfaces/IStakeManager.sol";
 
 library ERC4337Helpers {
     error UserOperationReverted(
@@ -89,11 +91,13 @@ library ERC4337Helpers {
         IEntryPointSimulations simulationEntryPoint = IEntryPointSimulations(address(onEntryPoint));
         for (uint256 i; i < userOps.length; i++) {
             PackedUserOperation memory userOp = userOps[i];
+            startMappingRecording();
             startStateDiffRecording();
             IEntryPointSimulations.ValidationResult memory result =
                 simulationEntryPoint.simulateValidation(userOp);
             VmSafe.AccountAccess[] memory accesses = stopAndReturnStateDiff();
             ERC4337SpecsParser.parseValidation(accesses, userOp);
+            stopMappingRecording();
         }
         revertTo(snapShotId);
     }
@@ -195,23 +199,31 @@ library ERC4337Helpers {
 
 library ERC4337SpecsParser {
     error InvalidStorageLocation(
-        address contractAddress, bytes32 slot, bytes32 previousValue, bytes32 newValue, bool isWrite
+        address contractAddress,
+        string contractLabel,
+        bytes32 slot,
+        bytes32 previousValue,
+        bytes32 newValue,
+        bool isWrite
     );
+    error InvalidOpcode(address contractAddress, string opcode);
 
     function parseValidation(
         VmSafe.AccountAccess[] memory accesses,
         PackedUserOperation memory userOp
     )
         internal
-        view
     {
         validateBannedOpcodes();
         for (uint256 i; i < accesses.length; i++) {
             VmSafe.AccountAccess memory currentAccess = accesses[i];
-            validateBannedStorageLocations(currentAccess, userOp);
-            validateDisallowedCalls(currentAccess, userOp);
-            validateDisallowedExtOpCodes(currentAccess);
-            validateDisallowedCreate(currentAccess, userOp);
+            if (currentAccess.account != address(this) && currentAccess.account != ENTRYPOINT_ADDR)
+            {
+                validateBannedStorageLocations(correctBug(accesses, i), userOp);
+                validateDisallowedCalls(currentAccess, userOp);
+                validateDisallowedExtOpCodes(currentAccess);
+                validateDisallowedCreate(currentAccess, userOp);
+            }
         }
     }
 
@@ -221,6 +233,7 @@ library ERC4337SpecsParser {
         // NUMBER, SELFBALANCE, BALANCE, ORIGIN, GAS, CREATE, COINBASE, SELFDESTRUCT
         // Exception: GAS is allowed if followed immediately by one of { CALL, DELEGATECALL,
         // CALLCODE, STATICCALL }]
+        // revert InvalidOpcode(currentAccess.account, opcode);
     }
 
     function validateBannedStorageLocations(
@@ -228,33 +241,44 @@ library ERC4337SpecsParser {
         PackedUserOperation memory userOp
     )
         internal
-        view
     {
-        if (
-            currentAccess.account == userOp.sender || currentAccess.account == ENTRYPOINT_ADDR
-                || currentAccess.account == address(this)
-        ) {
-            // all g
-        } else {
-            if (isStaked(currentAccess.account)) {
-                // all g
-            } else {
-                for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
-                    if (currentAccess.storageAccesses[j].slot == bytes32(bytes20(userOp.sender))) {
-                        // all g
-                    } else {
-                        // todo
-                        // Slots of type keccak256(A || X) + n on any other address. (to cover
-                        // mapping(address => value), which is usually used for balance in ERC-20
-                        // tokens). n is an offset value up to 128, to allow accessing fields in the
-                        // format mapping(address => struct)
-                        revert InvalidStorageLocation(
-                            currentAccess.account,
-                            currentAccess.storageAccesses[j].slot,
-                            currentAccess.storageAccesses[j].previousValue,
-                            currentAccess.storageAccesses[j].newValue,
-                            currentAccess.storageAccesses[j].isWrite
-                        );
+        address currentAccessAccount = currentAccess.account;
+
+        // todo: deal with accesskind resume
+
+        if (currentAccessAccount != userOp.sender && !isStaked(currentAccessAccount)) {
+            for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
+                bytes32 currentSlot = currentAccess.storageAccesses[j].slot;
+                if (currentSlot != bytes32(bytes20(userOp.sender))) {
+                    // this hack is needed until access kind resume is properly dealt with (this is
+                    // related to the delegatecall bug)
+                    string memory bootstrap = "ERC7579Bootstrap";
+                    string memory _label = getLabel(currentAccessAccount);
+                    if (keccak256(bytes(_label)) != keccak256(bytes(bootstrap))) {
+                        (bool found, bytes32 key) =
+                            getMappingParent(currentAccessAccount, currentSlot);
+                        if (found) {
+                            address parentSlotAddress = address(uint160(uint256(key)));
+                            if (parentSlotAddress != userOp.sender) {
+                                revert InvalidStorageLocation(
+                                    currentAccessAccount,
+                                    getLabel(currentAccessAccount),
+                                    currentSlot,
+                                    currentAccess.storageAccesses[j].previousValue,
+                                    currentAccess.storageAccesses[j].newValue,
+                                    currentAccess.storageAccesses[j].isWrite
+                                );
+                            }
+                        } else {
+                            revert InvalidStorageLocation(
+                                currentAccessAccount,
+                                getLabel(currentAccessAccount),
+                                currentSlot,
+                                currentAccess.storageAccesses[j].previousValue,
+                                currentAccess.storageAccesses[j].newValue,
+                                currentAccess.storageAccesses[j].isWrite
+                            );
+                        }
                     }
                 }
             }
@@ -280,16 +304,17 @@ library ERC4337SpecsParser {
             ) {
                 revert("Cannot call addresses without code");
             }
-            bool calleeIsEntryPoint = currentAccess.account == ENTRYPOINT_ADDR;
+
             bool callerIsAccount = currentAccess.accessor == userOp.sender;
-            bool callerIsTest = currentAccess.accessor == address(this);
-            bool callerIsEntryPoint = currentAccess.accessor == ENTRYPOINT_ADDR;
+            bool calleeIsEntryPoint = currentAccess.account == ENTRYPOINT_ADDR;
+
             if (currentAccess.value > 0) {
-                if (!calleeIsEntryPoint || !callerIsAccount) {
-                    revert("Cannot use value except to EntryPoint");
+                if (!callerIsAccount || !calleeIsEntryPoint) {
+                    revert("Cannot use value except from account to EntryPoint");
                 }
             }
-            if (calleeIsEntryPoint && !callerIsTest && !callerIsEntryPoint) {
+
+            if (calleeIsEntryPoint) {
                 if (
                     currentAccess.data.length > 4
                         && bytes4(currentAccess.data) != bytes4(0xb760faf9)
@@ -330,6 +355,52 @@ library ERC4337SpecsParser {
                 revert(
                     "Only one CREATE2 opcode is allowed in a user operation, to deploy the account"
                 );
+            }
+        }
+    }
+
+    // This is currently a bug in foundry, see https://github.com/foundry-rs/foundry/issues/7006
+    // This function compensates for the bug
+    function correctBug(
+        VmSafe.AccountAccess[] memory accesses,
+        uint256 currentIndex
+    )
+        internal
+        view
+        returns (VmSafe.AccountAccess memory currentAccess)
+    {
+        currentAccess = accesses[currentIndex];
+        if (currentAccess.kind == VmSafe.AccountAccessKind.DelegateCall) {
+            for (uint256 k = 1; k < currentIndex; k++) {
+                if (accesses[currentIndex - k].kind == VmSafe.AccountAccessKind.Call) {
+                    currentAccess.account = accesses[currentIndex - k].account;
+                    break;
+                }
+            }
+        }
+    }
+
+    function getMappingParent(
+        address currentAccessAccount,
+        bytes32 currentSlot
+    )
+        internal
+        returns (bool found, bytes32 key)
+    {
+        (bool _found, bytes32 _key,) = getMappingKeyAndParentOf(currentAccessAccount, currentSlot);
+        if (_found) {
+            found = _found;
+            key = _key;
+        } else {
+            for (uint256 k = 1; k <= 128; k++) {
+                (_found, _key,) = getMappingKeyAndParentOf(
+                    currentAccessAccount, bytes32(uint256(currentSlot) - k)
+                );
+                if (_found) {
+                    found = _found;
+                    key = _key;
+                    break;
+                }
             }
         }
     }
