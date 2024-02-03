@@ -26,6 +26,12 @@ contract SpecsTestValidator {
         data = value;
     }
 
+    function setDataIntoSlot(address addr, uint256 value) public {
+        assembly {
+            sstore(addr, value)
+        }
+    }
+
     function setData(address addr, uint256 value) public {
         singleData[addr] = value;
     }
@@ -84,6 +90,8 @@ contract SpecsTestValidator {
             setNestedDataWithOffset(msg.sender, 8, 128);
         } else if (mode == 9) {
             setNestedDataWithOffset(msg.sender, 9, 129);
+        } else if (mode == 10) {
+            setDataIntoSlot(msg.sender, 10);
         }
         return 0;
     }
@@ -338,5 +346,25 @@ contract ERC4337SpecsParserTest is Test, RhinestoneModuleKit {
             abi.encodeWithSelector(this.structMapping__RevertWhen__OutOfBounds.selector)
         );
         assertFalse(success);
+    }
+
+    function testSetDataIntoAccountSlot() public {
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+        bytes memory signature = "";
+
+        // Create userOperation
+        UserOpData memory userOpData = instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: address(validator)
+        });
+
+        userOpData.userOp.signature = abi.encodePacked(bytes32(uint256(10)));
+
+        userOpData.execUserOps();
     }
 }

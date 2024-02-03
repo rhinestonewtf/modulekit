@@ -248,7 +248,7 @@ library ERC4337SpecsParser {
         if (currentAccessAccount != userOp.sender && !isStaked(currentAccessAccount)) {
             for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
                 bytes32 currentSlot = currentAccess.storageAccesses[j].slot;
-                if (currentSlot != bytes32(bytes20(userOp.sender))) {
+                if (currentSlot != bytes32(uint256(uint160(address(userOp.sender))))) {
                     // this hack is needed until access kind resume is properly dealt with (this is
                     // related to the delegatecall bug)
                     string memory bootstrap = "ERC7579Bootstrap";
