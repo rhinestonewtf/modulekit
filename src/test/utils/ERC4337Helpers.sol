@@ -217,8 +217,7 @@ library ERC4337SpecsParser {
         validateBannedOpcodes();
         for (uint256 i; i < accesses.length; i++) {
             VmSafe.AccountAccess memory currentAccess = accesses[i];
-            if (currentAccess.account != address(this) && currentAccess.account != ENTRYPOINT_ADDR)
-            {
+            if (currentAccess.account != address(this) && currentAccess.accessor != address(this)) {
                 validateBannedStorageLocations(correctBug(accesses, i), userOp);
                 validateDisallowedCalls(currentAccess, userOp);
                 validateDisallowedExtOpCodes(currentAccess);
@@ -319,7 +318,9 @@ library ERC4337SpecsParser {
                     currentAccess.data.length > 4
                         && bytes4(currentAccess.data) != bytes4(0xb760faf9)
                 ) {
-                    revert("Cannot call EntryPoint except depositTo");
+                    if (currentAccess.accessor != ENTRYPOINT_ADDR) {
+                        revert("Cannot call EntryPoint except depositTo");
+                    }
                 }
             }
         }
