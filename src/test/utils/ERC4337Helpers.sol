@@ -218,7 +218,7 @@ library ERC4337SpecsParser {
         for (uint256 i; i < accesses.length; i++) {
             VmSafe.AccountAccess memory currentAccess = accesses[i];
             if (currentAccess.account != address(this) && currentAccess.accessor != address(this)) {
-                validateBannedStorageLocations(correctBug(accesses, i), userOp);
+                validateBannedStorageLocations(currentAccess, userOp);
                 validateDisallowedCalls(currentAccess, userOp);
                 validateDisallowedExtOpCodes(currentAccess);
                 validateDisallowedCreate(currentAccess, userOp);
@@ -241,47 +241,81 @@ library ERC4337SpecsParser {
     )
         internal
     {
-        address currentAccessAccount = currentAccess.account;
-
-        // todo: deal with accesskind resume
-
-        if (currentAccessAccount != userOp.sender && !isStaked(currentAccessAccount)) {
-            for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
-                bytes32 currentSlot = currentAccess.storageAccesses[j].slot;
+        for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
+            VmSafe.StorageAccess memory currentStorageAccess = currentAccess.storageAccesses[j];
+            address currentAccessAccount = currentStorageAccess.account;
+            if (currentAccessAccount != userOp.sender && !isStaked(currentAccessAccount)) {
+                bytes32 currentSlot = currentStorageAccess.slot;
                 if (currentSlot != bytes32(uint256(uint160(address(userOp.sender))))) {
-                    // this hack is needed until access kind resume is properly dealt with (this is
-                    // related to the delegatecall bug)
-                    string memory bootstrap = "ERC7579Bootstrap";
-                    string memory _label = getLabel(currentAccessAccount);
-                    if (keccak256(bytes(_label)) != keccak256(bytes(bootstrap))) {
-                        (bool found, bytes32 key) =
-                            getMappingParent(currentAccessAccount, currentSlot);
-                        if (found) {
-                            address parentSlotAddress = address(uint160(uint256(key)));
-                            if (parentSlotAddress != userOp.sender) {
-                                revert InvalidStorageLocation(
-                                    currentAccessAccount,
-                                    getLabel(currentAccessAccount),
-                                    currentSlot,
-                                    currentAccess.storageAccesses[j].previousValue,
-                                    currentAccess.storageAccesses[j].newValue,
-                                    currentAccess.storageAccesses[j].isWrite
-                                );
-                            }
-                        } else {
+                    (bool found, bytes32 key) = getMappingParent(currentAccessAccount, currentSlot);
+                    if (found) {
+                        address parentSlotAddress = address(uint160(uint256(key)));
+                        if (parentSlotAddress != userOp.sender) {
                             revert InvalidStorageLocation(
                                 currentAccessAccount,
                                 getLabel(currentAccessAccount),
                                 currentSlot,
-                                currentAccess.storageAccesses[j].previousValue,
-                                currentAccess.storageAccesses[j].newValue,
-                                currentAccess.storageAccesses[j].isWrite
+                                currentStorageAccess.previousValue,
+                                currentStorageAccess.newValue,
+                                currentStorageAccess.isWrite
                             );
                         }
+                    } else {
+                        revert InvalidStorageLocation(
+                            currentAccessAccount,
+                            getLabel(currentAccessAccount),
+                            currentSlot,
+                            currentStorageAccess.previousValue,
+                            currentStorageAccess.newValue,
+                            currentStorageAccess.isWrite
+                        );
                     }
                 }
             }
         }
+
+        // address currentAccessAccount = currentAccess.account;
+
+        // // todo: deal with accesskind resume
+
+        // if (currentAccessAccount != userOp.sender && !isStaked(currentAccessAccount)) {
+        //     for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
+        //         bytes32 currentSlot = currentAccess.storageAccesses[j].slot;
+        //         if (currentSlot != bytes32(uint256(uint160(address(userOp.sender))))) {
+        //             // this hack is needed until access kind resume is properly dealt with (this
+        // is
+        //             // related to the delegatecall bug)
+        //             string memory bootstrap = "ERC7579Bootstrap";
+        //             string memory _label = getLabel(currentAccessAccount);
+        //             if (keccak256(bytes(_label)) != keccak256(bytes(bootstrap))) {
+        //                 (bool found, bytes32 key) =
+        //                     getMappingParent(currentAccessAccount, currentSlot);
+        //                 if (found) {
+        //                     address parentSlotAddress = address(uint160(uint256(key)));
+        //                     if (parentSlotAddress != userOp.sender) {
+        //                         revert InvalidStorageLocation(
+        //                             currentAccessAccount,
+        //                             getLabel(currentAccessAccount),
+        //                             currentSlot,
+        //                             currentAccess.storageAccesses[j].previousValue,
+        //                             currentAccess.storageAccesses[j].newValue,
+        //                             currentAccess.storageAccesses[j].isWrite
+        //                         );
+        //                     }
+        //                 } else {
+        //                     revert InvalidStorageLocation(
+        //                         currentAccessAccount,
+        //                         getLabel(currentAccessAccount),
+        //                         currentSlot,
+        //                         currentAccess.storageAccesses[j].previousValue,
+        //                         currentAccess.storageAccesses[j].newValue,
+        //                         currentAccess.storageAccesses[j].isWrite
+        //                     );
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     function validateDisallowedCalls(
@@ -356,27 +390,6 @@ library ERC4337SpecsParser {
                 revert(
                     "Only one CREATE2 opcode is allowed in a user operation, to deploy the account"
                 );
-            }
-        }
-    }
-
-    // This is currently a bug in foundry, see https://github.com/foundry-rs/foundry/issues/7006
-    // This function compensates for the bug
-    function correctBug(
-        VmSafe.AccountAccess[] memory accesses,
-        uint256 currentIndex
-    )
-        internal
-        view
-        returns (VmSafe.AccountAccess memory currentAccess)
-    {
-        currentAccess = accesses[currentIndex];
-        if (currentAccess.kind == VmSafe.AccountAccessKind.DelegateCall) {
-            for (uint256 k = 1; k < currentIndex; k++) {
-                if (accesses[currentIndex - k].kind == VmSafe.AccountAccessKind.Call) {
-                    currentAccess.account = accesses[currentIndex - k].account;
-                    break;
-                }
             }
         }
     }
