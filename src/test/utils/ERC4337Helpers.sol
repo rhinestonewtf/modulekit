@@ -95,6 +95,7 @@ library ERC4337Helpers {
             startStateDiffRecording();
             IEntryPointSimulations.ValidationResult memory result =
                 simulationEntryPoint.simulateValidation(userOp);
+            require(result.returnInfo.sigFailed == false, "Simulation error: signature failed");
             VmSafe.AccountAccess[] memory accesses = stopAndReturnStateDiff();
             ERC4337SpecsParser.parseValidation(accesses, userOp);
             stopMappingRecording();
@@ -273,49 +274,6 @@ library ERC4337SpecsParser {
                 }
             }
         }
-
-        // address currentAccessAccount = currentAccess.account;
-
-        // // todo: deal with accesskind resume
-
-        // if (currentAccessAccount != userOp.sender && !isStaked(currentAccessAccount)) {
-        //     for (uint256 j; j < currentAccess.storageAccesses.length; j++) {
-        //         bytes32 currentSlot = currentAccess.storageAccesses[j].slot;
-        //         if (currentSlot != bytes32(uint256(uint160(address(userOp.sender))))) {
-        //             // this hack is needed until access kind resume is properly dealt with (this
-        // is
-        //             // related to the delegatecall bug)
-        //             string memory bootstrap = "ERC7579Bootstrap";
-        //             string memory _label = getLabel(currentAccessAccount);
-        //             if (keccak256(bytes(_label)) != keccak256(bytes(bootstrap))) {
-        //                 (bool found, bytes32 key) =
-        //                     getMappingParent(currentAccessAccount, currentSlot);
-        //                 if (found) {
-        //                     address parentSlotAddress = address(uint160(uint256(key)));
-        //                     if (parentSlotAddress != userOp.sender) {
-        //                         revert InvalidStorageLocation(
-        //                             currentAccessAccount,
-        //                             getLabel(currentAccessAccount),
-        //                             currentSlot,
-        //                             currentAccess.storageAccesses[j].previousValue,
-        //                             currentAccess.storageAccesses[j].newValue,
-        //                             currentAccess.storageAccesses[j].isWrite
-        //                         );
-        //                     }
-        //                 } else {
-        //                     revert InvalidStorageLocation(
-        //                         currentAccessAccount,
-        //                         getLabel(currentAccessAccount),
-        //                         currentSlot,
-        //                         currentAccess.storageAccesses[j].previousValue,
-        //                         currentAccess.storageAccesses[j].newValue,
-        //                         currentAccess.storageAccesses[j].isWrite
-        //                     );
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     }
 
     function validateDisallowedCalls(
