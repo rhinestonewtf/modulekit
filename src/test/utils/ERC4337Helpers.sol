@@ -198,6 +198,7 @@ library ERC4337Helpers {
     }
 }
 
+// Credit to Dror (@drortirosh) for the implementation approach and an initial prototype
 library ERC4337SpecsParser {
     error InvalidStorageLocation(
         address contractAddress,
@@ -308,7 +309,7 @@ library ERC4337SpecsParser {
             if (calleeIsEntryPoint) {
                 if (
                     currentAccess.data.length > 4
-                        && bytes4(currentAccess.data) != bytes4(0xb760faf9)
+                        && bytes4(currentAccess.data) != bytes4(0xb760faf9) // depositTo
                 ) {
                     if (currentAccess.accessor != ENTRYPOINT_ADDR) {
                         revert("Cannot call EntryPoint except depositTo");
