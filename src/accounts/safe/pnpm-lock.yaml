@@ -4,12 +4,13 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-dependencies:
+devDependencies:
   '@openzeppelin/contracts':
     specifier: 5.0.1
     version: 5.0.1
-
-devDependencies:
+  '@rhinestone/modulekit':
+    specifier: github:rhinestonewtf/modulekit
+    version: github.com/rhinestonewtf/modulekit/03c51550d68bfd46674bf8221f300318952439d4
   '@rhinestone/sessionkeymanager':
     specifier: github:rhinestonewtf/sessionkeymanager
     version: github.com/rhinestonewtf/sessionkeymanager/100f86b662bc16fbd7df374cd665a35c10f3a7b6
@@ -24,7 +25,7 @@ devDependencies:
     version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
   erc7579:
     specifier: github:erc7579/erc7579-implementation
-    version: github.com/erc7579/erc7579-implementation/7e9a02ec2570497ff5fb1ac5649d1491b1e434c9
+    version: github.com/erc7579/erc7579-implementation/15aa5bba6cbf287eeb2b094b4ade9d2567be3729
   forge-std:
     specifier: github:foundry-rs/forge-std
     version: github.com/foundry-rs/forge-std/4513bc2063f23c57bee6558799584b518d387a39
@@ -36,13 +37,16 @@ devDependencies:
     version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
   solady:
     specifier: github:vectorized/solady
-    version: github.com/vectorized/solady/2e70b1416e367ce55dd0f13360a3839c63bd58f5
+    version: github.com/vectorized/solady/54ea1543a229b88b44ccb6ec5ea570135811a7d9
   solarray:
     specifier: github:sablier-labs/solarray
     version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
   solhint:
     specifier: ^4.1.1
     version: 4.1.1(typescript@5.3.3)
+  solmate:
+    specifier: github:transmissions11/solmate
+    version: github.com/transmissions11/solmate/c892309933b25c03d32b1b0d674df7ae292ba925
 
 packages:
 
@@ -1082,6 +1086,7 @@ packages:
 
   /@openzeppelin/contracts@5.0.1:
     resolution: {integrity: sha512-yQJaT5HDp9hYOOp4jTYxMsR02gdFZFXhewX5HW9Jo4fsqSVqqyIO/xTHdWDaKX5a3pv1txmf076Lziz+sO7L1w==}
+    dev: true
 
   /@pnpm/config.env-replace@1.1.0:
     resolution: {integrity: sha512-htyl8TWnKL7K/ESFa1oW2UB5lVDxuF5DpM7tBi6Hu2LNL3mWkIzNLG6N4zoCUP1lCKNxWy/3iu8mS8MvToGd6w==}
@@ -1690,7 +1695,7 @@ packages:
     resolution: {integrity: sha512-C3nQxfFZxFRVoJoGKKI8y3MOEo129NQ+FgQ08iye+Mk4zNZZGdjfs06bVTr+DBSlA66Q2VEcMki/cUCP4SercQ==}
     dependencies:
       function-bind: 1.1.2
-      get-intrinsic: 1.2.3
+      get-intrinsic: 1.2.2
       set-function-length: 1.2.0
     dev: true
 
@@ -1951,7 +1956,7 @@ packages:
     resolution: {integrity: sha512-E7uGkTzkk1d0ByLeSc6ZsFS79Axg+m1P/VsgYsxHgiuc3tFSj+MjMIwe90FC4lOAZzNBdY7kkO2P2wKdsQ1vgQ==}
     engines: {node: '>= 0.4'}
     dependencies:
-      get-intrinsic: 1.2.3
+      get-intrinsic: 1.2.2
       gopd: 1.0.1
       has-property-descriptors: 1.0.1
     dev: true
@@ -2031,11 +2036,6 @@ packages:
     resolution: {integrity: sha512-7dFHNmqeFSEt2ZBsCriorKnn3Z2pj+fd9kmI6QoWw4//DL+icEBfc0U7qJCisqrTsKTjw4fNFy2pW9OqStD84g==}
     dependencies:
       is-arrayish: 0.2.1
-    dev: true
-
-  /es-errors@1.0.0:
-    resolution: {integrity: sha512-yHV74THqMJUyFKkHyN7hyENcEZM3Dj2a2IrdClY+IT4BFQHkIVwlh8s6uZfjsFydMdNHv0F5mWgAA3ajFbsvVQ==}
-    engines: {node: '>= 0.4'}
     dev: true
 
   /escalade@3.1.1:
@@ -2450,11 +2450,9 @@ packages:
     engines: {node: 6.* || 8.* || >= 10.*}
     dev: true
 
-  /get-intrinsic@1.2.3:
-    resolution: {integrity: sha512-JIcZczvcMVE7AUOP+X72bh8HqHBRxFdz5PDHYtNG/lE3yk9b3KZBJlwFcTyPYjg3L4RLLmZJzvjxhaZVapxFrQ==}
-    engines: {node: '>= 0.4'}
+  /get-intrinsic@1.2.2:
+    resolution: {integrity: sha512-0gSo4ml/0j98Y3lngkFEot/zhiCeWsbYIlZ+uZOVgzLyLaUw7wxUL+nCTP0XJvJg1AXulJRI3UJi8GsbDuxdGA==}
     dependencies:
-      es-errors: 1.0.0
       function-bind: 1.1.2
       has-proto: 1.0.1
       has-symbols: 1.0.3
@@ -2557,7 +2555,7 @@ packages:
   /gopd@1.0.1:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
     dependencies:
-      get-intrinsic: 1.2.3
+      get-intrinsic: 1.2.2
     dev: true
 
   /got@12.6.1:
@@ -2727,7 +2725,7 @@ packages:
   /has-property-descriptors@1.0.1:
     resolution: {integrity: sha512-VsX8eaIewvas0xnvinAe9bw4WfIeODpGYikiWYLH+dma0Jw6KHYqWiWfhQlgOVK8D6PvjubK5Uc4P0iIhIcNVg==}
     dependencies:
-      get-intrinsic: 1.2.3
+      get-intrinsic: 1.2.2
     dev: true
 
   /has-proto@1.0.1:
@@ -3802,7 +3800,7 @@ packages:
     dependencies:
       define-data-property: 1.1.1
       function-bind: 1.1.2
-      get-intrinsic: 1.2.3
+      get-intrinsic: 1.2.2
       gopd: 1.0.1
       has-property-descriptors: 1.0.1
     dev: true
@@ -3837,7 +3835,7 @@ packages:
     resolution: {integrity: sha512-q5XPytqFEIKHkGdiMIrY10mvLRvnQh42/+GoBlFW3b2LXLE2xxJpZFdm94we0BaoV3RwJyGqg5wS7epxTv0Zvw==}
     dependencies:
       call-bind: 1.0.5
-      get-intrinsic: 1.2.3
+      get-intrinsic: 1.2.2
       object-inspect: 1.13.1
     dev: true
 
@@ -4375,8 +4373,8 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/erc7579/erc7579-implementation/7e9a02ec2570497ff5fb1ac5649d1491b1e434c9:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/7e9a02ec2570497ff5fb1ac5649d1491b1e434c9}
+  github.com/erc7579/erc7579-implementation/15aa5bba6cbf287eeb2b094b4ade9d2567be3729:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/15aa5bba6cbf287eeb2b094b4ade9d2567be3729}
     name: micro-msa
     version: 0.3.1
     dependencies:
@@ -4419,6 +4417,14 @@ packages:
     version: 1.7.6
     dev: true
 
+  github.com/rhinestonewtf/modulekit/03c51550d68bfd46674bf8221f300318952439d4:
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/modulekit/tar.gz/03c51550d68bfd46674bf8221f300318952439d4}
+    name: '@rhinestone/modulekit'
+    version: 0.3.1
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+    dev: true
+
   github.com/rhinestonewtf/sessionkeymanager/100f86b662bc16fbd7df374cd665a35c10f3a7b6:
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/sessionkeymanager/tar.gz/100f86b662bc16fbd7df374cd665a35c10f3a7b6}
     name: sessionkeyManager
@@ -4431,10 +4437,16 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/vectorized/solady/2e70b1416e367ce55dd0f13360a3839c63bd58f5:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/2e70b1416e367ce55dd0f13360a3839c63bd58f5}
+  github.com/transmissions11/solmate/c892309933b25c03d32b1b0d674df7ae292ba925:
+    resolution: {tarball: https://codeload.github.com/transmissions11/solmate/tar.gz/c892309933b25c03d32b1b0d674df7ae292ba925}
+    name: solmate
+    version: 6.2.0
+    dev: true
+
+  github.com/vectorized/solady/54ea1543a229b88b44ccb6ec5ea570135811a7d9:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/54ea1543a229b88b44ccb6ec5ea570135811a7d9}
     name: solady
-    version: 0.0.167
+    version: 0.0.166
     dev: true
 
   github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61:

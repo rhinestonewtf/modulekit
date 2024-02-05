@@ -170,6 +170,29 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         instance = makeRhinestoneAccount(salt, validators, executors, hook, fallBack);
     }
 
+    function makeRhinestoneAccount(
+        bytes32 salt,
+        address account,
+        address defaultValidator,
+        bytes memory initCode
+    )
+        internal
+        returns (RhinestoneAccount memory instance)
+    {
+        init();
+
+        instance = RhinestoneAccount({
+            account: account,
+            aux: auxiliary,
+            salt: salt,
+            defaultValidator: IERC7579Validator(address(defaultValidator)),
+            initCode: initCode,
+            gasLog: false
+        });
+
+        ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);
+    }
+
     function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
         bytes memory _bytes = new bytes(32);
         for (uint256 i = 0; i < 32; i++) {

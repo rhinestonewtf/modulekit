@@ -1,30 +1,30 @@
 {
-  "name": "@rhinestone/modulekit",
-  "description": "ModuleKit is a development toolkit to build Smart Account Modules",
+  "name": "@rhinestone/safe-erc7579",
+  "description": "Safe ERC7579 implementation",
   "license": "MIT",
-  "version": "0.3.1",
+  "version": "0.1.0",
   "author": {
     "name": "zeroknots.eth",
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
-    "url": "https://github.com/rhinestonewtf/modulekit/issues"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "5.0.1"
+    "url": "https://github.com/rhinestonewtf/safe-erc7579/issues"
   },
   "devDependencies": {
-    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
+    "@openzeppelin/contracts": "5.0.1",
+    "@rhinestone/modulekit": "github:rhinestonewtf/modulekit",
     "@safe-global/safe-contracts": "^1.4.1",
+    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
     "ds-test": "github:dapphub/ds-test",
-    "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
+    "erc7579": "github:erc7579/erc7579-implementation",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^4.1.1"
+    "solhint": "^4.1.1",
+    "solmate": "github:transmissions11/solmate"
   },
   "files": [
     "artifacts",
@@ -33,7 +33,7 @@
     "CHANGELOG.md",
     "LICENSE-GPL.md"
   ],
-  "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
+  "homepage": "https://github.com/rhinestonewtf/safe-erc7579/#readme",
   "keywords": [
     "blockchain",
     "ethereum",
@@ -45,7 +45,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": "github.com/rhinestonewtf/modulekit",
+  "repository": "github.com/rhinestonewtf/modulekit-examples",
   "scripts": {
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
