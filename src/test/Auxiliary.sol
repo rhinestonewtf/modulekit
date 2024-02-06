@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
-import { EntryPointFactory } from "./predeploy/EntryPoint.sol";
+import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { EntryPointSimulations } from "account-abstraction/core/EntryPointSimulations.sol";
 import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPointSimulations.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
@@ -88,9 +88,8 @@ contract AuxiliaryFactory {
     function init() internal virtual {
         auxiliary.mockFactory = new MockFactory();
         label(address(auxiliary.mockFactory), "Mock Factory");
-        EntryPointFactory entryPointFactory = new EntryPointFactory();
         auxiliary.gasSimulation = new UserOpGasLog();
-        auxiliary.entrypoint = entryPointFactory.etchEntrypoint();
+        auxiliary.entrypoint = etchEntrypoint();
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();
         label(address(auxiliary.bootstrap), "ERC7579Bootstrap");

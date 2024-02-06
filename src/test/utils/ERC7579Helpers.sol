@@ -84,8 +84,7 @@ library ERC7579Helpers {
             callData: configModule(instance.account, module, initData, fn),
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
+            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
             paymasterAndData: bytes(""),
             signature: bytes("")
         });
@@ -115,8 +114,7 @@ library ERC7579Helpers {
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
-            maxFeePerGas: 1,
-            maxPriorityFeePerGas: 1,
+            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
             paymasterAndData: bytes(""),
             signature: bytes("")
         });

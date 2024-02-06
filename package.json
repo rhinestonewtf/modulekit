@@ -12,11 +12,13 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "5.0.1",
-    "@prb/math": "^4.0.2"
+    "@prb/math": "^4.0.2",
+    "erc4337-validation": "github:rhinestonewtf/erc4337-validation"
   },
   "devDependencies": {
     "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
