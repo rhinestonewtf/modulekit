@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 /* solhint-disable no-unused-import */
 import { MSAFactory as ERC7579AccountFactory } from "erc7579/MSAFactory.sol";
-import { MSAAdvanced as ERC7579Account } from "erc7579/uMSAAdvanced.sol";
+import { MSAAdvanced as ERC7579Account } from "erc7579/MSAAdvanced.sol";
 import { Execution, IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
 import {
     IModule as IERC7579Module,
