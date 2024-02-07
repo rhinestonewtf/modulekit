@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
+import { PackedUserOperation, IEntryPoint, IStakeManager } from "../external/ERC4337.sol";
 import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
+import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 
 import {
     ERC7579BootstrapConfig,
@@ -31,7 +32,7 @@ struct RhinestoneAccount {
 }
 
 struct UserOpData {
-    UserOperation userOp;
+    PackedUserOperation userOp;
     bytes32 userOpHash;
 }
 
@@ -58,12 +59,19 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         }
 
         isInit = true;
+
+        // Deploy default contracts
         accountImplementationSingleton = new ERC7579Account();
         label(address(accountImplementationSingleton), "ERC7579AccountImpl");
         accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
         label(address(accountFactory), "ERC7579AccountFactory");
         defaultValidator = new MockValidator();
         label(address(defaultValidator), "DefaultValidator");
+
+        // Stake factory on EntryPoint
+        deal(address(accountFactory), 10 ether);
+        prank(address(accountFactory));
+        IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
     }
 
     /**

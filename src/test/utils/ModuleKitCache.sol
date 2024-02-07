@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
+import { IEntryPoint } from "../../external/ERC4337.sol";
 
 struct TmpStorage {
     mapping(address account => IEntryPoint entrypoint) entrypoint;
