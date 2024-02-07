@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IEntryPoint, UserOperation } from "../external/ERC4337.sol";
+import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
-import { EntryPointFactory } from "./predeploy/EntryPoint.sol";
+import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { EntryPointSimulations } from "account-abstraction/core/EntryPointSimulations.sol";
 import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPointSimulations.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
@@ -46,7 +46,7 @@ contract UserOpGasLog {
     }
 
     function calcValidationGas(
-        UserOperation memory userOp,
+        PackedUserOperation memory userOp,
         bytes32 userOpHash,
         address sender,
         bytes memory initCode
@@ -63,7 +63,7 @@ contract UserOpGasLog {
     }
 
     function calcExecutionGas(
-        UserOperation memory userOp,
+        PackedUserOperation memory userOp,
         bytes32 userOpHash,
         address sender,
         bytes memory initCode
@@ -88,12 +88,11 @@ contract AuxiliaryFactory {
     function init() internal virtual {
         auxiliary.mockFactory = new MockFactory();
         label(address(auxiliary.mockFactory), "Mock Factory");
-        EntryPointFactory entryPointFactory = new EntryPointFactory();
         auxiliary.gasSimulation = new UserOpGasLog();
-        auxiliary.entrypoint = entryPointFactory.etchEntrypoint();
+        auxiliary.entrypoint = etchEntrypoint();
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();
-        label(address(auxiliary.bootstrap), "ERC7579BootStrap");
+        label(address(auxiliary.bootstrap), "ERC7579Bootstrap");
         auxiliary.registry = new MockRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
         auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");

@@ -8,4 +8,12 @@ contract MockTarget {
         value = _value;
         return _value;
     }
+
+    function setAccessControl(uint256 _value) public returns (uint256) {
+        if (msg.sender != address(this)) {
+            revert("MockTarget: not authorized");
+        }
+        value = _value;
+        return _value;
+    }
 }

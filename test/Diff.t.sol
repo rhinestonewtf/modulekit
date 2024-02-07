@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import { Test } from "forge-std/Test.sol";
 import "src/ModuleKit.sol";
 import "src/Mocks.sol";
+import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 /* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
@@ -15,12 +16,13 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
     MockValidator internal validator;
     MockHook internal hook;
     MockExecutor internal executor;
+    MockTarget internal mockTarget;
 
     MockERC20 internal token;
 
     function setUp() public {
         // Setup account
-        instance = makeRhinestoneAccount("1");
+        instance = makeRhinestoneAccount("account1");
         vm.deal(instance.account, 1000 ether);
 
         // Setup modules
@@ -32,6 +34,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         token = new MockERC20();
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
+        mockTarget = new MockTarget();
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -86,12 +89,11 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     function testexec__RevertWhen__UserOperationFails() public {
         // Create userOperation fields
-        address receiver = makeAddr("receiver");
-        uint256 value = 100_000 ether;
+        bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
 
         // Create userOperation
         instance.expect4337Revert();
-        instance.exec({ target: receiver, callData: "", value: value });
+        instance.exec({ target: address(mockTarget), callData: callData, value: 0 });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -247,5 +249,27 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         //
         // // Validate userOperation
         // assertEq(userOpHash, entryPointUserOpHash);
+    }
+
+    function testWriteGas() public {
+        string memory gasIdentifier = "testWriteGas";
+        string memory rootDir = "gas_calculations";
+        string memory fileName = string.concat(rootDir, "/", gasIdentifier, ".json");
+        assertTrue(vm.isDir("gas_calculations"));
+        if (vm.isFile(fileName)) {
+            vm.removeFile(fileName);
+        }
+        assertFalse(vm.isFile(fileName));
+
+        vm.setEnv("GAS", "true");
+
+        instance.log4337Gas("testWriteGas");
+        testexec__Given__TwoInputs();
+        assertTrue(vm.isFile(fileName));
+    }
+
+    function testSimulateUserOp() public {
+        writeSimulateUserOp(true);
+        testexec__Given__TwoInputs();
     }
 }
