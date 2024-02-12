@@ -10,7 +10,7 @@ import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 abstract contract ERC7579ValidatorBase is ERC7579ModuleBase {
     type ValidationData is uint256;
 
-    ValidationData internal constant VALIDATION_FAILED = ValidationData.wrap(0);
+    ValidationData internal constant VALIDATION_FAILED = ValidationData.wrap(1);
     bytes4 internal constant EIP1271_SUCCESS = 0x1626ba7e;
     bytes4 internal constant EIP1271_FAILED = 0xFFFFFFFF;
 
