@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 function writeExpectRevert(uint256 value) {
-    bytes32 slot = keccak256("ExpectSlot");
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     // solhint-disable-next-line no-inline-assembly
     assembly {
         sstore(slot, value)
@@ -10,8 +10,36 @@ function writeExpectRevert(uint256 value) {
 }
 
 function getExpectRevert() view returns (uint256 value) {
-    bytes32 slot = keccak256("ExpectSlot");
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     // solhint-disable-next-line no-inline-assembly
+    assembly {
+        value := sload(slot)
+    }
+}
+
+function writeGasIdentifier(string memory id) {
+    bytes32 slot = keccak256("ModuleKit.GasIdentifierSlot");
+    assembly {
+        sstore(slot, id)
+    }
+}
+
+function getGasIdentifier() view returns (string memory id) {
+    bytes32 slot = keccak256("ModuleKit.GasIdentifierSlot");
+    assembly {
+        id := sload(slot)
+    }
+}
+
+function writeSimulateUserOp(bool value) {
+    bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
+    assembly {
+        sstore(slot, value)
+    }
+}
+
+function getSimulateUserOp() view returns (bool value) {
+    bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
     assembly {
         value := sload(slot)
     }

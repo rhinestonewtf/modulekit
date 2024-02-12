@@ -2,12 +2,12 @@
 pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { UserOperation, IEntryPoint } from "../external/ERC4337.sol";
+import { IEntryPoint } from "../external/ERC4337.sol";
 import { IERC7579Account } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
-import { writeExpectRevert } from "./utils/Log.sol";
+import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 
 import "forge-std/console2.sol";
 
@@ -111,7 +111,6 @@ library ModuleKitHelpers {
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
-        console2.log("\n\n\n\n\n\n------");
         userOpData.execUserOps();
     }
 
@@ -286,5 +285,18 @@ library ModuleKitHelpers {
 
     function expect4337Revert(RhinestoneAccount memory) internal {
         writeExpectRevert(1);
+    }
+
+    /**
+     * @dev Logs the gas used by an ERC-4337 transaction
+     * @dev needs to be called before an exec4337 call
+     * @dev the id needs to be unique across your tests, otherwise the gas calculations will
+     * overwrite each other
+     *
+     * @param instance RhinestoneAccount
+     * @param id Identifier for the gas calculation, which will be used as the filename
+     */
+    function log4337Gas(RhinestoneAccount memory instance, string memory id) internal {
+        writeGasIdentifier(id);
     }
 }

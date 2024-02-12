@@ -3,7 +3,6 @@ pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IERC7579Account, Execution } from "../external/ERC7579.sol";
-import { UserOperation } from "../external/ERC4337.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";

@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 import "src/ModuleKit.sol";
 import "./MakeAccount.t.sol";
 import "src/Mocks.sol";
+import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 /* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
@@ -14,13 +15,15 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     MockValidator internal validator;
     MockHook internal hook;
     MockExecutor internal executor;
+    MockTarget internal mockTarget;
 
     MockERC20 internal token;
 
     function setUp() public override {
         super.setUp();
         // Setup account
-        instance = makeRhinestoneAccount("1");
+        instance = makeRhinestoneAccount("account1");
+        vm.deal(instance.account, 1000 ether);
 
         // Setup modules
         validator = new MockValidator();
@@ -30,24 +33,8 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Setup aux
         token = new MockERC20();
         token.initialize("Mock Token", "MTK", 18);
-        fund();
-    }
-
-    function fund() internal {
-        for (uint256 i; i < diffAccounts.length; i++) {
-            instance = diffAccounts[i];
-            deal(address(token), instance.account, 100 ether);
-            vm.deal(instance.account, 1000 ether);
-        }
-    }
-
-    modifier diffTest() {
-        uint256 snapshot = vm.snapshot(); // saves the state
-        for (uint256 i; i < diffAccounts.length; i++) {
-            instance = diffAccounts[i];
-            _;
-            vm.revertTo(snapshot);
-        }
+        deal(address(token), instance.account, 100 ether);
+        mockTarget = new MockTarget();
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -102,12 +89,11 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     function testexec__RevertWhen__UserOperationFails() public {
         // Create userOperation fields
-        address receiver = makeAddr("receiver");
-        uint256 value = 100_000 ether;
+        bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
 
         // Create userOperation
         instance.expect4337Revert();
-        instance.exec({ target: receiver, callData: "", value: value });
+        instance.exec({ target: address(mockTarget), callData: callData, value: 0 });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -263,5 +249,27 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         //
         // // Validate userOperation
         // assertEq(userOpHash, entryPointUserOpHash);
+    }
+
+    function testWriteGas() public {
+        string memory gasIdentifier = "testWriteGas";
+        string memory rootDir = "gas_calculations";
+        string memory fileName = string.concat(rootDir, "/", gasIdentifier, ".json");
+        assertTrue(vm.isDir("gas_calculations"));
+        if (vm.isFile(fileName)) {
+            vm.removeFile(fileName);
+        }
+        assertFalse(vm.isFile(fileName));
+
+        vm.setEnv("GAS", "true");
+
+        instance.log4337Gas("testWriteGas");
+        testexec__Given__TwoInputs();
+        assertTrue(vm.isFile(fileName));
+    }
+
+    function testSimulateUserOp() public {
+        writeSimulateUserOp(true);
+        testexec__Given__TwoInputs();
     }
 }
