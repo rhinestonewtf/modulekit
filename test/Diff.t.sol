@@ -22,19 +22,35 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     function setUp() public override {
         super.setUp();
         // Setup account
-        instance = makeRhinestoneAccount("account1");
-        vm.deal(instance.account, 1000 ether);
+        instance = makeRhinestoneAccount("1");
 
         // Setup modules
         validator = new MockValidator();
         hook = new MockHook();
         executor = new MockExecutor();
+        mockTarget = new MockTarget();
 
         // Setup aux
         token = new MockERC20();
         token.initialize("Mock Token", "MTK", 18);
-        deal(address(token), instance.account, 100 ether);
-        mockTarget = new MockTarget();
+        fund();
+    }
+
+    function fund() internal {
+        for (uint256 i; i < diffAccounts.length; i++) {
+            instance = diffAccounts[i];
+            deal(address(token), instance.account, 100 ether);
+            vm.deal(instance.account, 1000 ether);
+        }
+    }
+
+    modifier diffTest() {
+        uint256 snapshot = vm.snapshot(); // saves the state
+        for (uint256 i; i < diffAccounts.length; i++) {
+            instance = diffAccounts[i];
+            _;
+            vm.revertTo(snapshot);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////

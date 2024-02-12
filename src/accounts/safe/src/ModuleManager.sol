@@ -225,7 +225,6 @@ abstract contract ModuleManager is AccessControl, Receiver {
         SentinelListLib.SentinelList storage _executors =
             _getModuleManagerStorage(msg.sender)._executors;
         _executors.push(executor);
-        console2.log("install executor", executor);
         IExecutor(executor).onInstall(data);
     }
 
