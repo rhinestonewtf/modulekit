@@ -198,14 +198,14 @@ library ModuleKitUserOp {
         RhinestoneAccount memory instance,
         address[] memory targets,
         uint256[] memory values,
-        bytes[] memory initDatas,
+        bytes[] memory callDatas,
         address txValidator
     )
         internal
         view
         returns (UserOpData memory userOpData)
     {
-        Execution[] memory executions = ERC7579Helpers.toExecutions(targets, values, initDatas);
+        Execution[] memory executions = ERC7579Helpers.toExecutions(targets, values, callDatas);
         return getExecOps(instance, executions, txValidator);
     }
 }

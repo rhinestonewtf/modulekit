@@ -16,6 +16,10 @@ import {
 abstract contract ERC7579HookDestruct is ERC7579HookBase {
     error HookInvalidSelector();
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                CALLDATA DECODING
+    //////////////////////////////////////////////////////////////////////////*/
+
     function preCheck(
         address msgSender,
         bytes calldata msgData
@@ -72,10 +76,10 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         return onPostCheck(hookData);
     }
 
-    function onPostCheck(bytes calldata hookData) internal virtual returns (bool success);
-    /////////////////////////////////////////////////////
-    // Executions
-    ////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////////////////
+                                     EXECUTION
+    //////////////////////////////////////////////////////////////////////////*/
+
     function onExecute(
         address msgSender,
         address target,
@@ -112,9 +116,9 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         virtual
         returns (bytes memory hookData);
 
-    /////////////////////////////////////////////////////
-    // IAccountConfig
-    ////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
 
     function onInstallModule(
         address msgSender,
@@ -135,4 +139,10 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         internal
         virtual
         returns (bytes memory hookData);
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     POSTCHECK
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onPostCheck(bytes calldata hookData) internal virtual returns (bool success);
 }
