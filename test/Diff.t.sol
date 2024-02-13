@@ -2,17 +2,16 @@
 pragma solidity ^0.8.19;
 
 /* solhint-disable no-global-import */
-import { Test } from "forge-std/Test.sol";
 import "src/ModuleKit.sol";
+import "./MakeAccount.t.sol";
 import "src/Mocks.sol";
 import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 /* solhint-enable no-global-import */
 
-contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
+contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
-    RhinestoneAccount internal instance;
     MockValidator internal validator;
     MockHook internal hook;
     MockExecutor internal executor;
@@ -20,28 +19,45 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
 
     MockERC20 internal token;
 
-    function setUp() public {
+    function setUp() public override {
+        super.setUp();
         // Setup account
-        instance = makeRhinestoneAccount("account1");
-        vm.deal(instance.account, 1000 ether);
+        instance = makeRhinestoneAccount("1");
 
         // Setup modules
         validator = new MockValidator();
         hook = new MockHook();
         executor = new MockExecutor();
+        mockTarget = new MockTarget();
 
         // Setup aux
         token = new MockERC20();
         token.initialize("Mock Token", "MTK", 18);
-        deal(address(token), instance.account, 100 ether);
-        mockTarget = new MockTarget();
+        fund();
+    }
+
+    function fund() internal {
+        for (uint256 i; i < diffAccounts.length; i++) {
+            instance = diffAccounts[i];
+            deal(address(token), instance.account, 100 ether);
+            vm.deal(instance.account, 1000 ether);
+        }
+    }
+
+    modifier diffTest() {
+        uint256 snapshot = vm.snapshot(); // saves the state
+        for (uint256 i; i < diffAccounts.length; i++) {
+            instance = diffAccounts[i];
+            _;
+            vm.revertTo(snapshot);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 exec
     //////////////////////////////////////////////////////////////////////////*/
 
-    function testexec__Given__TwoInputs() public {
+    function testexec__Given__TwoInputs() public diffTest {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -55,7 +71,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertEq(token.balanceOf(receiver), value, "Receiver should have 10 gwei in tokens");
     }
 
-    function testexec__Given__ThreeInputs() public {
+    function testexec__Given__ThreeInputs() public diffTest {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -68,7 +84,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
 
-    function testexec__Given__FourInputs() public {
+    function testexec__Given__FourInputs() public diffTest {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -100,7 +116,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
 
-    function testAddValidator() public {
+    function testAddValidator() public diffTest {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -116,7 +132,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertTrue(validator1Enabled);
     }
 
-    function testRemoveValidator() public {
+    function testRemoveValidator() public diffTest {
         address newValidator = address(new MockValidator());
         instance.installValidator(newValidator);
         bool validatorEnabled = instance.isValidatorInstalled(newValidator);
@@ -164,14 +180,14 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         // assertTrue(isValidProof);
     }
 
-    function testAddHook() public {
+    function testAddHook() public diffTest {
         instance.installHook(address(hook));
 
         bool hookEnabled = instance.isHookInstalled(address(hook));
         assertTrue(hookEnabled);
     }
 
-    function testAddExecutor() public {
+    function testAddExecutor() public diffTest {
         address newExecutor = address(new MockExecutor());
 
         instance.installExecutor(newExecutor);
@@ -179,7 +195,7 @@ contract ERC7579DifferentialModuleKitLibTest is Test, RhinestoneModuleKit {
         assertTrue(executorEnabled);
     }
 
-    function testRemoveExecutor() public {
+    function testRemoveExecutor() public diffTest {
         address newExecutor = address(new MockExecutor());
 
         instance.installExecutor(newExecutor);
