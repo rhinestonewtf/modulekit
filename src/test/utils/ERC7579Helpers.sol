@@ -48,23 +48,26 @@ library ERC7579Helpers {
      */
     function configModule(
         address account,
+        uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, address, bytes memory) internal  returns (address, uint256, bytes memory)
+        function(address, uint256, address, bytes memory) internal  returns (address, uint256, bytes memory)
             fn
     )
         internal
         returns (bytes memory erc7579Tx)
     {
-        (address to, uint256 value, bytes memory callData) = fn(account, module, initData);
+        (address to, uint256 value, bytes memory callData) =
+            fn(account, moduleType, module, initData);
         erc7579Tx = encode(to, value, callData);
     }
 
     function configModuleUserOp(
         RhinestoneAccount memory instance,
+        uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, address, bytes memory) internal  returns (address, uint256, bytes memory)
+        function(address, uint256, address, bytes memory) internal  returns (address, uint256, bytes memory)
             fn,
         address txValidator
     )
@@ -81,7 +84,7 @@ library ERC7579Helpers {
             sender: instance.account,
             nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
             initCode: initCode,
-            callData: configModule(instance.account, module, initData, fn),
+            callData: configModule(instance.account, moduleType, module, initData, fn),
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
             gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
@@ -120,6 +123,58 @@ library ERC7579Helpers {
         });
 
         userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
+    /**
+     * Router function to install a module on an ERC7579 account
+     */
+    function installModule(
+        address account,
+        uint256 moduleType,
+        address module,
+        bytes memory initData
+    )
+        internal
+        pure
+        returns (address to, uint256 value, bytes memory callData)
+    {
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            return installValidator(account, module, initData);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            return installExecutor(account, module, initData);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            return installHook(account, module, initData);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            return installFallback(account, module, initData);
+        } else {
+            revert("Invalid module type");
+        }
+    }
+
+    /**
+     * Router function to uninstall a module on an ERC7579 account
+     */
+    function uninstallModule(
+        address account,
+        uint256 moduleType,
+        address module,
+        bytes memory initData
+    )
+        internal
+        view
+        returns (address to, uint256 value, bytes memory callData)
+    {
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            return uninstallValidator(account, module, initData);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            return uninstallExecutor(account, module, initData);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            return uninstallHook(account, module, initData);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            return uninstallFallback(account, module, initData);
+        } else {
+            revert("Invalid module type");
+        }
     }
 
     /**

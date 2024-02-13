@@ -6,8 +6,9 @@ import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { Execution } from "../external/ERC7579.sol";
 
 library ModuleKitUserOp {
-    function getInstallValidatorOps(
+    function getInstallModuleOps(
         RhinestoneAccount memory instance,
+        uint256 moduleType,
         address module,
         bytes memory initData,
         address txValidator
@@ -18,15 +19,17 @@ library ModuleKitUserOp {
         // get userOp with correct nonce for selected txValidator
         (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
             instance: instance,
+            moduleType: moduleType,
             module: module,
             initData: initData,
-            fn: ERC7579Helpers.installValidator,
+            fn: ERC7579Helpers.installModule,
             txValidator: txValidator
         });
     }
 
-    function getUninstallValidatorOps(
+    function getUninstallModuleOps(
         RhinestoneAccount memory instance,
+        uint256 moduleType,
         address module,
         bytes memory initData,
         address txValidator
@@ -37,123 +40,10 @@ library ModuleKitUserOp {
         // get userOp with correct nonce for selected txValidator
         (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
             instance: instance,
+            moduleType: moduleType,
             module: module,
             initData: initData,
-            fn: ERC7579Helpers.uninstallValidator,
-            txValidator: txValidator
-        });
-    }
-
-    function getInstallExecutorOps(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData,
-        address txValidator
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        // get userOp with correct nonce for selected txValidator
-        (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
-            instance: instance,
-            module: module,
-            initData: initData,
-            fn: ERC7579Helpers.installExecutor,
-            txValidator: txValidator
-        });
-    }
-
-    function getUninstallExecutorOps(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData,
-        address txValidator
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        // get userOp with correct nonce for selected txValidator
-        (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
-            instance: instance,
-            module: module,
-            initData: initData,
-            fn: ERC7579Helpers.uninstallExecutor,
-            txValidator: txValidator
-        });
-    }
-
-    function getInstallHookOps(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData,
-        address txValidator
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        // get userOp with correct nonce for selected txValidator
-        (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
-            instance: instance,
-            module: module,
-            initData: initData,
-            fn: ERC7579Helpers.installHook,
-            txValidator: txValidator
-        });
-    }
-
-    function getUninstallHookOps(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData,
-        address txValidator
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        // get userOp with correct nonce for selected txValidator
-        (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
-            instance: instance,
-            module: module,
-            initData: initData,
-            fn: ERC7579Helpers.uninstallHook,
-            txValidator: txValidator
-        });
-    }
-
-    function getInstallFallbackOps(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData,
-        address txValidator
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        // get userOp with correct nonce for selected txValidator
-        (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
-            instance: instance,
-            module: module,
-            initData: initData,
-            fn: ERC7579Helpers.installFallback,
-            txValidator: txValidator
-        });
-    }
-
-    function getUninstallFallbackOps(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData,
-        address txValidator
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        // get userOp with correct nonce for selected txValidator
-        (userOpData.userOp, userOpData.userOpHash) = ERC7579Helpers.configModuleUserOp({
-            instance: instance,
-            module: module,
-            initData: initData,
-            fn: ERC7579Helpers.uninstallFallback,
+            fn: ERC7579Helpers.uninstallModule,
             txValidator: txValidator
         });
     }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.21;
 
 import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { IERC7579Account, Execution } from "../external/ERC7579.sol";
+import { IERC7579Account, Execution, MODULE_TYPE_VALIDATOR } from "../external/ERC7579.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
@@ -40,7 +40,9 @@ library ModuleKitSCM {
         // detect if account was not created yet, or if SessionKeyManager is not installed
         if (
             instance.initCode.length > 0
-                || !instance.isValidatorInstalled(address(instance.aux.sessionKeyManager))
+                || !instance.isModuleInstalled(
+                    MODULE_TYPE_VALIDATOR, address(instance.aux.sessionKeyManager)
+                )
         ) {
             executions = new Execution[](2);
             // install core/SessionKeyManager first
@@ -49,9 +51,10 @@ library ModuleKitSCM {
                 value: 0,
                 callData: ERC7579Helpers.configModule(
                     instance.account,
+                    MODULE_TYPE_VALIDATOR,
                     address(instance.aux.sessionKeyManager),
                     "",
-                    ERC7579Helpers.installValidator // <--
+                    ERC7579Helpers.installModule // <--
                 )
             });
         }
