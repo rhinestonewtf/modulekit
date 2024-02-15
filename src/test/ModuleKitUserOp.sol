@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
+import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { Execution } from "../external/ERC7579.sol";
 
 library ModuleKitUserOp {
     function getInstallModuleOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleType,
         address module,
         bytes memory initData,
@@ -28,7 +28,7 @@ library ModuleKitUserOp {
     }
 
     function getUninstallModuleOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleType,
         address module,
         bytes memory initData,
@@ -49,7 +49,7 @@ library ModuleKitUserOp {
     }
 
     function getExecOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address target,
         uint256 value,
         bytes memory callData,
@@ -68,7 +68,7 @@ library ModuleKitUserOp {
     }
 
     function getExecOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         Execution[] memory executions,
         address txValidator
     )
@@ -85,7 +85,7 @@ library ModuleKitUserOp {
     }
 
     function getExecOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory callDatas,

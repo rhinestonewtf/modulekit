@@ -22,7 +22,7 @@ import "./utils/Vm.sol";
 import "./utils/ModuleKitCache.sol";
 import "./utils/Log.sol";
 
-struct RhinestoneAccount {
+struct AccountInstance {
     address account;
     Auxiliary aux;
     IERC7579Validator defaultValidator;
@@ -75,22 +75,22 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     }
 
     /**
-     * create new RhinestoneAccount with initCode
+     * create new AccountInstance with initCode
      * @param salt account salt / name
      * @param counterFactualAddress of the account
      * @param initCode4337 to be added to userOp:initCode
      */
-    function makeRhinestoneAccount(
+    function makeAccountInstance(
         bytes32 salt,
         address counterFactualAddress,
         bytes memory initCode4337
     )
         internal
-        returns (RhinestoneAccount memory instance)
+        returns (AccountInstance memory instance)
     {
-        // Create RhinestoneAccount struct with counterFactualAddress and initCode
+        // Create AccountInstance struct with counterFactualAddress and initCode
         // The initcode will be set to 0, once the account was created by EntryPoint.sol
-        instance = RhinestoneAccount({
+        instance = AccountInstance({
             account: counterFactualAddress,
             aux: auxiliary,
             salt: salt,
@@ -103,7 +103,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     }
 
     /**
-     * create new RhinestoneAccount with ERC7579BootstrapConfig
+     * create new AccountInstance with ERC7579BootstrapConfig
      *
      * @param salt account salt / name
      * @param validators ERC7549 validators to be installed on the account
@@ -111,7 +111,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
      * @param hook ERC7549 hook to be installed on the account
      * @param fallBack ERC7549 fallbackHandler to be installed on the account
      */
-    function makeRhinestoneAccount(
+    function makeAccountInstance(
         bytes32 salt,
         ERC7579BootstrapConfig[] memory validators,
         ERC7579BootstrapConfig[] memory executors,
@@ -119,7 +119,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         ERC7579BootstrapConfig memory fallBack
     )
         internal
-        returns (RhinestoneAccount memory instance)
+        returns (AccountInstance memory instance)
     {
         init();
 
@@ -154,18 +154,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         label(address(account), bytes32ToString(salt));
         deal(account, 1 ether);
 
-        instance = makeRhinestoneAccount(salt, account, initCode4337);
+        instance = makeAccountInstance(salt, account, initCode4337);
     }
 
     /**
-     * create new RhinestoneAccount with modulekit defaults
+     * create new AccountInstance with modulekit defaults
      *
      * @param salt account salt / name
      */
-    function makeRhinestoneAccount(bytes32 salt)
-        internal
-        returns (RhinestoneAccount memory instance)
-    {
+    function makeAccountInstance(bytes32 salt) internal returns (AccountInstance memory instance) {
         init();
         ERC7579BootstrapConfig[] memory validators =
             makeBootstrapConfig(address(defaultValidator), "");
@@ -175,21 +172,21 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         ERC7579BootstrapConfig memory hook = _emptyConfig();
 
         ERC7579BootstrapConfig memory fallBack = _emptyConfig();
-        instance = makeRhinestoneAccount(salt, validators, executors, hook, fallBack);
+        instance = makeAccountInstance(salt, validators, executors, hook, fallBack);
     }
 
-    function makeRhinestoneAccount(
+    function makeAccountInstance(
         bytes32 salt,
         address account,
         address defaultValidator,
         bytes memory initCode
     )
         internal
-        returns (RhinestoneAccount memory instance)
+        returns (AccountInstance memory instance)
     {
         init();
 
-        instance = RhinestoneAccount({
+        instance = AccountInstance({
             account: account,
             aux: auxiliary,
             salt: salt,

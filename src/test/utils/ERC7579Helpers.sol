@@ -5,7 +5,7 @@ import { Execution, IERC7579Account, ERC7579BootstrapConfig } from "../../extern
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
-import { RhinestoneAccount } from "../RhinestoneModuleKit.sol";
+import { AccountInstance } from "../RhinestoneModuleKit.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -63,7 +63,7 @@ library ERC7579Helpers {
     }
 
     function configModuleUserOp(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleType,
         address module,
         bytes memory initData,
@@ -96,7 +96,7 @@ library ERC7579Helpers {
     }
 
     function execUserOp(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         bytes memory callData,
         address txValidator
     )

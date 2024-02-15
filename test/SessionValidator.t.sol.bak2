@@ -8,16 +8,16 @@ import "src/Modules.sol";
 import "src/Mocks.sol";
 
 contract SessionValidatorTest is RhinestoneModuleKit, Test {
-    using RhinestoneModuleKitLib for RhinestoneAccount;
+    using RhinestoneModuleKitLib for AccountInstance;
 
-    RhinestoneAccount internal instance;
+    AccountInstance internal instance;
 
     MockSessionKeyValidator internal sessionValidator;
     bytes32 internal sessionValidatorDigest;
     MockTarget internal target;
 
     function setUp() public {
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
         vm.deal(instance.account, 1 ether);
 
         sessionValidator = new MockSessionKeyValidator();

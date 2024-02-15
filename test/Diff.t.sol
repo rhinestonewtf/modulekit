@@ -25,7 +25,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     function setUp() public override {
         super.setUp();
         // Setup account
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
 
         // Setup modules
         validator = new MockValidator();

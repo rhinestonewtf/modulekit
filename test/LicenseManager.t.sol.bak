@@ -13,9 +13,9 @@ import { Solarray } from "solarray/Solarray.sol";
 /* solhint-enable no-global-import */
 
 contract LicenseManagerTest is RhinestoneModuleKit, Test {
-    using RhinestoneModuleKitLib for RhinestoneAccount;
+    using RhinestoneModuleKitLib for AccountInstance;
 
-    RhinestoneAccount internal instance;
+    AccountInstance internal instance;
 
     LicenseValidator internal validator;
     LicenseCollector internal collector;
@@ -29,7 +29,7 @@ contract LicenseManagerTest is RhinestoneModuleKit, Test {
     uint256 internal keySignerPk1;
 
     function setUp() public {
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
         vm.deal(instance.account, 1 ether);
 
         token = new MockERC20();

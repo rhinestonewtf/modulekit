@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
+import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
 import { IERC7579Account } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
@@ -12,8 +12,8 @@ import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import "forge-std/console2.sol";
 
 library ModuleKitHelpers {
-    using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelpers for RhinestoneAccount;
+    using ModuleKitUserOp for AccountInstance;
+    using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
 
     function execUserOps(UserOpData memory userOpData) internal {
@@ -29,7 +29,7 @@ library ModuleKitHelpers {
     }
 
     function installModule(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -47,7 +47,7 @@ library ModuleKitHelpers {
     }
 
     function uninstallModule(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -65,7 +65,7 @@ library ModuleKitHelpers {
     }
 
     function isModuleInstalled(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module
     )
@@ -76,7 +76,7 @@ library ModuleKitHelpers {
     }
 
     function isModuleInstalled(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -88,7 +88,7 @@ library ModuleKitHelpers {
     }
 
     function exec(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address target,
         uint256 value,
         bytes memory callData
@@ -105,7 +105,7 @@ library ModuleKitHelpers {
     }
 
     function exec(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address target,
         bytes memory callData
     )
@@ -115,7 +115,7 @@ library ModuleKitHelpers {
         return exec(instance, target, 0, callData);
     }
 
-    function expect4337Revert(RhinestoneAccount memory) internal {
+    function expect4337Revert(AccountInstance memory) internal {
         writeExpectRevert(1);
     }
 
@@ -125,10 +125,10 @@ library ModuleKitHelpers {
      * @dev the id needs to be unique across your tests, otherwise the gas calculations will
      * overwrite each other
      *
-     * @param instance RhinestoneAccount
+     * @param instance AccountInstance
      * @param id Identifier for the gas calculation, which will be used as the filename
      */
-    function log4337Gas(RhinestoneAccount memory instance, string memory id) internal {
+    function log4337Gas(AccountInstance memory instance, string memory id) internal {
         writeGasIdentifier(id);
     }
 }
