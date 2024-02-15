@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.23;
 
 import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";

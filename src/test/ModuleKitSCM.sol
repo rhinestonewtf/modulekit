@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.23;
 
 import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IERC7579Account, Execution, MODULE_TYPE_VALIDATOR } from "../external/ERC7579.sol";
