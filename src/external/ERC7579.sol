@@ -10,7 +10,11 @@ import {
     IValidator as IERC7579Validator,
     IExecutor as IERC7579Executor,
     IHook as IERC7579Hook,
-    IFallback as IERC7579Fallback
+    IFallback as IERC7579Fallback,
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_FALLBACK
 } from "erc7579/interfaces/IERC7579Module.sol";
 
 import {

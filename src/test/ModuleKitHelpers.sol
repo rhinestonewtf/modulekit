@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.23;
 
-import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
+import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
 import { IERC7579Account } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
@@ -12,11 +12,9 @@ import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import "forge-std/console2.sol";
 
 library ModuleKitHelpers {
-    using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelpers for RhinestoneAccount;
+    using ModuleKitUserOp for AccountInstance;
+    using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
-
-    // will call installValidator with initData:0
 
     function execUserOps(UserOpData memory userOpData) internal {
         // send userOp to entrypoint
@@ -30,193 +28,67 @@ library ModuleKitHelpers {
         return userOpData;
     }
 
-    function installValidator(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        return instance.installValidator(module, "");
-    }
-
-    function installValidator(
-        RhinestoneAccount memory instance,
+    function installModule(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
         address module,
-        bytes memory initData
+        bytes memory data
     )
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData =
-            instance.getInstallValidatorOps(module, initData, address(instance.defaultValidator));
+        userOpData = instance.getInstallModuleOps(
+            moduleTypeId, module, data, address(instance.defaultValidator)
+        );
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
 
-    // will call uninstallValidator with initData:0
-    function uninstallValidator(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        return instance.uninstallValidator(module, "");
-    }
-    // will call uninstallValidator with initData:0
-
-    function uninstallValidator(
-        RhinestoneAccount memory instance,
+    function uninstallModule(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
         address module,
-        bytes memory initData
+        bytes memory data
     )
         internal
         returns (UserOpData memory userOpData)
     {
-        userOpData =
-            instance.getUninstallValidatorOps(module, initData, address(instance.defaultValidator));
-
+        userOpData = instance.getUninstallModuleOps(
+            moduleTypeId, module, data, address(instance.defaultValidator)
+        );
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
 
-    // will call installValidator with initData:0
-    function installExecutor(
-        RhinestoneAccount memory instance,
+    function isModuleInstalled(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
         address module
     )
         internal
-        returns (UserOpData memory userOpData)
+        returns (bool)
     {
-        return instance.installExecutor(module, "");
+        return isModuleInstalled(instance, moduleTypeId, module, "");
     }
 
-    // will call installValidator with initData:0
-    function installExecutor(
-        RhinestoneAccount memory instance,
+    function isModuleInstalled(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
         address module,
-        bytes memory initData
+        bytes memory data
     )
         internal
-        returns (UserOpData memory userOpData)
+        returns (bool)
     {
-        userOpData =
-            instance.getInstallExecutorOps(module, initData, address(instance.defaultValidator));
-
-        // sign userOp with default signature
-        userOpData = userOpData.signDefault();
-        // send userOp to entrypoint
-        userOpData.execUserOps();
-    }
-
-    function uninstallExecutor(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        return instance.uninstallExecutor(module, "");
-    }
-
-    // will call uninstallExecutor with initData:0
-    function uninstallExecutor(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        userOpData =
-            instance.getUninstallExecutorOps(module, initData, address(instance.defaultValidator));
-
-        // sign userOp with default signature
-        userOpData = userOpData.signDefault();
-        // send userOp to entrypoint
-        userOpData.execUserOps();
-    }
-
-    function installHook(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        return instance.installHook(module, "");
-    }
-    // executes installHook with initData:0
-
-    function installHook(
-        RhinestoneAccount memory instance,
-        address module,
-        bytes memory initData
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        userOpData =
-            instance.getInstallHookOps(module, initData, address(instance.defaultValidator));
-
-        // sign userOp with default signature
-        userOpData = userOpData.signDefault();
-        // send userOp to entrypoint
-        userOpData.execUserOps();
-    }
-
-    // executes uninstallHook with initData:0
-    function uninstallHook(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        userOpData = instance.getUninstallHookOps(module, "", address(instance.defaultValidator));
-        // sign userOp with default signature
-        userOpData = userOpData.signDefault();
-        // send userOp to entrypoint
-        userOpData.execUserOps();
-    }
-
-    // executes installFallback with initData:0
-    function installFallback(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        userOpData = instance.getInstallFallbackOps(module, "", address(instance.defaultValidator));
-        // sign userOp with default signature
-        userOpData = userOpData.signDefault();
-        // send userOp to entrypoint
-        userOpData.execUserOps();
-    }
-
-    // executes installFallback wiith initData:0
-    function uninstallFallback(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (UserOpData memory userOpData)
-    {
-        userOpData = instance.getInstallFallbackOps(module, "", address(instance.defaultValidator));
-        // sign userOp with default signature
-        userOpData = userOpData.signDefault();
-        // send userOp to entrypoint
-        userOpData.execUserOps();
+        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
     }
 
     function exec(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address target,
         uint256 value,
         bytes memory callData
@@ -233,7 +105,7 @@ library ModuleKitHelpers {
     }
 
     function exec(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address target,
         bytes memory callData
     )
@@ -243,47 +115,22 @@ library ModuleKitHelpers {
         return exec(instance, target, 0, callData);
     }
 
-    function isValidatorInstalled(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (bool)
-    {
-        return IERC7579Account(instance.account).isModuleInstalled(1, module, "");
+    function deployAccount(AccountInstance memory instance) internal {
+        if (instance.account.code.length == 0) {
+            if (instance.initCode.length == 0) {
+                revert("deployAccount: no initCode provided");
+            } else {
+                bytes memory initCode = instance.initCode;
+                assembly {
+                    let factory := mload(add(initCode, 20))
+                    let success := call(gas(), factory, 0, add(initCode, 52), mload(initCode), 0, 0)
+                    if iszero(success) { revert(0, 0) }
+                }
+            }
+        }
     }
 
-    function isExecutorInstalled(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (bool)
-    {
-        return IERC7579Account(instance.account).isModuleInstalled(2, module, "");
-    }
-
-    function isHookInstalled(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (bool)
-    {
-        return IERC7579Account(instance.account).isModuleInstalled(4, module, "");
-    }
-
-    function isFallbackInstalled(
-        RhinestoneAccount memory instance,
-        address module
-    )
-        internal
-        returns (bool)
-    {
-        return IERC7579Account(instance.account).isModuleInstalled(3, module, "");
-    }
-
-    function expect4337Revert(RhinestoneAccount memory) internal {
+    function expect4337Revert(AccountInstance memory) internal {
         writeExpectRevert(1);
     }
 
@@ -293,10 +140,10 @@ library ModuleKitHelpers {
      * @dev the id needs to be unique across your tests, otherwise the gas calculations will
      * overwrite each other
      *
-     * @param instance RhinestoneAccount
+     * @param instance AccountInstance
      * @param id Identifier for the gas calculation, which will be used as the filename
      */
-    function log4337Gas(RhinestoneAccount memory instance, string memory id) internal {
+    function log4337Gas(AccountInstance memory instance, string memory id) internal {
         writeGasIdentifier(id);
     }
 }

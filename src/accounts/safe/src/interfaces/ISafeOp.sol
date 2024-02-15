@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.23;
 
 bytes32 constant SAFE_OP_TYPEHASH =
     0x84aa190356f56b8c87825f54884392a9907c23ee0f8e1ea86336b763faf021bd;

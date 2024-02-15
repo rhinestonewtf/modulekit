@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.23;
 
-import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { IERC7579Account, Execution } from "../external/ERC7579.sol";
+import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
+import { IERC7579Account, Execution, MODULE_TYPE_VALIDATOR } from "../external/ERC7579.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
@@ -10,13 +10,13 @@ import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
 import { ISessionKeyManager, ISessionValidationModule } from "../Core.sol";
 
 library ModuleKitSCM {
-    using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelpers for RhinestoneAccount;
+    using ModuleKitUserOp for AccountInstance;
+    using ModuleKitHelpers for AccountInstance;
     /**
      * @dev Installs core/SessionKeyManager on the account if not already installed, and
      * configures it with the given sessionKeyModule and sessionKeyData
      *
-     * @param instance RhinestoneAccount
+     * @param instance AccountInstance
      * @param sessionKeyModule the SessionKeyManager SessionKeyModule address that will handle this
      * sessionkeyData
      * @param validUntil timestamp until which the sessionKey is valid
@@ -25,7 +25,7 @@ library ModuleKitSCM {
      */
 
     function installSessionKey(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address sessionKeyModule,
         uint48 validUntil,
         uint48 validAfter,
@@ -40,7 +40,9 @@ library ModuleKitSCM {
         // detect if account was not created yet, or if SessionKeyManager is not installed
         if (
             instance.initCode.length > 0
-                || !instance.isValidatorInstalled(address(instance.aux.sessionKeyManager))
+                || !instance.isModuleInstalled(
+                    MODULE_TYPE_VALIDATOR, address(instance.aux.sessionKeyManager)
+                )
         ) {
             executions = new Execution[](2);
             // install core/SessionKeyManager first
@@ -49,9 +51,10 @@ library ModuleKitSCM {
                 value: 0,
                 callData: ERC7579Helpers.configModule(
                     instance.account,
+                    MODULE_TYPE_VALIDATOR,
                     address(instance.aux.sessionKeyManager),
                     "",
-                    ERC7579Helpers.installValidator // <--
+                    ERC7579Helpers.installModule // <--
                 )
             });
         }
@@ -76,7 +79,7 @@ library ModuleKitSCM {
     }
 
     function getExecOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address target,
         uint256 value,
         bytes memory callData,
@@ -96,7 +99,7 @@ library ModuleKitSCM {
 
     // wrapper for signAndExec4337
     function getExecOps(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory callDatas,

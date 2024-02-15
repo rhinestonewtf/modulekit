@@ -9,23 +9,23 @@ import "src/Mocks.sol";
 /* solhint-enable no-global-import */
 
 contract BaseTest is RhinestoneModuleKit, Test {
-    using ModuleKitHelpers for RhinestoneAccount;
+    using ModuleKitHelpers for AccountInstance;
 
     MultiAccount multiAccount;
-    RhinestoneAccount[] internal diffAccounts;
+    AccountInstance[] internal diffAccounts;
 
-    RhinestoneAccount internal instance;
-    RhinestoneAccount internal instanceSafe;
+    AccountInstance internal instance;
+    AccountInstance internal instanceSafe;
 
     address recipient;
 
     function setUp() public virtual {
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
         MockValidator defaultValidator = new MockValidator();
         MockExecutor defaultExecutor = new MockExecutor();
         multiAccount = new MultiAccount(address(defaultValidator), address(defaultExecutor));
         address safe = multiAccount.makeSafe();
-        instanceSafe = makeRhinestoneAccount("2", safe, address(defaultValidator), "");
+        instanceSafe = makeAccountInstance("2", safe, address(defaultValidator), "");
         vm.deal(instanceSafe.account, 1000 ether);
         diffAccounts.push(instance);
         diffAccounts.push(instanceSafe);

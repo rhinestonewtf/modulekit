@@ -1,28 +1,28 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.23;
 
-import { RhinestoneAccount, UserOpData } from "./RhinestoneModuleKit.sol";
-import { IERC7579Account, Execution } from "../external/ERC7579.sol";
+import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
+import { IERC7579Account, Execution, MODULE_TYPE_FALLBACK } from "../external/ERC7579.sol";
 import { ERC7579Helpers } from "./utils/ERC7579Helpers.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
 import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
 
 library ModuleKitFallbackHandler {
-    using ModuleKitUserOp for RhinestoneAccount;
-    using ModuleKitHelpers for RhinestoneAccount;
+    using ModuleKitUserOp for AccountInstance;
+    using ModuleKitHelpers for AccountInstance;
     /**
      * @dev Installs ExtensibleFallbackHandler on the account if not already installed, and
      * configures
      *
-     * @param instance RhinestoneAccount
+     * @param instance AccountInstance
      * @param handleFunctionSig function sig that should be handled
      * @param isStatic is function staticcall or call
      * @param subHandler ExtensibleFallbackHandler subhandler to handle this function sig
      */
 
     function installFallback(
-        RhinestoneAccount memory instance,
+        AccountInstance memory instance,
         bytes4 handleFunctionSig,
         bool isStatic,
         address subHandler
@@ -32,7 +32,8 @@ library ModuleKitFallbackHandler {
     {
         // check if fallbackhandler is installed on account
 
-        bool enabled = instance.isFallbackInstalled(address(instance.aux.fallbackHandler));
+        bool enabled =
+            instance.isModuleInstalled(MODULE_TYPE_FALLBACK, address(instance.aux.fallbackHandler));
 
         Execution[] memory executions;
 
@@ -46,9 +47,10 @@ library ModuleKitFallbackHandler {
                 value: 0,
                 callData: ERC7579Helpers.configModule(
                     instance.account,
+                    MODULE_TYPE_FALLBACK,
                     address(instance.aux.fallbackHandler), // ExtensibleFallbackHandler from Auxiliary
                     "",
-                    ERC7579Helpers.installFallback // <--
+                    ERC7579Helpers.installModule // <--
                 )
             });
         } else {

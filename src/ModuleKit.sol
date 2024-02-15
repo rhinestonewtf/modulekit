@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 /* solhint-disable no-unused-import */
-import { UserOpData, RhinestoneAccount, RhinestoneModuleKit } from "./test/RhinestoneModuleKit.sol";
+import { UserOpData, AccountInstance, RhinestoneModuleKit } from "./test/RhinestoneModuleKit.sol";
 
 import { ModuleKitHelpers } from "./test/ModuleKitHelpers.sol";
 import { ModuleKitSCM } from "./test/ModuleKitSCM.sol";

@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 /* solhint-disable no-global-import */
 import "src/ModuleKit.sol";
 import "./MakeAccount.t.sol";
 import "src/Mocks.sol";
 import { writeSimulateUserOp } from "src/test/utils/Log.sol";
+import {
+    MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK
+} from "src/external/ERC7579.sol";
 /* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
@@ -22,7 +25,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     function setUp() public override {
         super.setUp();
         // Setup account
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
 
         // Setup modules
         validator = new MockValidator();
@@ -121,25 +124,41 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
 
-        instance.installValidator(newValidator);
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
         // instance.log4337Gas("testAddValidator()");
         // instance.enableGasLog();
-        instance.installValidator(newValidator1);
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
 
-        bool validatorEnabled = instance.isValidatorInstalled(newValidator);
+        bool validatorEnabled = instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, newValidator);
         assertTrue(validatorEnabled);
-        bool validator1Enabled = instance.isValidatorInstalled(newValidator1);
+        bool validator1Enabled = instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, newValidator1);
         assertTrue(validator1Enabled);
     }
 
     function testRemoveValidator() public diffTest {
         address newValidator = address(new MockValidator());
-        instance.installValidator(newValidator);
-        bool validatorEnabled = instance.isValidatorInstalled(newValidator);
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        bool validatorEnabled = instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, newValidator);
         assertTrue(validatorEnabled);
 
-        instance.uninstallValidator(newValidator);
-        validatorEnabled = instance.isValidatorInstalled(newValidator);
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        validatorEnabled = instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, newValidator);
         assertFalse(validatorEnabled);
     }
 
@@ -181,29 +200,33 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testAddHook() public diffTest {
-        instance.installHook(address(hook));
+        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
-        bool hookEnabled = instance.isHookInstalled(address(hook));
+        bool hookEnabled = instance.isModuleInstalled(MODULE_TYPE_HOOK, address(hook));
         assertTrue(hookEnabled);
     }
 
     function testAddExecutor() public diffTest {
         address newExecutor = address(new MockExecutor());
 
-        instance.installExecutor(newExecutor);
-        bool executorEnabled = instance.isExecutorInstalled(newExecutor);
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+        bool executorEnabled = instance.isModuleInstalled(MODULE_TYPE_EXECUTOR, newExecutor);
         assertTrue(executorEnabled);
     }
 
     function testRemoveExecutor() public diffTest {
         address newExecutor = address(new MockExecutor());
 
-        instance.installExecutor(newExecutor);
-        bool executorEnabled = instance.isExecutorInstalled(newExecutor);
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+        bool executorEnabled = instance.isModuleInstalled(MODULE_TYPE_EXECUTOR, newExecutor);
         assertTrue(executorEnabled);
 
-        instance.uninstallExecutor(newExecutor);
-        executorEnabled = instance.isExecutorInstalled(newExecutor);
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: newExecutor,
+            data: ""
+        });
+        executorEnabled = instance.isModuleInstalled(MODULE_TYPE_EXECUTOR, newExecutor);
         assertFalse(executorEnabled);
     }
 
@@ -265,6 +288,15 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         //
         // // Validate userOperation
         // assertEq(userOpHash, entryPointUserOpHash);
+    }
+
+    function testDeployAccount() public {
+        AccountInstance memory newInstance = makeAccountInstance("new");
+        assertTrue(newInstance.account.code.length == 0);
+
+        newInstance.deployAccount();
+
+        assertTrue(newInstance.account.code.length > 0);
     }
 
     function testWriteGas() public {

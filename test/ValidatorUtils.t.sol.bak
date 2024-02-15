@@ -68,15 +68,15 @@ contract Validator is ERC7579ValidatorBase {
 }
 
 contract ValTest is RhinestoneModuleKit, Test {
-    using RhinestoneModuleKitLib for RhinestoneAccount;
+    using RhinestoneModuleKitLib for AccountInstance;
 
-    RhinestoneAccount instance;
+    AccountInstance instance;
     Validator validator;
 
     MockTarget target;
 
     function setUp() public {
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
         vm.deal(instance.account, 1 ether);
 
         validator = new Validator();

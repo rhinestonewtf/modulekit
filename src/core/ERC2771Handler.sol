@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 /**
  * @title Handler Context - Allows the fallback handler to extract addition context from the

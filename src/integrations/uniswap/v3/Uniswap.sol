@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.23;
 
 import { SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE } from "../helpers/MainnetAddresses.sol";
 import { ISwapRouter } from "../../interfaces/uniswap/v3/ISwapRouter.sol";

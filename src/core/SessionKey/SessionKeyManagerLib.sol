@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";

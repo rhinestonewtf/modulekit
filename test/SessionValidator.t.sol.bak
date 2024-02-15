@@ -33,9 +33,9 @@ library SessionKeyManagerLib {
 }
 
 contract SessionValidatorTest is RhinestoneModuleKit, Test {
-    using RhinestoneModuleKitLib for RhinestoneAccount;
+    using RhinestoneModuleKitLib for AccountInstance;
 
-    RhinestoneAccount instance;
+    AccountInstance instance;
 
     SessionKeyManagerHybrid sessionKeyManager;
     ISessionKeyManagerModuleHybrid.SessionData sessionData;
@@ -43,7 +43,7 @@ contract SessionValidatorTest is RhinestoneModuleKit, Test {
     MockTarget target;
 
     function setUp() public {
-        instance = makeRhinestoneAccount("1");
+        instance = makeAccountInstance("1");
         vm.deal(instance.account, 1 ether);
 
         sessionKeyManager = new SessionKeyManagerHybrid();
