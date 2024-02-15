@@ -290,6 +290,15 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // assertEq(userOpHash, entryPointUserOpHash);
     }
 
+    function testDeployAccount() public {
+        AccountInstance memory newInstance = makeAccountInstance("new");
+        assertTrue(newInstance.account.code.length == 0);
+
+        newInstance.deployAccount();
+
+        assertTrue(newInstance.account.code.length > 0);
+    }
+
     function testWriteGas() public {
         string memory gasIdentifier = "testWriteGas";
         string memory rootDir = "gas_calculations";

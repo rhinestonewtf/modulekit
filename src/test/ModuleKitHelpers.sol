@@ -115,6 +115,21 @@ library ModuleKitHelpers {
         return exec(instance, target, 0, callData);
     }
 
+    function deployAccount(AccountInstance memory instance) internal {
+        if (instance.account.code.length == 0) {
+            if (instance.initCode.length == 0) {
+                revert("deployAccount: no initCode provided");
+            } else {
+                bytes memory initCode = instance.initCode;
+                assembly {
+                    let factory := mload(add(initCode, 20))
+                    let success := call(gas(), factory, 0, add(initCode, 52), mload(initCode), 0, 0)
+                    if iszero(success) { revert(0, 0) }
+                }
+            }
+        }
+    }
+
     function expect4337Revert(AccountInstance memory) internal {
         writeExpectRevert(1);
     }
