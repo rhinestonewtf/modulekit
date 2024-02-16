@@ -1,0 +1,58 @@
+name: "Build a Forge project"
+
+on:
+  workflow_call:
+    inputs:
+      cache-path:
+        default: |
+          cache
+          node_modules
+          out
+          out-optimized
+        required: false
+        type: "string"
+
+      save-cache:
+        default: true
+        required: false
+        type: boolean
+
+      store-artifacts:
+        default: true
+        required: false
+        type: boolean
+
+jobs:
+  forge-build:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v4"
+
+      - name: "Install Foundry"
+        uses: "foundry-rs/foundry-toolchain@v1"
+
+      - name: "Install NodeJS"
+        uses: actions/setup-node@v3
+        with:
+          node-version: 21
+
+      - uses: pnpm/action-setup@v3
+        name: Install pnpm
+        with:
+          version: 8.15
+          run_install: false
+
+      - name: "Install the Node.js dependencies"
+        run: "pnpm install"
+
+      - name: "Show the Forge config"
+        run: "forge config"
+
+      - name: "Build the production contracts"
+        run: "forge build"
+
+      - name: "Add summary"
+        run: |
+          echo "## Build result" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY

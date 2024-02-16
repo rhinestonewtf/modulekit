@@ -3,15 +3,15 @@ pragma solidity ^0.8.23;
 
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 
-
 interface ISessionKeyManager {
     type ValidationData is uint256;
-struct SessionData {
-    uint48 validUntil;
-    uint48 validAfter;
-    ISessionValidationModule sessionValidationModule;
-    bytes sessionKeyData;
-}
+
+    struct SessionData {
+        uint48 validUntil;
+        uint48 validAfter;
+        ISessionValidationModule sessionValidationModule;
+        bytes sessionKeyData;
+    }
 
     struct UserOperation {
         address sender;

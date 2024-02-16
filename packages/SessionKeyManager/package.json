@@ -12,6 +12,12 @@
   },
   "devDependencies": {
     "@rhinestone/modulekit": "workspace:*",
+    "ds-test": "github:dapphub/ds-test",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "sentinellist": "github:zeroknots/sentinellist",
+    "erc7579": "github:erc7579/erc7579-implementation",
+    "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
     "solhint": "^4.1.1",
     "prettier": "^2.8.8"
@@ -37,7 +43,9 @@
   "repository": "github.com/rhinestonewtf/modulekit-examples",
   "scripts": {
     "fmt": "forge fmt",
-    "build": "forge build",
+    "fmt:check": "forge fmt --check",
+    "build": "forge build && ./bytecode.sh",
+    "bytecode": "./bytescode.sh",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
     "build:smt": "FOUNDRY_PROFILE=smt forge build",
     "clean": "rm -rf artifacts broadcast cache docs out out-optimized out-svg",

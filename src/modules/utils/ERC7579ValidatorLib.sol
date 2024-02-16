@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IERC7579Account, Execution } from "../../Accounts.sol";
-import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
+import { PackedUserOperation, UserOperationLib } from "../../external/ERC4337.sol";
 
 enum ACCOUNT_EXEC_TYPE {
     EXEC_SINGLE,
@@ -18,7 +18,7 @@ enum ACCOUNT_EXEC_TYPE {
 library ERC7579ValidatorLib {
     error InvalidExecutionType();
 
-    function decodeExecType(UserOperation calldata _ops)
+    function decodeExecType(PackedUserOperation calldata _ops)
         internal
         pure
         returns (ACCOUNT_EXEC_TYPE _type)
@@ -33,23 +33,23 @@ library ERC7579ValidatorLib {
     {
         bytes4 functionSig = bytes4(userOpCalldata[:4]);
 
-        if (IERC7579Account.execute.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.EXEC_SINGLE;
-        } else if (IERC7579Account.executeBatch.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.EXEC_BATCH;
-        } else if (IERC7579Account.executeFromExecutor.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.EXEC_SINGLE_FROM_EXECUTOR;
-        } else if (IERC7579Account.executeBatchFromExecutor.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.EXEC_BATCH_FROM_EXECUTOR;
-        } else if (IERC7579Account.installValidator.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.INSTALL_VALIDATOR;
-        } else if (IERC7579Account.installExecutor.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.INSTALL_EXECUTOR;
-        } else if (IERC7579Account.uninstallHook.selector == functionSig) {
-            _type = ACCOUNT_EXEC_TYPE.UNINSTALL_HOOK;
-        } else {
-            _type = ACCOUNT_EXEC_TYPE.ERROR;
-        }
+        // if (IERC7579Account.execute.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.EXEC_SINGLE;
+        // } else if (IERC7579Account.executeBatch.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.EXEC_BATCH;
+        // } else if (IERC7579Account.executeFromExecutor.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.EXEC_SINGLE_FROM_EXECUTOR;
+        // } else if (IERC7579Account.executeBatchFromExecutor.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.EXEC_BATCH_FROM_EXECUTOR;
+        // } else if (IERC7579Account.installValidator.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.INSTALL_VALIDATOR;
+        // } else if (IERC7579Account.installExecutor.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.INSTALL_EXECUTOR;
+        // } else if (IERC7579Account.uninstallHook.selector == functionSig) {
+        //     _type = ACCOUNT_EXEC_TYPE.UNINSTALL_HOOK;
+        // } else {
+        //     _type = ACCOUNT_EXEC_TYPE.ERROR;
+        // }
     }
 
     function decodeCalldataBatch(bytes calldata userOpCalldata)
@@ -98,8 +98,8 @@ library ERC7579ValidatorLib {
     }
 
     function validateWith(
-        UserOperation calldata userOp,
-        function(UserOperation calldata,address,uint256,bytes calldata) internal returns(uint48,uint48)
+        PackedUserOperation calldata userOp,
+        function(PackedUserOperation calldata,address,uint256,bytes calldata) internal returns(uint48,uint48)
             validationFunction
     )
         internal
@@ -134,7 +134,7 @@ abstract contract Decoder {
     using ERC7579ValidatorLib for *;
     using UserOperationLib for *;
 
-    function validate(UserOperation calldata userOp) internal {
+    function validate(PackedUserOperation calldata userOp) internal {
         ACCOUNT_EXEC_TYPE accountExecType = userOp.callData.decodeExecType();
         address smartAccount = userOp.getSender();
 

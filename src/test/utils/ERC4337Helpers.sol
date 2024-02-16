@@ -12,7 +12,6 @@ import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import "./Vm.sol";
 import "./Log.sol";
 import "./GasCalculations.sol";
-import "forge-std/console2.sol";
 import { Simulator } from "erc4337-validation/Simulator.sol";
 
 library ERC4337Helpers {

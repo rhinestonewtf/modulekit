@@ -4,18 +4,24 @@ pragma solidity ^0.8.23;
 /* solhint-disable function-max-lines*/
 /* solhint-disable ordering*/
 
-import { ERC7579ValidatorBase } from "../../modules/ERC7579ValidatorBase.sol";
-import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
-import { IERC7579Account } from "../../ModuleKitLib.sol";
-import { IERC1271 } from "../../interfaces/IERC1271.sol";
+import { IERC7579Account, Execution } from "@rhinestone/modulekit/src/Accounts.sol";
+import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
+import {
+    ACCOUNT_EXEC_TYPE,
+    ERC7579ValidatorLib
+} from "@rhinestone/modulekit/src/modules/utils/ERC7579ValidatorLib.sol";
+import { IERC1271 } from "@rhinestone/modulekit/src/interfaces/IERC1271.sol";
+import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/modules/ERC7579ValidatorBase.sol";
+import {
+    PackedUserOperation, UserOperationLib
+} from "@rhinestone/modulekit/src/external/ERC4337.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
-import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 
 contract SessionKeyManager is ERC7579ValidatorBase {
-    using UserOperationLib for UserOperation;
-    using ERC7579ValidatorLib for UserOperation;
+    using UserOperationLib for PackedUserOperation;
+    using ERC7579ValidatorLib for PackedUserOperation;
     using ERC7579ValidatorLib for bytes;
     using SessionKeyManagerLib for SessionData;
     using SessionKeyManagerLib for bytes32;
@@ -58,7 +64,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     }
 
     function validateUserOp(
-        UserOperation calldata userOp,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         external
@@ -78,7 +84,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     }
 
     function _validateSingleExec(
-        UserOperation calldata userOp,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         internal
@@ -105,7 +111,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     }
 
     function _validateBatchedExec(
-        UserOperation calldata userOp,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         internal
@@ -118,8 +124,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
             SessionKeyManagerLib.decodeSignatureBatch(userOp.signature);
 
         // get ERC7579 Execution struct array from callData
-        Execution[] calldata execs =
-            ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
+        Execution[] calldata execs = ERC7579ValidatorLib.decodeCalldataBatch(userOp.callData);
 
         uint256 length = sessionKeySignatures.length;
         if (execs.length != length) {
@@ -198,11 +203,11 @@ contract SessionKeyManager is ERC7579ValidatorBase {
         returns (bytes4)
     { }
 
-    function name() external pure virtual override returns (string memory) {
+    function name() external pure virtual returns (string memory) {
         return "SessionKeyManager";
     }
 
-    function version() external pure virtual override returns (string memory) {
+    function version() external pure virtual returns (string memory) {
         return "0.0.1";
     }
 
@@ -213,4 +218,8 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     function onInstall(bytes calldata data) external override { }
 
     function onUninstall(bytes calldata data) external override { }
+
+    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
+
+    function isInitialized(address smartAccount) external view override returns (bool) { }
 }

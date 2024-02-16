@@ -9,8 +9,6 @@ import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 
-import "forge-std/console2.sol";
-
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
     using ModuleKitHelpers for AccountInstance;
