@@ -1,6 +1,6 @@
 {
-  "name": "@rhinestone/safe7579",
-  "description": "Safe ERC7579 implementation",
+  "name": "@rhinestone/sessionkeymanager",
+  "description": "ERC-4337 / ERC-7579 SessionKeyManager",
   "license": "MIT",
   "version": "0.1.0",
   "author": {
@@ -12,16 +12,7 @@
   },
   "devDependencies": {
     "@rhinestone/modulekit": "workspace:*",
-    "@safe-global/safe-contracts": "^1.4.1",
-    "@openzeppelin/contracts": "5.0.1",
-    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
-    "forge-std": "github:foundry-rs/forge-std",
-    "ds-test": "github:dapphub/ds-test",
-    "erc7579": "github:erc7579/erc7579-implementation",
-    "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
-    "solarray": "github:sablier-labs/solarray",
-    "solmate": "github:transmissions11/solmate",
     "solhint": "^4.1.1",
     "prettier": "^2.8.8"
   },

@@ -25,6 +25,7 @@
     "@openzeppelin/contracts": "5.0.1",
     "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
     "@rhinestone/safe7579": "workspace:*",
+    "@rhinestone/modulekit-examples": "workspace:*",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@safe-global/safe-contracts": "^1.4.1",

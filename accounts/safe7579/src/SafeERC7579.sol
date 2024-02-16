@@ -11,8 +11,8 @@ import "./HookManager.sol";
 import "./ExecutionHelper.sol";
 import "./ModuleManager.sol";
 import "./interfaces/ISafeOp.sol";
-import { UserOperationLib } from "account-abstraction/core/UserOperationLib.sol";
-import { _packValidationData } from "account-abstraction/core/Helpers.sol";
+import { UserOperationLib } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
+import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 
 contract SafeERC7579 is
     ISafeOp,
