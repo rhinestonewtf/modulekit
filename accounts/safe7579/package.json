@@ -1,5 +1,5 @@
 {
-  "name": "@rhinestone/safe-erc7579",
+  "name": "@rhinestone/safe7579",
   "description": "Safe ERC7579 implementation",
   "license": "MIT",
   "version": "0.1.0",
@@ -8,23 +8,22 @@
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
-    "url": "https://github.com/rhinestonewtf/safe-erc7579/issues"
+    "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "devDependencies": {
-    "@openzeppelin/contracts": "5.0.1",
-    "@rhinestone/modulekit": "github:rhinestonewtf/modulekit",
+    "@rhinestone/modulekit": "workspace:*",
     "@safe-global/safe-contracts": "^1.4.1",
-    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
-    "account-abstraction": "github:eth-infinitism/account-abstraction#develop",
-    "ds-test": "github:dapphub/ds-test",
+    "@openzeppelin/contracts": "5.0.1",
+    "account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "forge-std": "github:foundry-rs/forge-std",
+    "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
-    "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
+    "solmate": "github:transmissions11/solmate",
     "solhint": "^4.1.1",
-    "solmate": "github:transmissions11/solmate"
+    "prettier": "^2.8.8"
   },
   "files": [
     "artifacts",
@@ -33,7 +32,6 @@
     "CHANGELOG.md",
     "LICENSE-GPL.md"
   ],
-  "homepage": "https://github.com/rhinestonewtf/safe-erc7579/#readme",
   "keywords": [
     "blockchain",
     "ethereum",
@@ -47,6 +45,7 @@
   },
   "repository": "github.com/rhinestonewtf/modulekit-examples",
   "scripts": {
+    "fmt": "forge fmt",
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
     "build:smt": "FOUNDRY_PROFILE=smt forge build",

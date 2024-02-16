@@ -6,6 +6,13 @@ libs = ["lib"]
 fs_permissions = [{ access = "read", path = "out-optimized" }, { access = "read-write", path = "gas_calculations" }]
 allow_paths = ["*", "/"]
 
+[profile.accounts]
+src = "accounts"
+out = "out"
+libs = ["lib"]
+#via_ir = true
+fs_permissions = [{ access = "read", path = "out-optimized" }, { access = "read-write", path = "gas_calculations" }]
+allow_paths = ["*", "/"]
 
 [rpc_endpoints]
 mainnet = "https://rpc.ankr.com/eth"

@@ -5,9 +5,11 @@ pragma solidity ^0.8.23;
 /* solhint-disable no-global-import */
 import "../utils/Vm.sol";
 import { IEntryPoint } from "../../external/ERC4337.sol";
-import { SenderCreator } from "account-abstraction/core/EntryPoint.sol";
-import { EntryPointSimulations } from "account-abstraction/core/EntryPointSimulations.sol";
-import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPointSimulations.sol";
+import { SenderCreator } from "@ERC4337/account-abstraction/contracts/core/EntryPoint.sol";
+import { EntryPointSimulations } from
+    "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
+import { IEntryPointSimulations } from
+    "@ERC4337/account-abstraction/contracts/interfaces/IEntryPointSimulations.sol";
 
 contract EntryPointSimulationsPatch is EntryPointSimulations {
     address _entrypointAddr = address(this);

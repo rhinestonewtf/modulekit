@@ -1,15 +1,11 @@
 ds-test/=node_modules/ds-test/src/
 forge-std/=node_modules/forge-std/src/
-modulekit/=node_modules/@rhinestone/modulekit/src/
-modulekit/SessionKeyManager/=node_modules/@rhinestone/sessionkeymanager/src/
 account-abstraction/=node_modules/account-abstraction/contracts/
 erc7579/=node_modules/erc7579/src/
 sentinellist/=node_modules/sentinellist/src/
 solmate/=node_modules/solmate/src/
 solady/=node_modules/solady/
 solarray/=node_modules/solarray/src/
-@openzeppelin/=node_modules/@openzeppelin/
 @rhinestone/modulekit/=node_modules/@rhinestone/modulekit/src/
 @rhinestone/sessionkeymanager/=node_modules/@rhinestone/sessionkeymanager/src/
-umsa/=node_modules/micro-msa/src/
 @safe-global/=node_modules/@safe-global/

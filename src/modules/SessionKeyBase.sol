@@ -2,7 +2,8 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
-import { ISessionValidationModule } from "../core/SessionKey/ISessionValidationModule.sol";
+import { ISessionValidationModule } from
+    "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
 
 abstract contract SessionKeyBase is ISessionValidationModule, ERC7579ModuleBase {
     error InvalidMethod(bytes4);

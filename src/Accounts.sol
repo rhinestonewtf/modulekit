@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 /* solhint-disable no-unused-import */
 import { Execution, IERC7579Account } from "./external/ERC7579.sol";
 
-import { AccountFactory as SafeFactory } from "./accounts/safe/src/Account.sol";
+import { AccountFactory as SafeFactory } from "@rhinestone/safe7579/src/Account.sol";
 import "forge-std/Test.sol";
 
 contract MultiAccount is Test {

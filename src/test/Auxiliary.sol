@@ -5,8 +5,10 @@ import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
-import { EntryPointSimulations } from "account-abstraction/core/EntryPointSimulations.sol";
-import { IEntryPointSimulations } from "account-abstraction/interfaces/IEntryPointSimulations.sol";
+import { EntryPointSimulations } from
+    "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
+import { IEntryPointSimulations } from
+    "@ERC4337/account-abstraction/contracts/interfaces/IEntryPointSimulations.sol";
 import { ISessionKeyManager, etchSessionKeyManager } from "./predeploy/SessionKeyManager.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
 import { MockRegistry } from "../mocks/MockRegistry.sol";

@@ -10,19 +10,25 @@
   "bugs": {
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
+  "workspaces": [
+    "packages/**",
+    "examples/**",
+    "accounts/**"
+  ],
   "dependencies": {
-    "@openzeppelin/contracts": "5.0.1",
     "@prb/math": "^4.0.2",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation"
   },
   "devDependencies": {
-    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
-    "@safe-global/safe-contracts": "^1.4.1",
-    "account-abstraction": "github:kopy-kat/account-abstraction#develop",
-    "account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "ds-test": "github:dapphub/ds-test",
-    "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
+    "@openzeppelin/contracts": "5.0.1",
+    "@rhinestone/sessionkeymanager": "github:rhinestonewtf/sessionkeymanager",
+    "@rhinestone/safe7579": "workspace:*",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "@safe-global/safe-contracts": "^1.4.1",
+    "erc7579": "github:erc7579/erc7579-implementation",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
