@@ -28,8 +28,8 @@ importers:
         specifier: workspace:*
         version: link:accounts/safe7579
       '@rhinestone/sessionkeymanager':
-        specifier: github:rhinestonewtf/sessionkeymanager
-        version: github.com/rhinestonewtf/sessionkeymanager/100f86b662bc16fbd7df374cd665a35c10f3a7b6
+        specifier: workspace:*
+        version: link:packages/SessionKeyManager
       '@safe-global/safe-contracts':
         specifier: ^1.4.1
         version: 1.4.1(ethers@5.4.0)
@@ -101,13 +101,6 @@ importers:
         version: github.com/transmissions11/solmate/c892309933b25c03d32b1b0d674df7ae292ba925
 
   examples:
-    dependencies:
-      '@prb/math':
-        specifier: ^4.0.2
-        version: 4.0.2
-      erc4337-validation:
-        specifier: github:rhinestonewtf/erc4337-validation
-        version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
@@ -118,6 +111,9 @@ importers:
       '@openzeppelin/contracts':
         specifier: 5.0.1
         version: 5.0.1
+      '@prb/math':
+        specifier: ^4.0.2
+        version: 4.0.2
       '@rhinestone/modulekit':
         specifier: workspace:*
         version: link:..
@@ -127,6 +123,9 @@ importers:
       ds-test:
         specifier: github:dapphub/ds-test
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
+      erc4337-validation:
+        specifier: github:rhinestonewtf/erc4337-validation
+        version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
         version: github.com/erc7579/erc7579-implementation/be581c908df73f1554f466cb6b47c8ce8777e50f
@@ -1249,7 +1248,6 @@ packages:
 
   /@prb/math@4.0.2:
     resolution: {integrity: sha512-kJgqvXR6iyU7+N959RzggSFhBdnRuSDnc/bs8u6MzdWw7aYIUaAr+uMVdpP6Dheypjerd7sfJgFOs19FRFhscg==}
-    dev: false
 
   /@safe-global/safe-contracts@1.4.1(ethers@5.4.0):
     resolution: {integrity: sha512-fP1jewywSwsIniM04NsqPyVRFKPMAuirC3ftA/TA4X3Zc5EnwQp/UCJUU2PL/37/z/jMo8UUaJ+pnFNWmMU7dQ==}
@@ -4677,13 +4675,6 @@ packages:
     dependencies:
       '@openzeppelin/contracts': 5.0.1
       solady: github.com/vectorized/solady/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e
-    dev: false
-
-  github.com/rhinestonewtf/sessionkeymanager/100f86b662bc16fbd7df374cd665a35c10f3a7b6:
-    resolution: {tarball: https://codeload.github.com/rhinestonewtf/sessionkeymanager/tar.gz/100f86b662bc16fbd7df374cd665a35c10f3a7b6}
-    name: sessionkeyManager
-    version: 1.0.0
-    dev: true
 
   github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
     resolution: {tarball: https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684}

@@ -11,9 +11,6 @@ import "src/Mocks.sol";
 contract BaseTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for AccountInstance;
 
-    MultiAccount multiAccount;
-    AccountInstance[] internal diffAccounts;
-
     AccountInstance internal instance;
     AccountInstance internal instanceSafe;
 
@@ -23,12 +20,7 @@ contract BaseTest is RhinestoneModuleKit, Test {
         instance = makeAccountInstance("1");
         MockValidator defaultValidator = new MockValidator();
         MockExecutor defaultExecutor = new MockExecutor();
-        multiAccount = new MultiAccount(address(defaultValidator), address(defaultExecutor));
-        address safe = multiAccount.makeSafe();
-        instanceSafe = makeAccountInstance("2", safe, address(defaultValidator), "");
         vm.deal(instanceSafe.account, 1000 ether);
-        diffAccounts.push(instance);
-        diffAccounts.push(instanceSafe);
         vm.deal(instance.account, 2 ether);
 
         recipient = makeAddr("recipient");

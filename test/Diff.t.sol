@@ -36,31 +36,32 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Setup aux
         token = new MockERC20();
         token.initialize("Mock Token", "MTK", 18);
-        fund();
+        deal(address(token), instance.account, 100 ether);
+        vm.deal(instance.account, 1000 ether);
     }
 
-    function fund() internal {
-        for (uint256 i; i < diffAccounts.length; i++) {
-            instance = diffAccounts[i];
-            deal(address(token), instance.account, 100 ether);
-            vm.deal(instance.account, 1000 ether);
-        }
-    }
-
-    modifier diffTest() {
-        uint256 snapshot = vm.snapshot(); // saves the state
-        for (uint256 i; i < diffAccounts.length; i++) {
-            instance = diffAccounts[i];
-            _;
-            vm.revertTo(snapshot);
-        }
-    }
+    // function fund() internal {
+    //     for (uint256 i; i < diffAccounts.length; i++) {
+    //         instance = diffAccounts[i];
+    //         deal(address(token), instance.account, 100 ether);
+    //         vm.deal(instance.account, 1000 ether);
+    //     }
+    // }
+    //
+    // modifier () {
+    //     uint256 snapshot = vm.snapshot(); // saves the state
+    //     for (uint256 i; i < diffAccounts.length; i++) {
+    //         instance = diffAccounts[i];
+    //         _;
+    //         vm.revertTo(snapshot);
+    //     }
+    // }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 exec
     //////////////////////////////////////////////////////////////////////////*/
 
-    function testexec__Given__TwoInputs() public diffTest {
+    function testexec__Given__TwoInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -74,7 +75,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertEq(token.balanceOf(receiver), value, "Receiver should have 10 gwei in tokens");
     }
 
-    function testexec__Given__ThreeInputs() public diffTest {
+    function testexec__Given__ThreeInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -87,7 +88,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
 
-    function testexec__Given__FourInputs() public diffTest {
+    function testexec__Given__FourInputs() public {
         // Create userOperation fields
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
@@ -119,7 +120,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
                                 MODULES
     //////////////////////////////////////////////////////////////////////////*/
 
-    function testAddValidator() public diffTest {
+    function testAddValidator() public {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -143,7 +144,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(validator1Enabled);
     }
 
-    function testRemoveValidator() public diffTest {
+    function testRemoveValidator() public {
         address newValidator = address(new MockValidator());
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
@@ -199,14 +200,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // assertTrue(isValidProof);
     }
 
-    function testAddHook() public diffTest {
+    function testAddHook() public {
         instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
         bool hookEnabled = instance.isModuleInstalled(MODULE_TYPE_HOOK, address(hook));
         assertTrue(hookEnabled);
     }
 
-    function testAddExecutor() public diffTest {
+    function testAddExecutor() public {
         address newExecutor = address(new MockExecutor());
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
@@ -214,7 +215,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(executorEnabled);
     }
 
-    function testRemoveExecutor() public diffTest {
+    function testRemoveExecutor() public {
         address newExecutor = address(new MockExecutor());
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
