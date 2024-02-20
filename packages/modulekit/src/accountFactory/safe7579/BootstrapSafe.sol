@@ -6,7 +6,6 @@ import "@rhinestone/safe7579/src/core/HookManager.sol";
 
 import "../../external/ERC7579.sol";
 
-
 contract BootstrapSafe is ModuleManager, HookManager {
     function singleInitMSA(IERC7579Validator validator, bytes calldata data) external {
         // init validator

@@ -3,14 +3,30 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import { SafeERC7579 } from "src/SafeERC7579.sol";
+import { ModuleManager } from "src/core/ModuleManager.sol";
 import { MockValidator } from "./mocks/MockValidator.sol";
 import { MockExecutor } from "./mocks/MockExecutor.sol";
 import { MockTarget } from "./mocks/MockTarget.sol";
 
-import "@safe-global/safe-contracts/contracts/Safe.sol";
+import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { LibClone } from "solady/src/utils/LibClone.sol";
 
 import "./dependencies/EntryPoint.sol";
+
+contract Bootstrap is ModuleManager {
+    function singleInitMSA(
+        address validator,
+        bytes calldata validatorData,
+        address executor,
+        bytes calldata executorData
+    )
+        external
+    {
+        // init validator
+        _installValidator(address(validator), validatorData);
+        _installExecutor(executor, executorData);
+    }
+}
 
 contract TestBaseUtil is Test {
     // singletons
@@ -21,6 +37,7 @@ contract TestBaseUtil is Test {
 
     MockValidator internal defaultValidator;
     MockExecutor internal defaultExecutor;
+    Bootstrap internal bootstrap;
 
     MockTarget internal target;
 
@@ -32,6 +49,7 @@ contract TestBaseUtil is Test {
         etchEntrypoint();
 
         // Set up MSA and Factory
+        bootstrap = new Bootstrap();
         erc7579Mod = new SafeERC7579();
         safeImpl = new Safe();
 
@@ -70,7 +88,14 @@ contract TestBaseUtil is Test {
 
         vm.startPrank(address(clone));
         clone.enableModule(address(erc7579Mod));
-        erc7579Mod.initializeAccount(abi.encode(validators, executors));
+        erc7579Mod.initializeAccount(
+            abi.encode(
+                address(bootstrap),
+                abi.encodeCall(
+                    Bootstrap.singleInitMSA, (_defaultValidator, "", address(defaultExecutor), "")
+                )
+            )
+        );
         vm.stopPrank();
     }
 

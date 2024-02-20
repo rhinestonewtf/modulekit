@@ -39,6 +39,7 @@ contract ValidatorStorageHelper {
 
     // Ensures that the functions are only interacted with via delegatecall
     modifier onlyDelegateCall() {
+        // TODO:
         // if (msg.sender != address(this)) revert Unauthorized();
         _;
     }
