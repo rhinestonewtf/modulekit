@@ -29,9 +29,24 @@ abstract contract HookManager is ModuleManager {
         if (hook == address(0)) {
             _;
         } else {
-            bytes memory hookData = IHook(hook).preCheck(_msgSender(), msg.data);
+            bytes memory retData = _executeReturnData({
+                safe: msg.sender,
+                target: hook,
+                value: 0,
+                callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.data))
+            });
+            bytes memory hookPreContext = abi.decode(retData, (bytes));
+
             _;
-            if (!IHook(hook).postCheck(hookData)) revert HookPostCheckFailed();
+            retData = _executeReturnData({
+                safe: msg.sender,
+                target: hook,
+                value: 0,
+                callData: abi.encodeCall(IHook.postCheck, (hookPreContext))
+            });
+            bool success = abi.decode(retData, (bool));
+
+            if (!success) revert HookPostCheckFailed();
         }
     }
 

@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
 import { IExecutor, IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
+import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
@@ -27,7 +28,7 @@ bytes32 constant MODULEMANAGER_STORAGE_LOCATION =
  * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-abstract contract ModuleManager is AccessControl, Receiver {
+abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     using SentinelListLib for SentinelListLib.SentinelList;
     using ValidatorStorageLib for SentinelListLib.SentinelList;
 

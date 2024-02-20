@@ -16,7 +16,6 @@ import {
 } from "erc7579/interfaces/IERC7579Module.sol";
 import { AccessControl } from "./core/AccessControl.sol";
 import { HookManager } from "./core/HookManager.sol";
-import { ExecutionHelper } from "./core/ExecutionHelper.sol";
 import { ISafeOp, SAFE_OP_TYPEHASH } from "./interfaces/ISafeOp.sol";
 import { ISafe } from "./interfaces/ISafe.sol";
 import {
@@ -33,14 +32,7 @@ import "forge-std/console2.sol";
  * this contract creates full ERC7579 compliance to Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-contract SafeERC7579 is
-    ISafeOp,
-    IERC7579Account,
-    AccessControl,
-    ExecutionHelper,
-    IMSA,
-    HookManager
-{
+contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManager {
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
