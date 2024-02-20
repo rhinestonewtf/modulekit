@@ -8,51 +8,18 @@ importers:
 
   .:
     devDependencies:
-      '@ERC4337/account-abstraction':
-        specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
-      '@ERC4337/account-abstraction-v0.6':
-        specifier: github:eth-infinitism/account-abstraction#v0.6.0
-        version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
-      '@openzeppelin/contracts':
-        specifier: 5.0.1
-        version: 5.0.1
-      '@prb/math':
-        specifier: ^4.0.2
-        version: 4.0.2
+      '@rhinestone/modulekit':
+        specifier: workspace:*
+        version: link:packages/modulekit
       '@rhinestone/safe7579':
         specifier: workspace:*
         version: link:accounts/safe7579
       '@rhinestone/sessionkeymanager':
         specifier: workspace:*
         version: link:packages/SessionKeyManager
-      '@safe-global/safe-contracts':
-        specifier: ^1.4.1
-        version: 1.4.1(ethers@5.4.0)
-      ds-test:
-        specifier: github:dapphub/ds-test
-        version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      erc4337-validation:
-        specifier: github:rhinestonewtf/erc4337-validation
-        version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
-      erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/be581c908df73f1554f466cb6b47c8ce8777e50f
-      forge-std:
-        specifier: github:foundry-rs/forge-std
-        version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
       prettier:
         specifier: ^2.8.8
         version: 2.8.8
-      sentinellist:
-        specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
-      solady:
-        specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e
-      solarray:
-        specifier: github:sablier-labs/solarray
-        version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
       solhint:
         specifier: ^4.1.1
         version: 4.1.1(typescript@5.3.3)
@@ -73,7 +40,7 @@ importers:
         version: 4.0.2
       '@rhinestone/modulekit':
         specifier: workspace:*
-        version: link:../..
+        version: link:../../packages/modulekit
       '@rhinestone/sessionkeymanager':
         specifier: workspace:*
         version: link:../../packages/SessionKeyManager
@@ -127,7 +94,7 @@ importers:
         version: 4.0.2
       '@rhinestone/modulekit':
         specifier: workspace:*
-        version: link:..
+        version: link:../packages/modulekit
       '@rhinestone/sessionkeymanager':
         specifier: workspace:*
         version: link:../packages/SessionKeyManager
@@ -162,48 +129,6 @@ importers:
         specifier: github:transmissions11/solmate
         version: github.com/transmissions11/solmate/c892309933b25c03d32b1b0d674df7ae292ba925
 
-  packages/AccountFactory:
-    devDependencies:
-      '@ERC4337/account-abstraction':
-        specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
-      '@ERC4337/account-abstraction-v0.6':
-        specifier: github:eth-infinitism/account-abstraction#v0.6.0
-        version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
-      '@openzeppelin/contracts':
-        specifier: 5.0.1
-        version: 5.0.1
-      '@rhinestone/modulekit':
-        specifier: workspace:*
-        version: link:../..
-      '@rhinestone/safe7579':
-        specifier: workspace:*
-        version: link:../../accounts/safe7579
-      '@safe-global/safe-contracts':
-        specifier: ^1.4.1
-        version: 1.4.1(ethers@5.4.0)
-      ds-test:
-        specifier: github:dapphub/ds-test
-        version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf
-      forge-std:
-        specifier: github:foundry-rs/forge-std
-        version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
-      prettier:
-        specifier: ^2.8.8
-        version: 2.8.8
-      sentinellist:
-        specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
-      solady:
-        specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
-      solhint:
-        specifier: ^4.1.1
-        version: 4.1.1(typescript@5.3.3)
-
   packages/SessionKeyManager:
     devDependencies:
       '@ERC4337/account-abstraction':
@@ -214,7 +139,7 @@ importers:
         version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.7.2)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
       '@rhinestone/modulekit':
         specifier: workspace:*
-        version: link:../..
+        version: link:../modulekit
       ds-test:
         specifier: github:dapphub/ds-test
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
@@ -233,6 +158,57 @@ importers:
       solady:
         specifier: github:vectorized/solady
         version: github.com/vectorized/solady/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e
+      solhint:
+        specifier: ^4.1.1
+        version: 4.1.1(typescript@5.3.3)
+
+  packages/modulekit:
+    devDependencies:
+      '@ERC4337/account-abstraction':
+        specifier: github:kopy-kat/account-abstraction#develop
+        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@ERC4337/account-abstraction-v0.6':
+        specifier: github:eth-infinitism/account-abstraction#v0.6.0
+        version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@openzeppelin/contracts':
+        specifier: 5.0.1
+        version: 5.0.1
+      '@prb/math':
+        specifier: ^4.0.2
+        version: 4.0.2
+      '@rhinestone/safe7579':
+        specifier: workspace:*
+        version: link:../../accounts/safe7579
+      '@rhinestone/sessionkeymanager':
+        specifier: workspace:*
+        version: link:../SessionKeyManager
+      '@safe-global/safe-contracts':
+        specifier: ^1.4.1
+        version: 1.4.1(ethers@5.4.0)
+      ds-test:
+        specifier: github:dapphub/ds-test
+        version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
+      erc4337-validation:
+        specifier: github:rhinestonewtf/erc4337-validation
+        version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
+      erc7579:
+        specifier: github:erc7579/erc7579-implementation
+        version: github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf
+      forge-std:
+        specifier: github:foundry-rs/forge-std
+        version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
+      prettier:
+        specifier: ^2.8.8
+        version: 2.8.8
+      sentinellist:
+        specifier: github:zeroknots/sentinellist
+        version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
+      solady:
+        specifier: github:vectorized/solady
+        version: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
+      solarray:
+        specifier: github:sablier-labs/solarray
+        version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
       solhint:
         specifier: ^4.1.1
         version: 4.1.1(typescript@5.3.3)
