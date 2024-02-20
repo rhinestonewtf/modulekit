@@ -2,18 +2,13 @@
 pragma solidity ^0.8.23;
 
 import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
-import { AccountBase } from "erc7579/core/AccountBase.sol";
-import "erc7579/interfaces/IERC7579Module.sol";
+import { IExecutor, IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
-import "./AccessControl.sol";
-import "./interfaces/ISafe.sol";
-
-import "forge-std/console2.sol";
-
-struct ValidatorManagerStorage {
-    // linked list of validators. List is initialized by initializeAccount()
-    SentinelListLib.SentinelList _validators;
-}
+import { AccessControl } from "./AccessControl.sol";
+import { ISafe } from "../interfaces/ISafe.sol";
+import {
+    ValidatorStorageHelper, ValidatorStorageLib, $validator
+} from "./ValidatorStorageHelper.sol";
 
 struct ModuleManagerStorage {
     // linked list of executors. List is initialized by initializeAccount()
@@ -21,68 +16,33 @@ struct ModuleManagerStorage {
     // single fallback handler for all fallbacks
     // account vendors may implement this differently. This is just a reference implementation
     address fallbackHandler;
-    // single hook
-    address hook;
 }
 
 // keccak256("modulemanager.storage.msa");
 bytes32 constant MODULEMANAGER_STORAGE_LOCATION =
     0xf88ce1fdb7fb1cbd3282e49729100fa3f2d6ee9f797961fe4fb1871cea89ea02;
 
-function _getValidatorStorage() pure returns (ValidatorManagerStorage storage ims) {
-    bytes32 position = MODULEMANAGER_STORAGE_LOCATION;
-    assembly {
-        ims.slot := position
-    }
-}
-
-contract ModuleStorage {
-    using SentinelListLib for SentinelListLib.SentinelList;
-
-    function initModuleManager() external virtual {
-        ValidatorManagerStorage storage ims = _getValidatorStorage();
-        ims._validators.init();
-    }
-    /////////////////////////////////////////////////////
-    //  Manage Validators
-    ////////////////////////////////////////////////////
-
-    function installValidator(address validator, bytes calldata data) external virtual {
-        SentinelListLib.SentinelList storage _validators = _getValidatorStorage()._validators;
-        _validators.push(validator);
-        IValidator(validator).onInstall(data);
-    }
-
-    function uninstallValidator(address validator, bytes calldata data) external {
-        // TODO: check if its the last validator. this might brick the account
-        SentinelListLib.SentinelList storage _validators = _getValidatorStorage()._validators;
-        (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
-        _validators.pop(prev, validator);
-        IValidator(validator).onUninstall(disableModuleData);
-    }
-
-    function isValidatorInstalled(address validator) external view virtual returns (bool) {
-        SentinelListLib.SentinelList storage _validators = _getValidatorStorage()._validators;
-        return _validators.contains(validator);
-    }
-}
-
 /**
  * @title ModuleManager
+ * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
 abstract contract ModuleManager is AccessControl, Receiver {
     using SentinelListLib for SentinelListLib.SentinelList;
+    using ValidatorStorageLib for SentinelListLib.SentinelList;
 
     error InvalidModule(address module);
+    error LinkedListError();
     error CannotRemoveLastValidator();
+    error InitializerError();
+    error ValidatorStorageHelperError();
 
-    ModuleStorage immutable STORAGE_MANAGER;
+    ValidatorStorageHelper internal immutable VALIDATOR_STORAGE;
 
-    mapping(address smartAccount => ModuleManagerStorage) private _moduleManagerStorage;
+    mapping(address smartAccount => ModuleManagerStorage) private $moduleManager;
 
     constructor() {
-        STORAGE_MANAGER = new ModuleStorage();
+        VALIDATOR_STORAGE = new ValidatorStorageHelper();
     }
 
     function _getModuleManagerStorage(address account)
@@ -90,7 +50,7 @@ abstract contract ModuleManager is AccessControl, Receiver {
         view
         returns (ModuleManagerStorage storage ims)
     {
-        return _moduleManagerStorage[account];
+        return $moduleManager[account];
     }
 
     modifier onlyExecutorModule() {
@@ -98,67 +58,71 @@ abstract contract ModuleManager is AccessControl, Receiver {
         _;
     }
 
+    /**
+     * Initializes linked list that handles installed Validator and Executor
+     * For Validators:
+     *      The Safe Account will call VALIDATOR_STORAGE via DELEGTATECALL.
+     *      Due to the storage restrictions of ERC-4337 of the validation phase,
+     *      Validators are stored within the Safe's account storage.
+     */
     function _initModuleManager() internal {
         bool success = ISafe(msg.sender).execTransactionFromModule({
-            to: address(STORAGE_MANAGER),
+            to: address(VALIDATOR_STORAGE),
             value: 0,
-            data: abi.encodeCall(ModuleStorage.initModuleManager, ()),
-            operation: 1
-        });
-        require(success, "ModuleManager: failed to initialize module manager");
+            data: abi.encodeCall(ValidatorStorageHelper.initModuleManager, ()),
+            operation: 1 // <--- DELEGATECALL
+         });
+        // this will be false if the list is already initialized
+        if (!success) revert InitializerError();
 
         ModuleManagerStorage storage ims = _getModuleManagerStorage(msg.sender);
+        // this will revert if list is already initialized
         ims._executors.init();
     }
 
     /////////////////////////////////////////////////////
     //  Manage Validators
     ////////////////////////////////////////////////////
-    function _installValidator(address validator, bytes calldata data) internal virtual {
+    /**
+     * Write into validator linked list via ValidatorStorageHelper DELEGATECALL
+     */
+    function _installValidator(address validator, bytes memory data) internal virtual {
         bool success = ISafe(msg.sender).execTransactionFromModule({
-            to: address(STORAGE_MANAGER),
+            to: address(VALIDATOR_STORAGE),
             value: 0,
-            data: abi.encodeCall(ModuleStorage.installValidator, (validator, data)),
-            operation: 1
-        });
-        require(success, "ModuleManager: failed to install validator");
+            data: abi.encodeCall(ValidatorStorageHelper.installValidator, (validator, data)),
+            operation: 1 // <-- DELEGATECALL
+         });
+        if (!success) revert ValidatorStorageHelperError();
     }
 
-    function _uninstallValidator(address validator, bytes calldata data) internal {
+    function _uninstallValidator(address validator, bytes memory data) internal {
         bool success = ISafe(msg.sender).execTransactionFromModule({
-            to: address(STORAGE_MANAGER),
+            to: address(VALIDATOR_STORAGE),
             value: 0,
-            data: abi.encodeCall(ModuleStorage.uninstallValidator, (validator, data)),
+            data: abi.encodeCall(ValidatorStorageHelper.uninstallValidator, (validator, data)),
             operation: 1
         });
-        require(success, "ModuleManager: failed to uninstall validator");
+        if (!success) revert ValidatorStorageHelperError();
     }
 
-    function getKeyEncodedWithMappingIndex(
-        SentinelListLib.SentinelList storage linkedList,
-        address key
-    )
-        private
-        pure
-        returns (bytes32 hash)
+    /**
+     * Helper function that will calculate storage slot for
+     * validator address within the linked list in ValidatorStorageHelper
+     * and use Safe's getStorageAt() to read 32bytes from Safe's storage
+     */
+    function _isValidatorInstalled(address validator)
+        internal
+        view
+        virtual
+        returns (bool isInstalled)
     {
-        bytes32 slot;
-        assembly {
-            slot := linkedList.slot
-            mstore(0, key)
-            mstore(0x20, slot)
-            hash := keccak256(0, 0x40)
-        }
-    }
-
-    function _isValidatorInstalled(address validator) internal view virtual returns (bool) {
         // calculate slot for linked list
-        SentinelListLib.SentinelList storage _validators = _getValidatorStorage()._validators;
-        bytes32 slot = getKeyEncodedWithMappingIndex(_validators, validator);
-        bytes32 value = bytes32(ISafe(msg.sender).getStorageAt(uint256(slot), 1));
-        address link = address(uint160(uint256(value)));
-        bool ok = SENTINEL != validator && link != address(0);
-        return ok;
+        SentinelListLib.SentinelList storage $validators = $validator()._validators;
+        // predict slot for validator in ValidatorStorageHelper linked list
+        address link = $validators.getNextEntry(validator);
+        // See https://github.com/zeroknots/sentinellist/blob/main/src/SentinelList.sol#L52
+        isInstalled = SENTINEL != validator && link != address(0);
     }
 
     /**
@@ -174,45 +138,27 @@ abstract contract ModuleManager is AccessControl, Receiver {
         virtual
         returns (address[] memory array, address next)
     {
-        if (start != SENTINEL && _isExecutorInstalled(start)) revert();
-        if (pageSize == 0) revert();
+        if (start != SENTINEL && _isExecutorInstalled(start)) revert LinkedListError();
+        if (pageSize == 0) revert LinkedListError();
 
         array = new address[](pageSize);
 
         // Populate return array
-        uint256 entryCount = 0;
-        SentinelListLib.SentinelList storage _validators = _getValidatorStorage()._validators;
-        bytes32 slot = getKeyEncodedWithMappingIndex(_validators, start);
-        bytes32 value = bytes32(ISafe(msg.sender).getStorageAt(uint256(slot), 1));
-        address next = address(uint160(uint256(value)));
+        uint256 entryCount;
+        SentinelListLib.SentinelList storage $validators = $validator()._validators;
+        next = $validators.getNextEntry(start);
         while (next != address(0) && next != SENTINEL && entryCount < pageSize) {
             array[entryCount] = next;
-            bytes32 slot = getKeyEncodedWithMappingIndex(_validators, next);
-            bytes32 value = bytes32(ISafe(msg.sender).getStorageAt(uint256(slot), 1));
-            address next = address(uint160(uint256(value)));
+            next = $validators.getNextEntry(next);
             entryCount++;
         }
 
-        /**
-         * Because of the argument validation, we can assume that the loop will always iterate over
-         * the valid entry list values
-         *       and the `next` variable will either be an enabled entry or a sentinel address
-         * (signalling the end).
-         *
-         *       If we haven't reached the end inside the loop, we need to set the next pointer to
-         * the last element of the entry array
-         *       because the `next` variable (which is a entry by itself) acting as a pointer to the
-         * start of the next page is neither
-         *       incSENTINELrent page, nor will it be included in the next one if you pass it as a
-         * start.
-         */
         if (next != SENTINEL) {
             next = array[entryCount - 1];
         }
         // Set correct size of returned array
         // solhint-disable-next-line no-inline-assembly
-        /// @solidity memory-safe-assembly
-        assembly {
+        assembly ("memory-safe") {
             mstore(array, entryCount)
         }
     }
@@ -221,7 +167,7 @@ abstract contract ModuleManager is AccessControl, Receiver {
     //  Manage Executors
     ////////////////////////////////////////////////////
 
-    function _installExecutor(address executor, bytes calldata data) internal {
+    function _installExecutor(address executor, bytes memory data) internal {
         SentinelListLib.SentinelList storage _executors =
             _getModuleManagerStorage(msg.sender)._executors;
         _executors.push(executor);
@@ -295,6 +241,7 @@ abstract contract ModuleManager is AccessControl, Receiver {
         if (handler == address(0)) revert();
         /* solhint-disable no-inline-assembly */
         /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             // When compiled with the optimizer, the compiler relies on a certain assumptions on how
             // the

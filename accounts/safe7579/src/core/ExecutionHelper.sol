@@ -2,8 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
-import "./interfaces/ISafe.sol";
-import "forge-std/console2.sol";
+import "../interfaces/ISafe.sol";
 
 contract ExecutionHelper {
     function _execute(

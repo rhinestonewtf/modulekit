@@ -1,19 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "erc7579/interfaces/IERC7579Account.sol";
-import "erc7579/interfaces/IMSA.sol";
-import "erc7579/lib/ModeLib.sol";
-import "erc7579/lib/ExecutionLib.sol";
-import "erc7579/interfaces/IERC7579Module.sol";
-import "./AccessControl.sol";
-import "./HookManager.sol";
-import "./ExecutionHelper.sol";
-import "./ModuleManager.sol";
-import "./interfaces/ISafeOp.sol";
-import { UserOperationLib } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
+import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { IMSA } from "erc7579/interfaces/IMSA.sol";
+import {
+    CallType, ModeCode, ModeLib, CALLTYPE_SINGLE, CALLTYPE_BATCH
+} from "erc7579/lib/ModeLib.sol";
+import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import {
+    IValidator,
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK
+} from "erc7579/interfaces/IERC7579Module.sol";
+import { AccessControl } from "./core/AccessControl.sol";
+import { HookManager } from "./core/HookManager.sol";
+import { ExecutionHelper } from "./core/ExecutionHelper.sol";
+import { ISafeOp, SAFE_OP_TYPEHASH } from "./interfaces/ISafeOp.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
+import {
+    PackedUserOperation,
+    UserOperationLib
+} from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 
+/**
+ * @title ERC7579 Adapter for Safe accounts.
+ * By using Safe's Fallback and Execution modules,
+ * this contract creates full ERC7579 compliance to Safe accounts
+ * @author zeroknots.eth | rhinestone.wtf
+ */
 contract SafeERC7579 is
     ISafeOp,
     IERC7579Account,
@@ -26,9 +43,14 @@ contract SafeERC7579 is
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
 
+    error Unsupported();
+
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function execute(
         ModeCode mode,
         bytes calldata executionCalldata
@@ -53,6 +75,9 @@ contract SafeERC7579 is
         }
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function executeFromExecutor(
         ModeCode mode,
         bytes calldata executionCalldata
@@ -79,13 +104,21 @@ contract SafeERC7579 is
         }
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function executeUserOp(PackedUserOperation calldata userOp)
         external
         payable
         override
         onlyEntryPointOrSelf
-    { }
+    {
+        revert Unsupported();
+    }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
@@ -142,8 +175,14 @@ contract SafeERC7579 is
         }
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function isValidSignature(bytes32 hash, bytes calldata data) external view returns (bytes4) { }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function installModule(
         uint256 moduleType,
         address module,
@@ -162,6 +201,9 @@ contract SafeERC7579 is
         emit ModuleInstalled(moduleType, module);
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function uninstallModule(
         uint256 moduleType,
         address module,
@@ -180,6 +222,9 @@ contract SafeERC7579 is
         emit ModuleUninstalled(moduleType, module);
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function supportsAccountMode(ModeCode encodedMode) external pure override returns (bool) {
         CallType callType = encodedMode.getCallType();
         if (callType == CALLTYPE_BATCH) return true;
@@ -187,6 +232,9 @@ contract SafeERC7579 is
         else return false;
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function supportsModule(uint256 moduleTypeId) external pure override returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
@@ -194,6 +242,9 @@ contract SafeERC7579 is
         else return false;
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function isModuleInstalled(
         uint256 moduleType,
         address module,
@@ -211,8 +262,11 @@ contract SafeERC7579 is
         else return false;
     }
 
+    /**
+     * @inheritdoc IERC7579Account
+     */
     function accountId() external pure override returns (string memory accountImplementationId) {
-        return "safe-erc7579.v0.0.1";
+        return "safe-erc7579.v0.0.0";
     }
 
     /**
@@ -293,20 +347,18 @@ contract SafeERC7579 is
         }
     }
 
+    /**
+     * Domain Separator for EIP-712.
+     */
     function domainSeparator() public view returns (bytes32) {
         return keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, block.chainid, this));
     }
 
     function initializeAccount(bytes calldata data) external payable {
         _initModuleManager();
-        (address[] memory validators, address[] memory executors) =
-            abi.decode(data, (address[], address[]));
-        for (uint256 i = 0; i < validators.length; i++) {
-            _installValidator(validators[i], data);
-        }
 
-        for (uint256 i = 0; i < executors.length; i++) {
-            _installExecutor(executors[i], data);
-        }
+        (address bootstrap, bytes memory bootstrapCall) = abi.decode(data, (address, bytes));
+        (bool success,) = bootstrap.delegatecall(bootstrapCall);
+        if (!success) revert AccountInitializationFailed();
     }
 }

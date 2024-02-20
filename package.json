@@ -12,18 +12,18 @@
   },
   "workspaces": [
     "packages/**",
-    "examples/",
-    "accounts/**"
+    "accounts/**",
+    "examples/"
   ],
   "dependencies": {},
   "devDependencies": {
+    "@rhinestone/sessionkeymanager": "workspace:*",
+    "@rhinestone/safe7579": "workspace:*",
     "ds-test": "github:dapphub/ds-test",
     "forge-std": "github:foundry-rs/forge-std",
     "@openzeppelin/contracts": "5.0.1",
     "@prb/math": "^4.0.2",
-    "@rhinestone/sessionkeymanager": "workspace:*",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
-    "@rhinestone/safe7579": "workspace:*",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@safe-global/safe-contracts": "^1.4.1",

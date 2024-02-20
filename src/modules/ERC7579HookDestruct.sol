@@ -13,12 +13,37 @@ import {
     CALLTYPE_DELEGATECALL
 } from "erc7579/lib/ModeLib.sol";
 
+import "forge-std/console2.sol";
+
 abstract contract ERC7579HookDestruct is ERC7579HookBase {
     error HookInvalidSelector();
 
     /*//////////////////////////////////////////////////////////////////////////
                                 CALLDATA DECODING
     //////////////////////////////////////////////////////////////////////////*/
+
+    // import "../interfaces/IERC7579Account.sol";
+    //
+    // library HookOffsetLib {
+    //     function offset() internal pure returns (uint256 offset) {
+    //         bytes4 functionSig = bytes4(msg.data[:4]);
+    //         if (
+    //             functionSig == IERC7579Account.execute.selector
+    //                 || functionSig == IERC7579Account.executeFromExecutor.selector
+    //         ) {
+    //             return 100 + uint256(bytes32(msg.data[68:100]));
+    //         }
+    //
+    //         if (
+    //             functionSig == IERC7579Account.installModule.selector
+    //                 || functionSig == IERC7579Account.uninstallModule.selector
+    //         ) {
+    //             return 132 + uint256(bytes32(msg.data[100:132]));
+    //         } else {
+    //             return msg.data.length;
+    //         }
+    //     }
+    // }
 
     function preCheck(
         address msgSender,
@@ -33,9 +58,10 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         if (selector == IERC7579Account.execute.selector) {
             ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
             CallType calltype = ModeLib.getCallType(mode);
+            uint256 offset = 100 + uint256(bytes32(msgData[68:100]));
             if (calltype == CALLTYPE_SINGLE) {
                 (address to, uint256 value, bytes calldata callData) =
-                    ExecutionLib.decodeSingle(msgData[36:]);
+                    ExecutionLib.decodeSingle(msgData[36:offset]);
                 return onExecute(msgSender, to, value, callData);
             } else if (calltype == CALLTYPE_BATCH) {
                 Execution[] calldata execs = ExecutionLib.decodeBatch(msgData[36:]);
@@ -44,27 +70,34 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                 revert HookInvalidSelector();
             }
         } else if (selector == IERC7579Account.executeFromExecutor.selector) {
+            console2.logBytes(msgData);
+
+            uint256 offset = 100 + uint256(bytes32(msgData[68:100]));
+            console2.log("offset: ", offset);
+            console2.logBytes(msgData[:offset]);
             ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
             CallType calltype = ModeLib.getCallType(mode);
             if (calltype == CALLTYPE_SINGLE) {
                 (address to, uint256 value, bytes calldata callData) =
-                    ExecutionLib.decodeSingle(msgData[36:]);
+                    ExecutionLib.decodeSingle(msgData[36:offset]);
                 return onExecuteFromExecutor(msgSender, to, value, callData);
             } else if (calltype == CALLTYPE_BATCH) {
-                Execution[] calldata execs = ExecutionLib.decodeBatch(msgData[36:]);
+                Execution[] calldata execs = ExecutionLib.decodeBatch(msgData[36:offset]);
                 return onExecuteBatchFromExecutor(msgSender, execs);
             } else {
                 revert HookInvalidSelector();
             }
         } else if (selector == IERC7579Account.installModule.selector) {
+            uint256 offset = 132 + uint256(bytes32(msgData[100:132]));
             uint256 moduleType = uint256(bytes32(msgData[4:24]));
             address module = address(bytes20(msgData[24:36]));
-            bytes calldata initData = msgData[36:];
+            bytes calldata initData = msgData[36:offset];
             onInstallModule(msgSender, moduleType, module, initData);
         } else if (selector == IERC7579Account.uninstallModule.selector) {
+            uint256 offset = 132 + uint256(bytes32(msgData[100:132]));
             uint256 moduleType = uint256(bytes32(msgData[4:24]));
             address module = address(bytes20(msgData[24:36]));
-            bytes calldata initData = msgData[36:];
+            bytes calldata initData = msgData[36:offset];
             onUninstallModule(msgSender, moduleType, module, initData);
         } else {
             revert HookInvalidSelector();

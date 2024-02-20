@@ -9,3 +9,9 @@ import { ERC7579HookBase } from "./modules/ERC7579HookBase.sol";
 import { ERC7579HookDestruct } from "./modules/ERC7579HookDestruct.sol";
 import { ERC7579FallbackBase } from "./modules/ERC7579FallbackBase.sol";
 import { ExtensibleFallbackHandler } from "./core/ExtensibleFallbackHandler.sol";
+import {
+    IERC7579Validator,
+    IERC7579Executor,
+    IERC7579Fallback,
+    IERC7579Hook
+} from "./external/ERC7579.sol";
