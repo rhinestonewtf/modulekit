@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
+import { MultiAccountFactory } from "../accountFactory/MultiAccountFactory.sol";
 import { PackedUserOperation, IEntryPoint, IStakeManager } from "../external/ERC4337.sol";
 import { ERC7579Helpers, BootstrapUtil } from "./utils/ERC7579Helpers.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
@@ -22,6 +23,8 @@ import "./utils/Vm.sol";
 import "./utils/ModuleKitCache.sol";
 import "./utils/Log.sol";
 
+import "forge-std/console2.sol";
+
 struct AccountInstance {
     address account;
     Auxiliary aux;
@@ -37,8 +40,10 @@ struct UserOpData {
 }
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
-    ERC7579AccountFactory public accountFactory;
-    IERC7579Account public accountImplementationSingleton;
+    // ERC7579AccountFactory public accountFactory;
+    // IERC7579Account public accountImplementationSingleton;
+
+    MultiAccountFactory public accountFactory;
 
     bool internal isInit;
 
@@ -60,11 +65,13 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         isInit = true;
 
-        // Deploy default contracts
-        accountImplementationSingleton = new ERC7579Account();
-        label(address(accountImplementationSingleton), "ERC7579AccountImpl");
-        accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
-        label(address(accountFactory), "ERC7579AccountFactory");
+        // // Deploy default contracts
+        // accountImplementationSingleton = new ERC7579Account();
+        // label(address(accountImplementationSingleton), "ERC7579AccountImpl");
+        // accountFactory = new ERC7579AccountFactory(address(accountImplementationSingleton));
+        // label(address(accountFactory), "ERC7579AccountFactory");
+
+        accountFactory = new MultiAccountFactory();
         defaultValidator = new MockValidator();
         label(address(defaultValidator), "DefaultValidator");
 
@@ -140,9 +147,12 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             validators = _validators;
         }
 
+        // bytes memory bootstrapCalldata =
+        //     auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
         bytes memory bootstrapCalldata =
-            auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
+            accountFactory.getBootstrapCallData(validators, executors, hook, fallBack);
         address account = accountFactory.getAddress(salt, bootstrapCalldata);
+        console2.log("Account address: ", account);
 
         // using MSAFactory from ERC7579 repo.
         bytes memory createAccountOnFactory =

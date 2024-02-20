@@ -5,11 +5,13 @@ interface IMSA {
     function initializeAccount(bytes calldata initCode) external;
 }
 
-contract RefImplFactory {
+abstract contract RefImplFactory {
     ERC7579Account internal implementation;
+    ERC7579Bootstrap internal bootstrapDefault;
 
     constructor() {
         implementation = new ERC7579Account();
+        bootstrapDefault = new ERC7579Bootstrap();
     }
 
     function _createUMSA(bytes32 salt, bytes memory initCode) public returns (address account) {
@@ -20,7 +22,7 @@ contract RefImplFactory {
         return account;
     }
 
-    function getAddress(
+    function getAddressUMSA(
         bytes32 salt,
         bytes memory initCode
     )
@@ -42,8 +44,5 @@ contract RefImplFactory {
         public
         pure
         virtual
-        returns (bytes32 salt)
-    {
-        salt = keccak256(abi.encodePacked(_salt, initCode));
-    }
+        returns (bytes32 salt);
 }

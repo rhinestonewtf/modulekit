@@ -25,6 +25,8 @@ import {
 } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * By using Safe's Fallback and Execution modules,
@@ -358,6 +360,8 @@ contract SafeERC7579 is
         _initModuleManager();
 
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(data, (address, bytes));
+        console2.log("bootstrap: ", bootstrap);
+
         (bool success,) = bootstrap.delegatecall(bootstrapCall);
         if (!success) revert AccountInitializationFailed();
     }

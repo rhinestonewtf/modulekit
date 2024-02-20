@@ -6,12 +6,8 @@ import "@rhinestone/safe7579/src/core/HookManager.sol";
 
 import "../../external/ERC7579.sol";
 
-struct BootstrapConfig {
-    address module;
-    bytes data;
-}
 
-contract Bootstrap is ModuleManager, HookManager {
+contract BootstrapSafe is ModuleManager, HookManager {
     function singleInitMSA(IERC7579Validator validator, bytes calldata data) external {
         // init validator
         _installValidator(address(validator), data);
@@ -23,10 +19,10 @@ contract Bootstrap is ModuleManager, HookManager {
      * calling this function
      */
     function initMSA(
-        BootstrapConfig[] calldata _validators,
-        BootstrapConfig[] calldata _executors,
-        BootstrapConfig calldata _hook,
-        BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _validators,
+        ERC7579BootstrapConfig[] calldata _executors,
+        ERC7579BootstrapConfig calldata _hook,
+        ERC7579BootstrapConfig calldata _fallback
     )
         external
     {
@@ -53,10 +49,10 @@ contract Bootstrap is ModuleManager, HookManager {
     }
 
     function _getInitMSACalldata(
-        BootstrapConfig[] calldata _validators,
-        BootstrapConfig[] calldata _executors,
-        BootstrapConfig calldata _hook,
-        BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _validators,
+        ERC7579BootstrapConfig[] calldata _executors,
+        ERC7579BootstrapConfig calldata _hook,
+        ERC7579BootstrapConfig calldata _fallback
     )
         external
         view
