@@ -85,7 +85,10 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     //  Manage Validators
     ////////////////////////////////////////////////////
     /**
-     * Write into validator linked list via ValidatorStorageHelper DELEGATECALL
+     * install and initialize validator module
+     * @dev this function Write into the Safe account storage (validator linked) list via
+     * ValidatorStorageHelper DELEGATECALL
+     * the onInstall call to the module(ERC7579), will be executed from the Safe
      */
     function _installValidator(address validator, bytes memory data) internal virtual {
         bool success = ISafe(msg.sender).execTransactionFromModule({
@@ -97,13 +100,19 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         if (!success) revert ValidatorStorageHelperError();
     }
 
+    /**
+     * Uninstall and de-initialize validator module
+     * @dev this function Write into the Safe account storage (validator linked) list via
+     * ValidatorStorageHelper DELEGATECALL
+     * the onUninstall call to the module (ERC7579), will be executed from the Safe
+     */
     function _uninstallValidator(address validator, bytes memory data) internal {
         bool success = ISafe(msg.sender).execTransactionFromModule({
             to: address(VALIDATOR_STORAGE),
             value: 0,
             data: abi.encodeCall(ValidatorStorageHelper.uninstallValidator, (validator, data)),
-            operation: 1
-        });
+            operation: 1 // <-- DELEGATECALL
+         });
         if (!success) revert ValidatorStorageHelperError();
     }
 
@@ -172,6 +181,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         SentinelListLib.SentinelList storage _executors =
             _getModuleManagerStorage(msg.sender)._executors;
         _executors.push(executor);
+        // TODO:
         IExecutor(executor).onInstall(data);
     }
 
@@ -180,6 +190,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
             _getModuleManagerStorage(msg.sender)._executors;
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         _executors.pop(prev, executor);
+        // TODO:
         IExecutor(executor).onUninstall(disableModuleData);
     }
 

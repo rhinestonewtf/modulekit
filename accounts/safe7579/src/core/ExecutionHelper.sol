@@ -4,17 +4,25 @@ pragma solidity >=0.8.0 <0.9.0;
 import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import "../interfaces/ISafe.sol";
 
-contract ExecutionHelper {
+/**
+ * @title Helper contract to execute transactions from a safe
+ * All functions implemented in this contract check,
+ * that the transaction was successful
+ * @author zeroknots.eth
+ */
+abstract contract ExecutionHelper {
+    error ExecutionFailed();
+
     function _execute(
         address safe,
         address target,
         uint256 value,
-        bytes calldata callData
+        bytes memory callData
     )
         internal
     {
         bool success = ISafe(safe).execTransactionFromModule(target, value, callData, 0);
-        require(success, "Execution failed");
+        if (!success) revert ExecutionFailed();
     }
 
     function _executeReturnData(
@@ -29,7 +37,7 @@ contract ExecutionHelper {
         bool success;
         (success, returnData) =
             ISafe(safe).execTransactionFromModuleReturnData(target, value, callData, 0);
-        require(success, "Execution failed");
+        if (!success) revert ExecutionFailed();
     }
 
     function _execute(address safe, Execution[] calldata executions) internal {

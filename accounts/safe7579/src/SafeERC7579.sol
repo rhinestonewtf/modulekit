@@ -137,9 +137,12 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
 
         // pay prefund
         if (missingAccountFunds != 0) {
-            ISafe(userOp.getSender()).execTransactionFromModule(
-                entryPoint(), missingAccountFunds, "", 0
-            );
+            _execute({
+                safe: userOp.getSender(),
+                target: entryPoint(),
+                value: missingAccountFunds,
+                callData: ""
+            });
         }
     }
 
