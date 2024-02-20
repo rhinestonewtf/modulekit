@@ -70,11 +70,6 @@ contract TestBaseUtil is Test {
 
         vm.startPrank(address(clone));
         clone.enableModule(address(erc7579Mod));
-        address[] memory validators = new address[](1);
-        validators[0] = address(defaultValidator);
-
-        address[] memory executors = new address[](1);
-        executors[0] = address(defaultExecutor);
         erc7579Mod.initializeAccount(abi.encode(validators, executors));
         vm.stopPrank();
     }
