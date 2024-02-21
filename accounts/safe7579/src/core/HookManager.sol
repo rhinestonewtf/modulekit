@@ -60,12 +60,23 @@ abstract contract HookManager is ModuleManager {
             revert HookAlreadyInstalled(currentHook);
         }
         _setHook(hook);
-        IHook(hook).onInstall(data);
+
+        _execute({
+            safe: msg.sender,
+            target: hook,
+            value: 0,
+            callData: abi.encodeCall(IModule.onInstall, (data))
+        });
     }
 
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         _setHook(address(0));
-        IHook(hook).onUninstall(data);
+        _execute({
+            safe: msg.sender,
+            target: hook,
+            value: 0,
+            callData: abi.encodeCall(IModule.onUninstall, (data))
+        });
     }
 
     function _getHook(address smartAccount) internal view returns (address _hook) {
