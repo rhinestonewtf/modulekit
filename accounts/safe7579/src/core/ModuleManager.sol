@@ -80,7 +80,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     function _installValidator(address validator, bytes memory data) internal virtual {
         $validators.push({ account: msg.sender, newEntry: validator });
 
-        // Initialize Validator Module via Account
+        // Initialize Validator Module via Safe
         _execute({
             safe: msg.sender,
             target: validator,
@@ -99,7 +99,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
 
-        // De-Initialize Validator Module via Account
+        // De-Initialize Validator Module via Safe
         _execute({
             safe: msg.sender,
             target: validator,
@@ -149,7 +149,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     function _installExecutor(address executor, bytes memory data) internal {
         SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
         $executors.push(executor);
-        // Initialize Executor Module via Account
+        // Initialize Executor Module via Safe
         _execute({
             safe: msg.sender,
             target: executor,
@@ -163,7 +163,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         $executors.pop(prev, executor);
 
-        // De-Initialize Executor Module via Account
+        // De-Initialize Executor Module via Safe
         _execute({
             safe: msg.sender,
             target: executor,
@@ -201,7 +201,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         $mms.fallbackHandler = handler;
-        // Initialize Fallback Module via Account
+        // Initialize Fallback Module via Safe
         _execute({
             safe: msg.sender,
             target: handler,
@@ -213,7 +213,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     function _uninstallFallbackHandler(address handler, bytes calldata initData) internal virtual {
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         $mms.fallbackHandler = address(0);
-        // De-Initialize Fallback Module via Account
+        // De-Initialize Fallback Module via Safe
         _execute({
             safe: msg.sender,
             target: handler,
