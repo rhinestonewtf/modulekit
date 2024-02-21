@@ -13,6 +13,14 @@ import "../interfaces/ISafe.sol";
 abstract contract ExecutionHelper {
     error ExecutionFailed();
 
+    /**
+     * Execute call on Safe
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param target address of the contract to call
+     * @param value value of the transaction
+     * @param callData data of the transaction
+     */
     function _execute(
         address safe,
         address target,
@@ -25,6 +33,15 @@ abstract contract ExecutionHelper {
         if (!success) revert ExecutionFailed();
     }
 
+    /**
+     * Execute call on Safe, get return value from call
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param target address of the contract to call
+     * @param value value of the transaction
+     * @param callData data of the transaction
+     * @return returnData data returned from the call
+     */
     function _executeReturnData(
         address safe,
         address target,
@@ -40,26 +57,40 @@ abstract contract ExecutionHelper {
         if (!success) revert ExecutionFailed();
     }
 
+    /**
+     * Execute call on Safe
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param executions ERC-7579 struct for batched executions
+     */
     function _execute(address safe, Execution[] calldata executions) internal {
         uint256 length = executions.length;
         for (uint256 i; i < length; i++) {
-            _execute(safe, executions[i].target, executions[i].value, executions[i].callData);
+            Execution calldata execution = executions[i];
+            _execute(safe, execution.target, execution.value, execution.callData);
         }
     }
 
+    /**
+     * Execute call on Safe
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param executions ERC-7579 struct for batched executions
+     * @return returnDatas  array returned datas from the batched calls
+     */
     function _executeReturnData(
         address safe,
         Execution[] calldata executions
     )
         internal
-        returns (bytes[] memory retData)
+        returns (bytes[] memory returnDatas)
     {
         uint256 length = executions.length;
-        retData = new bytes[](length);
+        returnDatas = new bytes[](length);
         for (uint256 i; i < length; i++) {
-            retData[i] = _executeReturnData(
-                safe, executions[i].target, executions[i].value, executions[i].callData
-            );
+            Execution calldata execution = executions[i];
+            returnDatas[i] =
+                _executeReturnData(safe, execution.target, execution.value, execution.callData);
         }
     }
 }

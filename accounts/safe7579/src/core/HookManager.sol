@@ -20,10 +20,13 @@ abstract contract HookManager is ModuleManager {
         address hook = $hookManager[msg.sender];
         bool isHookEnabled = hook != address(0);
         bytes memory hookPreContext;
+
+        // pre hook
         if (isHookEnabled) hookPreContext = _doPreHook(hook);
 
         _; // <-- hooked Function Bytecode here
 
+        // post hook
         if (isHookEnabled) _doPostHook(hook, hookPreContext);
     }
 
