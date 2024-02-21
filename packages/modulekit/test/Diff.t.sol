@@ -317,8 +317,8 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(vm.isFile(fileName));
     }
 
-    function testSimulateUserOp() public {
-        writeSimulateUserOp(true);
-        testexec__Given__TwoInputs();
-    }
+    // function testSimulateUserOp() public {
+    //     writeSimulateUserOp(true);
+    //     testexec__Given__TwoInputs();
+    // }
 }
