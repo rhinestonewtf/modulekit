@@ -112,7 +112,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/be581c908df73f1554f466cb6b47c8ce8777e50f
+        version: github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -121,10 +121,10 @@ importers:
         version: 2.8.8
       sentinellist:
         specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
+        version: github.com/zeroknots/sentinellist/2783f466b6d9c457da0a240e392db183ca1607bb
       solady:
         specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e
+        version: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
       solarray:
         specifier: github:sablier-labs/solarray
         version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
