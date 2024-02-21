@@ -7,26 +7,14 @@ import { IModule, IExecutor, IValidator, IFallback } from "erc7579/interfaces/IE
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
-import { ISafe } from "../interfaces/ISafe.sol";
-import {
-    ValidatorStorageHelper, ValidatorStorageLib, $validator
-} from "./ValidatorStorageHelper.sol";
 
 struct ModuleManagerStorage {
     // linked list of executors. List is initialized by initializeAccount()
     SentinelListLib.SentinelList _executors;
     // single fallback handler for all fallbacks
-    // account vendors may implement this differently. This is just a reference implementation
     address fallbackHandler;
 }
 
-// // keccak256("modulemanager.storage.msa");
-// bytes32 constant MODULEMANAGER_STORAGE_LOCATION =
-//     0xf88ce1fdb7fb1cbd3282e49729100fa3f2d6ee9f797961fe4fb1871cea89ea02;
-//
-// // keccak256("modulemanager.validator.storage.msa")
-// bytes32 constant VALIDATOR_STORAGE_LOCATION =
-//     0x7ab08468dcbe2bcd9b34ba12d148d0310762840a62884f0cdee905ee43538c87;
 /**
  * @title ModuleManager
  * Contract that implements ERC7579 Module compatibility for Safe accounts
@@ -42,7 +30,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     error InitializerError();
     error ValidatorStorageHelperError();
 
-    ValidatorStorageHelper internal immutable VALIDATOR_STORAGE;
 
     mapping(address smartAccount => ModuleManagerStorage) private $moduleManager;
 
@@ -73,9 +60,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     ////////////////////////////////////////////////////
     /**
      * install and initialize validator module
-     * @dev this function Write into the Safe account storage (validator linked) list via
-     * ValidatorStorageHelper DELEGATECALL
-     * the onInstall call to the module(ERC7579), will be executed from the Safe
      */
     function _installValidator(address validator, bytes memory data) internal virtual {
         $validators.push({ account: msg.sender, newEntry: validator });
@@ -92,8 +76,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /**
      * Uninstall and de-initialize validator module
      * @dev this function Write into the Safe account storage (validator linked) list via
-     * ValidatorStorageHelper DELEGATECALL
-     * the onUninstall call to the module (ERC7579), will be executed from the Safe
      */
     function _uninstallValidator(address validator, bytes memory data) internal {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
@@ -176,11 +158,11 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
         return $executors.contains(executor);
     }
+
     /**
      * THIS IS NOT PART OF THE STANDARD
      * Helper Function to access linked list
      */
-
     function getExecutorsPaginated(
         address cursor,
         uint256 size
@@ -197,7 +179,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /////////////////////////////////////////////////////
     //  Manage Fallback
     ////////////////////////////////////////////////////
-
     function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         $mms.fallbackHandler = handler;
