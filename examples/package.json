@@ -13,10 +13,12 @@
   "devDependencies": {
     "@openzeppelin/contracts": "5.0.1",
     "@rhinestone/modulekit": "workspace:*",
+    "@rhinestone/safe7579": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
     "@prb/math": "^4.0.2",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@safe-global/safe-contracts": "^1.4.1",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "forge-std": "github:foundry-rs/forge-std",
     "ds-test": "github:dapphub/ds-test",
