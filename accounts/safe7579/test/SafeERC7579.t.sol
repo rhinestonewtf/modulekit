@@ -5,6 +5,7 @@ import "erc7579/interfaces/IERC7579Account.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/lib/ExecutionLib.sol";
 import { MockTarget } from "./mocks/MockTarget.sol";
+import { MockFallback } from "./mocks/MockFallback.sol";
 import "./Base.t.sol";
 
 contract MSATest is TestBaseUtil {
@@ -106,5 +107,17 @@ contract MSATest is TestBaseUtil {
 
         assertEq(ret.length, 2);
         assertEq(abi.decode(ret[0], (uint256)), 1338);
+    }
+
+    function test_fallback() public {
+        MockFallback _fallback = new MockFallback();
+        vm.prank(address(safe));
+        IERC7579Account(address(safe)).installModule(3, address(_fallback), "");
+        (uint256 ret, address erc2771Sender, address msgSender) =
+            MockFallback(address(safe)).target(1337);
+
+        assertEq(ret, 1337);
+        assertEq(erc2771Sender, address(this));
+        assertEq(msgSender, address(safe));
     }
 }

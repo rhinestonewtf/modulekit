@@ -9,8 +9,6 @@ import { IHook, IModule } from "erc7579/interfaces/IERC7579Module.sol";
  * @author zeroknots.eth | rhinestone.wtf
  */
 abstract contract HookManager is ModuleManager {
-    /// @custom:storage-location erc7201:hookmanager.storage.msa
-
     mapping(address smartAccount => address hook) internal $hookManager;
 
     error HookPostCheckFailed();
@@ -51,17 +49,12 @@ abstract contract HookManager is ModuleManager {
         });
     }
 
-    function _setHook(address hook) internal virtual {
-        $hookManager[msg.sender] = hook;
-    }
-
     function _installHook(address hook, bytes calldata data) internal virtual {
         address currentHook = $hookManager[msg.sender];
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
         }
-        _setHook(hook);
-
+        $hookManager[msg.sender] = hook;
         _execute({
             safe: msg.sender,
             target: hook,
@@ -71,7 +64,7 @@ abstract contract HookManager is ModuleManager {
     }
 
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
-        _setHook(address(0));
+        $hookManager[msg.sender] = address(0);
         _execute({
             safe: msg.sender,
             target: hook,
