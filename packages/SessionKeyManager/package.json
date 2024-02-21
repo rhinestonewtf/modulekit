@@ -40,7 +40,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": "github.com/rhinestonewtf/modulekit-examples",
+  "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
     "fmt": "forge fmt",
     "fmt:check": "forge fmt --check",
