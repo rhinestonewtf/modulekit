@@ -8,8 +8,6 @@ import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
 
-import "forge-std/console2.sol";
-
 struct ModuleManagerStorage {
     // linked list of executors. List is initialized by initializeAccount()
     SentinelListLib.SentinelList _executors;
@@ -211,7 +209,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         address handler = _getFallbackHandler();
         if (handler == address(0)) revert NoFallbackHandler();
 
-        // TODO: gas optimize this!
         bytes memory retData = _executeReturnData({
             safe: msg.sender,
             target: handler,

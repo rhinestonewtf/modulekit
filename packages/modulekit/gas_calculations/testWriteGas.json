@@ -4,9 +4,9 @@
     "OP-Stack": "8802 gas"
   },
   "Phases": {
-    "Creation": "535808 gas",
+    "Creation": "535950 gas",
     "Execution": "41784 gas",
     "Validation": "40829 gas"
   },
-  "Total": "2908692 gas"
+  "Total": "2908834 gas"
 }

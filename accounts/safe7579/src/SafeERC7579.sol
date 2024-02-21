@@ -105,7 +105,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         override
         onlyEntryPointOrSelf
     {
-        (bool success, bytes memory ret) = address(this).delegatecall(userOp.callData[4:]);
+        (bool success,) = address(this).delegatecall(userOp.callData[4:]);
         if (!success) revert ExecutionFailed();
     }
 
