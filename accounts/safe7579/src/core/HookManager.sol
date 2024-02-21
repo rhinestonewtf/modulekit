@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "./ModuleManager.sol";
-import "erc7579/interfaces/IERC7579Account.sol";
-import "erc7579/interfaces/IERC7579Module.sol";
+import { ModuleManager } from "./ModuleManager.sol";
+import { IHook, IModule } from "erc7579/interfaces/IERC7579Module.sol";
 
 /**
  * @title reference implementation of HookManager
@@ -11,51 +10,50 @@ import "erc7579/interfaces/IERC7579Module.sol";
  */
 abstract contract HookManager is ModuleManager {
     /// @custom:storage-location erc7201:hookmanager.storage.msa
-    struct HookManagerStorage {
-        IHook _hook;
-    }
 
-    mapping(address smartAccount => HookManagerStorage) private _hookManagerStorage;
-
-    // keccak256("hookmanager.storage.msa");
-    bytes32 constant HOOKMANAGER_STORAGE_LOCATION =
-        0x36e05829dd1b9a4411d96a3549582172d7f071c1c0db5c573fcf94eb28431608;
+    mapping(address smartAccount => address hook) internal $hookManager;
 
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
 
     modifier withHook() {
-        address hook = _getHook(msg.sender);
-        if (hook == address(0)) {
-            _;
-        } else {
-            bytes memory retData = _executeReturnData({
+        address hook = $hookManager[msg.sender];
+        bool isHookEnabled = hook != address(0);
+        bytes memory hookPreContext;
+        if (isHookEnabled) hookPreContext = _doPreHook(hook);
+
+        _; // <-- hooked Function Bytecode here
+
+        if (isHookEnabled) _doPostHook(hook, hookPreContext);
+    }
+
+    function _doPreHook(address hook) internal returns (bytes memory hookPreContext) {
+        hookPreContext = abi.decode(
+            _executeReturnData({
                 safe: msg.sender,
                 target: hook,
                 value: 0,
                 callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.data))
-            });
-            bytes memory hookPreContext = abi.decode(retData, (bytes));
+            }),
+            (bytes)
+        );
+    }
 
-            _;
-            retData = _executeReturnData({
-                safe: msg.sender,
-                target: hook,
-                value: 0,
-                callData: abi.encodeCall(IHook.postCheck, (hookPreContext))
-            });
-            bool success = abi.decode(retData, (bool));
-
-            if (!success) revert HookPostCheckFailed();
-        }
+    function _doPostHook(address hook, bytes memory hookPreContext) internal {
+        _execute({
+            safe: msg.sender,
+            target: hook,
+            value: 0,
+            callData: abi.encodeCall(IHook.postCheck, (hookPreContext))
+        });
     }
 
     function _setHook(address hook) internal virtual {
-        _hookManagerStorage[msg.sender]._hook = IHook(hook);
+        $hookManager[msg.sender] = hook;
     }
 
     function _installHook(address hook, bytes calldata data) internal virtual {
-        address currentHook = _getHook(msg.sender);
+        address currentHook = $hookManager[msg.sender];
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
         }
@@ -79,15 +77,11 @@ abstract contract HookManager is ModuleManager {
         });
     }
 
-    function _getHook(address smartAccount) internal view returns (address _hook) {
-        return address(_hookManagerStorage[smartAccount]._hook);
-    }
-
     function _isHookInstalled(address module) internal view returns (bool) {
-        return _getHook(msg.sender) == module;
+        return $hookManager[msg.sender] == module;
     }
 
     function getActiveHook() external view returns (address hook) {
-        return _getHook(msg.sender);
+        return $hookManager[msg.sender];
     }
 }

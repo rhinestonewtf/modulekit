@@ -24,8 +24,6 @@ import {
 } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * By using Safe's Fallback and Execution modules,
@@ -52,8 +50,8 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         external
         payable
         override
+        withHook // ! this modifier has side effects / external calls
         onlyEntryPointOrSelf
-        withHook
     {
         CallType callType = mode.getCallType();
 
@@ -80,7 +78,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         payable
         override
         onlyExecutorModule
-        withHook
+        withHook // ! this modifier has side effects / external calls
         returns (bytes[] memory returnData)
     {
         CallType callType = mode.getCallType();
@@ -107,7 +105,8 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         override
         onlyEntryPointOrSelf
     {
-        revert Unsupported();
+        (bool success, bytes memory ret) = address(this).delegatecall(userOp.callData[4:]);
+        if (!success) revert ExecutionFailed();
     }
 
     /**
@@ -125,11 +124,12 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     {
         address validator;
         uint256 nonce = userOp.nonce;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             validator := shr(96, nonce)
         }
 
-        // check if validator is enabled. If terminate the validation phase.
+        // check if validator is enabled. If not, use Safe's checkSignatures()
         if (!_isValidatorInstalled(validator)) return _validateSignatures(userOp);
 
         // bubble up the return value of the validator module
@@ -236,6 +236,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
         else if (moduleTypeId == MODULE_TYPE_EXECUTOR) return true;
         else if (moduleTypeId == MODULE_TYPE_FALLBACK) return true;
+        else if (moduleTypeId == MODULE_TYPE_HOOK) return true;
         else return false;
     }
 
@@ -355,7 +356,6 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         _initModuleManager();
 
         (address bootstrap, bytes memory bootstrapCall) = abi.decode(data, (address, bytes));
-        console2.log("bootstrap: ", bootstrap);
 
         (bool success,) = bootstrap.delegatecall(bootstrapCall);
         if (!success) revert AccountInitializationFailed();

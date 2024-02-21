@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
-import { IModule, IExecutor, IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
+import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
@@ -29,11 +29,12 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     error CannotRemoveLastValidator();
     error InitializerError();
     error ValidatorStorageHelperError();
+    error NoFallbackHandler();
 
+    mapping(address smartAccount => ModuleManagerStorage moduleManagerStorage) internal
+        $moduleManager;
 
-    mapping(address smartAccount => ModuleManagerStorage) private $moduleManager;
-
-    SentinelList4337Lib.SentinelList $validators;
+    SentinelList4337Lib.SentinelList internal $validators;
 
     modifier onlyExecutorModule() {
         if (!_isExecutorInstalled(_msgSender())) revert InvalidModule(_msgSender());
@@ -42,14 +43,9 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
 
     /**
      * Initializes linked list that handles installed Validator and Executor
-     * For Validators:
-     *      The Safe Account will call VALIDATOR_STORAGE via DELEGTATECALL.
-     *      Due to the storage restrictions of ERC-4337 of the validation phase,
-     *      Validators are stored within the Safe's account storage.
      */
     function _initModuleManager() internal {
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-
         // this will revert if list is already initialized
         $validators.init({ account: msg.sender });
         $mms._executors.init();
@@ -75,7 +71,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
 
     /**
      * Uninstall and de-initialize validator module
-     * @dev this function Write into the Safe account storage (validator linked) list via
      */
     function _uninstallValidator(address validator, bytes memory data) internal {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
@@ -104,10 +99,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         isInstalled = $validators.contains({ account: msg.sender, entry: validator });
     }
 
-    /**
-     * THIS IS NOT PART OF THE STANDARD
-     * Helper Function to access linked list
-     */
     function getValidatorPaginated(
         address start,
         uint256 pageSize
@@ -217,9 +208,10 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     }
 
     // FALLBACK
+    // solhint-disable-next-line no-complex-fallback
     fallback() external payable override(Receiver) receiverFallback {
         address handler = _getFallbackHandler();
-        if (handler == address(0)) revert();
+        if (handler == address(0)) revert NoFallbackHandler();
         /* solhint-disable no-inline-assembly */
         /// @solidity memory-safe-assembly
         // solhint-disable-next-line no-inline-assembly
