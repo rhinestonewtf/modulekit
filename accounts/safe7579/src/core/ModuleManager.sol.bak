@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
-import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
-import { IModule, IExecutor, IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
+import { IExecutor, IValidator, IFallback } from "erc7579/interfaces/IERC7579Module.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
@@ -20,13 +19,10 @@ struct ModuleManagerStorage {
     address fallbackHandler;
 }
 
-// // keccak256("modulemanager.storage.msa");
-// bytes32 constant MODULEMANAGER_STORAGE_LOCATION =
-//     0xf88ce1fdb7fb1cbd3282e49729100fa3f2d6ee9f797961fe4fb1871cea89ea02;
-//
-// // keccak256("modulemanager.validator.storage.msa")
-// bytes32 constant VALIDATOR_STORAGE_LOCATION =
-//     0x7ab08468dcbe2bcd9b34ba12d148d0310762840a62884f0cdee905ee43538c87;
+// keccak256("modulemanager.storage.msa");
+bytes32 constant MODULEMANAGER_STORAGE_LOCATION =
+    0xf88ce1fdb7fb1cbd3282e49729100fa3f2d6ee9f797961fe4fb1871cea89ea02;
+
 /**
  * @title ModuleManager
  * Contract that implements ERC7579 Module compatibility for Safe accounts
@@ -34,7 +30,7 @@ struct ModuleManagerStorage {
  */
 abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     using SentinelListLib for SentinelListLib.SentinelList;
-    using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
+    using ValidatorStorageLib for SentinelListLib.SentinelList;
 
     error InvalidModule(address module);
     error LinkedListError();
@@ -46,7 +42,17 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
 
     mapping(address smartAccount => ModuleManagerStorage) private $moduleManager;
 
-    SentinelList4337Lib.SentinelList $validators;
+    constructor() {
+        VALIDATOR_STORAGE = new ValidatorStorageHelper();
+    }
+
+    function _getModuleManagerStorage(address account)
+        internal
+        view
+        returns (ModuleManagerStorage storage ims)
+    {
+        return $moduleManager[account];
+    }
 
     modifier onlyExecutorModule() {
         if (!_isExecutorInstalled(_msgSender())) revert InvalidModule(_msgSender());
@@ -61,11 +67,18 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
      *      Validators are stored within the Safe's account storage.
      */
     function _initModuleManager() internal {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
+        bool success = ISafe(msg.sender).execTransactionFromModule({
+            to: address(VALIDATOR_STORAGE),
+            value: 0,
+            data: abi.encodeCall(ValidatorStorageHelper.initModuleManager, ()),
+            operation: 1 // <--- DELEGATECALL
+         });
+        // this will be false if the list is already initialized
+        if (!success) revert InitializerError();
 
+        ModuleManagerStorage storage ims = _getModuleManagerStorage(msg.sender);
         // this will revert if list is already initialized
-        $validators.init({ account: msg.sender });
-        $mms._executors.init();
+        ims._executors.init();
     }
 
     /////////////////////////////////////////////////////
@@ -78,15 +91,13 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
      * the onInstall call to the module(ERC7579), will be executed from the Safe
      */
     function _installValidator(address validator, bytes memory data) internal virtual {
-        $validators.push({ account: msg.sender, newEntry: validator });
-
-        // Initialize Validator Module via Account
-        _execute({
-            safe: msg.sender,
-            target: validator,
+        bool success = ISafe(msg.sender).execTransactionFromModule({
+            to: address(VALIDATOR_STORAGE),
             value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (data))
-        });
+            data: abi.encodeCall(ValidatorStorageHelper.installValidator, (validator, data)),
+            operation: 1 // <-- DELEGATECALL
+         });
+        if (!success) revert ValidatorStorageHelperError();
     }
 
     /**
@@ -96,16 +107,13 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
      * the onUninstall call to the module (ERC7579), will be executed from the Safe
      */
     function _uninstallValidator(address validator, bytes memory data) internal {
-        (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
-        $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
-
-        // De-Initialize Validator Module via Account
-        _execute({
-            safe: msg.sender,
-            target: validator,
+        bool success = ISafe(msg.sender).execTransactionFromModule({
+            to: address(VALIDATOR_STORAGE),
             value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
-        });
+            data: abi.encodeCall(ValidatorStorageHelper.uninstallValidator, (validator, data)),
+            operation: 1 // <-- DELEGATECALL
+         });
+        if (!success) revert ValidatorStorageHelperError();
     }
 
     /**
@@ -119,7 +127,12 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         virtual
         returns (bool isInstalled)
     {
-        isInstalled = $validators.contains({ account: msg.sender, entry: validator });
+        // calculate slot for linked list
+        SentinelListLib.SentinelList storage $validators = $validator()._validators;
+        // predict slot for validator in ValidatorStorageHelper linked list
+        address link = $validators.getNextEntry(validator);
+        // See https://github.com/zeroknots/sentinellist/blob/main/src/SentinelList.sol#L52
+        isInstalled = SENTINEL != validator && link != address(0);
     }
 
     /**
@@ -135,11 +148,29 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         virtual
         returns (address[] memory array, address next)
     {
-        return $validators.getEntriesPaginated({
-            account: msg.sender,
-            start: start,
-            pageSize: pageSize
-        });
+        if (start != SENTINEL && _isExecutorInstalled(start)) revert LinkedListError();
+        if (pageSize == 0) revert LinkedListError();
+
+        array = new address[](pageSize);
+
+        // Populate return array
+        uint256 entryCount;
+        SentinelListLib.SentinelList storage $validators = $validator()._validators;
+        next = $validators.getNextEntry(start);
+        while (next != address(0) && next != SENTINEL && entryCount < pageSize) {
+            array[entryCount] = next;
+            next = $validators.getNextEntry(next);
+            entryCount++;
+        }
+
+        if (next != SENTINEL) {
+            next = array[entryCount - 1];
+        }
+        // Set correct size of returned array
+        // solhint-disable-next-line no-inline-assembly
+        assembly ("memory-safe") {
+            mstore(array, entryCount)
+        }
     }
 
     /////////////////////////////////////////////////////
@@ -147,34 +178,26 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     ////////////////////////////////////////////////////
 
     function _installExecutor(address executor, bytes memory data) internal {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
-        $executors.push(executor);
-        // Initialize Executor Module via Account
-        _execute({
-            safe: msg.sender,
-            target: executor,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (data))
-        });
+        SentinelListLib.SentinelList storage _executors =
+            _getModuleManagerStorage(msg.sender)._executors;
+        _executors.push(executor);
+        // TODO:
+        IExecutor(executor).onInstall(data);
     }
 
     function _uninstallExecutor(address executor, bytes calldata data) internal {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
+        SentinelListLib.SentinelList storage _executors =
+            _getModuleManagerStorage(msg.sender)._executors;
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
-        $executors.pop(prev, executor);
-
-        // De-Initialize Executor Module via Account
-        _execute({
-            safe: msg.sender,
-            target: executor,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
-        });
+        _executors.pop(prev, executor);
+        // TODO:
+        IExecutor(executor).onUninstall(disableModuleData);
     }
 
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
-        return $executors.contains(executor);
+        SentinelListLib.SentinelList storage _executors =
+            _getModuleManagerStorage(msg.sender)._executors;
+        return _executors.contains(executor);
     }
     /**
      * THIS IS NOT PART OF THE STANDARD
@@ -190,8 +213,9 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         virtual
         returns (address[] memory array, address next)
     {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
-        return $executors.getEntriesPaginated(cursor, size);
+        SentinelListLib.SentinelList storage _executors =
+            _getModuleManagerStorage(msg.sender)._executors;
+        return _executors.getEntriesPaginated(cursor, size);
     }
 
     /////////////////////////////////////////////////////
@@ -199,32 +223,20 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     ////////////////////////////////////////////////////
 
     function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms.fallbackHandler = handler;
-        // Initialize Fallback Module via Account
-        _execute({
-            safe: msg.sender,
-            target: handler,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (initData))
-        });
+        ModuleManagerStorage storage ims = _getModuleManagerStorage(msg.sender);
+        ims.fallbackHandler = handler;
+        IFallback(handler).onInstall(initData);
     }
 
     function _uninstallFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms.fallbackHandler = address(0);
-        // De-Initialize Fallback Module via Account
-        _execute({
-            safe: msg.sender,
-            target: handler,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (initData))
-        });
+        ModuleManagerStorage storage ims = _getModuleManagerStorage(msg.sender);
+        ims.fallbackHandler = address(0);
+        IFallback(handler).onUninstall(initData);
     }
 
     function _getFallbackHandler() internal view virtual returns (address fallbackHandler) {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        return $mms.fallbackHandler;
+        ModuleManagerStorage storage ims = _getModuleManagerStorage(msg.sender);
+        return ims.fallbackHandler;
     }
 
     function _isFallbackHandlerInstalled(address _handler) internal view virtual returns (bool) {
