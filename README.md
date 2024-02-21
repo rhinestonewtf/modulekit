@@ -17,7 +17,15 @@ In-depth documentation is available at [docs.rhinestone.wtf](https://docs.rhines
 
 ## Installation
 
-### With Foundry
+### Using our template
+
+Use the [module-template](https://github.com/rhinestonewtf/module-template) to create a new repo and install the dependencies:
+
+```bash
+pnpm install
+```
+
+### Using git submodules
 
 ```bash
 forge install rhinestonewtf/modulekit
@@ -27,14 +35,6 @@ forge install rhinestonewtf/modulekit
 
 ```bash
 pnpm install rhinestonewtf/modulekit
-```
-
-### Using our template
-
-```bash
-git clone https://github.com/rhinestonewtf/module-template.git
-cd module-template
-forge install
 ```
 
 ## Updating
