@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19;
 
-import { WebAuthnLib } from "./utils/WebAuthnLib.sol";
+import { WebAuthnLib } from "./utils/WebAuthNLib.sol";
 import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import {
     PackedUserOperation, UserOperationLib
