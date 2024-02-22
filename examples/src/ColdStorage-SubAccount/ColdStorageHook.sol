@@ -206,6 +206,8 @@ contract ColdStorageHook is ERC7579HookDestruct {
         if (callData.length >= 4) {
             functionSig = bytes4(callData[0:4]);
         }
+        console2.log("onExecuteFromExecutor");
+        console2.logBytes(callData);
 
         // check if call is a requestTimelockedExecution
         if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
