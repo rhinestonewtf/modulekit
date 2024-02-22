@@ -4,55 +4,65 @@ pragma solidity ^0.8.23;
 import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.sol";
 
+import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
+
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
-contract OwnableValidator is ERC7579ValidatorBase {
+interface StatelessValidator {
+    function validateUserOpWithData(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash,
+        bytes calldata data
+    )
+        external
+        returns (uint256);
+}
+
+contract SubValidator is ERC7579ValidatorBase {
+    using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
     using SignatureCheckerLib for address;
 
-    mapping(address subAccout => address owner) public owners;
+    mapping(address subValidator => mapping(address smartAccount => bytes dataForSubValidator))
+        internal $subvalidatorDatas;
+    mapping(address smartAccount => address[] subValidators) internal $subValidators;
 
-    function onInstall(bytes calldata data) external override {
-        if (data.length == 0) return;
-        address owner = abi.decode(data, (address));
-        owners[msg.sender] = owner;
-    }
+    function onInstall(bytes calldata data) external override { }
 
-    function onUninstall(bytes calldata) external override {
-        delete owners[msg.sender];
-    }
+    function onUninstall(bytes calldata) external override { }
 
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         external
-        view
+        virtual
         override
-        returns (ValidationData)
+        returns (ValidationData ret)
     {
-        bool validSig = owners[userOp.sender].isValidSignatureNow(
-            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
-        );
-        return _packValidationData(!validSig, type(uint48).max, 0);
+        address smartAccount = userOp.sender;
+        uint256 length = $subValidators[smartAccount].length;
+        for (uint256 i; i < length; i++) {
+            address validator = $subValidators[smartAccount][i];
+            bytes memory validationParam = $subvalidatorDatas[validator][smartAccount];
+            StatelessValidator(validator).validateUserOpWithData(
+                userOp, userOpHash, validationParam
+            );
+        }
     }
 
     function isValidSignatureWithSender(
-        address,
+        address sender,
         bytes32 hash,
         bytes calldata data
     )
         external
         view
+        virtual
         override
         returns (bytes4)
-    {
-        address owner = owners[msg.sender];
-        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)
-            ? EIP1271_SUCCESS
-            : EIP1271_FAILED;
-    }
+    { }
 
     function name() external pure returns (string memory) {
         return "OwnableValidator";

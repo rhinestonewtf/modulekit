@@ -8,7 +8,7 @@ import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
-contract OwnableValidator is ERC7579ValidatorBase {
+contract SubValidator is ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
 
     mapping(address subAccout => address owner) public owners;
@@ -23,6 +23,21 @@ contract OwnableValidator is ERC7579ValidatorBase {
         delete owners[msg.sender];
     }
 
+    function _validate(
+        address owner,
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        internal
+        view
+        returns (ValidationData)
+    {
+        bool validSig = owner.isValidSignatureNowCalldata(
+            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
+        );
+        return _packValidationData(!validSig, type(uint48).max, 0);
+    }
+
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
@@ -32,10 +47,19 @@ contract OwnableValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        bool validSig = owners[userOp.sender].isValidSignatureNow(
-            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
-        );
-        return _packValidationData(!validSig, type(uint48).max, 0);
+        return _validate(owners[userOp.sender], userOp, userOpHash);
+    }
+
+    function validateUserOpWithData(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash,
+        bytes calldata data
+    )
+        external
+        view
+        returns (ValidationData)
+    {
+        return _validate(abi.decode(data, (address)), userOp, userOpHash);
     }
 
     function isValidSignatureWithSender(

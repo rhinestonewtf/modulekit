@@ -310,6 +310,6 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
         _execWithdraw(action);
 
         uint256 newBalance = target.balance;
-        assertTrue(newBalance > prevBalance );
+        assertTrue(newBalance > prevBalance);
     }
 }
