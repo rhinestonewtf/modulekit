@@ -9,7 +9,6 @@ import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableM
 import { ERC7579HookDestruct } from "@rhinestone/modulekit/src/modules/ERC7579HookDestruct.sol";
 import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
 import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
-import "forge-std/console2.sol";
 
 contract ColdStorageHook is ERC7579HookDestruct {
     error UnsupportedExecution();
@@ -206,15 +205,11 @@ contract ColdStorageHook is ERC7579HookDestruct {
         if (callData.length >= 4) {
             functionSig = bytes4(callData[0:4]);
         }
-        console2.log("onExecuteFromExecutor");
-        console2.logBytes(callData);
 
         // check if call is a requestTimelockedExecution
         if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
             return abi.encode(this.requestTimelockedExecution.selector);
         } else {
-            console2.log("fo");
-            console2.logBytes(callData);
             bytes32 executionHash = _execDigestMemory(target, value, callData);
             (bool success, bytes32 entry) = executions[msg.sender].tryGet(executionHash);
 
