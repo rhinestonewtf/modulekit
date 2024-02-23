@@ -4,9 +4,7 @@ pragma solidity ^0.8.23;
 import "erc7579/interfaces/IERC7579Account.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/lib/ExecutionLib.sol";
-import { MockTarget } from "./mocks/MockTarget.sol";
-import { MockFallback } from "./mocks/MockFallback.sol";
-import "./Base.t.sol";
+import { TestBaseUtil, MockTarget, MockFallback } from "./Base.t.sol";
 
 contract MSATest is TestBaseUtil {
     function setUp() public override {
@@ -15,7 +13,7 @@ contract MSATest is TestBaseUtil {
 
     function test_execSingle() public {
         // Create calldata for the account to execute
-        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, 1337);
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1337);
 
         // Encode the call into the calldata for the userOp
         bytes memory userOpCalldata = abi.encodeCall(
@@ -41,7 +39,6 @@ contract MSATest is TestBaseUtil {
         userOps[0] = userOp;
 
         // Send the userOp to the entrypoint
-        console2.log("userOps");
         entrypoint.handleOps(userOps, payable(address(0x69)));
 
         // Assert that the value was set ie that execution was successful
@@ -50,7 +47,7 @@ contract MSATest is TestBaseUtil {
 
     function test_execBatch() public {
         // Create calldata for the account to execute
-        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, 1337);
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1337);
         address target2 = address(0x420);
         uint256 target2Amount = 1 wei;
 
@@ -91,12 +88,12 @@ contract MSATest is TestBaseUtil {
             IERC7579Account(address(safe)),
             address(target),
             0,
-            abi.encodeWithSelector(MockTarget.setValue.selector, 1337)
+            abi.encodeWithSelector(MockTarget.set.selector, 1337)
         );
     }
 
     function test_execBatchFromExecutor() public {
-        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.setValue, 1338);
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1338);
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution({ target: address(target), value: 0, callData: setValueOnTarget });
         executions[1] = Execution({ target: address(target), value: 0, callData: setValueOnTarget });

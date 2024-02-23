@@ -15,6 +15,7 @@ contract MockValidator is ERC7579ValidatorBase {
         bytes32 userOpHash
     )
         external
+        virtual
         override
         returns (ValidationData)
     {
@@ -29,6 +30,7 @@ contract MockValidator is ERC7579ValidatorBase {
     )
         external
         view
+        virtual
         override
         returns (bytes4)
     {

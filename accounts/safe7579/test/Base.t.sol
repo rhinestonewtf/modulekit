@@ -6,7 +6,8 @@ import { SafeERC7579 } from "src/SafeERC7579.sol";
 import { ModuleManager } from "src/core/ModuleManager.sol";
 import { MockValidator } from "./mocks/MockValidator.sol";
 import { MockExecutor } from "./mocks/MockExecutor.sol";
-import { MockTarget } from "./mocks/MockTarget.sol";
+import { MockFallback } from "./mocks/MockFallback.sol";
+import { MockTarget } from "@rhinestone/modulekit/src/mocks/MockTarget.sol";
 
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { LibClone } from "solady/src/utils/LibClone.sol";

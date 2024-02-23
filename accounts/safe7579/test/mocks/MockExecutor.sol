@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IExecutor } from "erc7579/interfaces/IERC7579Module.sol";
 import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
+import { MockExecutor as MockExecutorBase } from "@rhinestone/modulekit/src/mocks/MockExecutor.sol";
 
-contract MockExecutor is IExecutor {
-    function onInstall(bytes calldata data) external override { }
-
-    function onUninstall(bytes calldata data) external override { }
-
+contract MockExecutor is MockExecutorBase {
     function executeViaAccount(
         IERC7579Account account,
         address target,
@@ -35,13 +31,5 @@ contract MockExecutor is IExecutor {
         return account.executeFromExecutor(
             ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(execs)
         );
-    }
-
-    function isModuleType(uint256 typeID) external view returns (bool) {
-        return typeID == 2;
-    }
-
-    function isInitialized(address smartAccount) external view returns (bool) {
-        return false;
     }
 }

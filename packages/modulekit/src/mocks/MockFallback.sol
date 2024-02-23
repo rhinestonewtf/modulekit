@@ -1,24 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IHook } from "erc7579/interfaces/IERC7579Module.sol";
+import { ERC7579FallbackBase } from "../Modules.sol";
 
-contract MockHook is IHook {
+contract MockFallback is ERC7579FallbackBase {
     function onInstall(bytes calldata data) external override { }
 
     function onUninstall(bytes calldata data) external override { }
 
-    function preCheck(
-        address msgSender,
-        bytes calldata msgData
-    )
-        external
-        returns (bytes memory hookData)
-    { }
-    function postCheck(bytes calldata hookData) external returns (bool success) { }
+    function targetFunction() external returns (bool) {
+        return true;
+    }
 
     function isModuleType(uint256 typeID) external view returns (bool) {
-        return typeID == 4;
+        return typeID == TYPE_FALLBACK;
     }
 
     function isInitialized(address smartAccount) external view returns (bool) {

@@ -13,11 +13,12 @@ contract MockHook is ERC7579HookBase {
         bytes calldata msgData
     )
         external
+        virtual
         override
         returns (bytes memory hookData)
     { }
 
-    function postCheck(bytes calldata) external override returns (bool success) {
+    function postCheck(bytes calldata) external virtual override returns (bool success) {
         return true;
     }
 
