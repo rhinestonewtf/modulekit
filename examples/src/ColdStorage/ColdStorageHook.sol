@@ -209,8 +209,7 @@ contract ColdStorageHook is ERC7579HookDestruct {
         if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
             return abi.encode(this.requestTimelockedExecution.selector);
         } else {
-            bytes32 executionHash =
-                _execDigestMemory(target, value, callData[0:callData.length - 8]);
+            bytes32 executionHash = _execDigestMemory(target, value, callData);
             (bool success, bytes32 entry) = executions[msg.sender].tryGet(executionHash);
 
             if (!success) revert InvalidExecutionHash(executionHash);

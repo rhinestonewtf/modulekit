@@ -7,12 +7,15 @@ import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";
 
-import { MultiFactor, ECDSAFactor } from "src/mfa/MultiFactor.sol";
+import { MultiFactor, ECDSAFactor } from "src/MFA/MultiFactor.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { Solarray } from "solarray/Solarray.sol";
 
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "@rhinestone/modulekit/src/external/ERC7579.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR
+} from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
 contract DemoValidator is MockValidator {
     mapping(address account => bool isInitialized) public initialized;

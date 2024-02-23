@@ -6,9 +6,11 @@ import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Helpers.sol";
 import "@rhinestone/modulekit/src/Core.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK } from "@rhinestone/modulekit/src/external/ERC7579.sol";
+import {
+    MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK
+} from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
-import "src/deadman-switch/DeadmanSwitch.sol";
+import "src/DeadmanSwitch/DeadmanSwitch.sol";
 import "forge-std/interfaces/IERC20.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 
