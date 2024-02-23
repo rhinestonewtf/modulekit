@@ -244,8 +244,6 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
                 MockERC20.transfer.selector, address(mainAccount.account), amountToWithdraw
                 )
         });
-        console2.log("token:", address(token));
-        console2.logBytes(action.callData);
 
         _requestWithdraw(action, 0);
 

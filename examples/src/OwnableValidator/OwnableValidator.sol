@@ -48,9 +48,7 @@ contract OwnableValidator is ERC7579ValidatorBase {
         returns (bytes4)
     {
         address owner = owners[msg.sender];
-        address recover = ECDSA.recover(hash, data);
-        bool valid = SignatureCheckerLib.isValidSignatureNow(owner, hash, data);
-        return SignatureCheckerLib.isValidSignatureNow(owner, hash, data)
+        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)
             ? EIP1271_SUCCESS
             : EIP1271_FAILED;
     }
