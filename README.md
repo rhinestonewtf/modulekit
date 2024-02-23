@@ -75,7 +75,7 @@ To learn more about using ModuleKit, visit the [tools section](https://docs.rhin
 
 ## Examples
 
-For module examples, check out our [modulekit examples repo](https://github.com/rhinestonewtf/modulekit-examples) and for module inspiration see our [module idea list](https://rhinestone.notion.site/Module-ideas-for-product-inspo-338100a2c99540f490472b8aa839da11). For general examples, check out the [awesome modular accounts repo](https://github.com/rhinestonewtf/awesome-modular-accounts).
+For module examples, check out our [modulekit examples](./examples) and for module inspiration see our [module idea list](https://rhinestone.notion.site/Module-ideas-for-product-inspo-338100a2c99540f490472b8aa839da11). For general examples, check out the [awesome modular accounts repo](https://github.com/rhinestonewtf/awesome-modular-accounts).
 
 ## Contributing
 
