@@ -15,6 +15,8 @@ import {
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract SessionKeyManager is ERC7579ValidatorBase {
     using UserOperationLib for PackedUserOperation;
