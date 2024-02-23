@@ -118,11 +118,6 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     //     }
     // } else if (selector == IERC7579Account.executeFromExecutor.selector) {
     //     uint256 offset = msgData.offset();
-    //     console2.log("\n\n offset %s msgData.length %s", offset, msgData.length);
-    //     console2.log("\nmsgData:");
-    //     console2.logBytes(msgData);
-    //     console2.log("\nmsgData cleaned:");
-    //     console2.logBytes(msgData[36:offset]);
     //
     //     ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
     //     CallType calltype = ModeLib.getCallType(mode);

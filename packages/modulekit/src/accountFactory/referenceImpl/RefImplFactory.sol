@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
 import "../../external/ERC7579.sol";
 import { LibClone } from "solady/src/utils/LibClone.sol";
 

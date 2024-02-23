@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
-import "forge-std/console2.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";

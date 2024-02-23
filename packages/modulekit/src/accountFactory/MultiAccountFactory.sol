@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
 import "forge-std/Base.sol";
 import "./safe7579/Safe7579Factory.sol";
 import "./referenceImpl/RefImplFactory.sol";

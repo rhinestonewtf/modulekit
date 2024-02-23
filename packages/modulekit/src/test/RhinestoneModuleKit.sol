@@ -23,8 +23,6 @@ import "./utils/Vm.sol";
 import "./utils/ModuleKitCache.sol";
 import "./utils/Log.sol";
 
-import "forge-std/console2.sol";
-
 struct AccountInstance {
     address account;
     Auxiliary aux;
@@ -152,7 +150,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         bytes memory bootstrapCalldata =
             accountFactory.getBootstrapCallData(validators, executors, hook, fallBack);
         address account = accountFactory.getAddress(salt, bootstrapCalldata);
-        console2.log("Account address: ", account);
 
         // using MSAFactory from ERC7579 repo.
         bytes memory createAccountOnFactory =

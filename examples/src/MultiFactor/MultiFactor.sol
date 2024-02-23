@@ -10,8 +10,6 @@ import { ECDSAFactor } from "./ECDSAFactor.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 
-import "forge-std/console2.sol";
-
 struct ConfigData {
     address subValidator;
     bytes initData;

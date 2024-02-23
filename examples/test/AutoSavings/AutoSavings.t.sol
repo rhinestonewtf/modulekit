@@ -11,8 +11,6 @@ import { AutoSavingToVault } from "src/AutoSavings/AutoSavings.sol";
 
 import { MODULE_TYPE_EXECUTOR } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
-import "forge-std/console2.sol";
-
 contract AutoSavingsTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
     using ModuleKitSCM for *;
