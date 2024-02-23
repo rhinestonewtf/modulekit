@@ -28,7 +28,7 @@ importers:
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+        version: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
       '@ERC4337/account-abstraction-v0.6':
         specifier: github:eth-infinitism/account-abstraction#v0.6.0
         version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
@@ -55,7 +55,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf
+        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -64,10 +64,10 @@ importers:
         version: 2.8.8
       sentinellist:
         specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/2783f466b6d9c457da0a240e392db183ca1607bb
+        version: github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b
       solady:
         specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
+        version: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
       solarray:
         specifier: github:sablier-labs/solarray
         version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
@@ -82,7 +82,7 @@ importers:
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+        version: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
       '@ERC4337/account-abstraction-v0.6':
         specifier: github:eth-infinitism/account-abstraction#v0.6.0
         version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
@@ -112,7 +112,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf
+        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -121,10 +121,10 @@ importers:
         version: 2.8.8
       sentinellist:
         specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/2783f466b6d9c457da0a240e392db183ca1607bb
+        version: github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b
       solady:
         specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
+        version: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
       solarray:
         specifier: github:sablier-labs/solarray
         version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
@@ -139,7 +139,7 @@ importers:
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.7.2)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+        version: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.7.2)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
       '@ERC4337/account-abstraction-v0.6':
         specifier: github:eth-infinitism/account-abstraction#v0.6.0
         version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.7.2)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
@@ -151,7 +151,7 @@ importers:
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/be581c908df73f1554f466cb6b47c8ce8777e50f
+        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -160,10 +160,10 @@ importers:
         version: 2.8.8
       sentinellist:
         specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61
+        version: github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b
       solady:
         specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e
+        version: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
       solhint:
         specifier: ^4.1.1
         version: 4.1.1(typescript@5.3.3)
@@ -172,7 +172,7 @@ importers:
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+        version: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
       '@ERC4337/account-abstraction-v0.6':
         specifier: github:eth-infinitism/account-abstraction#v0.6.0
         version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
@@ -199,7 +199,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf
+        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -208,10 +208,10 @@ importers:
         version: 2.8.8
       sentinellist:
         specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/2783f466b6d9c457da0a240e392db183ca1607bb
+        version: github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b
       solady:
         specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
+        version: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
       solarray:
         specifier: github:sablier-labs/solarray
         version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
@@ -1450,13 +1450,13 @@ packages:
   /@types/bn.js@4.11.6:
     resolution: {integrity: sha512-pqr857jrp2kPuO9uRjZ3PwnJTjoQy+fcdxvBTvHm6dkmEL9q+hDD/2j/0ELOBPtPnS8LjCX0gI9nbl8lVkadpg==}
     dependencies:
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
     dev: true
 
   /@types/bn.js@5.1.5:
     resolution: {integrity: sha512-V46N0zwKRF5Q00AZ6hWtN0T8gGmDUaUzLWQvHFo5yThtVwK/VCenFY3wXVbOvNfajEpsTfQM4IN9k/d6gUVX3A==}
     dependencies:
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
     dev: true
 
   /@types/debug@4.1.12:
@@ -1469,7 +1469,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
     dev: true
 
   /@types/http-cache-semantics@4.0.4:
@@ -1492,8 +1492,8 @@ packages:
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
     dev: true
 
-  /@types/node@20.11.19:
-    resolution: {integrity: sha512-7xMnVEcZFu0DikYjWOlRq7NTPETrm7teqUT2WkQjrTIkEgUyyGdWsj/Zg8bEJt5TNklzbPD1X3fqfsHw3SpapQ==}
+  /@types/node@20.11.20:
+    resolution: {integrity: sha512-7/rR21OS+fq8IyHTgtLkDK949uzsa6n8BkziAKtPVpugIkO6D+/ooXMvzXxDnZrmtXVfjb1bKQafYpb8s89LOg==}
     dependencies:
       undici-types: 5.26.5
     dev: true
@@ -1501,7 +1501,7 @@ packages:
   /@types/pbkdf2@3.1.2:
     resolution: {integrity: sha512-uRwJqmiXmh9++aSu1VNEn3iIxWOhd8AHXNSdlaLfdAAdSTY9jYVeGWnzejM3dvrkbqE3/hyQkQQ29IFATEGlew==}
     dependencies:
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
     dev: true
 
   /@types/prettier@2.7.3:
@@ -1515,14 +1515,14 @@ packages:
   /@types/readable-stream@2.3.15:
     resolution: {integrity: sha512-oM5JSKQCcICF1wvGgmecmHldZ48OZamtMxcGGVICOJA8o8cahXC1zEVAif8iwoc5j8etxFaRFnf095+CDsuoFQ==}
     dependencies:
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
       safe-buffer: 5.1.2
     dev: true
 
   /@types/secp256k1@4.0.6:
     resolution: {integrity: sha512-hHxJU6PAEUn0TP4S/ZOzuTUvJWuZ6eIKeNKb5RBpODvSl6hp1Wrw4s7ATY50rklRCScUDpHzVA/DQdSjJ3UoYQ==}
     dependencies:
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
     dev: true
 
   /abbrev@1.0.9:
@@ -2597,7 +2597,7 @@ packages:
     dependencies:
       es-errors: 1.3.0
       function-bind: 1.1.2
-      has-proto: 1.0.1
+      has-proto: 1.0.3
       has-symbols: 1.0.3
       hasown: 2.0.1
     dev: true
@@ -2883,8 +2883,8 @@ packages:
       es-define-property: 1.0.0
     dev: true
 
-  /has-proto@1.0.1:
-    resolution: {integrity: sha512-7qE+iP+O+bgF9clE5+UoBFzE65mlBiVj3tKCrlNQ0Ogwm0BjpT/gK4SlLYDMybDh5I3TCTKnPPa0oMG7JDYrhg==}
+  /has-proto@1.0.3:
+    resolution: {integrity: sha512-SJ1amZAJUiZS+PhsVLf5tGydlaVB8EdFpaSO4gmiUKUOxk8qzn5AIy4ZeJUmh22znIdk/uMAUT2pl3FxzVUH+Q==}
     engines: {node: '>= 0.4'}
     dev: true
 
@@ -3261,7 +3261,7 @@ packages:
     resolution: {integrity: sha512-90Tvmg2NXwnKMgTafA01PRELsYNNRb/F2bj3nzdByTLLMUmgkgL8H/oeWcjZtVVffnBJyNjDcYxY7cdOE/WoHg==}
     engines: {node: '>=14.17'}
     dependencies:
-      '@types/node': 20.11.19
+      '@types/node': 20.11.20
     dev: true
 
   /md5.js@1.3.5:
@@ -3995,8 +3995,8 @@ packages:
       - typescript
     dev: true
 
-  /solidity-coverage@0.8.7(hardhat@2.20.1):
-    resolution: {integrity: sha512-RzcPuNsIqVGq5F8rjQZPdI2EVdsRU7w2f1Uk1UY567n9eNcg5LSEQ3Q1WFoy9bi/2AD5SYbYK9SS/Nwh2oYbNw==}
+  /solidity-coverage@0.8.8(hardhat@2.20.1):
+    resolution: {integrity: sha512-7RN6/8YAFMQNeMdSulARtE0VC5JitBAUMwvkr10FkOK+nux5q+WykrgSZntkWrX/VHzRa096P4OOViO0T9Q9Cw==}
     hasBin: true
     peerDependencies:
       hardhat: ^2.11.0
@@ -4462,16 +4462,8 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/erc7579/erc7579-implementation/957cd05deeab6a9a85343bb8d1c9701705ed4ecf:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/957cd05deeab6a9a85343bb8d1c9701705ed4ecf}
-    name: micro-msa
-    version: 0.3.1
-    dependencies:
-      '@openzeppelin/contracts': 5.0.1
-    dev: true
-
-  github.com/erc7579/erc7579-implementation/be581c908df73f1554f466cb6b47c8ce8777e50f:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/be581c908df73f1554f466cb6b47c8ce8777e50f}
+  github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/85d2823a73f1816b519e7bd65e7d82c8b8a172a4}
     name: micro-msa
     version: 0.3.1
     dependencies:
@@ -4494,7 +4486,7 @@ packages:
       ethereumjs-wallet: 1.0.2
       hardhat-deploy: 0.11.45
       hardhat-deploy-ethers: 0.3.0-beta.13(ethers@5.4.0)(hardhat@2.20.1)
-      solidity-coverage: 0.8.7(hardhat@2.20.1)
+      solidity-coverage: 0.8.8(hardhat@2.20.1)
       source-map-support: 0.5.21
       table: 6.8.1
       typescript: 4.9.5
@@ -4525,7 +4517,7 @@ packages:
       ethereumjs-wallet: 1.0.2
       hardhat-deploy: 0.11.45
       hardhat-deploy-ethers: 0.3.0-beta.13(ethers@5.7.2)(hardhat@2.20.1)
-      solidity-coverage: 0.8.7(hardhat@2.20.1)
+      solidity-coverage: 0.8.8(hardhat@2.20.1)
       source-map-support: 0.5.21
       table: 6.8.1
       typescript: 4.9.5
@@ -4546,9 +4538,9 @@ packages:
     version: 1.7.6
     dev: true
 
-  github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
-    resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/aafae2a1f974e4c05f7025b3303d0d4aba85fa76}
-    id: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76
+  github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
+    resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc}
+    id: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc
     name: accountabstraction
     version: 0.6.0
     dependencies:
@@ -4556,12 +4548,14 @@ packages:
       '@openzeppelin/contracts': 5.0.1
       '@thehubbleproject/bls': 0.5.1
       '@typechain/hardhat': 2.3.1(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
+      debug: 4.3.4(supports-color@8.1.1)
       ethereumjs-util: 7.1.5
       ethereumjs-wallet: 1.0.2
       hardhat-deploy: 0.11.45
       hardhat-deploy-ethers: 0.3.0-beta.13(ethers@5.4.0)(hardhat@2.20.1)
-      solidity-coverage: 0.8.7(hardhat@2.20.1)
+      solidity-coverage: 0.8.8(hardhat@2.20.1)
       source-map-support: 0.5.21
       table: 6.8.1
       typescript: 4.9.5
@@ -4576,9 +4570,9 @@ packages:
       - utf-8-validate
     dev: true
 
-  github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76(ethers@5.7.2)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
-    resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/aafae2a1f974e4c05f7025b3303d0d4aba85fa76}
-    id: github.com/kopy-kat/account-abstraction/aafae2a1f974e4c05f7025b3303d0d4aba85fa76
+  github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.7.2)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
+    resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc}
+    id: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc
     name: accountabstraction
     version: 0.6.0
     dependencies:
@@ -4586,12 +4580,14 @@ packages:
       '@openzeppelin/contracts': 5.0.1
       '@thehubbleproject/bls': 0.5.1
       '@typechain/hardhat': 2.3.1(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@types/debug': 4.1.12
       '@types/mocha': 9.1.1
+      debug: 4.3.4(supports-color@8.1.1)
       ethereumjs-util: 7.1.5
       ethereumjs-wallet: 1.0.2
       hardhat-deploy: 0.11.45
       hardhat-deploy-ethers: 0.3.0-beta.13(ethers@5.7.2)(hardhat@2.20.1)
-      solidity-coverage: 0.8.7(hardhat@2.20.1)
+      solidity-coverage: 0.8.8(hardhat@2.20.1)
       source-map-support: 0.5.21
       table: 6.8.1
       typescript: 4.9.5
@@ -4612,7 +4608,7 @@ packages:
     version: 0.0.1
     dependencies:
       '@openzeppelin/contracts': 5.0.1
-      solady: github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a
+      solady: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
     dev: true
 
   github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
@@ -4627,26 +4623,14 @@ packages:
     version: 6.2.0
     dev: true
 
-  github.com/vectorized/solady/1372606383445c0a247e6c58eb255a529734258a:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/1372606383445c0a247e6c58eb255a529734258a}
+  github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/72e47ca417d24a30801b2921584e8486462cfc7b}
     name: solady
-    version: 0.0.168
+    version: 0.0.170
     dev: true
 
-  github.com/vectorized/solady/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e}
-    name: solady
-    version: 0.0.168
-    dev: true
-
-  github.com/zeroknots/sentinellist/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61:
-    resolution: {tarball: https://codeload.github.com/zeroknots/sentinellist/tar.gz/1f9ec0250f1b3f14ba5d200629e3d9f3264fde61}
+  github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b:
+    resolution: {tarball: https://codeload.github.com/zeroknots/sentinellist/tar.gz/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b}
     name: sentinellist
-    version: 0.0.0
-    dev: true
-
-  github.com/zeroknots/sentinellist/2783f466b6d9c457da0a240e392db183ca1607bb:
-    resolution: {tarball: https://codeload.github.com/zeroknots/sentinellist/tar.gz/2783f466b6d9c457da0a240e392db183ca1607bb}
-    name: sentinellist
-    version: 0.0.0
+    version: 1.0.0
     dev: true

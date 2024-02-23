@@ -8,7 +8,6 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import { ERC7579HookDestruct } from "@rhinestone/modulekit/src/modules/ERC7579HookDestruct.sol";
 import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract ColdStorageHook is ERC7579HookDestruct {
     error UnsupportedExecution();
@@ -210,7 +209,8 @@ contract ColdStorageHook is ERC7579HookDestruct {
         if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
             return abi.encode(this.requestTimelockedExecution.selector);
         } else {
-            bytes32 executionHash = _execDigestMemory(target, value, callData);
+            bytes32 executionHash =
+                _execDigestMemory(target, value, callData[0:callData.length - 8]);
             (bool success, bytes32 entry) = executions[msg.sender].tryGet(executionHash);
 
             if (!success) revert InvalidExecutionHash(executionHash);
@@ -279,8 +279,6 @@ contract ColdStorageHook is ERC7579HookDestruct {
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_HOOK;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 }

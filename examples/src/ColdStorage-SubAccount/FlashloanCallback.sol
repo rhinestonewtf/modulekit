@@ -5,7 +5,6 @@ import { IFallbackMethod } from "@rhinestone/modulekit/src/core/ExtensibleFallba
 
 import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import "./interfaces/Flashloan.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
     address immutable FALLBACK_HANDLER;
@@ -89,8 +88,6 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_EXECUTOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 }

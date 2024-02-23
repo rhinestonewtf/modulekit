@@ -5,7 +5,6 @@ import { IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract ColdStorageExecutor is ERC7579ExecutorBase {
     error UnauthorizedAccess();
@@ -32,8 +31,6 @@ contract ColdStorageExecutor is ERC7579ExecutorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) {
         return _subAccountOwner[smartAccount] != address(0);

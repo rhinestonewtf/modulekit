@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { ERC7579ExecutorBase, SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
-contract AutoSendSessionKey is ERC7579ExecutorBase, ISessionValidationModule {
+contract AutoSendSessionKey is ERC7579ExecutorBase, SessionKeyBase {
     struct ExecutorAccess {
         address sessionKeySigner;
         address token;
@@ -26,12 +24,6 @@ contract AutoSendSessionKey is ERC7579ExecutorBase, ISessionValidationModule {
         address receiver;
         uint128 amount;
     }
-
-    error InvalidMethod(bytes4);
-    error InvalidValue();
-    error InvalidAmount();
-    error InvalidTarget();
-    error InvalidRecipient();
 
     mapping(address account => mapping(address token => SpentLog)) internal _log;
 
@@ -114,8 +106,6 @@ contract AutoSendSessionKey is ERC7579ExecutorBase, ISessionValidationModule {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 

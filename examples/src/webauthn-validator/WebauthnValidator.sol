@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.19;
 
-import { WebAuthnLib } from "./utils/WebAuthNLib.sol";
+import { WebAuthnLib } from "./utils/WebAuthnLib.sol";
 import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import {
     PackedUserOperation, UserOperationLib
 } from "@rhinestone/modulekit/src/external/ERC4337.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 struct PassKeyId {
     uint256 pubKeyX;
@@ -59,7 +58,7 @@ contract WebAuthnValidator is ERC7579ValidatorBase {
         ) = abi.decode(userOp.signature, (bytes32, bytes, bytes1, bytes, uint256, uint256[2]));
 
         PassKeyId memory passKey = smartAccountPassKeys[userOp.getSender()];
-        require(passKey.pubKeyY != 0 && passKey.pubKeyY != 0, "Key not found");
+        require(passKey.pubKeyX != 0 && passKey.pubKeyY != 0, "Key not found");
         uint256[2] memory Q = [passKey.pubKeyX, passKey.pubKeyY];
         bool isValidSignature = WebAuthnLib.checkSignature(
             authenticatorData,
@@ -99,8 +98,6 @@ contract WebAuthnValidator is ERC7579ValidatorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 }

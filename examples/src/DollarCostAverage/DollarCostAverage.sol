@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { UniswapV3Integration } from "@rhinestone/modulekit/src/integrations/uniswap/v3/Uniswap.sol";
 import { Execution, IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { ERC7579ExecutorBase, SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
-contract DollarCostAverage is ERC7579ExecutorBase, ISessionValidationModule {
+contract DollarCostAverage is ERC7579ExecutorBase, SessionKeyBase {
     struct ScopedAccess {
         address sessionKeySigner;
         address onlyTokenIn;
@@ -29,11 +27,6 @@ contract DollarCostAverage is ERC7579ExecutorBase, ISessionValidationModule {
         uint128 amount;
     }
 
-    error InvalidMethod(bytes4);
-    error InvalidValue();
-    error InvalidAmount();
-    error InvalidTarget();
-    error InvalidRecipient();
     error InvalidParams();
 
     mapping(address account => mapping(address token => SpentLog)) internal _log;
@@ -91,21 +84,6 @@ contract DollarCostAverage is ERC7579ExecutorBase, ISessionValidationModule {
 
     function onUninstall(bytes calldata data) external override { }
 
-    modifier onlyThis(address destinationContract) {
-        if (destinationContract != address(this)) revert InvalidTarget();
-        _;
-    }
-
-    modifier onlyFunctionSig(bytes4 allowed, bytes4 received) {
-        if (allowed != received) revert InvalidMethod(received);
-        _;
-    }
-
-    modifier onlyZeroValue(uint256 callValue) {
-        if (callValue != 0) revert InvalidValue();
-        _;
-    }
-
     function encode(ScopedAccess memory transaction) public pure returns (bytes memory) {
         return abi.encode(transaction);
     }
@@ -117,8 +95,6 @@ contract DollarCostAverage is ERC7579ExecutorBase, ISessionValidationModule {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 

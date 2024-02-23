@@ -6,7 +6,7 @@ import { SchedulingBase } from "./SchedulingBase.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
-abstract contract ScheduledTransfers is SchedulingBase {
+contract ScheduledTransfers is SchedulingBase {
     function executeOrder(uint256 jobId) external override canExecute(jobId) {
         ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
 

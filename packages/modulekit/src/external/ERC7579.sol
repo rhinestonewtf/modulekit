@@ -28,7 +28,6 @@ import {
     EXECTYPE_DEFAULT,
     MODE_DEFAULT
 } from "erc7579/lib/ModeLib.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 import { Execution, ExecutionLib as ERC7579ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
 import {

@@ -5,13 +5,8 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
-import "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
-import {
-    SessionData,
-    SessionKeyManagerLib
-} from "@rhinestone/sessionkeymanager/src/SessionKeyManagerLib.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";
-import { ERC20Revocation } from "src/TokenRevocation/ERC20Revocation.sol";
+import { ERC20Revocation } from "src/token-revocation/ERC20Revocation.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { Solarray } from "solarray/Solarray.sol";
 

@@ -7,12 +7,9 @@ import "@rhinestone/modulekit/src/Helpers.sol";
 import "@rhinestone/modulekit/src/Core.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 import "solmate/test/utils/mocks/MockERC4626.sol";
-import { AutoSavingToVault } from "src/AutoSaving/AutoSavings.sol";
+import { AutoSavingToVault } from "src/auto-savings/AutoSavings.sol";
 
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR
-} from "@rhinestone/modulekit/src/external/ERC7579.sol";
+import { MODULE_TYPE_EXECUTOR } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
 import "forge-std/console2.sol";
 

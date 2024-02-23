@@ -8,7 +8,7 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
-abstract contract ScheduledOrders is SchedulingBase {
+contract ScheduledOrders is SchedulingBase {
     function executeOrder(uint256 jobId) external override canExecute(jobId) {
         ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
 

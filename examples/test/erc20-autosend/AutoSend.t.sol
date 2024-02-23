@@ -5,21 +5,11 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
-import "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
-import {
-    SessionData,
-    SessionKeyManagerLib
-} from "@rhinestone/sessionkeymanager/src/SessionKeyManagerLib.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";
-import { AutoSendSessionKey } from "src/AutoSend/AutoSend.sol";
+import { AutoSendSessionKey } from "src/erc20-autosend/AutoSend.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { Solarray } from "solarray/Solarray.sol";
-
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_HOOK
-} from "@rhinestone/modulekit/src/external/ERC7579.sol";
+import { MODULE_TYPE_EXECUTOR } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
 contract AutoSendTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
@@ -71,9 +61,11 @@ contract AutoSendTest is RhinestoneModuleKit, Test {
         AutoSendSessionKey.SpentLog[] memory logs = new AutoSendSessionKey.SpentLog[](1);
         logs[0] = AutoSendSessionKey.SpentLog({ spent: 0, maxAmount: 100 });
 
-        instance.installModule(
-            MODULE_TYPE_EXECUTOR, address(sessionValidator), abi.encode(tokens, logs)
-        );
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: address(sessionValidator),
+            data: abi.encode(tokens, logs)
+        });
     }
 
     function test_transferBatch() public {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IHook, EncodedModuleTypes } from "erc7579/interfaces/IERC7579Module.sol";
+import { IHook } from "erc7579/interfaces/IERC7579Module.sol";
 
 contract MockHook is IHook {
     function onInstall(bytes calldata data) external override { }
@@ -20,8 +20,6 @@ contract MockHook is IHook {
     function isModuleType(uint256 typeID) external view returns (bool) {
         return typeID == 4;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) {
         return false;

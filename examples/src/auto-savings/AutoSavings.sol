@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {
-    ERC20Integration,
-    ERC4626Integration,
-    UniswapV3Integration
-} from "@rhinestone/modulekit/src/Integrations.sol";
+import { ERC20Integration, ERC4626Integration } from "@rhinestone/modulekit/src/Integrations.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
+import { UniswapV3Integration } from "@rhinestone/modulekit/src/Integrations.sol";
 import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase, SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 import "forge-std/console2.sol";
 
@@ -140,8 +136,6 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 

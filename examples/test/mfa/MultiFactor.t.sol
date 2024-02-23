@@ -7,16 +7,12 @@ import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";
 
-import { MultiFactor, ECDSAFactor } from "src/MultiFactorValidator/MultiFactor.sol";
+import { MultiFactor, ECDSAFactor } from "src/mfa/MultiFactor.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { Solarray } from "solarray/Solarray.sol";
 
-import {
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_HOOK
-} from "@rhinestone/modulekit/src/external/ERC7579.sol";
+import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
 contract DemoValidator is MockValidator {
     mapping(address account => bool isInitialized) public initialized;
@@ -77,8 +73,12 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
     }
 
     function initAccount() internal {
-        instance.installModule(MODULE_TYPE_VALIDATOR, address(mfa), "");
-        instance.installModule(MODULE_TYPE_EXECUTOR, address(mfa), "");
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(mfa),
+            data: ""
+        });
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: address(mfa), data: "" });
         configMFA();
     }
 
@@ -116,8 +116,12 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
     }
 
     function init_localECDSA() public {
-        instance.installModule(MODULE_TYPE_VALIDATOR, address(mfa), "");
-        instance.installModule(MODULE_TYPE_EXECUTOR, address(mfa), "");
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(mfa),
+            data: ""
+        });
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: address(mfa), data: "" });
         address[] memory validators = Solarray.addresses(address(mfa), address(validator2));
         ECDSAFactor.FactorConfig memory conf = ECDSAFactor.FactorConfig({
             signer: signer.addr,

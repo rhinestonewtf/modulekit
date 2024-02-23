@@ -5,7 +5,6 @@ import "src/modules/ERC7579HookDestruct.sol";
 import { IERC7579Account } from "src/external/ERC7579.sol";
 
 import "forge-std/Test.sol";
-import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 
 contract HookDestructTest is Test, ERC7579HookDestruct {
@@ -222,7 +221,6 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     function onInstall(bytes calldata) public { }
     function onUninstall(bytes calldata) public { }
 
-    function getModuleTypes() public pure returns (EncodedModuleTypes) { }
     function isInitialized(address smartAccount) public view returns (bool) { }
     function isModuleType(uint256 moduleType) public pure returns (bool) { }
 }

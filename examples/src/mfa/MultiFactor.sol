@@ -7,7 +7,6 @@ import { IERC7579Account, Execution } from "@rhinestone/modulekit/src/Accounts.s
 import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.sol";
 import { LibSort } from "solady/src/utils/LibSort.sol";
 import { ECDSAFactor } from "./ECDSAFactor.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 
@@ -313,8 +312,8 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
 
     function onInstall(bytes calldata data) external {
         // check if module is already initialized
-        if (multiFactorConfig[msg.sender].threshold != 0) revert("Already Initialized");
         if (data.length == 0) return;
+        if (multiFactorConfig[msg.sender].threshold != 0) revert("Already Initialized");
 
         // TODO: slice this with packed / calldata
         (
@@ -363,8 +362,6 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     function version() external pure returns (string memory) {
         return "0.0.1";
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) {
         return multiFactorConfig[msg.sender].threshold != 0;

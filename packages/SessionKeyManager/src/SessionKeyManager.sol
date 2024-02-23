@@ -16,7 +16,6 @@ import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
-import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract SessionKeyManager is ERC7579ValidatorBase {
     using UserOperationLib for PackedUserOperation;
@@ -217,8 +216,6 @@ contract SessionKeyManager is ERC7579ValidatorBase {
     function onInstall(bytes calldata data) external override { }
 
     function onUninstall(bytes calldata data) external override { }
-
-    function getModuleTypes() external view override returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view override returns (bool) { }
 }

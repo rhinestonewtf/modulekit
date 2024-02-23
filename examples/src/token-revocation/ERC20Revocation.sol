@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ISessionValidationModule } from
-    "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
+import { SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 
-contract ERC20Revocation is ISessionValidationModule {
+contract ERC20Revocation is SessionKeyBase {
     enum TokenType {
         ERC20,
         ERC721
@@ -18,9 +17,6 @@ contract ERC20Revocation is ISessionValidationModule {
         address sessionKeySigner;
     }
 
-    error InvalidMethod(bytes4);
-    error InvalidValue();
-    error InvalidAmount();
     error InvalidToken();
     error NotZero();
 
@@ -29,22 +25,20 @@ contract ERC20Revocation is ISessionValidationModule {
     }
 
     function validateSessionParams(
-        address destinationContract,
-        uint256 callValue,
+        address to,
+        uint256 value,
         bytes calldata callData,
-        bytes calldata _sessionKeyData,
+        bytes calldata sessionKeyData,
         bytes calldata /*_callSpecificData*/
     )
         external
-        virtual
-        override
         returns (address)
     {
-        Token memory transaction = abi.decode(_sessionKeyData, (Token));
+        Token memory transaction = abi.decode(sessionKeyData, (Token));
         bytes4 targetSelector = bytes4(callData[:4]);
 
-        if (transaction.token != destinationContract) revert InvalidToken();
-        if (callValue != 0) revert InvalidValue();
+        if (transaction.token != to) revert InvalidToken();
+        if (value != 0) revert InvalidValue();
         if (transaction.tokenType == TokenType.ERC20) {
             _validateERC20(targetSelector, callData);
         } else if (transaction.tokenType == TokenType.ERC721) {
@@ -79,5 +73,23 @@ contract ERC20Revocation is ISessionValidationModule {
         } else {
             revert InvalidMethod(targetSelector);
         }
+    }
+
+    function onInstall(bytes calldata data) external { }
+
+    function onUninstall(bytes calldata data) external { }
+
+    function isModuleType(uint256 typeID) external pure override returns (bool) {
+        return typeID == TYPE_EXECUTOR;
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) { }
+
+    function name() external pure virtual returns (string memory) {
+        return "AutoSaving";
+    }
+
+    function version() external pure virtual returns (string memory) {
+        return "0.0.1";
     }
 }

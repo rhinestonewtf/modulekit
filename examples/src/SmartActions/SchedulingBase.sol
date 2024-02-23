@@ -3,27 +3,17 @@ pragma solidity ^0.8.23;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
-import "@rhinestone/sessionkeymanager/src/ISessionValidationModule.sol";
-import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
+import { ERC7579ExecutorBase, SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
 
-abstract contract SchedulingBase is ERC7579ExecutorBase, ISessionValidationModule {
+abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
     error InvalidExecution();
-    error InvalidMethod(bytes4);
-    error InvalidValue();
-    error InvalidAmount();
-    error InvalidTarget();
-    error InvalidRecipient();
-
     error InvalidInstall();
-
     error InvalidJob();
 
     event ExecutionAdded(address indexed smartAccount, uint256 indexed jobId);
-
     event ExecutionTriggered(address indexed smartAccount, uint256 indexed jobId);
-
     event ExecutionStatusUpdated(address indexed smartAccount, uint256 indexed jobId);
+    event ExecutionsCancelled(address indexed smartAccount);
 
     mapping(address smartAccount => mapping(uint256 jobId => ExecutionConfig)) internal
         _executionLog;
@@ -140,7 +130,12 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, ISessionValidationModul
             revert InvalidInstall();
         }
 
-        ExecutionConfig memory executionConfig = abi.decode(data, (ExecutionConfig));
+        (
+            uint48 executeInterval,
+            uint16 numberOfExecutions,
+            uint48 startDate,
+            bytes memory executionData
+        ) = abi.decode(data, (uint48, uint16, uint48, bytes));
 
         uint256 jobId = _accountJobCount[msg.sender] + 1;
         _accountJobCount[msg.sender]++;
@@ -149,11 +144,13 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, ISessionValidationModul
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
-            executeInterval: executionConfig.executeInterval,
-            numberOfExecutions: executionConfig.numberOfExecutions,
-            startDate: executionConfig.startDate,
-            executionData: executionConfig.executionData
+            executeInterval: executeInterval,
+            numberOfExecutions: numberOfExecutions,
+            startDate: startDate,
+            executionData: executionData
         });
+
+        emit ExecutionAdded(msg.sender, jobId);
     }
 
     function getAccountJobDetails(
@@ -167,19 +164,23 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, ISessionValidationModul
         return _executionLog[smartAccount][jobId];
     }
 
-    function onUninstall() external {
+    function getAccountJobCount(address smartAccount) external view returns (uint256) {
+        return _accountJobCount[smartAccount];
+    }
+
+    function onUninstall(bytes calldata) external {
         uint256 count = _accountJobCount[msg.sender];
         for (uint256 i = 1; i <= count; i++) {
             delete _executionLog[msg.sender][i];
         }
         _accountJobCount[msg.sender] = 0;
+
+        emit ExecutionsCancelled(msg.sender);
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) {
         return _accountJobCount[smartAccount] != 0;

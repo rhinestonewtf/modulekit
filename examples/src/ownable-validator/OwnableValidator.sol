@@ -6,7 +6,6 @@ import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.
 
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
 contract OwnableValidator is ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
@@ -49,7 +48,9 @@ contract OwnableValidator is ERC7579ValidatorBase {
         returns (bytes4)
     {
         address owner = owners[msg.sender];
-        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)
+        address recover = ECDSA.recover(hash, data);
+        bool valid = SignatureCheckerLib.isValidSignatureNow(owner, hash, data);
+        return SignatureCheckerLib.isValidSignatureNow(owner, hash, data)
             ? EIP1271_SUCCESS
             : EIP1271_FAILED;
     }
@@ -65,8 +66,6 @@ contract OwnableValidator is ERC7579ValidatorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    function getModuleTypes() external view returns (EncodedModuleTypes) { }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
 }
