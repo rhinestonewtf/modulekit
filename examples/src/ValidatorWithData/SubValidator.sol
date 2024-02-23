@@ -8,6 +8,8 @@ import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
+import "forge-std/console2.sol";
+
 contract SubValidator is ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
 
@@ -25,17 +27,15 @@ contract SubValidator is ERC7579ValidatorBase {
 
     function _validate(
         address owner,
-        PackedUserOperation calldata userOp,
+        bytes calldata signature,
         bytes32 userOpHash
     )
         internal
         view
-        returns (ValidationData)
+        returns (bool validSig)
     {
-        bool validSig = owner.isValidSignatureNowCalldata(
-            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
-        );
-        return _packValidationData(!validSig, type(uint48).max, 0);
+        address recover = ECDSA.recoverCalldata(userOpHash, signature);
+        validSig = recover == owner;
     }
 
     function validateUserOp(
@@ -47,19 +47,21 @@ contract SubValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        return _validate(owners[userOp.sender], userOp, userOpHash);
+        bool validSig = _validate(owners[userOp.sender], userOp.signature, userOpHash);
+        return _packValidationData(!validSig, type(uint48).max, 0);
     }
 
     function validateUserOpWithData(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
-        bytes calldata data
+        bytes calldata validationData
     )
         external
         view
-        returns (ValidationData)
+        returns (bool validSignature)
     {
-        return _validate(abi.decode(data, (address)), userOp, userOpHash);
+        address owner = abi.decode(validationData, (address));
+        return _validate(owner, userOp.signature, userOpHash);
     }
 
     function isValidSignatureWithSender(
@@ -71,15 +73,10 @@ contract SubValidator is ERC7579ValidatorBase {
         view
         override
         returns (bytes4)
-    {
-        address owner = owners[msg.sender];
-        return SignatureCheckerLib.isValidSignatureNowCalldata(owner, hash, data)
-            ? EIP1271_SUCCESS
-            : EIP1271_FAILED;
-    }
+    { }
 
     function name() external pure returns (string memory) {
-        return "OwnableValidator";
+        return "ECDSAValidator";
     }
 
     function version() external pure returns (string memory) {
