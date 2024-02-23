@@ -2,8 +2,6 @@
 pragma solidity ^0.8.23;
 
 interface ISessionValidationModule {
-
-
     /**
      * @dev validates that the call (destinationContract, callValue, funcCallData)
      * complies with the Session Key permissions represented by sessionKeyData
