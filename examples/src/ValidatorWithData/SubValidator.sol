@@ -8,8 +8,6 @@ import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 
-import "forge-std/console2.sol";
-
 contract SubValidator is ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
 
