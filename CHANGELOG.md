@@ -17,6 +17,8 @@ The format is based on [Common Changelog](https://common-changelog.org/).
   - `packages` now includes the core components
   - `examples` now includes the example modules
   - `accounts` includes the account integrations (the ERC-7579 reference implementation is currently inside the `packages/modulekit` package)
+- Support for the latest version of ERC-7579
+- Entrypoint address is now the official v0.7 EntryPoint address
 
 ### Added
 
