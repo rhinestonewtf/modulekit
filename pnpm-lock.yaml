@@ -55,7 +55,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
+        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -112,7 +112,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
+        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -151,7 +151,7 @@ importers:
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
+        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -199,7 +199,7 @@ importers:
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4
+        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -4462,8 +4462,8 @@ packages:
     version: 1.0.0
     dev: true
 
-  github.com/erc7579/erc7579-implementation/85d2823a73f1816b519e7bd65e7d82c8b8a172a4:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/85d2823a73f1816b519e7bd65e7d82c8b8a172a4}
+  github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/1548b5bd9d20c257926d84952190cc6877ba7a57}
     name: micro-msa
     version: 0.3.1
     dependencies:
