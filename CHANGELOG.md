@@ -13,18 +13,22 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 ### Changed
 
 - Native ERC-7579 support
-- Folder structure
-- Testing interface
+- Improved Folder structure
+- Testing interface:
+  - `RhinestoneAccount` -> `AccountInstance`
+  - `install`, `uininstall` and `isInstalled` functions for module types have been collapsed into `installModule`, `uninstallModule` and `isModuleInstalled` respectively
+- Safe suppport now via a Safe ERC7579 module (still experimental)
 
 ### Added
 
-- Hooks and Fallbacks
+- Hooks and Fallbacks: `ERC7579HookBase` and `ERC7579FallbackBase`
 - Module Bases
+- Gas measurement helper: `instance.log4337Gas("identifier")` and `GAS=true forge test`
+- ERC4337 rule validation support in Foundry: `SIMULATE=true forge test`
 
 ### Removed
 
 - Unused components
-- Safe support (temporarily)
 
 ## [0.2.0] - 17-10-2023
 
