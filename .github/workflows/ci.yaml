@@ -1,0 +1,50 @@
+on:
+  - push
+  - pull_request
+
+jobs:
+  lint-modulekit:
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-lint-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/modulekit"
+
+  build-modulekit:
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/modulekit"
+
+  lint-safe7579:
+    needs: ["lint-modulekit"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-lint-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/safe7579"
+
+  test-safe7579:
+    needs: ["build-modulekit"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/safe7579"
+
+  lint-sessionkeymanager:
+    needs: ["lint-modulekit"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-lint-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/sessionkeymanager"
+
+  test-sessionkeymanager:
+    needs: ["build-modulekit"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/sessionkeymanager"
+
+  lint-modulekit-examples:
+    needs: ["lint-modulekit"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-lint-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/modulekit-examples"
+
+  test-modulekit-examples:
+    needs: ["build-modulekit"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
+    with:
+      match-workspace: "@rhinestone/modulekit-examples"

@@ -4,9 +4,25 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
+[0.3.1]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.1
 [0.3.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
+
+## [0.3.1] - 23-02-2024
+
+### Changed
+
+- File structure:
+  - `packages` now includes the core components
+  - `examples` now includes the example modules
+  - `accounts` includes the account integrations (the ERC-7579 reference implementation is currently inside the `packages/modulekit` package)
+- Support for the latest version of ERC-7579
+- Entrypoint address is now the official v0.7 EntryPoint address
+
+### Added
+
+- Module Examples are now in the `examples` folder
 
 ## [0.3.0] - 01-02-2024
 

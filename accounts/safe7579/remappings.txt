@@ -1,0 +1,15 @@
+ds-test/=node_modules/ds-test/src/
+forge-std/=node_modules/forge-std/src/
+account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/
+account-abstraction-v0.6/=node_modules/@ERC4337/account-abstraction-v0.6/contracts/
+erc7579/=node_modules/erc7579/src/
+sentinellist/=node_modules/sentinellist/src/
+solmate/=node_modules/solmate/src/
+solady/=node_modules/solady/
+solarray/=node_modules/solarray/src/
+@rhinestone/=node_modules/@rhinestone/
+@safe-global/=node_modules/@safe-global/
+@ERC4337/=node_modules/@ERC4337/
+@openzeppelin/=node_modules/@openzeppelin/
+@prb/math/=node_modules/@prb/math/
+erc4337-validation/=node_modules/erc4337-validation/src/

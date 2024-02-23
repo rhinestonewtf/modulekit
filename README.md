@@ -83,6 +83,26 @@ For feature or change requests, feel free to open a PR, start a discussion or ge
 
 For guidance on how to create PRs, see the [CONTRIBUTING](./CONTRIBUTING.md) guide.
 
+## Using this repo
+
+To install dependencies, run:
+
+```bash
+pnpm install
+```
+
+To build the project, run:
+
+```bash
+pnpm build
+```
+
+To run tests, run:
+
+```bash
+pnpm test -r
+```
+
 ## Credits
 
 - [Safe{Core} Protocol](https://github.com/safe-global/safe-core-protocol/): ExecutorManager.sol is heavily insprired by Safe's SafeProtocolManager but is compatible across all supported accounts

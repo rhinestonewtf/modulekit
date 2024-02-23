@@ -1,8 +1,8 @@
 {
-  "name": "@rhinestone/modulekit",
-  "description": "ModuleKit is a development toolkit to build Smart Account Modules",
+  "name": "@rhinestone/safe7579",
+  "description": "Safe ERC7579 implementation",
   "license": "MIT",
-  "version": "0.3.1",
+  "version": "0.1.0",
   "author": {
     "name": "zeroknots.eth",
     "url": "https://rhinestone.wtf"
@@ -10,18 +10,24 @@
   "bugs": {
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
-  "workspaces": [
-    "packages/**",
-    "accounts/**",
-    "examples/"
-  ],
-  "dependencies": {},
   "devDependencies": {
-    "@rhinestone/sessionkeymanager": "workspace:*",
-    "@rhinestone/safe7579": "workspace:*",
     "@rhinestone/modulekit": "workspace:*",
-    "prettier": "^2.8.8",
-    "solhint": "^4.1.1"
+    "@rhinestone/sessionkeymanager": "workspace:*",
+    "@safe-global/safe-contracts": "^1.4.1",
+    "@openzeppelin/contracts": "5.0.1",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
+    "@prb/math": "^4.0.2",
+    "forge-std": "github:foundry-rs/forge-std",
+    "ds-test": "github:dapphub/ds-test",
+    "erc7579": "github:erc7579/erc7579-implementation",
+    "sentinellist": "github:zeroknots/sentinellist",
+    "solady": "github:vectorized/solady",
+    "solarray": "github:sablier-labs/solarray",
+    "solmate": "github:transmissions11/solmate",
+    "solhint": "^4.1.1",
+    "prettier": "^2.8.8"
   },
   "files": [
     "artifacts",
@@ -30,7 +36,6 @@
     "CHANGELOG.md",
     "LICENSE-GPL.md"
   ],
-  "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
   "keywords": [
     "blockchain",
     "ethereum",
@@ -44,9 +49,8 @@
   },
   "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
-    "build": "forge build",
     "fmt": "forge fmt",
-    "fmt:check": "forge fmt --check",
+    "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
     "build:smt": "FOUNDRY_PROFILE=smt forge build",
     "clean": "rm -rf artifacts broadcast cache docs out out-optimized out-svg",
