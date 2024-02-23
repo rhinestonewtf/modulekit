@@ -3,5 +3,6 @@ bytecode=$(jq ".bytecode" out/SessionKeyManager.sol/SessionKeyManager.json | jq 
 
 echo "// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-/* solhint-disable-nextline max-line-length */
+
+/* solhint-disable  max-line-length */
 bytes constant SESSIONKEYMANAGER_BYTECODE = $bytecode;" > src/SessionKeyManagerBytecode.sol

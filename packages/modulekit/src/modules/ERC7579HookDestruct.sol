@@ -13,7 +13,6 @@ import {
     CALLTYPE_DELEGATECALL
 } from "erc7579/lib/ModeLib.sol";
 
-
 uint256 constant EXEC_OFFSET = 100;
 uint256 constant INSTALL_OFFSET = 132;
 
@@ -69,7 +68,6 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
         ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
         CallType calltype = ModeLib.getCallType(mode);
-
 
         if (calltype == CALLTYPE_SINGLE) {
             (address to, uint256 value, bytes calldata callData) =

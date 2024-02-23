@@ -4,13 +4,10 @@ pragma solidity ^0.8.23;
 /* solhint-disable function-max-lines*/
 /* solhint-disable ordering*/
 
-import { IERC7579Account, Execution } from "@rhinestone/modulekit/src/Accounts.sol";
-import { EncodedModuleTypes, ModuleTypeLib, ModuleType } from "erc7579/lib/ModuleTypeLib.sol";
 import {
     ACCOUNT_EXEC_TYPE,
     ERC7579ValidatorLib
 } from "@rhinestone/modulekit/src/modules/utils/ERC7579ValidatorLib.sol";
-import { IERC1271 } from "@rhinestone/modulekit/src/interfaces/IERC1271.sol";
 import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/modules/ERC7579ValidatorBase.sol";
 import {
     PackedUserOperation, UserOperationLib
@@ -85,7 +82,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
 
     function _validateSingleExec(
         PackedUserOperation calldata userOp,
-        bytes32 userOpHash
+        bytes32 /*userOpHash*/ // TODO: userOpHash is currently not evaluated. DONT USE THIS IN PROD
     )
         internal
         returns (ValidationData vd)
@@ -112,7 +109,7 @@ contract SessionKeyManager is ERC7579ValidatorBase {
 
     function _validateBatchedExec(
         PackedUserOperation calldata userOp,
-        bytes32 userOpHash
+        bytes32 /*userOpHash*/
     )
         internal
         returns (ValidationData vd)
