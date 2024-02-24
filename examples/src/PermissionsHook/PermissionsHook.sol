@@ -1,0 +1,294 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
+import { ERC7579HookDestruct } from "@rhinestone/modulekit/src/modules/ERC7579HookDestruct.sol";
+import { Execution, IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
+
+import { IERC721 } from "forge-std/interfaces/IERC721.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+
+contract PermissionsHook is ERC7579HookDestruct {
+    /*//////////////////////////////////////////////////////////////////////////
+                                    CONSTANTS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    bytes1 internal constant PERMISSION_DISALLOWED = 0x00;
+    bytes1 internal constant PERMISSION_ALLOWED = 0x00;
+
+    error InvalidPermission();
+
+    struct ModulePermissions {
+        // Execution permissions
+        // - Target permissions
+        bytes1 selfCall; // 0x00 - false, 0x01 - true
+        bytes1 moduleCall; // 0x00 - false, 0x01 - true
+        // - Value permissions
+        bytes1 sendValue; // 0x00 - false, 0x01 - true
+        // - Calldata permissions
+        bytes1 erc20Transfer; // 0x00 - false, 0x01 - true
+        bytes1 erc721Transfer; // 0x00 - false, 0x01 - true
+        // Module configuration permissions
+        bytes1 moduleConfig; // 0x00 - false, 0x01 - true
+    }
+
+    mapping(address account => mapping(address module => ModulePermissions)) internal permissions;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external override {
+        (address[] memory _modules, ModulePermissions[] memory _permissions) =
+            abi.decode(data, (address[], ModulePermissions[]));
+
+        uint256 permissionsLength = _permissions.length;
+
+        if (_modules.length != permissionsLength) {
+            revert("PermissionsHook: addPermissions: module and permissions length mismatch");
+        }
+
+        for (uint256 i = 0; i < permissionsLength; i++) {
+            permissions[msg.sender][_modules[i]] = _permissions[i];
+        }
+    }
+
+    function onUninstall(bytes calldata data) external override {
+        // todo
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        // todo
+    }
+
+    function addPermissions(
+        address[] calldata _modules,
+        ModulePermissions[] calldata _permissions
+    )
+        external
+    {
+        uint256 permissionsLength = _permissions.length;
+
+        if (_modules.length != permissionsLength) {
+            revert("PermissionsHook: addPermissions: module and permissions length mismatch");
+        }
+
+        for (uint256 i = 0; i < permissionsLength; i++) {
+            permissions[msg.sender][_modules[i]] = _permissions[i];
+        }
+    }
+
+    function getPermissions(
+        address account,
+        address module
+    )
+        public
+        view
+        returns (ModulePermissions memory)
+    {
+        return permissions[account][module];
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onPostCheck(bytes calldata hookData)
+        internal
+        virtual
+        override
+        returns (bool success)
+    {
+        return true;
+    }
+
+    function onExecute(
+        address msgSender,
+        address target,
+        uint256 value,
+        bytes calldata callData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        // Not callable from module
+        return "";
+    }
+
+    function onExecuteBatch(
+        address msgSender,
+        Execution[] calldata
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        // Not callable from module
+        return "";
+    }
+
+    function onExecuteFromExecutor(
+        address msgSender,
+        address target,
+        uint256 value,
+        bytes calldata callData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        ModulePermissions memory modulePermissions = permissions[msg.sender][msgSender];
+        _validateExecutePermissions(modulePermissions, target, value, callData);
+    }
+
+    function onExecuteBatchFromExecutor(
+        address msgSender,
+        Execution[] calldata executions
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        ModulePermissions memory modulePermissions = permissions[msg.sender][msgSender];
+
+        uint256 executionLength = executions.length;
+        for (uint256 i = 0; i < executionLength; i++) {
+            _validateExecutePermissions(
+                modulePermissions, executions[i].target, executions[i].value, executions[i].callData
+            );
+        }
+    }
+
+    function onInstallModule(
+        address msgSender,
+        uint256 moduleType,
+        address module,
+        bytes calldata initData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        bool isInstalledExecutor =
+            IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, msgSender, "");
+
+        if (!isInstalledExecutor) {
+            // Execution not triggered by executor, so account should do access control
+            return "";
+        }
+
+        ModulePermissions storage modulePermissions = permissions[msg.sender][msgSender];
+
+        if (modulePermissions.moduleConfig != PERMISSION_ALLOWED) {
+            revert InvalidPermission();
+        }
+    }
+
+    function onUninstallModule(
+        address msgSender,
+        uint256 moduleType,
+        address module,
+        bytes calldata deInitData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        bool isInstalledExecutor =
+            IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, msgSender, "");
+
+        if (!isInstalledExecutor) {
+            // Execution not triggered by executor, so account should do access control
+            return "";
+        }
+
+        ModulePermissions storage modulePermissions = permissions[msg.sender][msgSender];
+
+        if (modulePermissions.moduleConfig != PERMISSION_ALLOWED) {
+            revert InvalidPermission();
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _validateExecutePermissions(
+        ModulePermissions memory modulePermissions,
+        address target,
+        uint256 value,
+        bytes calldata callData
+    )
+        internal
+    {
+        // Target permissions
+        if (target == msg.sender && modulePermissions.selfCall != PERMISSION_ALLOWED) {
+            revert InvalidPermission();
+        }
+
+        if (modulePermissions.moduleCall != PERMISSION_ALLOWED) {
+            if (IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, target, "")) {
+                revert InvalidPermission();
+            }
+        }
+
+        // Value permissions
+        if (value > 0 && modulePermissions.sendValue != PERMISSION_ALLOWED) {
+            revert InvalidPermission();
+        }
+
+        // Calldata permissions
+        if (_isErc20Transfer(callData) && modulePermissions.erc20Transfer != PERMISSION_ALLOWED) {
+            revert InvalidPermission();
+        }
+
+        if (_isErc721Transfer(callData) && modulePermissions.erc721Transfer != PERMISSION_ALLOWED) {
+            revert InvalidPermission();
+        }
+    }
+
+    function _isErc20Transfer(bytes calldata callData)
+        internal
+        pure
+        returns (bool isErc20Transfer)
+    {
+        bytes4 functionSig = bytes4(callData[0:4]);
+        if (functionSig == IERC20.transfer.selector || functionSig == IERC20.transferFrom.selector)
+        {
+            isErc20Transfer = true;
+        }
+    }
+
+    function _isErc721Transfer(bytes calldata callData)
+        internal
+        pure
+        returns (bool isErc721Transfer)
+    {
+        bytes4 functionSig = bytes4(callData[0:4]);
+        if (functionSig == IERC721.transferFrom.selector) {
+            isErc721Transfer = true;
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function version() external pure virtual returns (string memory) {
+        return "1.0.0";
+    }
+
+    function name() external pure virtual returns (string memory) {
+        return "ColdStorageHook";
+    }
+
+    function isModuleType(uint256 isType) external pure virtual override returns (bool) {
+        return isType == TYPE_HOOK;
+    }
+}
