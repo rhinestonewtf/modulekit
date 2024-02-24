@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ExecutorBase } from "../Modules.sol";
-import { IERC7579Account } from "../external/ERC7579.sol";
+import { IERC7579Account, Execution } from "../external/ERC7579.sol";
 
 contract MockExecutor is ERC7579ExecutorBase {
     function onInstall(bytes calldata data) external override { }
@@ -19,6 +19,16 @@ contract MockExecutor is ERC7579ExecutorBase {
         returns (bytes memory)
     {
         return _execute(account, to, value, callData);
+    }
+
+    function execBatch(
+        address account,
+        Execution[] memory execs
+    )
+        external
+        returns (bytes[] memory)
+    {
+        return _execute(account, execs);
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {

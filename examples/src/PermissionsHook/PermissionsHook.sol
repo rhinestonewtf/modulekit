@@ -12,8 +12,8 @@ contract PermissionsHook is ERC7579HookDestruct {
                                     CONSTANTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    bytes1 internal constant PERMISSION_DISALLOWED = 0x00;
-    bytes1 internal constant PERMISSION_ALLOWED = 0x00;
+    bytes1 internal constant FALSE_CONSTANT = 0x00;
+    bytes1 internal constant TRUE_CONSTANT = 0x01;
 
     error InvalidPermission();
 
@@ -22,13 +22,17 @@ contract PermissionsHook is ERC7579HookDestruct {
         // - Target permissions
         bytes1 selfCall; // 0x00 - false, 0x01 - true
         bytes1 moduleCall; // 0x00 - false, 0x01 - true
+        bytes1 hasAllowedTargets; // 0x00 - false, 0x01 - true
         // - Value permissions
         bytes1 sendValue; // 0x00 - false, 0x01 - true
         // - Calldata permissions
+        bytes1 hasAllowedFunctions; // 0x00 - false, 0x01 - true
         bytes1 erc20Transfer; // 0x00 - false, 0x01 - true
         bytes1 erc721Transfer; // 0x00 - false, 0x01 - true
         // Module configuration permissions
         bytes1 moduleConfig; // 0x00 - false, 0x01 - true
+        bytes4[] allowedFunctions;
+        address[] allowedTargets;
     }
 
     mapping(address account => mapping(address module => ModulePermissions)) internal permissions;
@@ -113,7 +117,6 @@ contract PermissionsHook is ERC7579HookDestruct {
         returns (bytes memory hookData)
     {
         // Not callable from module
-        return "";
     }
 
     function onExecuteBatch(
@@ -126,7 +129,6 @@ contract PermissionsHook is ERC7579HookDestruct {
         returns (bytes memory hookData)
     {
         // Not callable from module
-        return "";
     }
 
     function onExecuteFromExecutor(
@@ -184,7 +186,7 @@ contract PermissionsHook is ERC7579HookDestruct {
 
         ModulePermissions storage modulePermissions = permissions[msg.sender][msgSender];
 
-        if (modulePermissions.moduleConfig != PERMISSION_ALLOWED) {
+        if (modulePermissions.moduleConfig != TRUE_CONSTANT) {
             revert InvalidPermission();
         }
     }
@@ -210,7 +212,7 @@ contract PermissionsHook is ERC7579HookDestruct {
 
         ModulePermissions storage modulePermissions = permissions[msg.sender][msgSender];
 
-        if (modulePermissions.moduleConfig != PERMISSION_ALLOWED) {
+        if (modulePermissions.moduleConfig != TRUE_CONSTANT) {
             revert InvalidPermission();
         }
     }
@@ -228,28 +230,58 @@ contract PermissionsHook is ERC7579HookDestruct {
         internal
     {
         // Target permissions
-        if (target == msg.sender && modulePermissions.selfCall != PERMISSION_ALLOWED) {
+        if (target == msg.sender && modulePermissions.selfCall != TRUE_CONSTANT) {
             revert InvalidPermission();
         }
 
-        if (modulePermissions.moduleCall != PERMISSION_ALLOWED) {
+        if (modulePermissions.moduleCall != TRUE_CONSTANT) {
             if (IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, target, "")) {
                 revert InvalidPermission();
             }
         }
 
+        if (modulePermissions.hasAllowedTargets == TRUE_CONSTANT) {
+            bool isAllowedTarget = false;
+            uint256 allowedTargetsLength = modulePermissions.allowedTargets.length;
+            for (uint256 i = 0; i < allowedTargetsLength; i++) {
+                if (modulePermissions.allowedTargets[i] == target) {
+                    isAllowedTarget = true;
+                    break;
+                }
+            }
+
+            if (!isAllowedTarget) {
+                revert InvalidPermission();
+            }
+        }
+
         // Value permissions
-        if (value > 0 && modulePermissions.sendValue != PERMISSION_ALLOWED) {
+        if (value > 0 && modulePermissions.sendValue != TRUE_CONSTANT) {
             revert InvalidPermission();
         }
 
         // Calldata permissions
-        if (_isErc20Transfer(callData) && modulePermissions.erc20Transfer != PERMISSION_ALLOWED) {
+        if (_isErc20Transfer(callData) && modulePermissions.erc20Transfer != TRUE_CONSTANT) {
             revert InvalidPermission();
         }
 
-        if (_isErc721Transfer(callData) && modulePermissions.erc721Transfer != PERMISSION_ALLOWED) {
+        if (_isErc721Transfer(callData) && modulePermissions.erc721Transfer != TRUE_CONSTANT) {
             revert InvalidPermission();
+        }
+
+        if (modulePermissions.hasAllowedFunctions == TRUE_CONSTANT) {
+            bool isAllowedFunction = false;
+            uint256 allowedFunctionsLength = modulePermissions.allowedFunctions.length;
+            for (uint256 i = 0; i < allowedFunctionsLength; i++) {
+                if (modulePermissions.allowedFunctions[i] == bytes4(callData[0:4])) {
+                    isAllowedFunction = true;
+                    break;
+                }
+            }
+
+            if (!isAllowedFunction) {
+                revert InvalidPermission();
+            }
         }
     }
 
@@ -258,6 +290,9 @@ contract PermissionsHook is ERC7579HookDestruct {
         pure
         returns (bool isErc20Transfer)
     {
+        if (callData.length < 4) {
+            return false;
+        }
         bytes4 functionSig = bytes4(callData[0:4]);
         if (functionSig == IERC20.transfer.selector || functionSig == IERC20.transferFrom.selector)
         {
@@ -270,6 +305,9 @@ contract PermissionsHook is ERC7579HookDestruct {
         pure
         returns (bool isErc721Transfer)
     {
+        if (callData.length < 4) {
+            return false;
+        }
         bytes4 functionSig = bytes4(callData[0:4]);
         if (functionSig == IERC721.transferFrom.selector) {
             isErc721Transfer = true;
