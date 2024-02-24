@@ -12,25 +12,22 @@ contract PermissionsHook is ERC7579HookDestruct {
                                     CONSTANTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    bytes1 internal constant FALSE_CONSTANT = 0x00;
-    bytes1 internal constant TRUE_CONSTANT = 0x01;
-
     error InvalidPermission();
 
     struct ModulePermissions {
         // Execution permissions
         // - Target permissions
-        bytes1 selfCall; // 0x00 - false, 0x01 - true
-        bytes1 moduleCall; // 0x00 - false, 0x01 - true
-        bytes1 hasAllowedTargets; // 0x00 - false, 0x01 - true
+        bool selfCall;
+        bool moduleCall;
+        bool hasAllowedTargets;
         // - Value permissions
-        bytes1 sendValue; // 0x00 - false, 0x01 - true
+        bool sendValue;
         // - Calldata permissions
-        bytes1 hasAllowedFunctions; // 0x00 - false, 0x01 - true
-        bytes1 erc20Transfer; // 0x00 - false, 0x01 - true
-        bytes1 erc721Transfer; // 0x00 - false, 0x01 - true
+        bool hasAllowedFunctions;
+        bool erc20Transfer;
+        bool erc721Transfer;
         // Module configuration permissions
-        bytes1 moduleConfig; // 0x00 - false, 0x01 - true
+        bool moduleConfig;
         bytes4[] allowedFunctions;
         address[] allowedTargets;
     }
@@ -186,7 +183,7 @@ contract PermissionsHook is ERC7579HookDestruct {
 
         ModulePermissions storage modulePermissions = permissions[msg.sender][msgSender];
 
-        if (modulePermissions.moduleConfig != TRUE_CONSTANT) {
+        if (!modulePermissions.moduleConfig) {
             revert InvalidPermission();
         }
     }
@@ -212,7 +209,7 @@ contract PermissionsHook is ERC7579HookDestruct {
 
         ModulePermissions storage modulePermissions = permissions[msg.sender][msgSender];
 
-        if (modulePermissions.moduleConfig != TRUE_CONSTANT) {
+        if (!modulePermissions.moduleConfig) {
             revert InvalidPermission();
         }
     }
@@ -230,17 +227,17 @@ contract PermissionsHook is ERC7579HookDestruct {
         internal
     {
         // Target permissions
-        if (target == msg.sender && modulePermissions.selfCall != TRUE_CONSTANT) {
+        if (target == msg.sender && !modulePermissions.selfCall) {
             revert InvalidPermission();
         }
 
-        if (modulePermissions.moduleCall != TRUE_CONSTANT) {
+        if (!modulePermissions.moduleCall) {
             if (IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, target, "")) {
                 revert InvalidPermission();
             }
         }
 
-        if (modulePermissions.hasAllowedTargets == TRUE_CONSTANT) {
+        if (modulePermissions.hasAllowedTargets) {
             bool isAllowedTarget = false;
             uint256 allowedTargetsLength = modulePermissions.allowedTargets.length;
             for (uint256 i = 0; i < allowedTargetsLength; i++) {
@@ -256,20 +253,20 @@ contract PermissionsHook is ERC7579HookDestruct {
         }
 
         // Value permissions
-        if (value > 0 && modulePermissions.sendValue != TRUE_CONSTANT) {
+        if (value > 0 && !modulePermissions.sendValue) {
             revert InvalidPermission();
         }
 
         // Calldata permissions
-        if (_isErc20Transfer(callData) && modulePermissions.erc20Transfer != TRUE_CONSTANT) {
+        if (_isErc20Transfer(callData) && !modulePermissions.erc20Transfer) {
             revert InvalidPermission();
         }
 
-        if (_isErc721Transfer(callData) && modulePermissions.erc721Transfer != TRUE_CONSTANT) {
+        if (_isErc721Transfer(callData) && !modulePermissions.erc721Transfer) {
             revert InvalidPermission();
         }
 
-        if (modulePermissions.hasAllowedFunctions == TRUE_CONSTANT) {
+        if (modulePermissions.hasAllowedFunctions) {
             bool isAllowedFunction = false;
             uint256 allowedFunctionsLength = modulePermissions.allowedFunctions.length;
             for (uint256 i = 0; i < allowedFunctionsLength; i++) {

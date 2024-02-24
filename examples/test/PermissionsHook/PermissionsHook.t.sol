@@ -19,9 +19,6 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
-    bytes1 internal constant FALSE_CONSTANT = 0x00;
-    bytes1 internal constant TRUE_CONSTANT = 0x01;
-
     // Account instance and hook
     AccountInstance internal instance;
     PermissionsHook internal permissionsHook;
@@ -68,27 +65,27 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
         PermissionsHook.ModulePermissions[] memory permissions =
             new PermissionsHook.ModulePermissions[](2);
         permissions[0] = PermissionsHook.ModulePermissions({
-            selfCall: FALSE_CONSTANT,
-            moduleCall: FALSE_CONSTANT,
-            hasAllowedTargets: TRUE_CONSTANT,
-            sendValue: FALSE_CONSTANT,
-            hasAllowedFunctions: TRUE_CONSTANT,
-            erc20Transfer: FALSE_CONSTANT,
-            erc721Transfer: FALSE_CONSTANT,
-            moduleConfig: FALSE_CONSTANT,
+            selfCall: false,
+            moduleCall: false,
+            hasAllowedTargets: true,
+            sendValue: false,
+            hasAllowedFunctions: true,
+            erc20Transfer: false,
+            erc721Transfer: false,
+            moduleConfig: false,
             allowedFunctions: new bytes4[](0),
             allowedTargets: new address[](0)
         });
 
         permissions[1] = PermissionsHook.ModulePermissions({
-            selfCall: TRUE_CONSTANT,
-            moduleCall: TRUE_CONSTANT,
-            hasAllowedTargets: FALSE_CONSTANT,
-            sendValue: TRUE_CONSTANT,
-            hasAllowedFunctions: FALSE_CONSTANT,
-            erc20Transfer: TRUE_CONSTANT,
-            erc721Transfer: TRUE_CONSTANT,
-            moduleConfig: TRUE_CONSTANT,
+            selfCall: true,
+            moduleCall: true,
+            hasAllowedTargets: false,
+            sendValue: true,
+            hasAllowedFunctions: false,
+            erc20Transfer: true,
+            erc721Transfer: true,
+            moduleConfig: true,
             allowedFunctions: new bytes4[](0),
             allowedTargets: new address[](0)
         });
