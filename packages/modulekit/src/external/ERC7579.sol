@@ -25,6 +25,7 @@ import {
     ModePayload,
     CALLTYPE_SINGLE,
     CALLTYPE_BATCH,
+    CALLTYPE_DELEGATECALL,
     EXECTYPE_DEFAULT,
     MODE_DEFAULT
 } from "erc7579/lib/ModeLib.sol";
