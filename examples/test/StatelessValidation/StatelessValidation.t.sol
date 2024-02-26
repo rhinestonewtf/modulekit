@@ -7,8 +7,8 @@ import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
 import "@rhinestone/modulekit/src/Helpers.sol";
 
-import { SubValidator } from "src/ValidatorWithData/SubValidator.sol";
-import { MultiPlexer } from "src/ValidatorWithData/MultiPlexer.sol";
+import { SubValidator } from "src/StatelessValidation/SubValidator.sol";
+import { MultiPlexer } from "src/StatelessValidation/MultiPlexer.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { Solarray } from "solarray/Solarray.sol";
