@@ -54,8 +54,8 @@ importers:
         specifier: github:rhinestonewtf/erc4337-validation
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
+        specifier: github:erc7579/erc7579-implementation#feature/hookRevert
+        version: github.com/erc7579/erc7579-implementation/db377a819c44515cb9454a9da151714136ee0b25
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -82,7 +82,7 @@ importers:
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
-        version: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+        version: github.com/kopy-kat/account-abstraction/396bda190ddc00919339986c72c580c160a15587(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
       '@ERC4337/account-abstraction-v0.6':
         specifier: github:eth-infinitism/account-abstraction#v0.6.0
         version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
@@ -109,10 +109,10 @@ importers:
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
       erc4337-validation:
         specifier: github:rhinestonewtf/erc4337-validation
-        version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
+        version: git@github.com+rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
+        specifier: github:erc7579/erc7579-implementation#feature/hookRevert
+        version: github.com/erc7579/erc7579-implementation/cb007568e1c420ddbddf83f1880a4dc7c981e178
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -124,7 +124,7 @@ importers:
         version: github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b
       solady:
         specifier: github:vectorized/solady
-        version: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
+        version: github.com/vectorized/solady/21009ce09f02c0e20ce4750b63577e8c0cc7ced8
       solarray:
         specifier: github:sablier-labs/solarray
         version: github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684
@@ -150,8 +150,8 @@ importers:
         specifier: github:dapphub/ds-test
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
       erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
+        specifier: github:erc7579/erc7579-implementation#feature/hookRevert
+        version: github.com/erc7579/erc7579-implementation/db377a819c44515cb9454a9da151714136ee0b25
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -198,8 +198,8 @@ importers:
         specifier: github:rhinestonewtf/erc4337-validation
         version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57
+        specifier: github:erc7579/erc7579-implementation#feature/hookRevert
+        version: github.com/erc7579/erc7579-implementation/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -4456,14 +4456,39 @@ packages:
       ethers: 5.7.2
     dev: true
 
+  git@github.com+rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0:
+    resolution: {commit: 19a97d86f8f29709664334078925b2a843be19e0, repo: git@github.com:rhinestonewtf/erc4337-validation.git, type: git}
+    name: erc4337-validation
+    version: 0.0.1
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+      solady: github.com/vectorized/solady/21009ce09f02c0e20ce4750b63577e8c0cc7ced8
+    dev: true
+
   github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0:
     resolution: {tarball: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0}
     name: ds-test
     version: 1.0.0
     dev: true
 
-  github.com/erc7579/erc7579-implementation/1548b5bd9d20c257926d84952190cc6877ba7a57:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/1548b5bd9d20c257926d84952190cc6877ba7a57}
+  github.com/erc7579/erc7579-implementation/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3}
+    name: micro-msa
+    version: 0.3.1
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+    dev: true
+
+  github.com/erc7579/erc7579-implementation/cb007568e1c420ddbddf83f1880a4dc7c981e178:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/cb007568e1c420ddbddf83f1880a4dc7c981e178}
+    name: micro-msa
+    version: 0.3.1
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+    dev: true
+
+  github.com/erc7579/erc7579-implementation/db377a819c44515cb9454a9da151714136ee0b25:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/db377a819c44515cb9454a9da151714136ee0b25}
     name: micro-msa
     version: 0.3.1
     dependencies:
@@ -4538,6 +4563,38 @@ packages:
     version: 1.7.6
     dev: true
 
+  github.com/kopy-kat/account-abstraction/396bda190ddc00919339986c72c580c160a15587(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
+    resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/396bda190ddc00919339986c72c580c160a15587}
+    id: github.com/kopy-kat/account-abstraction/396bda190ddc00919339986c72c580c160a15587
+    name: accountabstraction
+    version: 0.7.0
+    dependencies:
+      '@nomiclabs/hardhat-etherscan': 2.1.8(hardhat@2.20.1)
+      '@openzeppelin/contracts': 5.0.1
+      '@thehubbleproject/bls': 0.5.1
+      '@typechain/hardhat': 2.3.1(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@types/debug': 4.1.12
+      '@types/mocha': 9.1.1
+      debug: 4.3.4(supports-color@8.1.1)
+      ethereumjs-util: 7.1.5
+      ethereumjs-wallet: 1.0.2
+      hardhat-deploy: 0.11.45
+      hardhat-deploy-ethers: 0.3.0-beta.13(ethers@5.4.0)(hardhat@2.20.1)
+      solidity-coverage: 0.8.8(hardhat@2.20.1)
+      source-map-support: 0.5.21
+      table: 6.8.1
+      typescript: 4.9.5
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - ethers
+      - hardhat
+      - lodash
+      - supports-color
+      - typechain
+      - utf-8-validate
+    dev: true
+
   github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
     resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc}
     id: github.com/kopy-kat/account-abstraction/3c0127e9f7cb76e4a0fdb2d35cac51900f252bdc
@@ -4608,7 +4665,7 @@ packages:
     version: 0.0.1
     dependencies:
       '@openzeppelin/contracts': 5.0.1
-      solady: github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b
+      solady: github.com/vectorized/solady/21009ce09f02c0e20ce4750b63577e8c0cc7ced8
     dev: true
 
   github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
@@ -4621,6 +4678,12 @@ packages:
     resolution: {tarball: https://codeload.github.com/transmissions11/solmate/tar.gz/c892309933b25c03d32b1b0d674df7ae292ba925}
     name: solmate
     version: 6.2.0
+    dev: true
+
+  github.com/vectorized/solady/21009ce09f02c0e20ce4750b63577e8c0cc7ced8:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/21009ce09f02c0e20ce4750b63577e8c0cc7ced8}
+    name: solady
+    version: 0.0.172
     dev: true
 
   github.com/vectorized/solady/72e47ca417d24a30801b2921584e8486462cfc7b:

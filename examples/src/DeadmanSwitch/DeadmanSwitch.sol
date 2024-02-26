@@ -58,9 +58,7 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         config.lastAccess = uint48(block.timestamp);
     }
 
-    function postCheck(bytes calldata) external pure returns (bool success) {
-        success = true;
-    }
+    function postCheck(bytes calldata) external { }
 
     function validateUserOp(
         PackedUserOperation calldata userOp,

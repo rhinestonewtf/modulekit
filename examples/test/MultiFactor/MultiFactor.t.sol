@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
 import "@rhinestone/modulekit/src/Modules.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";
+import { EncodedModuleTypes } from "erc7579/lib/ModuleTypeLib.sol";
 
 import { MultiFactor, ECDSAFactor } from "src/MultiFactor/MultiFactor.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";

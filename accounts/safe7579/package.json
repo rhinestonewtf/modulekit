@@ -21,7 +21,7 @@
     "@prb/math": "^4.0.2",
     "forge-std": "github:foundry-rs/forge-std",
     "ds-test": "github:dapphub/ds-test",
-    "erc7579": "github:erc7579/erc7579-implementation",
+    "erc7579": "github:erc7579/erc7579-implementation#feature/hookRevert",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
