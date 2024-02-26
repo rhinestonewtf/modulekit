@@ -47,6 +47,7 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
     }
 
     function setUpPermissionsHook() internal {
+        console2.log("setting up permissions hook");
         instance.installModule({
             moduleTypeId: MODULE_TYPE_EXECUTOR,
             module: address(executorDisallowed),
@@ -58,12 +59,13 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             data: ""
         });
 
-        address[] memory executors = new address[](2);
-        executors[0] = address(executorDisallowed);
-        executors[1] = address(executorAllowed);
+        address[] memory modules = new address[](3);
+        modules[0] = address(executorDisallowed);
+        modules[1] = address(executorAllowed);
+        modules[2] = address(instance.defaultValidator);
 
         PermissionsHook.ModulePermissions[] memory permissions =
-            new PermissionsHook.ModulePermissions[](2);
+            new PermissionsHook.ModulePermissions[](3);
         permissions[0] = PermissionsHook.ModulePermissions({
             selfCall: false,
             moduleCall: false,
@@ -90,11 +92,26 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             allowedTargets: new address[](0)
         });
 
+        permissions[2] = PermissionsHook.ModulePermissions({
+            selfCall: true,
+            moduleCall: true,
+            hasAllowedTargets: false,
+            sendValue: true,
+            hasAllowedFunctions: false,
+            erc20Transfer: true,
+            erc721Transfer: true,
+            moduleConfig: true,
+            allowedFunctions: new bytes4[](0),
+            allowedTargets: new address[](0)
+        });
+
+        console2.log("installing module");
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(permissionsHook),
-            data: abi.encode(executors, permissions)
+            data: abi.encode(modules, permissions)
         });
+        console2.log("installed");
     }
 
     modifier performWithBothExecutors() {
@@ -137,5 +154,15 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
 
         (bool success, bytes memory result) = activeExecutor.call(executorCallData);
         activeCallSuccess = success;
+    }
+
+    function test_sendValue_4337() public performWithBothExecutors {
+        address target = makeAddr("target");
+        uint256 balanceBefore = target.balance;
+        uint256 value = 1 ether;
+        bytes memory callData = "";
+
+        instance.exec({ target: address(target), value: value, callData: callData });
+        assertEq(target.balance, balanceBefore + value);
     }
 }

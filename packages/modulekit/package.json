@@ -22,7 +22,7 @@
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@safe-global/safe-contracts": "^1.4.1",
-    "erc7579": "github:erc7579/erc7579-implementation",
+    "erc7579": "github:erc7579/erc7579-implementation#feature/hookRevert",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",

@@ -7,6 +7,8 @@ import { Execution, IERC7579Account } from "@rhinestone/modulekit/src/Accounts.s
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
+import "forge-std/console2.sol";
+
 contract PermissionsHook is ERC7579HookDestruct {
     /*//////////////////////////////////////////////////////////////////////////
                                     CONSTANTS
@@ -114,6 +116,9 @@ contract PermissionsHook is ERC7579HookDestruct {
         returns (bytes memory hookData)
     {
         // Not callable from module
+        ModulePermissions memory modulePermissions = permissions[msg.sender][msgSender];
+        console2.log("modulePermissions", modulePermissions.moduleCall);
+        _validateExecutePermissions(modulePermissions, target, value, callData);
     }
 
     function onExecuteBatch(
@@ -231,11 +236,11 @@ contract PermissionsHook is ERC7579HookDestruct {
             revert InvalidPermission();
         }
 
-        if (!modulePermissions.moduleCall) {
-            if (IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, target, "")) {
-                revert InvalidPermission();
-            }
-        }
+        // if (!modulePermissions.moduleCall) {
+        //     if (IERC7579Account(msg.sender).isModuleInstalled(TYPE_EXECUTOR, target, "")) {
+        //         revert InvalidPermission();
+        //     }
+        // }
 
         if (modulePermissions.hasAllowedTargets) {
             bool isAllowedTarget = false;
