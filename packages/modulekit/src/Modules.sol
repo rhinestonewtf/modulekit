@@ -13,5 +13,6 @@ import {
     IERC7579Validator,
     IERC7579Executor,
     IERC7579Fallback,
-    IERC7579Hook
+    IERC7579Hook,
+    IERC7579Module
 } from "./external/ERC7579.sol";

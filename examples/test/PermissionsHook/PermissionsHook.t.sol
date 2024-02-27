@@ -3,17 +3,20 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import {
     SessionData,
     SessionKeyManagerLib
 } from "@rhinestone/sessionkeymanager/src/SessionKeyManagerLib.sol";
-import { MockExecutor } from "@rhinestone/modulekit/src/Mocks.sol";
+import { MockExecutor, MockERC20 } from "@rhinestone/modulekit/src/Mocks.sol";
 import { Solarray } from "solarray/Solarray.sol";
 
 import {
     MODULE_TYPE_HOOK, MODULE_TYPE_EXECUTOR
 } from "@rhinestone/modulekit/src/external/ERC7579.sol";
-import { PermissionsHook, IERC7579Account } from "src/PermissionsHook/PermissionsHook.sol";
+import { PermissionsHook, IERC7579Account } from "src/PermissionsHook/PermissionsHookV2.sol";
+
+import { SpendingLimit } from "src/PermissionsHook/subHooks/SpendingLimit.sol";
 
 contract PermissionsHookTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
@@ -21,11 +24,14 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
 
     // Account instance and hook
     AccountInstance internal instance;
+    MockERC20 internal token;
     PermissionsHook internal permissionsHook;
 
     // Mock executors
     MockExecutor internal executorDisallowed;
     MockExecutor internal executorAllowed;
+
+    SpendingLimit internal spendingLimit;
 
     address activeExecutor;
     bool activeCallSuccess;
@@ -35,6 +41,9 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
 
         permissionsHook = new PermissionsHook();
         vm.label(address(permissionsHook), "permissionsHook");
+
+        spendingLimit = new SpendingLimit(address(permissionsHook));
+        vm.label(address(spendingLimit), "SubHook:SpendingLimit");
         executorDisallowed = new MockExecutor();
         vm.label(address(executorDisallowed), "executorDisallowed");
         executorAllowed = new MockExecutor();
@@ -42,6 +51,10 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
 
         instance = makeAccountInstance("PermissionsHookTestAccount");
         deal(address(instance.account), 100 ether);
+
+        token = new MockERC20();
+        token.initialize("Mock Token", "MTK", 18);
+        deal(address(token), instance.account, 100 ether);
 
         setUpPermissionsHook();
     }
@@ -64,9 +77,8 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
         modules[1] = address(executorAllowed);
         modules[2] = address(instance.defaultValidator);
 
-        PermissionsHook.ModulePermissions[] memory permissions =
-            new PermissionsHook.ModulePermissions[](3);
-        permissions[0] = PermissionsHook.ModulePermissions({
+        PermissionsHook.AccessFlags[] memory permissions = new PermissionsHook.AccessFlags[](3);
+        permissions[0] = PermissionsHook.AccessFlags({
             selfCall: false,
             moduleCall: false,
             hasAllowedTargets: true,
@@ -74,12 +86,10 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             hasAllowedFunctions: true,
             erc20Transfer: false,
             erc721Transfer: false,
-            moduleConfig: false,
-            allowedFunctions: new bytes4[](0),
-            allowedTargets: new address[](0)
+            moduleConfig: false
         });
 
-        permissions[1] = PermissionsHook.ModulePermissions({
+        permissions[1] = PermissionsHook.AccessFlags({
             selfCall: true,
             moduleCall: true,
             hasAllowedTargets: false,
@@ -87,12 +97,10 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             hasAllowedFunctions: false,
             erc20Transfer: true,
             erc721Transfer: true,
-            moduleConfig: true,
-            allowedFunctions: new bytes4[](0),
-            allowedTargets: new address[](0)
+            moduleConfig: true
         });
 
-        permissions[2] = PermissionsHook.ModulePermissions({
+        permissions[2] = PermissionsHook.AccessFlags({
             selfCall: true,
             moduleCall: true,
             hasAllowedTargets: false,
@@ -100,9 +108,7 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             hasAllowedFunctions: false,
             erc20Transfer: true,
             erc721Transfer: true,
-            moduleConfig: true,
-            allowedFunctions: new bytes4[](0),
-            allowedTargets: new address[](0)
+            moduleConfig: true
         });
 
         console2.log("installing module");
@@ -112,6 +118,12 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             data: abi.encode(modules, permissions)
         });
         console2.log("installed");
+
+        vm.prank(instance.account);
+        address[] memory subHooks = new address[](1);
+        subHooks[0] = address(spendingLimit);
+
+        permissionsHook.installGlobalHooks(subHooks);
     }
 
     modifier performWithBothExecutors() {
@@ -164,5 +176,19 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
 
         instance.exec({ target: address(target), value: value, callData: callData });
         assertEq(target.balance, balanceBefore + value);
+    }
+
+    function test_sendERC20() public {
+        address receiver = makeAddr("receiver");
+        vm.prank(instance.account);
+        spendingLimit.setLimit(address(token), 200);
+        bytes memory callData = abi.encodeCall(IERC20.transfer, (receiver, 150));
+
+        instance.exec({ target: address(token), value: 0, callData: callData });
+
+        assertEq(token.balanceOf(receiver), 150);
+
+        vm.expectRevert();
+        instance.exec({ target: address(token), value: 0, callData: callData });
     }
 }

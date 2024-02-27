@@ -5,6 +5,8 @@ libs = ["node_modules"]
 #via_ir = true
 fs_permissions = [{ access = "read", path = "out-optimized" }, { access = "read-write", path = "gas_calculations" }]
 allow_paths = ["*", "/"]
+evm_version = "cancun"
+ignored_error_codes = [2394]
 
 [rpc_endpoints]
 mainnet = "https://rpc.ankr.com/eth"

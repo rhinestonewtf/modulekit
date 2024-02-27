@@ -109,10 +109,10 @@ importers:
         version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
       erc4337-validation:
         specifier: github:rhinestonewtf/erc4337-validation
-        version: git@github.com+rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
+        version: github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0
       erc7579:
         specifier: github:erc7579/erc7579-implementation#feature/hookRevert
-        version: github.com/erc7579/erc7579-implementation/cb007568e1c420ddbddf83f1880a4dc7c981e178
+        version: github.com/erc7579/erc7579-implementation/240e114638eaa10facc01cd8cb6d7a32e1c63269
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/1d0766bc5d814f117c7b1e643828f7d85024fb51
@@ -121,7 +121,7 @@ importers:
         version: 2.8.8
       sentinellist:
         specifier: github:zeroknots/sentinellist
-        version: github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b
+        version: github.com/zeroknots/sentinellist/5f851f29b5d5e0fd4f5cdc63a2ccd7865ab1802d
       solady:
         specifier: github:vectorized/solady
         version: github.com/vectorized/solady/21009ce09f02c0e20ce4750b63577e8c0cc7ced8
@@ -4456,31 +4456,22 @@ packages:
       ethers: 5.7.2
     dev: true
 
-  git@github.com+rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0:
-    resolution: {commit: 19a97d86f8f29709664334078925b2a843be19e0, repo: git@github.com:rhinestonewtf/erc4337-validation.git, type: git}
-    name: erc4337-validation
-    version: 0.0.1
-    dependencies:
-      '@openzeppelin/contracts': 5.0.1
-      solady: github.com/vectorized/solady/21009ce09f02c0e20ce4750b63577e8c0cc7ced8
-    dev: true
-
   github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0:
     resolution: {tarball: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0}
     name: ds-test
     version: 1.0.0
     dev: true
 
-  github.com/erc7579/erc7579-implementation/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3}
+  github.com/erc7579/erc7579-implementation/240e114638eaa10facc01cd8cb6d7a32e1c63269:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/240e114638eaa10facc01cd8cb6d7a32e1c63269}
     name: micro-msa
     version: 0.3.1
     dependencies:
       '@openzeppelin/contracts': 5.0.1
     dev: true
 
-  github.com/erc7579/erc7579-implementation/cb007568e1c420ddbddf83f1880a4dc7c981e178:
-    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/cb007568e1c420ddbddf83f1880a4dc7c981e178}
+  github.com/erc7579/erc7579-implementation/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/8bdabebe50afeaed5d3c7916bfb98a5290de1dc3}
     name: micro-msa
     version: 0.3.1
     dependencies:
@@ -4690,6 +4681,12 @@ packages:
     resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/72e47ca417d24a30801b2921584e8486462cfc7b}
     name: solady
     version: 0.0.170
+    dev: true
+
+  github.com/zeroknots/sentinellist/5f851f29b5d5e0fd4f5cdc63a2ccd7865ab1802d:
+    resolution: {tarball: https://codeload.github.com/zeroknots/sentinellist/tar.gz/5f851f29b5d5e0fd4f5cdc63a2ccd7865ab1802d}
+    name: sentinellist
+    version: 1.0.0
     dev: true
 
   github.com/zeroknots/sentinellist/6294bf412489c0f6d3b9c92ad0aceb08c5b8704b:
