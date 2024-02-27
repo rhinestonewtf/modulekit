@@ -16,8 +16,6 @@ import {
 } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 import { PermissionsHook, IERC7579Account } from "src/PermissionsHook/PermissionsHookV2.sol";
 
-import { SpendingLimit } from "src/PermissionsHook/subHooks/SpendingLimit.sol";
-
 contract PermissionsHookTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
@@ -31,7 +29,6 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
     MockExecutor internal executorDisallowed;
     MockExecutor internal executorAllowed;
 
-    SpendingLimit internal spendingLimit;
 
     address activeExecutor;
     bool activeCallSuccess;
@@ -42,8 +39,6 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
         permissionsHook = new PermissionsHook();
         vm.label(address(permissionsHook), "permissionsHook");
 
-        spendingLimit = new SpendingLimit(address(permissionsHook));
-        vm.label(address(spendingLimit), "SubHook:SpendingLimit");
         executorDisallowed = new MockExecutor();
         vm.label(address(executorDisallowed), "executorDisallowed");
         executorAllowed = new MockExecutor();
@@ -121,7 +116,7 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
 
         vm.prank(instance.account);
         address[] memory subHooks = new address[](1);
-        subHooks[0] = address(spendingLimit);
+        subHooks[0] = address(0);
 
         permissionsHook.installGlobalHooks(subHooks);
     }

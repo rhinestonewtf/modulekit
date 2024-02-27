@@ -53,6 +53,7 @@ abstract contract HookMultiPlexer {
         uint256 length = hooks.length;
         for (uint256 i; i < length; i++) {
             $globalSubHooks[msg.sender].push(hooks[i]);
+            // TODO check if the hook is already enabled for module
         }
     }
 
