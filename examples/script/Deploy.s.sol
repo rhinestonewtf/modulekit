@@ -2,8 +2,8 @@
 pragma solidity ^0.8.19;
 
 import { Script } from "forge-std/Script.sol";
-import { AutoSavings } from "../src/AutoSavings/AutoSavings.sol";
-import { AutoSend } from "../src/AutoSend/AutoSend.sol";
+import { AutoSavingToVault } from "../src/AutoSavings/AutoSavings.sol";
+import { AutoSendSessionKey } from "../src/AutoSend/AutoSend.sol";
 import { FlashloanCallback } from "../src/ColdStorage/FlashloanCallback.sol";
 import { FlashloanLender } from "../src/ColdStorage/FlashloanLender.sol";
 import { ColdStorageHook } from "../src/ColdStorage/ColdStorageHook.sol";
@@ -23,18 +23,17 @@ import { WebAuthnValidator } from "../src/WebAuthnValidator/WebAuthnValidator.so
 contract DeployScript is Script {
     function run() public {
         bytes32 salt = bytes32(uint256(0));
+        address fallbackHandler = address(0); // Add fallback handler address
 
         vm.startBroadcast(vm.envUint("PK"));
 
         // Deploy Modules
-        AutoSavings autoSavings = new AutoSavings{ salt: salt }();
+        AutoSavingToVault autoSavings = new AutoSavingToVault{ salt: salt }();
 
-        AutoSend autoSend = new AutoSend{ salt: salt }();
+        AutoSendSessionKey autoSend = new AutoSendSessionKey{ salt: salt }();
 
-        FlashloanCallback flashloanCallback =
-            new FlashloanCallback{ salt: salt }(address(fallbackHandler));
-        FlashloanLender flashloanLender =
-            new FlashloanLender{ salt: salt }(address(fallbackHandler));
+        FlashloanCallback flashloanCallback = new FlashloanCallback{ salt: salt }(fallbackHandler);
+        FlashloanLender flashloanLender = new FlashloanLender{ salt: salt }(fallbackHandler);
         ColdStorageHook coldStorageHook = new ColdStorageHook{ salt: salt }();
         ColdStorageExecutor coldStorageExecutor = new ColdStorageExecutor{ salt: salt }();
 
