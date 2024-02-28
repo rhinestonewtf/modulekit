@@ -24,11 +24,13 @@
     "solhint": "^4.1.1"
   },
   "files": [
-    "artifacts",
-    "src",
-    "test/utils",
+    "accounts",
+    "packages",
+    "examples",
+    "package.json",
+    "pnpm-workspace.yaml",
     "CHANGELOG.md",
-    "LICENSE-GPL.md"
+    "LICENSE.md"
   ],
   "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
   "keywords": [
