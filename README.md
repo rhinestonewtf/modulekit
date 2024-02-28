@@ -34,7 +34,7 @@ forge install rhinestonewtf/modulekit
 ### Using a package manager
 
 ```bash
-pnpm install rhinestonewtf/modulekit
+pnpm install @rhinestonewtf/modulekit
 ```
 
 ## Updating
@@ -48,7 +48,7 @@ forge update rhinestonewtf/modulekit
 or
 
 ```bash
-pnpm update rhinestonewtf/modulekit
+pnpm update @rhinestonewtf/modulekit
 ```
 
 ## Usage
