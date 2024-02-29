@@ -25,6 +25,7 @@
     "erc7579": "github:erc7579/erc7579-implementation",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
+    "FreshCryptoLib": "github:rdubois-crypto/FreshCryptoLib",
     "solarray": "github:sablier-labs/solarray",
     "solmate": "github:transmissions11/solmate",
     "solhint": "^4.1.1",
