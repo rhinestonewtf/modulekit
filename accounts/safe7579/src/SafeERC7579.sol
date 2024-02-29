@@ -222,7 +222,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     /**
      * @inheritdoc IERC7579Account
      */
-    function supportsAccountMode(ModeCode encodedMode) external pure override returns (bool) {
+    function supportsExecutionMode(ModeCode encodedMode) external pure override returns (bool) {
         CallType callType = encodedMode.getCallType();
         if (callType == CALLTYPE_BATCH) return true;
         else if (callType == CALLTYPE_SINGLE) return true;
