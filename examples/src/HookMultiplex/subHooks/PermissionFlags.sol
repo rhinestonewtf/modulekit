@@ -4,14 +4,14 @@ pragma solidity ^0.8.23;
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { LinkedBytes32Lib } from "sentinellist/SentinelListBytes32.sol";
 import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ISubHook } from "../ISubHook.sol";
+import { SubHookBase } from "./SubHookBase.sol";
 import { TokenTransactionLib } from "../lib/TokenTransactionLib.sol";
 import "forge-std/console2.sol";
 
 // bytes32 constant STORAGE_SLOT = keccak256("permissions.storage");
 bytes32 constant STORAGE_SLOT = bytes32(uint256(123));
 
-contract PermissionFlags is ISubHook {
+contract PermissionFlags is SubHookBase {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LinkedBytes32Lib for LinkedBytes32Lib.LinkedBytes32;
     using TokenTransactionLib for bytes4;
@@ -44,6 +44,8 @@ contract PermissionFlags is ISubHook {
         mapping(address account => mapping(address module => ModulePermissions)) permissions;
     }
 
+    constructor(address HookMultiplexer) SubHookBase(HookMultiplexer) { }
+
     function $subHook() internal pure virtual returns (SubHookStorage storage shs) {
         bytes32 position = STORAGE_SLOT;
         assembly {
@@ -74,6 +76,7 @@ contract PermissionFlags is ISubHook {
     }
 
     function onExecute(
+        address smartAccount,
         address superVisorModule,
         address target,
         uint256 value,
@@ -81,19 +84,19 @@ contract PermissionFlags is ISubHook {
     )
         external
         virtual
-        override
+        onlyMultiplexer
         returns (bytes memory hookData)
     {
         console2.log("onExecute subhook");
         ModulePermissions storage $modulePermissions =
-            $subHook().permissions[msg.sender][superVisorModule];
+            $subHook().permissions[smartAccount][superVisorModule];
 
         AccessFlags memory flags = $modulePermissions.flags;
 
         bytes4 functionSig = callData.length > 4 ? bytes4(callData[0:4]) : bytes4(0);
 
         // check for self call
-        if (!flags.selfCall && target == msg.sender) {
+        if (!flags.selfCall && target == smartAccount) {
             revert InvalidPermission();
         }
 
@@ -133,6 +136,7 @@ contract PermissionFlags is ISubHook {
     }
 
     function onExecuteBatch(
+        address smartAccount,
         address superVisorModule,
         Execution[] calldata
     )
@@ -143,6 +147,7 @@ contract PermissionFlags is ISubHook {
     { }
 
     function onExecuteFromExecutor(
+        address smartAccount,
         address superVisorModule,
         address target,
         uint256 value,
@@ -155,6 +160,7 @@ contract PermissionFlags is ISubHook {
     { }
 
     function onExecuteBatchFromExecutor(
+        address smartAccount,
         address superVisorModule,
         Execution[] calldata
     )
@@ -165,6 +171,7 @@ contract PermissionFlags is ISubHook {
     { }
 
     function onInstallModule(
+        address smartAccount,
         address superVisorModule,
         uint256 moduleType,
         address module,
@@ -177,6 +184,7 @@ contract PermissionFlags is ISubHook {
     { }
 
     function onUninstallModule(
+        address smartAccount,
         address superVisorModule,
         uint256 moduleType,
         address module,
@@ -188,10 +196,5 @@ contract PermissionFlags is ISubHook {
         returns (bytes memory hookData)
     { }
 
-    function onPostCheck(bytes calldata hookData)
-        external
-        virtual
-        override
-        returns (bool success)
-    { }
+    function onPostCheck(bytes calldata hookData) external virtual returns (bool success) { }
 }

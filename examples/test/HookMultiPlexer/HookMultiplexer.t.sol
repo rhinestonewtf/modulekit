@@ -14,7 +14,7 @@ import { Solarray } from "solarray/Solarray.sol";
 import {
     MODULE_TYPE_HOOK, MODULE_TYPE_EXECUTOR
 } from "@rhinestone/modulekit/src/external/ERC7579.sol";
-import { HookMultiPlexer } from "src/HookMultiPlex/HookMultiPlexer.sol";
+import { IHookMultiPlexer, HookMultiPlexer, hookFlag } from "src/HookMultiPlex/HookMultiPlexer.sol";
 
 import { PermissionFlags } from "src/HookMultiPlex/subHooks/PermissionFlags.sol";
 import { SpendingLimits } from "src/HookMultiPlex/subHooks/SpendingLimits.sol";
@@ -43,9 +43,9 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test {
         multiplexer = new HookMultiPlexer();
         vm.label(address(multiplexer), "multiplexer");
 
-        permissionFlagsSubHook = new PermissionFlags();
+        permissionFlagsSubHook = new PermissionFlags(address(multiplexer));
         vm.label(address(permissionFlagsSubHook), "SubHook:PermissionFlags");
-        spendingLimitsSubHook = new SpendingLimits();
+        spendingLimitsSubHook = new SpendingLimits(address(multiplexer));
         vm.label(address(spendingLimitsSubHook), "SubHook:SpendingLimits");
 
         executorDisallowed = new MockExecutor();
@@ -73,10 +73,24 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test {
         });
 
         vm.prank(instance.account);
-        address[] memory globalHooks = new address[](2);
-        globalHooks[0] = address(permissionFlagsSubHook);
-        globalHooks[1] = address(spendingLimitsSubHook);
-        multiplexer.installGlobalHooks(globalHooks);
+
+        IHookMultiPlexer.ConfigParam[] memory globalHooksConfig =
+            new IHookMultiPlexer.ConfigParam[](2);
+        globalHooksConfig[0] = IHookMultiPlexer.ConfigParam({
+            hook: address(permissionFlagsSubHook),
+            isExecutorHook: hookFlag.wrap(false),
+            isValidatorHook: hookFlag.wrap(true),
+            isConfigHook: hookFlag.wrap(false)
+        });
+
+        globalHooksConfig[1] = IHookMultiPlexer.ConfigParam({
+            hook: address(spendingLimitsSubHook),
+            isExecutorHook: hookFlag.wrap(false),
+            isValidatorHook: hookFlag.wrap(true),
+            isConfigHook: hookFlag.wrap(false)
+        });
+
+        multiplexer.installGlobalHooks(globalHooksConfig);
     }
 
     function setUpPermissionsSubHook() internal {
