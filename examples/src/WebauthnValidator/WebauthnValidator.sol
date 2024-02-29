@@ -70,7 +70,7 @@ contract WebAuthnValidator is ERC7579ValidatorBase {
             Q
         );
 
-        return _packValidationData(!isValidSignature, 0, type(uint48).max);
+        return _packValidationData(!isValidSignature, type(uint48).max, 0);
     }
 
     function isValidSignatureWithSender(
