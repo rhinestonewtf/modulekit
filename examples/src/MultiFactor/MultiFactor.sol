@@ -51,13 +51,21 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         // a uniquified list of validators must be created for this. so that the frontend / user can
         // not select the same validator multiple times
         // not that this assumes that the subvalidators in storage are unique
-        validatorIndextoUse.sort();
-        validatorIndextoUse.uniquifySorted();
+        uint256 validatorToUseCount = validatorIndextoUse.length;
+
+        uint256[] memory _validatorToUseCount = new uint256[](validatorToUseCount);
+        for (uint256 i; i < validatorToUseCount; i++) {
+            for (uint256 j; j < _validatorToUseCount.length; j++) {
+                if (validatorIndextoUse[i] + 1 == _validatorToUseCount[j]) {
+                    revert("index already used");
+                }
+            }
+            _validatorToUseCount[i] = validatorIndextoUse[i] + 1;
+        }
         // check that the number of signatures matches the number of validators
         // check validatorIndextoUse length is higher or equal to threshold.
         // should a smaller value be provided, the security assumption that a multifactor validator
         // is void
-        uint256 validatorToUseCount = validatorIndextoUse.length;
         if (validatorToUseCount < config.threshold || validatorToUseCount != signatures.length) {
             return VALIDATION_FAILED;
         }
@@ -129,13 +137,21 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
 
         // a uniquified list of validators MUST be crated for this. so that the frontend / user can
         // not select the same validator multiple times
-        validatorIndextoUse.sort();
-        validatorIndextoUse.uniquifySorted();
+        uint256 validatorToUseCount = validatorIndextoUse.length;
+
+        uint256[] memory _validatorToUseCount = new uint256[](validatorToUseCount);
+        for (uint256 i; i < validatorToUseCount; i++) {
+            for (uint256 j; j < _validatorToUseCount.length; j++) {
+                if (validatorIndextoUse[i] + 1 == _validatorToUseCount[j]) {
+                    revert("index already used");
+                }
+            }
+            _validatorToUseCount[i] = validatorIndextoUse[i] + 1;
+        }
         // check that the number of signatures matches the number of validators
         // check validatorIndextoUse length is higher or equal to threshold.
         // should a smaller value be provided, the security assumption that a multifactor validator
         // is void
-        uint256 validatorToUseCount = validatorIndextoUse.length;
         if (validatorToUseCount < config.threshold || validatorToUseCount != signatures.length) {
             return EIP1271_FAILED;
         }
@@ -278,12 +294,19 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     )
         internal
     {
+        uint256 length = subValidators.length;
         // sort and uniquify the subValidators
         // Should a user provide the same validators multiple times, the security assumption that a
         // multifactor validator brings can be bypassed
-        subValidators.sort();
-        subValidators.uniquifySorted();
-        uint256 length = subValidators.length;
+        address[] memory _subValidators = new address[](length);
+        for (uint256 i; i < length; i++) {
+            for (uint256 j; j < _subValidators.length; j++) {
+                if (subValidators[i] == _subValidators[j]) {
+                    revert("validator already used");
+                }
+            }
+            _subValidators[i] = subValidators[i];
+        }
         if (length < threshold && threshold >= MIN_THRESHOLD) {
             revert InvalidThreshold(length, threshold);
         }
