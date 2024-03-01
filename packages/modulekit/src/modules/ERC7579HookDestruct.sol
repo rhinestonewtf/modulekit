@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import { ERC7579HookBase } from "./ERC7579HookBase.sol";
 import { IERC7579Account } from "../Accounts.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
+import { PackedUserOperation } from "../external/ERC4337.sol";
 import {
     ModeLib,
     CallType,

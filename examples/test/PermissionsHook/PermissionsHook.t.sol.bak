@@ -72,8 +72,8 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
         modules[1] = address(executorAllowed);
         modules[2] = address(instance.defaultValidator);
 
-        PermissionsHook.AccessFlags[] memory permissions = new PermissionsHook.AccessFlags[](3);
-        permissions[0] = PermissionsHook.AccessFlags({
+        PermissionsHook.PermissionFlags[] memory permissions = new PermissionsHook.PermissionFlags[](3);
+        permissions[0] = PermissionsHook.PermissionFlags({
             selfCall: false,
             moduleCall: false,
             hasAllowedTargets: true,
@@ -84,7 +84,7 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             moduleConfig: false
         });
 
-        permissions[1] = PermissionsHook.AccessFlags({
+        permissions[1] = PermissionsHook.PermissionFlags({
             selfCall: true,
             moduleCall: true,
             hasAllowedTargets: false,
@@ -95,7 +95,7 @@ contract PermissionsHookTest is RhinestoneModuleKit, Test {
             moduleConfig: true
         });
 
-        permissions[2] = PermissionsHook.AccessFlags({
+        permissions[2] = PermissionsHook.PermissionFlags({
             selfCall: true,
             moduleCall: true,
             hasAllowedTargets: false,

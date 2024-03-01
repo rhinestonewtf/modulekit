@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { SentinelListLib } from "sentinellist/SentinelList.sol";
-import { LinkedBytes32Lib } from "sentinellist/SentinelListBytes32.sol";
+import { SentinelListLib, SENTINEL as SENTINEL_ADDRESS } from "sentinellist/SentinelList.sol";
+import {
+    LinkedBytes32Lib, SENTINEL as SENTINEL_BYTES32
+} from "sentinellist/SentinelListBytes32.sol";
+import { SSTORE2 } from "solady/src/utils/SSTORE2.sol";
 import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
 import { SubHookBase } from "./SubHookBase.sol";
 import { TokenTransactionLib } from "../lib/TokenTransactionLib.sol";
@@ -11,31 +14,90 @@ import "forge-std/console2.sol";
 // bytes32 constant STORAGE_SLOT = keccak256("permissions.storage");
 bytes32 constant STORAGE_SLOT = bytes32(uint256(123));
 
-contract PermissionFlags is SubHookBase {
+type PermissionFlags is bytes32;
+
+library PermissionFlagsLib {
+    function pack(
+        bool permit_selfCall,
+        bool permit_moduleCall,
+        bool permit_sendValue,
+        bool permit_erc20Transfer,
+        bool permit_erc721Transfer,
+        bool permit_hasAllowedFunctions,
+        bool permit_hasAllowedTargets,
+        bool permit_moduleConfig,
+        bool enfoce_subhooks
+    )
+        internal
+        pure
+        returns (PermissionFlags)
+    {
+        return PermissionFlags.wrap(
+            bytes32(
+                uint256(
+                    (permit_selfCall ? 1 : 0) + (permit_moduleCall ? 2 : 0)
+                        + (permit_sendValue ? 4 : 0) + (permit_erc20Transfer ? 8 : 0)
+                        + (permit_erc721Transfer ? 16 : 0) + (permit_hasAllowedFunctions ? 32 : 0)
+                        + (permit_hasAllowedTargets ? 64 : 0) + (permit_moduleConfig ? 128 : 0)
+                        + (enfoce_subhooks ? 256 : 0)
+                )
+            )
+        );
+    }
+
+    function isSelfCall(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 1 == 1;
+    }
+
+    function isModuleCall(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 2 == 2;
+    }
+
+    function isSendValue(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 4 == 4;
+    }
+
+    function isERC20Transfer(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 8 == 8;
+    }
+
+    function isERC721Transfer(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 16 == 16;
+    }
+
+    function hasAllowedFunctions(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 32 == 32;
+    }
+
+    function hasAllowedTargets(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 64 == 64;
+    }
+
+    function isModuleConfig(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 128 == 128;
+    }
+
+    function enfoceSubhooks(PermissionFlags flags) internal pure returns (bool) {
+        return uint256(PermissionFlags.unwrap(flags)) & 256 == 256;
+    }
+}
+
+contract PermissionHook is SubHookBase {
     using SentinelListLib for SentinelListLib.SentinelList;
     using LinkedBytes32Lib for LinkedBytes32Lib.LinkedBytes32;
     using TokenTransactionLib for bytes4;
+    using PermissionFlagsLib for PermissionFlags;
 
     error InvalidPermission();
 
-    struct AccessFlags {
-        // Execution permissions
-        // - Target permissions
-        bool selfCall;
-        bool moduleCall;
-        // - Value permissions
-        bool sendValue;
-        bool erc20Transfer;
-        bool erc721Transfer;
-        // - Calldata permissions
-        bool hasAllowedFunctions;
-        bool hasAllowedTargets;
-        // Module configuration permissions
-        bool moduleConfig;
+    struct ConfigParams {
+        PermissionFlags flags;
+        address[] allowedTargets;
+        bytes4[] allowedFunctions;
     }
 
     struct ModulePermissions {
-        AccessFlags flags;
+        PermissionFlags flags;
         LinkedBytes32Lib.LinkedBytes32 allowedFunctions;
         SentinelListLib.SentinelList allowedTargets;
     }
@@ -53,26 +115,55 @@ contract PermissionFlags is SubHookBase {
         }
     }
 
-    function configure(
-        address module,
-        AccessFlags calldata flags,
-        address[] calldata allowedTargets,
-        bytes4[] calldata allowedFunctions
+    function getPermissions(
+        address account,
+        address module
     )
         external
+        view
+        returns (ConfigParams memory config)
     {
-        ModulePermissions storage $modulePermissions = $subHook().permissions[msg.sender][module];
-        $modulePermissions.flags = flags;
+        (address[] memory allowedTargets,) = $subHook().permissions[account][module]
+            .allowedTargets
+            .getEntriesPaginated(SENTINEL_ADDRESS, 100);
+        (bytes32[] memory _allowedFunctions,) = $subHook().permissions[account][module]
+            .allowedFunctions
+            .getEntriesPaginated(SENTINEL_BYTES32, 100);
+        bytes4[] memory allowedFunctions = new bytes4[](_allowedFunctions.length);
+        for (uint256 i; i < _allowedFunctions.length; i++) {
+            allowedFunctions[i] = bytes4(_allowedFunctions[i]);
+        }
+        config = ConfigParams({
+            flags: $subHook().permissions[account][module].flags,
+            allowedTargets: allowedTargets,
+            allowedFunctions: allowedFunctions
+        });
+    }
 
-        uint256 length = allowedTargets.length;
+    function configure(address module, ConfigParams memory params) public {
+        ModulePermissions storage $modulePermissions = $subHook().permissions[msg.sender][module];
+        $modulePermissions.flags = params.flags;
+
+        uint256 length = params.allowedTargets.length;
         $modulePermissions.allowedTargets.init();
         for (uint256 i; i < length; i++) {
-            $modulePermissions.allowedTargets.push(allowedTargets[i]);
+            $modulePermissions.allowedTargets.push(params.allowedTargets[i]);
         }
-        length = allowedFunctions.length;
+        length = params.allowedFunctions.length;
         for (uint256 i; i < length; i++) {
-            $modulePermissions.allowedFunctions.push(bytes32(allowedFunctions[i]));
+            $modulePermissions.allowedFunctions.push(bytes32(params.allowedFunctions[i]));
         }
+    }
+
+    function _getSSTORE2Ref(address module, address attester) internal pure returns (address) {
+        // TODO: implement actual registry lookup
+        return address(0xbBb6987cD1807141DBc07A9C164CAB37603Db429);
+    }
+
+    function configureWithRegistry(address module, address attester) external {
+        ConfigParams memory params =
+            abi.decode(SSTORE2.read(_getSSTORE2Ref(module, attester)), (ConfigParams));
+        configure(module, params);
     }
 
     function onExecute(
@@ -91,12 +182,12 @@ contract PermissionFlags is SubHookBase {
         ModulePermissions storage $modulePermissions =
             $subHook().permissions[smartAccount][superVisorModule];
 
-        AccessFlags memory flags = $modulePermissions.flags;
+        PermissionFlags flags = $modulePermissions.flags;
 
         bytes4 functionSig = callData.length > 4 ? bytes4(callData[0:4]) : bytes4(0);
 
         // check for self call
-        if (!flags.selfCall && target == smartAccount) {
+        if (!flags.isSelfCall() && target == smartAccount) {
             revert InvalidPermission();
         }
 
@@ -108,27 +199,27 @@ contract PermissionFlags is SubHookBase {
         // }
 
         // check for value transfer
-        if (!flags.sendValue && value > 0) {
+        if (!flags.isSendValue() && value > 0) {
             revert InvalidPermission();
         }
 
         // Calldata permissions
-        if (flags.erc20Transfer && functionSig.isERC20Transfer()) {
+        if (flags.isERC20Transfer() && functionSig.isERC20Transfer()) {
             revert InvalidPermission();
         }
 
-        if (flags.erc721Transfer && functionSig.isERC721Transfer()) {
+        if (flags.isERC721Transfer() && functionSig.isERC721Transfer()) {
             revert InvalidPermission();
         }
 
         // check if target address is allowed to be called
-        if (flags.hasAllowedTargets && !$modulePermissions.allowedTargets.contains(target)) {
+        if (flags.hasAllowedTargets() && !$modulePermissions.allowedTargets.contains(target)) {
             revert InvalidPermission();
         }
 
         // check if target functioni is allowed to be called
         if (
-            flags.hasAllowedFunctions
+            flags.hasAllowedFunctions()
                 && !$modulePermissions.allowedFunctions.contains(bytes32(functionSig))
         ) {
             revert InvalidPermission();

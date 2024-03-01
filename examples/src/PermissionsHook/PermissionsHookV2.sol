@@ -26,13 +26,13 @@ contract PermissionsHook is ERC7579HookDestruct, HookMultiPlexer {
     error InvalidPermission();
 
     struct InitParams {
-        AccessFlags flags;
+        PermissionFlags flags;
         address[] allowedTargets;
         bytes32[] allowedFunctions;
         address[] moduleSubHooks;
     }
 
-    struct AccessFlags {
+    struct PermissionFlags {
         // Execution permissions
         // - Target permissions
         bool selfCall;
@@ -49,7 +49,7 @@ contract PermissionsHook is ERC7579HookDestruct, HookMultiPlexer {
     }
 
     struct ModulePermissions {
-        AccessFlags flags;
+        PermissionFlags flags;
         LinkedBytes32Lib.LinkedBytes32 allowedFunctions;
         SentinelListLib.SentinelList allowedTargets;
     }
@@ -61,8 +61,8 @@ contract PermissionsHook is ERC7579HookDestruct, HookMultiPlexer {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        (address[] memory _modules, AccessFlags[] memory _initParams) =
-            abi.decode(data, (address[], AccessFlags[]));
+        (address[] memory _modules, PermissionFlags[] memory _initParams) =
+            abi.decode(data, (address[], PermissionFlags[]));
 
         uint256 permissionsLength = _initParams.length;
 
@@ -88,18 +88,18 @@ contract PermissionsHook is ERC7579HookDestruct, HookMultiPlexer {
 
     function addPermissions(
         address[] calldata _modules,
-        AccessFlags[] calldata _accessFlags
+        PermissionFlags[] calldata _PermissionFlags
     )
         external
     {
-        uint256 permissionsLength = _accessFlags.length;
+        uint256 permissionsLength = _PermissionFlags.length;
 
         if (_modules.length != permissionsLength) {
             revert("PermissionsHook: addPermissions: module and permissions length mismatch");
         }
 
         for (uint256 i; i < permissionsLength; i++) {
-            permissions[msg.sender][_modules[i]].flags = _accessFlags[i];
+            permissions[msg.sender][_modules[i]].flags = _PermissionFlags[i];
         }
     }
 
@@ -257,7 +257,7 @@ contract PermissionsHook is ERC7579HookDestruct, HookMultiPlexer {
     )
         internal
     {
-        AccessFlags memory flags = $permissions.flags;
+        PermissionFlags memory flags = $permissions.flags;
 
         bytes4 functionSig = callData.length > 4 ? bytes4(callData[0:4]) : bytes4(0);
         console2.log("validate exeute permissions");

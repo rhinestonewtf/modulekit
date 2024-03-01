@@ -106,9 +106,9 @@ contract HookMultiPlexer is ERC7579HookDestruct, IHookMultiPlexer {
 
         for (uint256 i; i < length; i++) {
             bytes32 _globalHook = globalHooks[i];
-            console2.logBytes32(_globalHook);
-            console2.log("flag", checkFlagFn(_globalHook));
-            if (!checkFlagFn(_globalHook)) continue;
+            // console2.logBytes32(_globalHook);
+            // console2.log("flag", checkFlagFn(_globalHook));
+            // if (!checkFlagFn(_globalHook)) continue;
             (bool success,) = _globalHook.decodeAddress().call(callData);
             if (!success) revert SubHookFailed(_globalHook);
         }

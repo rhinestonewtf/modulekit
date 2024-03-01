@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
+import { SSTORE2 } from "solady/src/utils/SSTORE2.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import {
     SessionData,
@@ -16,7 +17,11 @@ import {
 } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 import { IHookMultiPlexer, HookMultiPlexer, hookFlag } from "src/HookMultiPlex/HookMultiPlexer.sol";
 
-import { PermissionFlags } from "src/HookMultiPlex/subHooks/PermissionFlags.sol";
+import {
+    PermissionHook,
+    PermissionFlags,
+    PermissionFlagsLib
+} from "src/HookMultiPlex/subHooks/PermissionFlags.sol";
 import { SpendingLimits } from "src/HookMultiPlex/subHooks/SpendingLimits.sol";
 
 contract HookMultiPlexerTest is RhinestoneModuleKit, Test {
@@ -27,7 +32,7 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test {
     AccountInstance internal instance;
     MockERC20 internal token;
     HookMultiPlexer internal multiplexer;
-    PermissionFlags internal permissionFlagsSubHook;
+    PermissionHook internal permissionFlagsSubHook;
     SpendingLimits internal spendingLimitsSubHook;
 
     // Mock executors
@@ -43,7 +48,7 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test {
         multiplexer = new HookMultiPlexer();
         vm.label(address(multiplexer), "multiplexer");
 
-        permissionFlagsSubHook = new PermissionFlags(address(multiplexer));
+        permissionFlagsSubHook = new PermissionHook(address(multiplexer));
         vm.label(address(permissionFlagsSubHook), "SubHook:PermissionFlags");
         spendingLimitsSubHook = new SpendingLimits(address(multiplexer));
         vm.label(address(spendingLimitsSubHook), "SubHook:SpendingLimits");
@@ -94,24 +99,63 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test {
     }
 
     function setUpPermissionsSubHook() internal {
-        PermissionFlags.AccessFlags memory flags = PermissionFlags.AccessFlags({
-            selfCall: false,
-            moduleCall: false,
-            hasAllowedTargets: true,
-            sendValue: false,
-            hasAllowedFunctions: true,
-            erc20Transfer: true,
-            erc721Transfer: false,
-            moduleConfig: false
+        // PermissionFlags.PermissionFlags memory flags = PermissionFlags.PermissionFlags({
+        //     selfCall: false,
+        //     moduleCall: false,
+        //     hasAllowedTargets: true,
+        //     sendValue: false,
+        //     hasAllowedFunctions: true,
+        //     erc20Transfer: true,
+        //     erc721Transfer: false,
+        //     moduleConfig: false
+        // });
+
+        PermissionFlags flags = PermissionFlagsLib.pack({
+            permit_selfCall: false,
+            permit_moduleCall: false,
+            permit_hasAllowedTargets: true,
+            permit_sendValue: false,
+            permit_hasAllowedFunctions: true,
+            permit_erc20Transfer: true,
+            permit_erc721Transfer: false,
+            permit_moduleConfig: false
         });
 
-        vm.prank(instance.account);
-        permissionFlagsSubHook.configure({
-            module: address(instance.defaultValidator),
+        flags = PermissionFlags.wrap(bytes32(uint256(type(uint256).max)));
+
+        // vm.prank(instance.account);
+        // permissionFlagsSubHook.configure({
+        //     module: address(instance.defaultValidator),
+        //     flags: flags,
+        //     allowedTargets: new address[](0),
+        //     allowedFunctions: new bytes4[](0)
+        // });
+
+        address[] memory allowedTargets = new address[](1);
+        allowedTargets[0] = address(0x414141414141);
+        // allowedTargets[1] = address(0x414141414141);
+        bytes4[] memory allowedFunctions = new bytes4[](1);
+        allowedFunctions[0] = IERC20.transfer.selector;
+        PermissionHook.ConfigParams memory params = PermissionHook.ConfigParams({
             flags: flags,
-            allowedTargets: new address[](0),
-            allowedFunctions: new bytes4[](0)
+            allowedTargets: allowedTargets,
+            allowedFunctions: allowedFunctions
         });
+
+        bytes memory data = abi.encode(params);
+
+        address pointer = SSTORE2.write(data);
+
+        vm.prank(instance.account);
+        permissionFlagsSubHook.configureWithRegistry(address(instance.defaultValidator), pointer);
+        permissionFlagsSubHook.configure(address(instance.defaultValidator), params);
+
+        PermissionHook.ConfigParams memory _params = permissionFlagsSubHook.getPermissions(
+            instance.account, address(instance.defaultValidator)
+        );
+        assertEq(PermissionFlags.unwrap(params.flags), PermissionFlags.unwrap(_params.flags));
+
+        console2.log("pointer", pointer);
     }
 
     function setupSpendingLimitsSubHook() public {

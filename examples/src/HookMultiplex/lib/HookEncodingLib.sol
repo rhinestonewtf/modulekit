@@ -58,19 +58,6 @@ library HookEncodingLib {
     }
 
     function is4337Hook(bytes32 encoded) internal pure returns (bool) {
-        console2.log("----");
-        console2.logBytes32(encoded);
-
-        bytes32 foo;
-
-        assembly  {
-
-          foo := shr(encoded, 8)
-
-        }
-        console2.logBytes32(foo);
-        console2.log("----");
-
         return (uint256(encoded) >> 8) & 0xff == 1;
     }
 
