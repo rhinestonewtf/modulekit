@@ -76,6 +76,7 @@ contract TestBaseUtil is Test {
         signers[0] = signer1.addr;
         signers[1] = signer2.addr;
 
+        // TODO: think about launchpad impl see: passkey for safe.
         clone.setup({
             _owners: signers,
             _threshold: 2,

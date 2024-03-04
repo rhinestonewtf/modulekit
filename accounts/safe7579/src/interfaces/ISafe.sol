@@ -82,4 +82,6 @@ interface ISafe {
      * @param module Module to be enabled.
      */
     function enableModule(address module) external;
+
+    function VERSION() external view returns (string memory);
 }
