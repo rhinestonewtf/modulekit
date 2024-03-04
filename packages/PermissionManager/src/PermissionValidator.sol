@@ -206,8 +206,6 @@ contract PermissionValidator is ERC7579ValidatorBase {
     {
         require(_userOp.sender == msg.sender, "sender must be msg.sender");
         bytes32 permissionId = bytes32(_userOp.signature[0:32]);
-        console2.log("validate user Op. PermissionID:");
-        console2.logBytes32(permissionId);
         if (
             permissions[permissionId][msg.sender].flag & toFlag(1) == toFlag(0)
                 || nonces[msg.sender].revoked > permissions[permissionId][msg.sender].nonce
@@ -217,8 +215,6 @@ contract PermissionValidator is ERC7579ValidatorBase {
         Permission memory permission = permissions[permissionId][msg.sender];
         PolicyConfig policy = permission.firstPolicy;
         uint256 cursor = 32;
-        console2.log("policy", address(PolicyConfigLib.getAddress(policy)));
-        console2.logBytes32(PolicyConfig.unwrap(policy));
         while (address(PolicyConfigLib.getAddress(policy)) != address(0)) {
             // if (PolicyConfigLib.skipOnValidateUserOp(policy)) {
             //     policy = nextPolicy[permissionId][policy][msg.sender];
@@ -233,7 +229,6 @@ contract PermissionValidator is ERC7579ValidatorBase {
                     && address(bytes20(_userOp.signature[cursor:cursor + 20]))
                         == address(PolicyConfigLib.getAddress(policy))
             ) {
-                console2.log("if");
                 // only when policy address is same as the one in signature
                 uint256 length = uint256(bytes32(_userOp.signature[cursor + 20:cursor + 52]));
                 require(
@@ -244,12 +239,9 @@ contract PermissionValidator is ERC7579ValidatorBase {
                     // policyDataLength, policyData]
                 cursor += 52 + length;
             } else {
-                console2.log("else");
                 policyData = _userOp.signature[cursor:cursor];
             }
 
-            console2.log("policyData");
-            console2.logBytes(policyData);
             ValidationData policyValidation = PolicyConfigLib.getAddress(policy).checkUserOpPolicy(
                 msg.sender, permissionId, _userOp, policyData
             );
