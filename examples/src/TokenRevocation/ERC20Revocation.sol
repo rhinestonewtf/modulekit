@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { SessionKeyBase } from "modulekit/src/Modules.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 

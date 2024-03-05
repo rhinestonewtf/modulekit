@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { IERC7579Account } from "modulekit/src/Accounts.sol";
+import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 

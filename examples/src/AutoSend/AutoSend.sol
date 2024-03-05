@@ -2,8 +2,8 @@
 pragma solidity ^0.8.23;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { IERC7579Account } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase, SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { IERC7579Account } from "modulekit/src/Accounts.sol";
+import { ERC7579ExecutorBase, SessionKeyBase } from "modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IERC7579Account, Execution } from "@rhinestone/modulekit/src/Accounts.sol";
+import { IERC7579Account, Execution } from "modulekit/src/Accounts.sol";
 import { SchedulingBase } from "./SchedulingBase.sol";
-import { UniswapV3Integration } from "@rhinestone/modulekit/src/Integrations.sol";
+import { UniswapV3Integration } from "modulekit/src/Integrations.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";

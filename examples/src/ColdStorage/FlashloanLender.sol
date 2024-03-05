@@ -1,8 +1,8 @@
 import "forge-std/interfaces/IERC20.sol";
 import "forge-std/interfaces/IERC721.sol";
 
-import { IFallbackMethod } from "@rhinestone/modulekit/src/core/ExtensibleFallbackHandler.sol";
-import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { IFallbackMethod } from "modulekit/src/core/ExtensibleFallbackHandler.sol";
+import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 import "./interfaces/Flashloan.sol";
 
 pragma solidity ^0.8.20;
@@ -10,13 +10,7 @@ pragma solidity ^0.8.20;
 contract FlashloanLender is IFallbackMethod, ERC7579ExecutorBase {
     // using ERC7579ExecutorLib for address;
 
-    address immutable FALLBACK_HANDLER;
-
     mapping(address account => uint256) public nonce;
-
-    constructor(address fallbackHandler) {
-        FALLBACK_HANDLER = fallbackHandler;
-    }
 
     function handle(
         address account,
@@ -30,7 +24,6 @@ contract FlashloanLender is IFallbackMethod, ERC7579ExecutorBase {
     {
         if (data.length < 4) revert();
 
-        if (msg.sender != FALLBACK_HANDLER) revert();
         bytes4 functionSig = bytes4(data[0:4]);
         if (functionSig == IERC6682.availableForFlashLoan.selector) {
             (address token, uint256 tokenId) = abi.decode(data[4:], (address, uint256));

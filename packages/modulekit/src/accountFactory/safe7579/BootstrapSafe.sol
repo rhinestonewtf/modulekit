@@ -21,7 +21,7 @@ contract BootstrapSafe is ModuleManager, HookManager {
         ERC7579BootstrapConfig[] calldata _validators,
         ERC7579BootstrapConfig[] calldata _executors,
         ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _fallbacks
     )
         external
     {
@@ -41,9 +41,10 @@ contract BootstrapSafe is ModuleManager, HookManager {
             _installHook(_hook.module, _hook.data);
         }
 
-        // init fallback
-        if (_fallback.module != address(0)) {
-            _installFallbackHandler(_fallback.module, _fallback.data);
+        // init fallbacks
+        for (uint256 i; i < _fallbacks.length; i++) {
+            if (_fallbacks[i].module == address(0)) continue;
+            _installFallbackHandler(_fallbacks[i].module, _fallbacks[i].data);
         }
     }
 
@@ -51,14 +52,15 @@ contract BootstrapSafe is ModuleManager, HookManager {
         ERC7579BootstrapConfig[] calldata _validators,
         ERC7579BootstrapConfig[] calldata _executors,
         ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _fallbacks
     )
         external
         view
         returns (bytes memory init)
     {
         init = abi.encode(
-            address(this), abi.encodeCall(this.initMSA, (_validators, _executors, _hook, _fallback))
+            address(this),
+            abi.encodeCall(this.initMSA, (_validators, _executors, _hook, _fallbacks))
         );
     }
 }

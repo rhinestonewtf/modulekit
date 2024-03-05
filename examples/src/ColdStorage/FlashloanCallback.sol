@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IFallbackMethod } from "@rhinestone/modulekit/src/core/ExtensibleFallbackHandler.sol";
+import { IFallbackMethod } from "modulekit/src/core/ExtensibleFallbackHandler.sol";
 
-import { ERC7579ExecutorBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 import "./interfaces/Flashloan.sol";
 
 contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
-    address immutable FALLBACK_HANDLER;
-
     mapping(address account => uint256) public nonce;
-
-    constructor(address fallbackHandler) {
-        FALLBACK_HANDLER = fallbackHandler;
-    }
 
     function handle(
         address borrower,
@@ -26,7 +20,6 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
         returns (bytes memory result)
     {
         if (data.length < 4) revert();
-        if (msg.sender != FALLBACK_HANDLER) revert();
 
         bytes4 selector = bytes4(data[0:4]);
 

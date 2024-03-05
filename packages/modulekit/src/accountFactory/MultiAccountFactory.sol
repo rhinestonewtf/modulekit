@@ -82,7 +82,7 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
         ERC7579BootstrapConfig[] calldata _validators,
         ERC7579BootstrapConfig[] calldata _executors,
         ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _fallbacks
     )
         external
         view
@@ -92,13 +92,13 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
             init = abi.encode(
                 address(bootstrapSafe),
                 abi.encodeCall(
-                    ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallback)
+                    ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallbacks)
                 )
             );
         } else {
             init = abi.encode(
                 address(bootstrapDefault),
-                abi.encodeCall(BootstrapSafe.initMSA, (_validators, _executors, _hook, _fallback))
+                abi.encodeCall(BootstrapSafe.initMSA, (_validators, _executors, _hook, _fallbacks))
             );
         }
     }

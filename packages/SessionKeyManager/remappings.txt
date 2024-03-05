@@ -1,5 +1,6 @@
 solady/=node_modules/solady/
 @rhinestone/=node_modules/@rhinestone/
+modulekit/=node_modules/@rhinestone/modulekit/packages/modulekit/
 erc7579/=node_modules/erc7579/src/
 @ERC4337/=node_modules/@ERC4337/
 account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/

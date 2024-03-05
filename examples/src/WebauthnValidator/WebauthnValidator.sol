@@ -2,10 +2,8 @@
 pragma solidity >=0.8.19;
 
 import { WebAuthnLib } from "./utils/WebAuthNLib.sol";
-import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
-import {
-    PackedUserOperation, UserOperationLib
-} from "@rhinestone/modulekit/src/external/ERC4337.sol";
+import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
+import { PackedUserOperation, UserOperationLib } from "modulekit/src/external/ERC4337.sol";
 
 struct PassKeyId {
     uint256 pubKeyX;

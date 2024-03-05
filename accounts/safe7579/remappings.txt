@@ -8,6 +8,7 @@ solmate/=node_modules/solmate/src/
 solady/=node_modules/solady/
 solarray/=node_modules/solarray/src/
 @rhinestone/=node_modules/@rhinestone/
+modulekit/=node_modules/@rhinestone/modulekit/packages/modulekit/
 @safe-global/=node_modules/@safe-global/
 @ERC4337/=node_modules/@ERC4337/
 @openzeppelin/=node_modules/@openzeppelin/

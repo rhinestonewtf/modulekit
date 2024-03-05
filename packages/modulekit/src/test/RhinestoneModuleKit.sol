@@ -111,17 +111,17 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
      * create new AccountInstance with ERC7579BootstrapConfig
      *
      * @param salt account salt / name
-     * @param validators ERC7549 validators to be installed on the account
-     * @param executors ERC7549 executors to be installed on the account
-     * @param hook ERC7549 hook to be installed on the account
-     * @param fallBack ERC7549 fallbackHandler to be installed on the account
+     * @param validators ERC7579 validators to be installed on the account
+     * @param executors ERC7579 executors to be installed on the account
+     * @param hook ERC7579 hook to be installed on the account
+     * @param fallBacks ERC7579 array of fallbackHandlers to be installed on the account
      */
     function makeAccountInstance(
         bytes32 salt,
         ERC7579BootstrapConfig[] memory validators,
         ERC7579BootstrapConfig[] memory executors,
         ERC7579BootstrapConfig memory hook,
-        ERC7579BootstrapConfig memory fallBack
+        ERC7579BootstrapConfig[] memory fallBacks
     )
         internal
         returns (AccountInstance memory instance)
@@ -146,9 +146,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         }
 
         // bytes memory bootstrapCalldata =
-        //     auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBack);
+        //     auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBacks);
         bytes memory bootstrapCalldata =
-            accountFactory.getBootstrapCallData(validators, executors, hook, fallBack);
+            accountFactory.getBootstrapCallData(validators, executors, hook, fallBacks);
         address account = accountFactory.getAddress(salt, bootstrapCalldata);
 
         // using MSAFactory from ERC7579 repo.
@@ -178,7 +178,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         ERC7579BootstrapConfig memory hook = _emptyConfig();
 
-        ERC7579BootstrapConfig memory fallBack = _emptyConfig();
+        ERC7579BootstrapConfig[] memory fallBack = _emptyConfigs();
         instance = makeAccountInstance(salt, validators, executors, hook, fallBack);
     }
 

@@ -6,8 +6,8 @@ import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import { ERC7579HookDestruct } from "@rhinestone/modulekit/src/modules/ERC7579HookDestruct.sol";
-import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
+import { ERC7579HookDestruct } from "modulekit/src/modules/ERC7579HookDestruct.sol";
+import { Execution } from "modulekit/src/Accounts.sol";
 
 contract ColdStorageHook is ERC7579HookDestruct {
     error UnsupportedExecution();

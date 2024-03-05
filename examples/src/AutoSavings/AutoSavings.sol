@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC20Integration, ERC4626Integration } from "@rhinestone/modulekit/src/Integrations.sol";
+import { ERC20Integration, ERC4626Integration } from "modulekit/src/Integrations.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
-import { UniswapV3Integration } from "@rhinestone/modulekit/src/Integrations.sol";
-import { Execution } from "@rhinestone/modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase, SessionKeyBase } from "@rhinestone/modulekit/src/Modules.sol";
+import { UniswapV3Integration } from "modulekit/src/Integrations.sol";
+import { Execution } from "modulekit/src/Accounts.sol";
+import { ERC7579ExecutorBase, SessionKeyBase } from "modulekit/src/Modules.sol";
 
 contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
     struct Params {

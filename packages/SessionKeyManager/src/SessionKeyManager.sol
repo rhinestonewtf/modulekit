@@ -7,11 +7,9 @@ pragma solidity ^0.8.23;
 import {
     ACCOUNT_EXEC_TYPE,
     ERC7579ValidatorLib
-} from "@rhinestone/modulekit/src/modules/utils/ERC7579ValidatorLib.sol";
-import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/modules/ERC7579ValidatorBase.sol";
-import {
-    PackedUserOperation, UserOperationLib
-} from "@rhinestone/modulekit/src/external/ERC4337.sol";
+} from "modulekit/src/modules/utils/ERC7579ValidatorLib.sol";
+import { ERC7579ValidatorBase } from "modulekit/src/modules/ERC7579ValidatorBase.sol";
+import { PackedUserOperation, UserOperationLib } from "modulekit/src/external/ERC4337.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
