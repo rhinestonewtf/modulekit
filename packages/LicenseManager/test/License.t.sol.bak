@@ -13,7 +13,7 @@ import {
 } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
 import "src/PayMaster.sol";
-import "./LicensedValidator.sol";
+import "src/LicensedValidator.sol";
 
 contract MockOracle is IOracle {
     function decimals() external view override returns (uint8) {

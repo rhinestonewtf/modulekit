@@ -22,3 +22,4 @@ solarray/=node_modules/solarray/src/
 erc4337-validation/=node_modules/erc4337-validation/src/
 @ERC4337/=node_modules/@ERC4337/
 @prb/math/=node_modules/@prb/math/
+permit2/=node_modules/permit2/

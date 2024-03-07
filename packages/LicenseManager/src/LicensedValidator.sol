@@ -1,12 +1,15 @@
 import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.sol";
-import { FeePayMaster } from "src/PayMaster.sol";
+import { IPaymasterPermit } from "./IPaymasterPermit.sol";
 
 import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import "forge-std/interfaces/IERC20.sol";
+import "permit2/src/interfaces/IPermit2.sol";
 
 contract LicensedValidator is ERC7579ValidatorBase {
     address immutable FEE_RECIEPIENT;
     address immutable FEE_TOKEN;
+
+    error InvalidPaymaster();
 
     constructor(address _feeRecipient, address _feeToken) {
         FEE_RECIEPIENT = _feeRecipient;
@@ -20,14 +23,13 @@ contract LicensedValidator is ERC7579ValidatorBase {
     )
         internal
     {
-        address paymaster = address(bytes20(userOp.paymasterAndData[0:20]));
-        if (paymaster == address(0)) revert();
-        FeePayMaster(paymaster).claimFee({
+        IPaymasterPermit paymaster =
+            IPaymasterPermit(address(bytes20(userOp.paymasterAndData[0:20])));
+        if (address(paymaster) == address(0)) revert InvalidPaymaster();
+        paymaster.claimModuleFee({
             userOpHash: userOpHash,
-            smartAccount: address(userOp.sender),
-            receiver: FEE_RECIEPIENT,
-            token: IERC20(FEE_TOKEN),
-            amount: 1337
+            smartaccount: address(userOp.sender),
+            tokenPermissions: ISignatureTransfer.TokenPermissions({ token: FEE_TOKEN, amount: amount })
         });
     }
 
