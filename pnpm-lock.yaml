@@ -135,6 +135,63 @@ importers:
         specifier: github:transmissions11/solmate
         version: github.com/transmissions11/solmate/c892309933b25c03d32b1b0d674df7ae292ba925
 
+  packages/LicenseManager:
+    devDependencies:
+      '@ERC4337/account-abstraction':
+        specifier: github:kopy-kat/account-abstraction#develop
+        version: github.com/kopy-kat/account-abstraction/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@ERC4337/account-abstraction-v0.6':
+        specifier: github:eth-infinitism/account-abstraction#v0.6.0
+        version: github.com/eth-infinitism/account-abstraction/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@openzeppelin/contracts':
+        specifier: 5.0.1
+        version: 5.0.1
+      '@prb/math':
+        specifier: ^4.0.2
+        version: 4.0.2
+      '@rhinestone/modulekit':
+        specifier: workspace:*
+        version: link:../modulekit
+      '@rhinestone/safe7579':
+        specifier: workspace:*
+        version: link:../../accounts/safe7579
+      '@rhinestone/sessionkeymanager':
+        specifier: workspace:*
+        version: link:../SessionKeyManager
+      '@safe-global/safe-contracts':
+        specifier: ^1.4.1
+        version: 1.4.1(ethers@5.4.0)
+      ds-test:
+        specifier: github:dapphub/ds-test
+        version: github.com/dapphub/ds-test/e282159d5170298eb2455a6c05280ab5a73a4ef0
+      erc4337-validation:
+        specifier: github:rhinestonewtf/erc4337-validation
+        version: github.com/rhinestonewtf/erc4337-validation/5bc7fa2dec4ed815d389c41df0c93151e1ff6cae
+      erc7579:
+        specifier: github:erc7579/erc7579-implementation#feature/hookRevert
+        version: github.com/erc7579/erc7579-implementation/240e114638eaa10facc01cd8cb6d7a32e1c63269
+      forge-std:
+        specifier: github:foundry-rs/forge-std
+        version: github.com/foundry-rs/forge-std/2f6762e4f73f3d835457c220b5f62dfeeb6f6341
+      p256-verifier:
+        specifier: https://github.com/daimo-eth/p256-verifier
+        version: github.com/daimo-eth/p256-verifier/29475ae300ec95d98d5c7cc34c094846f0aa2dcd
+      permit2:
+        specifier: github:Uniswap/permit2
+        version: github.com/Uniswap/permit2/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219
+      prettier:
+        specifier: ^2.8.8
+        version: 2.8.8
+      sentinellist:
+        specifier: github:zeroknots/sentinellist
+        version: github.com/zeroknots/sentinellist/5f851f29b5d5e0fd4f5cdc63a2ccd7865ab1802d
+      solady:
+        specifier: github:vectorized/solady
+        version: github.com/vectorized/solady/d3d564a3451f7128d63e611ac972b37804bd2c21
+      solhint:
+        specifier: ^4.1.1
+        version: 4.1.1(typescript@5.3.3)
+
   packages/PermissionManager:
     devDependencies:
       '@ERC4337/account-abstraction':
@@ -4510,6 +4567,12 @@ packages:
       ethers: 5.7.2
     dev: true
 
+  github.com/Uniswap/permit2/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219:
+    resolution: {tarball: https://codeload.github.com/Uniswap/permit2/tar.gz/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219}
+    name: '@uniswap/permit2'
+    version: 1.0.0
+    dev: true
+
   github.com/daimo-eth/p256-verifier/29475ae300ec95d98d5c7cc34c094846f0aa2dcd:
     resolution: {tarball: https://codeload.github.com/daimo-eth/p256-verifier/tar.gz/29475ae300ec95d98d5c7cc34c094846f0aa2dcd}
     name: p256-verifier
@@ -4716,6 +4779,38 @@ packages:
       - utf-8-validate
     dev: true
 
+  github.com/kopy-kat/account-abstraction/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.4.0)(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0):
+    resolution: {tarball: https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38}
+    id: github.com/kopy-kat/account-abstraction/c5887153fbfe3ed09b2637cac39873f96d676f38
+    name: accountabstraction
+    version: 0.7.0
+    dependencies:
+      '@nomiclabs/hardhat-etherscan': 2.1.8(hardhat@2.20.1)
+      '@openzeppelin/contracts': 5.0.1
+      '@thehubbleproject/bls': 0.5.1
+      '@typechain/hardhat': 2.3.1(hardhat@2.20.1)(lodash@4.17.21)(typechain@5.2.0)
+      '@types/debug': 4.1.12
+      '@types/mocha': 9.1.1
+      debug: 4.3.4(supports-color@8.1.1)
+      ethereumjs-util: 7.1.5
+      ethereumjs-wallet: 1.0.2
+      hardhat-deploy: 0.11.45
+      hardhat-deploy-ethers: 0.3.0-beta.13(ethers@5.4.0)(hardhat@2.20.1)
+      solidity-coverage: 0.8.8(hardhat@2.20.1)
+      source-map-support: 0.5.21
+      table: 6.8.1
+      typescript: 4.9.5
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - ethers
+      - hardhat
+      - lodash
+      - supports-color
+      - typechain
+      - utf-8-validate
+    dev: true
+
   github.com/rhinestonewtf/erc4337-validation/19a97d86f8f29709664334078925b2a843be19e0:
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/19a97d86f8f29709664334078925b2a843be19e0}
     name: erc4337-validation
@@ -4731,7 +4826,7 @@ packages:
     version: 0.0.1-alpha
     dependencies:
       '@openzeppelin/contracts': 5.0.1
-      solady: github.com/vectorized/solady/e7024bee47b1623f436ee491ca9458a6dc8abce9
+      solady: github.com/vectorized/solady/d3d564a3451f7128d63e611ac972b37804bd2c21
     dev: true
 
   github.com/sablier-labs/solarray/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
@@ -4758,16 +4853,16 @@ packages:
     version: 0.0.170
     dev: true
 
+  github.com/vectorized/solady/d3d564a3451f7128d63e611ac972b37804bd2c21:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/d3d564a3451f7128d63e611ac972b37804bd2c21}
+    name: solady
+    version: 0.0.175
+    dev: true
+
   github.com/vectorized/solady/d699161248fdb571a35fe12f4bd3077032f33806:
     resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/d699161248fdb571a35fe12f4bd3077032f33806}
     name: solady
     version: 0.0.172
-    dev: true
-
-  github.com/vectorized/solady/e7024bee47b1623f436ee491ca9458a6dc8abce9:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/e7024bee47b1623f436ee491ca9458a6dc8abce9}
-    name: solady
-    version: 0.0.173
     dev: true
 
   github.com/zeroknots/sentinellist/5f851f29b5d5e0fd4f5cdc63a2ccd7865ab1802d:

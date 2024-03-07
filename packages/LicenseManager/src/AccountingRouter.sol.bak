@@ -1,0 +1,58 @@
+import "forge-std/interfaces/IERC20.sol";
+import { OwnableRoles } from "solady/src/auth/OwnableRoles.sol";
+
+type Role is uint256;
+
+struct Settlement {
+    IERC20 tokens;
+    uint256 amount;
+}
+
+contract AccountingRouter is OwnableRoles {
+    uint256 public constant ROLE_MODULE = _ROLE_1;
+
+    struct FeeAccounting {
+        uint256 outstanding;
+        uint256 paid;
+    }
+
+    mapping(
+        address module
+            => mapping(IERC20 token => mapping(address smartAccount => FeeAccounting accounting))
+    ) internal $moduleBalancesPerToken;
+
+    event ModuleClaim(
+        address indexed module, IERC20 indexed token, address indexed smartAccount, uint256 amount
+    );
+
+    constructor(address owner) {
+        _initializeOwner(owner);
+    }
+
+    function moduleClaim(
+        address smartAccount,
+        IERC20 token,
+        uint256 addAmount
+    )
+        external
+        onlyRoles(ROLE_MODULE)
+    {
+        FeeAccounting storage $accounting = $moduleBalancesPerToken[msg.sender][token][smartAccount];
+        $accounting.outstanding += addAmount;
+
+        emit ModuleClaim(msg.sender, token, smartAccount, addAmount);
+    }
+
+    function settleModule(address modules, Settlement[] calldata settlements) external {
+        uint256 length = settlements.length;
+        for (uint256 i; i < length; i++) {
+            Settlement calldata settlement = settlements[i];
+
+            FeeAccounting storage $accounting =
+                $moduleBalancesPerToken[modules][settlement.tokens][msg.sender];
+
+            uint256 outstanding = $accounting.outstanding;
+            if (outstanding < settlement.amount) revert();
+        }
+    }
+}
