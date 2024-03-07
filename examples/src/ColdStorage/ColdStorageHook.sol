@@ -10,6 +10,10 @@ import { ERC7579HookDestruct } from "modulekit/src/modules/ERC7579HookDestruct.s
 import { Execution } from "modulekit/src/Accounts.sol";
 
 contract ColdStorageHook is ERC7579HookDestruct {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     error UnsupportedExecution();
     error UnauthorizedAccess();
     error InvalidExecutionHash(bytes32 executionHash);
@@ -38,6 +42,24 @@ contract ColdStorageHook is ERC7579HookDestruct {
         address indexed subAccount, address target, uint256 value, bytes callData
     );
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external override {
+        VaultConfig storage _config = vaultConfig[msg.sender];
+        (_config.waitPeriod, _config.owner) = abi.decode(data, (uint128, address));
+    }
+
+    function onUninstall(bytes calldata data) external override {
+        delete vaultConfig[msg.sender].waitPeriod;
+        delete vaultConfig[msg.sender].owner;
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return vaultConfig[smartAccount].owner != address(0);
+    }
+
     function checkHash(
         address account,
         Execution calldata exec
@@ -51,21 +73,20 @@ contract ColdStorageHook is ERC7579HookDestruct {
         (success, entry) = executions[account].tryGet(executionHash);
     }
 
-    function _getTokenTxReceiver(bytes calldata callData)
-        internal
-        pure
-        returns (address receiver)
-    {
-        bytes4 functionSig = bytes4(callData[0:4]);
-        bytes calldata params = callData[4:];
-        if (functionSig == IERC20.transfer.selector) {
-            (receiver,) = abi.decode(params, (address, uint256));
-        } else if (functionSig == IERC20.transferFrom.selector) {
-            (, receiver,) = abi.decode(params, (address, address, uint256));
-        } else if (functionSig == IERC721.transferFrom.selector) {
-            (, receiver,) = abi.decode(params, (address, address, uint256));
+    function setWaitPeriod(uint256 waitPeriod) external {
+        if (waitPeriod == 0) {
+            revert("Wait period cannot be 0");
         }
+        vaultConfig[msg.sender].waitPeriod = uint128(waitPeriod);
     }
+
+    function getLockTime(address subAccount) public view returns (uint256) {
+        return vaultConfig[subAccount].waitPeriod;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Function that must be triggered from subaccount.
@@ -104,12 +125,9 @@ contract ColdStorageHook is ERC7579HookDestruct {
         emit ExecutionRequested(msg.sender, _exec.target, _exec.value, _exec.callData, executeAfter);
     }
 
-    function setWaitPeriod(uint256 waitPeriod) external {
-        if (waitPeriod == 0) {
-            revert("Wait period cannot be 0");
-        }
-        vaultConfig[msg.sender].waitPeriod = uint128(waitPeriod);
-    }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
 
     function _execDigest(
         address to,
@@ -136,14 +154,20 @@ contract ColdStorageHook is ERC7579HookDestruct {
         digest = keccak256(abi.encodePacked(to, value, callData));
     }
 
-    function onInstall(bytes calldata data) external override {
-        VaultConfig storage _config = vaultConfig[msg.sender];
-        (_config.waitPeriod, _config.owner) = abi.decode(data, (uint128, address));
-    }
-
-    function onUninstall(bytes calldata data) external override {
-        delete vaultConfig[msg.sender].waitPeriod;
-        delete vaultConfig[msg.sender].owner;
+    function _getTokenTxReceiver(bytes calldata callData)
+        internal
+        pure
+        returns (address receiver)
+    {
+        bytes4 functionSig = bytes4(callData[0:4]);
+        bytes calldata params = callData[4:];
+        if (functionSig == IERC20.transfer.selector) {
+            (receiver,) = abi.decode(params, (address, uint256));
+        } else if (functionSig == IERC20.transferFrom.selector) {
+            (, receiver,) = abi.decode(params, (address, address, uint256));
+        } else if (functionSig == IERC721.transferFrom.selector) {
+            (, receiver,) = abi.decode(params, (address, address, uint256));
+        }
     }
 
     function onPostCheck(bytes calldata hookData)
@@ -263,9 +287,9 @@ contract ColdStorageHook is ERC7579HookDestruct {
         revert UnsupportedExecution();
     }
 
-    function getLockTime(address subAccount) public view returns (uint256) {
-        return vaultConfig[subAccount].waitPeriod;
-    }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function version() external pure virtual returns (string memory) {
         return "1.0.0";
@@ -278,6 +302,4 @@ contract ColdStorageHook is ERC7579HookDestruct {
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_HOOK;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 }

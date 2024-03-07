@@ -8,9 +8,24 @@ import "./interfaces/Flashloan.sol";
 pragma solidity ^0.8.20;
 
 contract FlashloanLender is IFallbackMethod, ERC7579ExecutorBase {
-    // using ERC7579ExecutorLib for address;
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
 
     mapping(address account => uint256) public nonce;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external override { }
+
+    function onUninstall(bytes calldata data) external override { }
+    function isInitialized(address smartAccount) external view returns (bool) { }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function handle(
         address account,
@@ -43,6 +58,10 @@ contract FlashloanLender is IFallbackMethod, ERC7579ExecutorBase {
             return abi.encode(_flashLoan(account, borrower, token, tokenId, flashloanData));
         }
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
 
     /**
      * @notice Executes a flash loan by lending an NFT and collecting a fee.
@@ -159,9 +178,9 @@ contract FlashloanLender is IFallbackMethod, ERC7579ExecutorBase {
         }
     }
 
-    function onInstall(bytes calldata data) external override { }
-
-    function onUninstall(bytes calldata data) external override { }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function version() external pure virtual returns (string memory) {
         return "1.0.0";
@@ -174,6 +193,4 @@ contract FlashloanLender is IFallbackMethod, ERC7579ExecutorBase {
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_EXECUTOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 }

@@ -9,6 +9,12 @@ import { Execution } from "modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase, SessionKeyBase } from "modulekit/src/Modules.sol";
 
 contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
+    using ERC4626Integration for *;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     struct Params {
         address token;
         uint256 amountReceived;
@@ -26,9 +32,11 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
         uint128 sqrtPriceLimitX96;
     }
 
-    using ERC4626Integration for *;
-
     mapping(address account => mapping(address token => Config)) internal _config;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
 
     function getConfig(address account, address token) public view returns (Config memory) {
         return _config[account][token];
@@ -48,7 +56,17 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
         }
     }
 
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external override {
+        // Todo
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        // Todo
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function calcDepositAmount(
         uint256 amountReceived,
@@ -130,11 +148,13 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
         return access.sessionKeySigner;
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 
     function name() external pure virtual returns (string memory) {
         return "AutoSaving";

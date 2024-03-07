@@ -10,7 +10,15 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 contract OwnableValidator is ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     mapping(address subAccout => address owner) public owners;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
         if (data.length == 0) return;
@@ -21,6 +29,14 @@ contract OwnableValidator is ERC7579ValidatorBase {
     function onUninstall(bytes calldata) external override {
         delete owners[msg.sender];
     }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return owners[smartAccount] != address(0);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function validateUserOp(
         PackedUserOperation calldata userOp,
@@ -53,6 +69,10 @@ contract OwnableValidator is ERC7579ValidatorBase {
             : EIP1271_FAILED;
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
     function name() external pure returns (string memory) {
         return "OwnableValidator";
     }
@@ -64,6 +84,4 @@ contract OwnableValidator is ERC7579ValidatorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 }

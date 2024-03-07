@@ -7,6 +7,10 @@ import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
 contract ScheduledTransfers is SchedulingBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
+
     function executeOrder(uint256 jobId) external override canExecute(jobId) {
         ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
 
@@ -22,6 +26,10 @@ contract ScheduledTransfers is SchedulingBase {
 
         emit ExecutionTriggered(msg.sender, jobId);
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function name() external pure virtual returns (string memory) {
         return "Scheduled Transfers";

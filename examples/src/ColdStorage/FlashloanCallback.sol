@@ -7,7 +7,36 @@ import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 import "./interfaces/Flashloan.sol";
 
 contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     mapping(address account => uint256) public nonce;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external override { }
+
+    function onUninstall(bytes calldata data) external override { }
+
+    function isInitialized(address smartAccount) external view returns (bool) { }
+
+    function getTokengatedTxHash(
+        bytes memory transaction,
+        uint256 _nonce
+    )
+        public
+        view
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(transaction, _nonce));
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function handle(
         address borrower,
@@ -36,6 +65,10 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
         }
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
     function _onFlashloan(
         address borrower,
         address lender,
@@ -55,20 +88,9 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
         nonce[borrower]++;
     }
 
-    function getTokengatedTxHash(
-        bytes memory transaction,
-        uint256 _nonce
-    )
-        public
-        view
-        returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(transaction, _nonce));
-    }
-
-    function onInstall(bytes calldata data) external override { }
-
-    function onUninstall(bytes calldata data) external override { }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function version() external pure virtual returns (string memory) {
         return "1.0.0";
@@ -81,6 +103,4 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_EXECUTOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 }

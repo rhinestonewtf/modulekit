@@ -18,6 +18,10 @@ struct ConfigData {
 contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     using LibSort for *;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     error InvalidThreshold(uint256 length, uint256 threshold);
     error ValidatorIsAlreadyUsed(address smartaccount, address validator);
     error InvalidParams();
@@ -31,6 +35,65 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     }
 
     mapping(address smartAccount => MultiFactorConfig configuration) internal multiFactorConfig;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external {
+        // check if module is already initialized
+        if (data.length == 0) return;
+        if (multiFactorConfig[msg.sender].threshold != 0) revert("Already Initialized");
+
+        // TODO: slice this with packed / calldata
+        (
+            address[] memory subValidators,
+            bytes[] memory deInitDatas,
+            bytes[] memory initDatas,
+            uint8 threshold
+        ) = abi.decode(data, (address[], bytes[], bytes[], uint8));
+
+        _setConfig(subValidators, deInitDatas, initDatas, threshold);
+    }
+
+    function onUninstall(bytes calldata deInit) external {
+        // TODO: slice this with packed / calldata
+        bytes[] memory deInitDatas;
+        if (deInit.length != 0) {
+            (deInitDatas) = abi.decode(deInit, (bytes[]));
+        }
+        MultiFactorConfig storage config = multiFactorConfig[msg.sender];
+        _deinitSubValidator(msg.sender, config.subValidators, deInitDatas);
+        config.subValidators = new address[](0);
+        config.threshold = 0;
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return multiFactorConfig[msg.sender].threshold != 0;
+    }
+
+    function setConfig(
+        address[] memory subValidators,
+        bytes[] memory deInitDatas,
+        bytes[] memory initDatas,
+        uint8 threshold
+    )
+        external
+    {
+        _setConfig(subValidators, deInitDatas, initDatas, threshold);
+    }
+
+    function getMultiFactorConfig(address smartAccount)
+        external
+        view
+        returns (MultiFactorConfig memory)
+    {
+        return multiFactorConfig[smartAccount];
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function validateUserOp(
         PackedUserOperation memory userOp,
@@ -169,6 +232,10 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         // signatures
         return EIP1271_SUCCESS;
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Helper function that will call `onInstall` on selected subvalidators
@@ -311,60 +378,17 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         config.threshold = threshold;
     }
 
-    function setConfig(
-        address[] memory subValidators,
-        bytes[] memory deInitDatas,
-        bytes[] memory initDatas,
-        uint8 threshold
-    )
-        external
-    {
-        _setConfig(subValidators, deInitDatas, initDatas, threshold);
+    function useLocalECDSAFactor(address validator) internal view returns (bool) {
+        return validator == address(this);
     }
 
-    function onInstall(bytes calldata data) external {
-        // check if module is already initialized
-        if (data.length == 0) return;
-        if (multiFactorConfig[msg.sender].threshold != 0) revert("Already Initialized");
-
-        // TODO: slice this with packed / calldata
-        (
-            address[] memory subValidators,
-            bytes[] memory deInitDatas,
-            bytes[] memory initDatas,
-            uint8 threshold
-        ) = abi.decode(data, (address[], bytes[], bytes[], uint8));
-
-        _setConfig(subValidators, deInitDatas, initDatas, threshold);
-    }
-
-    function onUninstall(bytes calldata deInit) external {
-        // TODO: slice this with packed / calldata
-        bytes[] memory deInitDatas;
-        if (deInit.length != 0) {
-            (deInitDatas) = abi.decode(deInit, (bytes[]));
-        }
-        MultiFactorConfig storage config = multiFactorConfig[msg.sender];
-        _deinitSubValidator(msg.sender, config.subValidators, deInitDatas);
-        config.subValidators = new address[](0);
-        config.threshold = 0;
-    }
-
-    function getMultiFactorConfig(address smartAccount)
-        external
-        view
-        returns (MultiFactorConfig memory)
-    {
-        return multiFactorConfig[smartAccount];
-    }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function isModuleType(uint256 typeID) external pure returns (bool) {
         if (typeID == TYPE_VALIDATOR) return true;
         if (typeID == TYPE_EXECUTOR) return true;
-    }
-
-    function useLocalECDSAFactor(address validator) internal view returns (bool) {
-        return validator == address(this);
     }
 
     function name() external pure returns (string memory) {
@@ -373,9 +397,5 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
 
     function version() external pure returns (string memory) {
         return "0.0.1";
-    }
-
-    function isInitialized(address smartAccount) external view returns (bool) {
-        return multiFactorConfig[msg.sender].threshold != 0;
     }
 }

@@ -9,6 +9,10 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     struct DeadmanSwitchStorage {
         uint48 lastAccess;
         uint48 timeout;
@@ -21,6 +25,10 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
 
     error MissingCondition();
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
     function onInstall(bytes calldata data) external {
         if (data.length == 0) return;
         (address nominee, uint48 timeout) = abi.decode(data, (address, uint48));
@@ -31,27 +39,19 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         config.nominee = nominee;
     }
 
-    function lastAccess(address account) external view returns (uint48) {
-        return _lastAccess[account].lastAccess;
-    }
-
     function onUninstall(bytes calldata) external override {
         delete _lastAccess[msg.sender];
     }
 
-    function name() external pure returns (string memory) {
-        return "DeadmanSwitch";
-    }
-
-    function version() external pure returns (string memory) {
-        return "0.0.1";
-    }
-
-    function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_HOOK;
-    }
-
     function isInitialized(address smartAccount) external view returns (bool) { }
+
+    function lastAccess(address account) external view returns (uint48) {
+        return _lastAccess[account].lastAccess;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function preCheck(address, bytes calldata) external returns (bytes memory) {
         DeadmanSwitchStorage storage config = _lastAccess[msg.sender];
@@ -96,5 +96,21 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         returns (bytes4)
     {
         return EIP1271_FAILED;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function name() external pure returns (string memory) {
+        return "DeadmanSwitch";
+    }
+
+    function version() external pure returns (string memory) {
+        return "0.0.1";
+    }
+
+    function isModuleType(uint256 typeID) external pure override returns (bool) {
+        return typeID == TYPE_HOOK;
     }
 }

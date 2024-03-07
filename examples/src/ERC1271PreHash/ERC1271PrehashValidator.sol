@@ -9,7 +9,32 @@ import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
 contract ERC1271PrehashValidator is ERC7579ValidatorBase {
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     mapping(address account => EnumerableSet.Bytes32Set) internal _validHashes;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external override {
+        if (data.length == 0) return;
+
+        bytes32[] memory hashes = abi.decode(data, (bytes32[]));
+        for (uint256 i; i < hashes.length; i++) {
+            _validHashes[msg.sender].add(hashes[i]);
+        }
+    }
+
+    function onUninstall(bytes calldata data) external override {
+        // Todo
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        // Todo
+    }
 
     function addHash(bytes32 _hash) external {
         _validHashes[msg.sender].add(_hash);
@@ -22,6 +47,10 @@ contract ERC1271PrehashValidator is ERC7579ValidatorBase {
     function isHash(address account, bytes32 _hash) public view returns (bool) {
         return _validHashes[account].contains(_hash);
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function validateUserOp(
         PackedUserOperation calldata userOp,
@@ -54,6 +83,10 @@ contract ERC1271PrehashValidator is ERC7579ValidatorBase {
         }
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
     function version() external pure virtual returns (string memory) {
         return "1.0.0";
     }
@@ -65,17 +98,4 @@ contract ERC1271PrehashValidator is ERC7579ValidatorBase {
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
         return isType == TYPE_VALIDATOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
-
-    function onInstall(bytes calldata data) external override {
-        if (data.length == 0) return;
-
-        bytes32[] memory hashes = abi.decode(data, (bytes32[]));
-        for (uint256 i; i < hashes.length; i++) {
-            _validHashes[msg.sender].add(hashes[i]);
-        }
-    }
-
-    function onUninstall(bytes calldata data) external override { }
 }

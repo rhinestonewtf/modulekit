@@ -5,6 +5,10 @@ import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
 
 abstract contract ECDSAFactor is ERC7579ValidatorBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     struct FactorConfig {
         address signer;
         uint48 validAfter;
@@ -13,9 +17,17 @@ abstract contract ECDSAFactor is ERC7579ValidatorBase {
 
     mapping(address smartAccount => FactorConfig ecdsaConfig) public ecdsaFactorConfig;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
     function setECDSAFactor(FactorConfig calldata config) external {
         ecdsaFactorConfig[msg.sender] = config;
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
 
     function _ecdsaSet(address smartAccount) internal view returns (bool) {
         return ecdsaFactorConfig[smartAccount].signer != address(0);

@@ -6,6 +6,10 @@ import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase, SessionKeyBase } from "modulekit/src/Modules.sol";
 
 abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     error InvalidExecution();
     error InvalidInstall();
     error InvalidJob();
@@ -35,33 +39,22 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
         uint256 jobId;
     }
 
-    function _isExecutionValid(uint256 jobId) internal view {
-        ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
 
-        if (!executionConfig.isEnabled) {
-            revert InvalidExecution();
+    function onInstall(bytes calldata data) external override {
+        if (_accountJobCount[msg.sender] != 0) {
+            revert InvalidInstall();
         }
 
-        if (executionConfig.lastExecutionTime + executionConfig.executeInterval < block.timestamp) {
-            revert InvalidExecution();
-        }
-        if (executionConfig.numberOfExecutionsCompleted >= executionConfig.numberOfExecutions) {
-            revert InvalidExecution();
-        }
-        if (executionConfig.startDate > block.timestamp) {
-            revert InvalidExecution();
-        }
-    }
+        (
+            uint48 executeInterval,
+            uint16 numberOfExecutions,
+            uint48 startDate,
+            bytes memory executionData
+        ) = abi.decode(data, (uint48, uint16, uint48, bytes));
 
-    modifier canExecute(uint256 jobId) {
-        _isExecutionValid(jobId);
-        _;
-    }
-
-    // abstract methohd to be implemented by the inheriting contract
-    function executeOrder(uint256 jobId) external virtual;
-
-    function _createExecution(ExecutionConfig calldata data) internal {
         uint256 jobId = _accountJobCount[msg.sender] + 1;
         _accountJobCount[msg.sender]++;
 
@@ -69,13 +62,27 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
-            executeInterval: data.executeInterval,
-            numberOfExecutions: data.numberOfExecutions,
-            startDate: data.startDate,
-            executionData: data.executionData
+            executeInterval: executeInterval,
+            numberOfExecutions: numberOfExecutions,
+            startDate: startDate,
+            executionData: executionData
         });
 
         emit ExecutionAdded(msg.sender, jobId);
+    }
+
+    function onUninstall(bytes calldata) external {
+        uint256 count = _accountJobCount[msg.sender];
+        for (uint256 i = 1; i <= count; i++) {
+            delete _executionLog[msg.sender][i];
+        }
+        _accountJobCount[msg.sender] = 0;
+
+        emit ExecutionsCancelled(msg.sender);
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return _accountJobCount[smartAccount] != 0;
     }
 
     function addOrder(ExecutionConfig calldata executionConfig) external {
@@ -87,6 +94,28 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
         executionConfig.isEnabled = !executionConfig.isEnabled;
         emit ExecutionStatusUpdated(msg.sender, jobId);
     }
+
+    function getAccountJobDetails(
+        address smartAccount,
+        uint256 jobId
+    )
+        external
+        view
+        returns (ExecutionConfig memory)
+    {
+        return _executionLog[smartAccount][jobId];
+    }
+
+    function getAccountJobCount(address smartAccount) external view returns (uint256) {
+        return _accountJobCount[smartAccount];
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
+
+    // abstract methohd to be implemented by the inheriting contract
+    function executeOrder(uint256 jobId) external virtual;
 
     function validateSessionParams(
         address destinationContract,
@@ -125,18 +154,11 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
         return access.sessionKeySigner;
     }
 
-    function onInstall(bytes calldata data) external override {
-        if (_accountJobCount[msg.sender] != 0) {
-            revert InvalidInstall();
-        }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
 
-        (
-            uint48 executeInterval,
-            uint16 numberOfExecutions,
-            uint48 startDate,
-            bytes memory executionData
-        ) = abi.decode(data, (uint48, uint16, uint48, bytes));
-
+    function _createExecution(ExecutionConfig calldata data) internal {
         uint256 jobId = _accountJobCount[msg.sender] + 1;
         _accountJobCount[msg.sender]++;
 
@@ -144,45 +166,43 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
-            executeInterval: executeInterval,
-            numberOfExecutions: numberOfExecutions,
-            startDate: startDate,
-            executionData: executionData
+            executeInterval: data.executeInterval,
+            numberOfExecutions: data.numberOfExecutions,
+            startDate: data.startDate,
+            executionData: data.executionData
         });
 
         emit ExecutionAdded(msg.sender, jobId);
     }
 
-    function getAccountJobDetails(
-        address smartAccount,
-        uint256 jobId
-    )
-        external
-        view
-        returns (ExecutionConfig memory)
-    {
-        return _executionLog[smartAccount][jobId];
-    }
+    function _isExecutionValid(uint256 jobId) internal view {
+        ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
 
-    function getAccountJobCount(address smartAccount) external view returns (uint256) {
-        return _accountJobCount[smartAccount];
-    }
-
-    function onUninstall(bytes calldata) external {
-        uint256 count = _accountJobCount[msg.sender];
-        for (uint256 i = 1; i <= count; i++) {
-            delete _executionLog[msg.sender][i];
+        if (!executionConfig.isEnabled) {
+            revert InvalidExecution();
         }
-        _accountJobCount[msg.sender] = 0;
 
-        emit ExecutionsCancelled(msg.sender);
+        if (executionConfig.lastExecutionTime + executionConfig.executeInterval < block.timestamp) {
+            revert InvalidExecution();
+        }
+        if (executionConfig.numberOfExecutionsCompleted >= executionConfig.numberOfExecutions) {
+            revert InvalidExecution();
+        }
+        if (executionConfig.startDate > block.timestamp) {
+            revert InvalidExecution();
+        }
     }
+
+    modifier canExecute(uint256 jobId) {
+        _isExecutionValid(jobId);
+        _;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
-    }
-
-    function isInitialized(address smartAccount) external view returns (bool) {
-        return _accountJobCount[smartAccount] != 0;
     }
 }

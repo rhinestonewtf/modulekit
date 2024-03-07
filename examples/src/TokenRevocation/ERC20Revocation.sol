@@ -6,6 +6,10 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 
 contract ERC20Revocation is SessionKeyBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     enum TokenType {
         ERC20,
         ERC721
@@ -20,9 +24,23 @@ contract ERC20Revocation is SessionKeyBase {
     error InvalidToken();
     error NotZero();
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external { }
+
+    function onUninstall(bytes calldata data) external { }
+
+    function isInitialized(address smartAccount) external view returns (bool) { }
+
     function encode(Token memory transaction) public pure returns (bytes memory) {
         return abi.encode(transaction);
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function validateSessionParams(
         address to,
@@ -50,6 +68,10 @@ contract ERC20Revocation is SessionKeyBase {
         return transaction.sessionKeySigner;
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
     function _validateERC20(bytes4 targetSelector, bytes calldata callData) internal pure {
         // handle ERC20
         if (targetSelector == IERC20.approve.selector) {
@@ -75,15 +97,13 @@ contract ERC20Revocation is SessionKeyBase {
         }
     }
 
-    function onInstall(bytes calldata data) external { }
-
-    function onUninstall(bytes calldata data) external { }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 
     function name() external pure virtual returns (string memory) {
         return "AutoSaving";

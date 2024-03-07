@@ -14,12 +14,20 @@ struct PassKeyId {
 contract WebAuthnValidator is ERC7579ValidatorBase {
     using UserOperationLib for PackedUserOperation;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     error NoPassKeyRegisteredForSmartAccount(address smartAccount);
     error AlreadyInitedForSmartAccount(address smartAccount);
 
     event NewPassKeyRegistered(address indexed smartAccount, string keyId);
 
     mapping(address account => PassKeyId passkeyConfig) public smartAccountPassKeys;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
         PassKeyId memory passkey = abi.decode(data, (PassKeyId));
@@ -30,13 +38,17 @@ contract WebAuthnValidator is ERC7579ValidatorBase {
         _removePassKey();
     }
 
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return smartAccountPassKeys[smartAccount].pubKeyX != 0;
+    }
+
     function getAuthorizedKey(address account) public view returns (PassKeyId memory passkey) {
         passkey = smartAccountPassKeys[account];
     }
 
-    function _removePassKey() internal {
-        smartAccountPassKeys[msg.sender] = PassKeyId(0, 0, "");
-    }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function validateUserOp(
         PackedUserOperation calldata userOp,
@@ -85,6 +97,18 @@ contract WebAuthnValidator is ERC7579ValidatorBase {
         return EIP1271_FAILED;
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _removePassKey() internal {
+        smartAccountPassKeys[msg.sender] = PassKeyId(0, 0, "");
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
+
     function name() external pure returns (string memory) {
         return "WebAuthnValidator";
     }
@@ -96,6 +120,4 @@ contract WebAuthnValidator is ERC7579ValidatorBase {
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 }

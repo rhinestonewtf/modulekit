@@ -9,6 +9,10 @@ import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
 contract DollarCostAverage is ERC7579ExecutorBase, SessionKeyBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     struct ScopedAccess {
         address sessionKeySigner;
         address onlyTokenIn;
@@ -30,6 +34,38 @@ contract DollarCostAverage is ERC7579ExecutorBase, SessionKeyBase {
     error InvalidParams();
 
     mapping(address account => mapping(address token => SpentLog)) internal _log;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onInstall(bytes calldata data) external override {
+        (address[] memory tokens, SpentLog[] memory log) = abi.decode(data, (address[], SpentLog[]));
+
+        for (uint256 i; i < tokens.length; i++) {
+            _log[msg.sender][tokens[i]] = log[i];
+        }
+    }
+
+    function onUninstall(bytes calldata data) external override {
+        // Todo
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        // Todo
+    }
+
+    function encode(ScopedAccess memory transaction) public pure returns (bytes memory) {
+        return abi.encode(transaction);
+    }
+
+    function getSpentLog(address account, address token) public view returns (SpentLog memory) {
+        return _log[account][token];
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
 
     function dca(Params calldata params) external {
         IERC7579Account smartAccount = IERC7579Account(msg.sender);
@@ -74,29 +110,13 @@ contract DollarCostAverage is ERC7579ExecutorBase, SessionKeyBase {
         return access.sessionKeySigner;
     }
 
-    function onInstall(bytes calldata data) external override {
-        (address[] memory tokens, SpentLog[] memory log) = abi.decode(data, (address[], SpentLog[]));
-
-        for (uint256 i; i < tokens.length; i++) {
-            _log[msg.sender][tokens[i]] = log[i];
-        }
-    }
-
-    function onUninstall(bytes calldata data) external override { }
-
-    function encode(ScopedAccess memory transaction) public pure returns (bytes memory) {
-        return abi.encode(transaction);
-    }
-
-    function getSpentLog(address account, address token) public view returns (SpentLog memory) {
-        return _log[account][token];
-    }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     METADATA
+    //////////////////////////////////////////////////////////////////////////*/
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
         return typeID == TYPE_EXECUTOR;
     }
-
-    function isInitialized(address smartAccount) external view returns (bool) { }
 
     function name() external pure virtual returns (string memory) {
         return "DollarCostAverage";
