@@ -73,6 +73,7 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         // initialize the min values
         uint256 validUntil;
         uint256 validAfter;
+        bool sigFailed;
         // Iterate over the selected validators and validate the userOp.
         for (uint256 i; i < validatorToUseCount; i++) {
             ERC7579ValidatorBase _validator =
@@ -91,28 +92,18 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
 
             // destructuring the individual return values from the subvalidator
             // using uint256 to avoid padding gas
-            (bool sigFailed, uint256 _validUntil, uint256 _validAfter) =
+            (bool _sigFailed, uint256 _validUntil, uint256 _validAfter) =
                 _unpackValidationData(_validationData);
 
             // update the min values
             if (_validUntil < validUntil) validUntil = _validUntil;
             if (_validAfter > validAfter) validAfter = _validAfter;
 
-            // if any of the validators failed, the Validation is INVALID.
-            // Terminate the entire validation process and return the result
-            // returning the max values here
-            if (sigFailed) {
-                return _packValidationData({
-                    sigFailed: true,
-                    validUntil: uint48(validUntil),
-                    validAfter: uint48(validAfter)
-                });
-            }
+            if (_sigFailed) sigFailed = true;
         }
 
-        // if we reach this point, all validators have passed and we can return the validation data
         return _packValidationData({
-            sigFailed: false,
+            sigFailed: sigFailed,
             validUntil: uint48(validUntil),
             validAfter: uint48(validAfter)
         });
