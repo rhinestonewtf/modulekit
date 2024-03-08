@@ -28,15 +28,14 @@ import {
     UserOperationLib
 } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
+import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
-import "forge-std/console2.sol";
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * By using Safe's Fallback and Execution modules,
  * this contract creates full ERC7579 compliance to Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-
 contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManager {
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
@@ -155,7 +154,6 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
 
         // pay prefund
         if (missingAccountFunds != 0) {
-            console2.log("missingAccountFunds", missingAccountFunds);
             _execute({
                 safe: userOp.getSender(),
                 target: entryPoint(),
@@ -245,6 +243,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         CallType callType = encodedMode.getCallType();
         if (callType == CALLTYPE_BATCH) return true;
         else if (callType == CALLTYPE_SINGLE) return true;
+        else if (callType == CALLTYPE_DELEGATECALL) return true;
         else return false;
     }
 
@@ -283,7 +282,6 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
      * @inheritdoc IERC7579Account
      */
     function accountId() external view override returns (string memory accountImplementationId) {
-        // TODO: concat safe version
         string memory safeVersion = ISafe(_msgSender()).VERSION();
         return string(abi.encodePacked(safeVersion, "erc7579.v0.0.0"));
     }
@@ -396,5 +394,10 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         }
 
         emit Safe7579Initialized(msg.sender);
+    }
+
+    function getNonce(address safe, address validator) external view returns (uint256 nonce) {
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        nonce = IEntryPoint(entryPoint()).getNonce(safe, key);
     }
 }

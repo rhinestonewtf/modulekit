@@ -108,6 +108,7 @@ contract SafeLaunchPadTest is Test {
         uint256 salt = 0;
 
         address account = _predictAddress(bytes32(salt), initializer);
+        vm.deal(account, 1 ether);
         PackedUserOperation memory userOp = getDefaultUserOp(account);
         userOp.initCode = abi.encodePacked(
             address(safeProxyFactory),
@@ -115,8 +116,6 @@ contract SafeLaunchPadTest is Test {
                 SafeProxyFactory.createProxyWithNonce, (address(singleton), initializer, salt)
             )
         );
-
-        console.log("accountPredict", _predictAddress(bytes32(0), initializer));
 
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
@@ -126,15 +125,12 @@ contract SafeLaunchPadTest is Test {
 
     function getDefaultUserOp(address account)
         internal
+        view
         returns (PackedUserOperation memory userOp)
     {
-        // console.log("accountPredict", _predictAddress(bytes32(0)));
-        vm.deal(account, 1 ether);
-        uint192 key = uint192(bytes24(bytes20(address(defaultValidator))));
-        uint256 nonce = entrypoint.getNonce(address(account), key);
         userOp = PackedUserOperation({
             sender: account,
-            nonce: nonce,
+            nonce: safe7579.getNonce(address(account), address(defaultValidator)),
             initCode: "",
             callData: "",
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
