@@ -107,7 +107,8 @@ contract SafeLaunchPadTest is Test {
         );
         uint256 salt = 0;
 
-        PackedUserOperation memory userOp = getDefaultUserOp();
+        address account = _predictAddress(bytes32(salt), initializer);
+        PackedUserOperation memory userOp = getDefaultUserOp(account);
         userOp.initCode = abi.encodePacked(
             address(safeProxyFactory),
             abi.encodeCall(
@@ -115,16 +116,19 @@ contract SafeLaunchPadTest is Test {
             )
         );
 
+        console.log("accountPredict", _predictAddress(bytes32(0), initializer));
+
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
 
         entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
-    function getDefaultUserOp() internal returns (PackedUserOperation memory userOp) {
-        address account = address(0x8bDB7B3070D3cefA1586427ebAfd5FDD56aE96A7);
-
-        console.log("accountPredict", _predictAddress(bytes32(0)));
+    function getDefaultUserOp(address account)
+        internal
+        returns (PackedUserOperation memory userOp)
+    {
+        // console.log("accountPredict", _predictAddress(bytes32(0)));
         vm.deal(account, 1 ether);
         uint192 key = uint192(bytes24(bytes20(address(defaultValidator))));
         uint256 nonce = entrypoint.getNonce(address(account), key);
@@ -141,12 +145,39 @@ contract SafeLaunchPadTest is Test {
         });
     }
 
-    function _predictAddress(bytes32 salt) internal returns (address safeProxy) {
+    function _predictAddress(
+        bytes32 salt,
+        bytes memory initializer
+    )
+        internal
+        returns (address safeProxy)
+    {
         bytes memory deploymentData = abi.encodePacked(
             safeProxyFactory.proxyCreationCode(), uint256(uint160(address(singleton)))
         );
         bytes32 hash = LibClone.initCodeHash(address(singleton));
         safeProxy = LibClone.predictDeterministicAddress(hash, salt, address(safeProxyFactory));
+        salt = keccak256(abi.encodePacked(keccak256(initializer), salt));
+
+        safeProxy = address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            bytes1(0xff),
+                            address(safeProxyFactory),
+                            salt,
+                            keccak256(
+                                abi.encodePacked(
+                                    safeProxyFactory.proxyCreationCode(),
+                                    uint256(uint160(address(singleton)))
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
     }
 
     function test_foo() public { }
