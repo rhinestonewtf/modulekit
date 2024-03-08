@@ -29,18 +29,22 @@ import {
 } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 
+import "forge-std/console2.sol";
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * By using Safe's Fallback and Execution modules,
  * this contract creates full ERC7579 compliance to Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
+
 contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManager {
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
 
     error Unsupported();
+
+    event Safe7579Initialized(address indexed safe);
 
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
@@ -151,6 +155,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
 
         // pay prefund
         if (missingAccountFunds != 0) {
+            console2.log("missingAccountFunds", missingAccountFunds);
             _execute({
                 safe: userOp.getSender(),
                 target: entryPoint(),
@@ -368,12 +373,28 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         return keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, block.chainid, this));
     }
 
-    function initializeAccount(bytes calldata data) external payable {
+    function initializeAccount(bytes calldata initCode) external payable {
         _initModuleManager();
 
-        (address bootstrap, bytes memory bootstrapCall) = abi.decode(data, (address, bytes));
+        (
+            address[] memory validator,
+            bytes[] memory validatorInitcode,
+            address[] memory executors,
+            bytes[] memory executorsInitcode
+        ) = abi.decode(initCode, (address[], bytes[], address[], bytes[]));
 
-        (bool success,) = bootstrap.delegatecall(bootstrapCall);
-        if (!success) revert AccountInitializationFailed();
+        uint256 length = validator.length;
+        if (length != validatorInitcode.length) revert("Invalid input");
+        for (uint256 i; i < length; i++) {
+            _installValidator(validator[i], validatorInitcode[i]);
+        }
+
+        length = executors.length;
+        if (length != executorsInitcode.length) revert("Invalid input");
+        for (uint256 i; i < length; i++) {
+            _installExecutor(executors[i], executorsInitcode[i]);
+        }
+
+        emit Safe7579Initialized(msg.sender);
     }
 }
