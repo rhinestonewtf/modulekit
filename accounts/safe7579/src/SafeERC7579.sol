@@ -277,18 +277,24 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     function isModuleInstalled(
         uint256 moduleType,
         address module,
-        bytes calldata /*additionalContext*/
+        bytes calldata additionalContext
     )
         external
         view
         override
         returns (bool)
     {
-        if (moduleType == MODULE_TYPE_VALIDATOR) return _isValidatorInstalled(module);
-        else if (moduleType == MODULE_TYPE_EXECUTOR) return _isExecutorInstalled(module);
-        else if (moduleType == MODULE_TYPE_FALLBACK) return _isFallbackHandlerInstalled(module);
-        else if (moduleType == MODULE_TYPE_HOOK) return _isHookInstalled(module);
-        else return false;
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            return _isValidatorInstalled(module);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            return _isExecutorInstalled(module);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            return _isFallbackHandlerInstalled(module, additionalContext);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            return _isHookInstalled(module);
+        } else {
+            return false;
+        }
     }
 
     /**

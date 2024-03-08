@@ -7,12 +7,19 @@ import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
+
+CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
+
+struct FallbackHandler {
+    address handler;
+    CallType calltype;
+}
 
 struct ModuleManagerStorage {
     // linked list of executors. List is initialized by initializeAccount()
     SentinelListLib.SentinelList _executors;
-    // single fallback handler for all fallbacks
-    address fallbackHandler;
+    mapping(bytes4 selector => FallbackHandler fallbackHandler) _fallbacks;
 }
 
 /**
@@ -29,7 +36,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     error CannotRemoveLastValidator();
     error InitializerError();
     error ValidatorStorageHelperError();
-    error NoFallbackHandler();
+    error NoFallbackHandler(bytes4 msgSig);
 
     mapping(address smartAccount => ModuleManagerStorage moduleManagerStorage) internal
         $moduleManager;
@@ -166,10 +173,19 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /////////////////////////////////////////////////////
     //  Manage Fallback
     ////////////////////////////////////////////////////
-    function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms.fallbackHandler = handler;
-        // Initialize Fallback Module via Safe
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+        (bytes4 functionSig, CallType calltype, bytes memory initData) =
+            abi.decode(params, (bytes4, CallType, bytes));
+        if (_isFallbackHandlerInstalled(functionSig)) revert();
+
+        FallbackHandler storage $fallbacks = $moduleManager[msg.sender]._fallbacks[functionSig];
+        $fallbacks.calltype = calltype;
+        $fallbacks.handler = handler;
+
+        //
+        // ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
+        // $mms.fallbackHandler = handler;
+        // // Initialize Fallback Module via Safe
         _execute({
             safe: msg.sender,
             target: handler,
@@ -178,9 +194,16 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         });
     }
 
+    function _isFallbackHandlerInstalled(bytes4 functionSig) internal view virtual returns (bool) {
+        FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
+        return $fallback.handler != address(0);
+    }
+
     function _uninstallFallbackHandler(address handler, bytes calldata initData) internal virtual {
+        (bytes4 functionSig) = abi.decode(initData, (bytes4));
+
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms.fallbackHandler = address(0);
+        $mms._fallbacks[functionSig].handler = address(0);
         // De-Initialize Fallback Module via Safe
         _execute({
             safe: msg.sender,
@@ -190,35 +213,88 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         });
     }
 
-    function _getFallbackHandler() internal view virtual returns (address fallbackHandler) {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        return $mms.fallbackHandler;
-    }
+    function _isFallbackHandlerInstalled(
+        address _handler,
+        bytes calldata additionalContext
+    )
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        bytes4 functionSig = abi.decode(additionalContext, (bytes4));
 
-    function _isFallbackHandlerInstalled(address _handler) internal view virtual returns (bool) {
-        return _getFallbackHandler() == _handler;
-    }
-
-    function getActiveFallbackHandler() external view virtual returns (address) {
-        return _getFallbackHandler();
+        FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
+        return $fallback.handler == _handler;
     }
 
     // FALLBACK
     // solhint-disable-next-line no-complex-fallback
     fallback() external payable override(Receiver) receiverFallback {
-        address handler = _getFallbackHandler();
-        if (handler == address(0)) revert NoFallbackHandler();
+        FallbackHandler storage $fallbackHandler = $moduleManager[msg.sender]._fallbacks[msg.sig];
+        address handler = $fallbackHandler.handler;
+        CallType calltype = $fallbackHandler.calltype;
+        if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
-        bytes memory retData = _executeReturnData({
-            safe: msg.sender,
-            target: handler,
-            value: msg.value,
-            callData: abi.encodePacked(msg.data, _msgSender()) // ERC2771
-         });
+        if (calltype == CALLTYPE_STATIC) {
+            assembly {
+                function allocate(length) -> pos {
+                    pos := mload(0x40)
+                    mstore(0x40, add(pos, length))
+                }
 
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            return(add(retData, 0x20), mload(retData))
+                let calldataPtr := allocate(calldatasize())
+                calldatacopy(calldataPtr, 0, calldatasize())
+
+                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                // Then the address without padding is stored right after the calldata
+                let senderPtr := allocate(20)
+                mstore(senderPtr, shl(96, caller()))
+
+                // Add 20 bytes for the address appended add the end
+                let success :=
+                    staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
+
+                let returnDataPtr := allocate(returndatasize())
+                returndatacopy(returnDataPtr, 0, returndatasize())
+                if iszero(success) { revert(returnDataPtr, returndatasize()) }
+                return(returnDataPtr, returndatasize())
+            }
+        }
+        if (calltype == CALLTYPE_SINGLE) {
+            assembly {
+                function allocate(length) -> pos {
+                    pos := mload(0x40)
+                    mstore(0x40, add(pos, length))
+                }
+
+                let calldataPtr := allocate(calldatasize())
+                calldatacopy(calldataPtr, 0, calldatasize())
+
+                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
+                // Then the address without padding is stored right after the calldata
+                let senderPtr := allocate(20)
+                mstore(senderPtr, shl(96, caller()))
+
+                // Add 20 bytes for the address appended add the end
+                let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
+
+                let returnDataPtr := allocate(returndatasize())
+                returndatacopy(returnDataPtr, 0, returndatasize())
+                if iszero(success) { revert(returnDataPtr, returndatasize()) }
+                return(returnDataPtr, returndatasize())
+            }
+        }
+
+        if (calltype == CALLTYPE_DELEGATECALL) {
+            assembly {
+                calldatacopy(0, 0, calldatasize())
+                let result := delegatecall(gas(), handler, 0, calldatasize(), 0, 0)
+                returndatacopy(0, 0, returndatasize())
+                switch result
+                case 0 { revert(0, returndatasize()) }
+                default { return(0, returndatasize()) }
+            }
         }
     }
 }
