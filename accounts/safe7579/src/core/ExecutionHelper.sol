@@ -71,6 +71,25 @@ abstract contract ExecutionHelper {
         }
     }
 
+    function _executeDelegateCall(address safe, address target, bytes calldata callData) internal {
+        bool success = ISafe(safe).execTransactionFromModule(target, 0, callData, 1);
+        if (!success) revert ExecutionFailed();
+    }
+
+    function _executeDelegateCallReturnData(
+        address safe,
+        address target,
+        bytes calldata callData
+    )
+        internal
+        returns (bytes memory returnData)
+    {
+        bool success;
+        (success, returnData) =
+            ISafe(safe).execTransactionFromModuleReturnData(target, 0, callData, 1);
+        if (!success) revert ExecutionFailed();
+    }
+
     /**
      * Execute call on Safe
      * @dev This function will revert if the call fails

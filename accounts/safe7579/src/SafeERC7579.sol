@@ -4,7 +4,12 @@ pragma solidity ^0.8.23;
 import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { IMSA } from "erc7579/interfaces/IMSA.sol";
 import {
-    CallType, ModeCode, ModeLib, CALLTYPE_SINGLE, CALLTYPE_BATCH
+    CallType,
+    ModeCode,
+    ModeLib,
+    CALLTYPE_SINGLE,
+    CALLTYPE_BATCH,
+    CALLTYPE_DELEGATECALL
 } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import {
@@ -62,6 +67,10 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
             (address target, uint256 value, bytes calldata callData) =
                 executionCalldata.decodeSingle();
             _execute(msg.sender, target, value, callData);
+        } else if (callType == CALLTYPE_DELEGATECALL) {
+            address target = address(bytes20(executionCalldata[:20]));
+            bytes calldata callData = executionCalldata[20:];
+            _executeDelegateCall(msg.sender, target, callData);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -91,6 +100,11 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
                 executionCalldata.decodeSingle();
             returnData = new bytes[](1);
             returnData[0] = _executeReturnData(msg.sender, target, value, callData);
+        } else if (callType == CALLTYPE_DELEGATECALL) {
+            address target = address(bytes20(executionCalldata[:20]));
+            bytes calldata callData = executionCalldata[20:];
+            returnData = new bytes[](1);
+            returnData[0] = _executeDelegateCallReturnData(msg.sender, target, callData);
         } else {
             revert UnsupportedCallType(callType);
         }
@@ -263,10 +277,10 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     /**
      * @inheritdoc IERC7579Account
      */
-    function accountId() external pure override returns (string memory accountImplementationId) {
+    function accountId() external view override returns (string memory accountImplementationId) {
         // TODO: concat safe version
         string memory safeVersion = ISafe(_msgSender()).VERSION();
-        return abi.encodePackedad(safeVersion, "erc7579.v0.0.0");
+        return string(abi.encodePacked(safeVersion, "erc7579.v0.0.0"));
     }
 
     /**
