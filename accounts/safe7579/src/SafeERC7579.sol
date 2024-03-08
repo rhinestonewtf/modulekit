@@ -192,7 +192,20 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     /**
      * @inheritdoc IERC7579Account
      */
-    function isValidSignature(bytes32 hash, bytes calldata data) external view returns (bytes4) { }
+    function isValidSignature(
+        bytes32 hash,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bytes4 magicValue)
+    {
+        address validationModule = address(bytes20(data[:20]));
+
+        if (!_isValidatorInstalled(validationModule)) return 0xFFFFFFFF;
+        magicValue =
+            IValidator(validationModule).isValidSignatureWithSender(msg.sender, hash, data[20:]);
+    }
 
     /**
      * @inheritdoc IERC7579Account

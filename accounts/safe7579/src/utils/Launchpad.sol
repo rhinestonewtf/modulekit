@@ -9,10 +9,10 @@ import { ISafe, SafeERC7579 } from "../SafeERC7579.sol";
  * as well as initializing Safe7579 for the SafeProxy
  */
 contract Safe7579Launchpad {
-    address immutable safe7579Singleton;
+    address immutable SAFE7579Singleton;
 
     constructor(address _safe7579Singleton) {
-        safe7579Singleton = _safe7579Singleton;
+        SAFE7579Singleton = _safe7579Singleton;
     }
 
     function initSafe7579(address safe7579, bytes calldata safe7579InitCode) public {
@@ -66,7 +66,7 @@ contract Safe7579Launchpad {
         bytes memory safeLaunchPadSetup = abi.encodeCall(
             this.initSafe7579,
             (
-                address(safe7579Singleton),
+                address(SAFE7579Singleton),
                 abi.encode(validators, validatorsInitCode, executors, executorsInitCode)
             )
         );
@@ -78,7 +78,7 @@ contract Safe7579Launchpad {
                 threshold,
                 address(this),
                 safeLaunchPadSetup,
-                safe7579Singleton,
+                SAFE7579Singleton,
                 address(0),
                 0,
                 payable(address(0))
