@@ -6,12 +6,57 @@ import "erc7579/lib/ModeLib.sol";
 import "erc7579/lib/ExecutionLib.sol";
 import { TestBaseUtil, MockTarget, MockFallback } from "./Base.t.sol";
 
-contract MSATest is TestBaseUtil {
+import "forge-std/console2.sol";
+
+contract Safe7579Test is TestBaseUtil {
+    MockTarget target;
+
     function setUp() public override {
         super.setUp();
+        target = new MockTarget();
+        deal(address(safe), 1 ether);
     }
 
-    function test_execSingle() public {
+    modifier alreadyInitialized(bool initNow) {
+        if (initNow) {
+            test_initializeAccount();
+        }
+        _;
+    }
+
+    function test_initializeAccount() public {
+        PackedUserOperation memory userOp =
+            getDefaultUserOp(address(safe), address(defaultValidator));
+
+        // Create calldata for the account to execute
+        bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 777);
+
+        // Encode the call into the calldata for the userOp
+        bytes memory userOpCalldata = abi.encodeCall(
+            IERC7579Account.execute,
+            (
+                ModeLib.encodeSimpleSingle(),
+                ExecutionLib.encodeSingle(address(target), uint256(0), setValueOnTarget)
+            )
+        );
+        userOp.initCode = userOpInitCode;
+        userOp.callData = userOpCalldata;
+        // Create userOps array
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
+
+        // Send the userOp to the entrypoint
+        entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        // Assert that the value was set ie that execution was successful
+        assertTrue(target.value() == 777);
+        userOpInitCode = "";
+    }
+
+    function test_execSingle(bool withInitializedAccount)
+        public
+        alreadyInitialized(withInitializedAccount)
+    {
         // Create calldata for the account to execute
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1337);
 
@@ -24,14 +69,9 @@ contract MSATest is TestBaseUtil {
             )
         );
 
-        // Get the account, initcode and nonce
-        uint256 nonce = getNonce(address(safe), address(defaultValidator));
-
-        // Create the userOp and add the data
-        PackedUserOperation memory userOp = getDefaultUserOp();
-        userOp.sender = address(safe);
-        userOp.nonce = nonce;
-        userOp.initCode = "";
+        PackedUserOperation memory userOp =
+            getDefaultUserOp(address(safe), address(defaultValidator));
+        userOp.initCode = userOpInitCode;
         userOp.callData = userOpCalldata;
 
         // Create userOps array
@@ -45,7 +85,10 @@ contract MSATest is TestBaseUtil {
         assertTrue(target.value() == 1337);
     }
 
-    function test_execBatch() public {
+    function test_execBatch(bool withInitializedAccount)
+        public
+        alreadyInitialized(withInitializedAccount)
+    {
         // Create calldata for the account to execute
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1337);
         address target2 = address(0x420);
@@ -62,14 +105,10 @@ contract MSATest is TestBaseUtil {
             (ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions))
         );
 
-        address account = address(safe);
-        uint256 nonce = getNonce(account, address(defaultValidator));
-
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = getDefaultUserOp();
-        userOp.sender = address(account);
-        userOp.nonce = nonce;
-        userOp.initCode = "";
+        PackedUserOperation memory userOp =
+            getDefaultUserOp(address(safe), address(defaultValidator));
+        userOp.initCode = userOpInitCode;
         userOp.callData = userOpCalldata;
 
         // Create userOps array
@@ -84,6 +123,7 @@ contract MSATest is TestBaseUtil {
     }
 
     function test_execViaExecutor() public {
+        test_initializeAccount();
         defaultExecutor.executeViaAccount(
             IERC7579Account(address(safe)),
             address(target),
@@ -93,6 +133,7 @@ contract MSATest is TestBaseUtil {
     }
 
     function test_execBatchFromExecutor() public {
+        test_initializeAccount();
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1338);
         Execution[] memory executions = new Execution[](2);
         executions[0] = Execution({ target: address(target), value: 0, callData: setValueOnTarget });
@@ -107,6 +148,7 @@ contract MSATest is TestBaseUtil {
     }
 
     function test_fallback() public {
+        test_initializeAccount();
         MockFallback _fallback = new MockFallback();
         vm.prank(address(safe));
         IERC7579Account(address(safe)).installModule(3, address(_fallback), "");

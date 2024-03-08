@@ -396,6 +396,11 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         emit Safe7579Initialized(msg.sender);
     }
 
+    /**
+     * Safe7579 is using validator selection encoding in the userop nonce.
+     * to make it easier for SDKs / devs to integrate, this function can be
+     * called to get the next nonce for a specific validator
+     */
     function getNonce(address safe, address validator) external view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = IEntryPoint(entryPoint()).getNonce(safe, key);
