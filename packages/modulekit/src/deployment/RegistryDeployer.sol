@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
 
-address constant REGISTRY_ADDR = 0x500684cBaa280aDf80d5ACf7A32Daebb23162e63;
+address constant REGISTRY_ADDR = 0xe0cde9239d16bEf05e62Bbf7aA93e420f464c826;
 
 // Struct that represents Module artefact.
 struct ModuleRecord {
