@@ -2,7 +2,7 @@
   "name": "@rhinestone/modulekit",
   "description": "ModuleKit is a development toolkit to build Smart Account Modules",
   "license": "MIT",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "author": {
     "name": "zeroknots.eth",
     "url": "https://rhinestone.wtf"
