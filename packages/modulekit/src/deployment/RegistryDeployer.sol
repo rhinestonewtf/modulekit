@@ -30,7 +30,7 @@ struct AttestationRecord {
 contract RegistryDeployer {
     IRegistry registry = IRegistry(REGISTRY_ADDR);
     // Default resolver
-    bytes32 resolverUID = 0xb9b4999cbba6cde047b368adda06dbadc43fa3e6673c373ed46aac455ed4e521;
+    bytes32 resolverUID = 0x6e9a1e8208096d8743830b1db54115683584e42da14bccdc6a0a9fca61278fb1;
 
     // <---- DEPLOYMENT ---->
 
