@@ -7,6 +7,7 @@ import "erc7579/lib/ExecutionLib.sol";
 import { TestBaseUtil, MockTarget, MockFallback } from "./Base.t.sol";
 
 import "forge-std/console2.sol";
+CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
 
 contract Safe7579Test is TestBaseUtil {
     MockTarget target;
@@ -154,10 +155,26 @@ contract Safe7579Test is TestBaseUtil {
         IERC7579Account(address(safe)).installModule(
             3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_SINGLE, "")
         );
-        (uint256 ret, address msgSender) = MockFallback(address(safe)).target(1337);
+        (uint256 ret, address msgSender, address context) = MockFallback(address(safe)).target(1337);
 
         assertEq(ret, 1337);
-        assertEq(msgSender, address(safe));
+        assertEq(msgSender, address(safe7579));
+        assertEq(context, address(safe));
+
+        vm.prank(address(safe));
+        IERC7579Account(address(safe)).uninstallModule(
+            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_SINGLE, "")
+        );
+        vm.prank(address(safe));
+        IERC7579Account(address(safe)).installModule(
+            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_STATIC, "")
+        );
+        ( ret,  msgSender,  context) = MockFallback(address(safe)).target(1337);
+        assertEq(ret, 1337);
+        assertEq(msgSender, address(safe7579));
+        assertEq(context, address(safe));
+
+
 
         vm.prank(address(safe));
         IERC7579Account(address(safe)).installModule(
