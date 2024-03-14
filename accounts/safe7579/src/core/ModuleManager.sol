@@ -65,7 +65,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /**
      * install and initialize validator module
      */
-    function _installValidator(address validator, bytes memory data) internal virtual {
+    function _installValidator(address validator, bytes calldata data) internal virtual {
         $validators.push({ account: msg.sender, newEntry: validator });
 
         // Initialize Validator Module via Safe
@@ -80,7 +80,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /**
      * Uninstall and de-initialize validator module
      */
-    function _uninstallValidator(address validator, bytes memory data) internal {
+    function _uninstallValidator(address validator, bytes calldata data) internal {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
 
@@ -130,7 +130,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     //  Manage Executors
     ////////////////////////////////////////////////////
 
-    function _installExecutor(address executor, bytes memory data) internal {
+    function _installExecutor(address executor, bytes calldata data) internal {
         SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
         $executors.push(executor);
         // Initialize Executor Module via Safe
@@ -268,7 +268,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
 
                 // Add 20 bytes for the address appended add the end
                 let success :=
-                    staticcall(gas(), handler,  calldataPtr, add(calldatasize(), 20), 0, 0)
+                    staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
 
                 let returnDataPtr := allocate(returndatasize())
                 returndatacopy(returnDataPtr, 0, returndatasize())

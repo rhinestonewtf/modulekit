@@ -48,13 +48,22 @@ contract TestBaseUtil is Test {
 
         bytes32 salt;
 
+        ISafe7579Init.ModuleInit[] memory validators = new ISafe7579Init.ModuleInit[](1);
+        validators[0] =
+            ISafe7579Init.ModuleInit({ module: address(defaultValidator), initData: bytes("") });
+        ISafe7579Init.ModuleInit[] memory executors = new ISafe7579Init.ModuleInit[](1);
+        executors[0] =
+            ISafe7579Init.ModuleInit({ module: address(defaultExecutor), initData: bytes("") });
+        ISafe7579Init.ModuleInit[] memory fallbacks = new ISafe7579Init.ModuleInit[](0);
+        ISafe7579Init.ModuleInit[] memory hooks = new ISafe7579Init.ModuleInit[](0);
+
         bytes memory initializer = launchpad.getInitCode({
             signers: Solarray.addresses(signer1.addr, signer2.addr),
             threshold: 2,
-            validators: Solarray.addresses(address(defaultValidator)),
-            validatorsInitCode: Solarray.bytess(""),
-            executors: Solarray.addresses(address(defaultExecutor)),
-            executorsInitCode: Solarray.bytess("")
+            validators: validators,
+            executors: executors,
+            fallbacks: fallbacks,
+            hooks: hooks
         });
         // computer counterfactual address for SafeProxy
         safe = Safe(

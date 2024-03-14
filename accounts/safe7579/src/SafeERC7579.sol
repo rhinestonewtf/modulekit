@@ -29,6 +29,7 @@ import {
 } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 
 /**
  * @title ERC7579 Adapter for Safe accounts.
@@ -36,7 +37,14 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
  * this contract creates full ERC7579 compliance to Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManager {
+contract SafeERC7579 is
+    ISafeOp,
+    IERC7579Account,
+    ISafe7579Init,
+    AccessControl,
+    IMSA,
+    HookManager
+{
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
@@ -390,26 +398,46 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         return keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, block.chainid, this));
     }
 
-    function initializeAccount(bytes calldata initCode) external payable {
+    function initializeAccount(bytes calldata callData) external payable override {
+        // TODO: destructuring callData
+    }
+
+    function initializeAccount(
+        ModuleInit[] calldata validators,
+        ModuleInit[] calldata executors,
+        ModuleInit[] calldata fallbacks,
+        ModuleInit[] calldata hooks
+    )
+        public
+        payable
+        override
+    {
         _initModuleManager();
 
-        (
-            address[] memory validator,
-            bytes[] memory validatorInitcode,
-            address[] memory executors,
-            bytes[] memory executorsInitcode
-        ) = abi.decode(initCode, (address[], bytes[], address[], bytes[]));
+        // InitData memory initDatas = abi.decode(initCode, (InitData));
 
-        uint256 length = validator.length;
-        if (length != validatorInitcode.length) revert("Invalid input");
+        uint256 length = validators.length;
         for (uint256 i; i < length; i++) {
-            _installValidator(validator[i], validatorInitcode[i]);
+            ModuleInit calldata validator = validators[i];
+            _installValidator(validator.module, validator.initData);
         }
 
         length = executors.length;
-        if (length != executorsInitcode.length) revert("Invalid input");
         for (uint256 i; i < length; i++) {
-            _installExecutor(executors[i], executorsInitcode[i]);
+            ModuleInit calldata executor = executors[i];
+            _installExecutor(executor.module, executor.initData);
+        }
+
+        length = fallbacks.length;
+        for (uint256 i; i < length; i++) {
+            ModuleInit calldata fallBack = fallbacks[i];
+            _installFallbackHandler(fallBack.module, fallBack.initData);
+        }
+
+        length = hooks.length;
+        for (uint256 i; i < length; i++) {
+            ModuleInit calldata hook = hooks[i];
+            _installFallbackHandler(hook.module, hook.initData);
         }
 
         emit Safe7579Initialized(msg.sender);
