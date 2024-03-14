@@ -12,14 +12,6 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
     using ERC4626Integration for *;
 
     /*//////////////////////////////////////////////////////////////////////////
-                                   Events
-    //////////////////////////////////////////////////////////////////////////*/
-
-    event AutoSaveExecuted(
-        address indexed smartAccount, address indexed token, uint256 amountReceived
-    );
-
-    /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -41,6 +33,10 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
     }
 
     mapping(address account => mapping(address token => Config)) internal _config;
+
+    event AutoSaveExecuted(
+        address indexed smartAccount, address indexed token, uint256 amountReceived
+    );
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
