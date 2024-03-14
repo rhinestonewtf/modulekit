@@ -21,7 +21,7 @@ contract MockFallback is MockFallbackBase, HandlerContext {
         returns (uint256 _value, address _this, address msgSender)
     {
         _value = value;
-        msgSender = msg.sender;
         _this = address(this);
+        msgSender = msg.sender;
     }
 }

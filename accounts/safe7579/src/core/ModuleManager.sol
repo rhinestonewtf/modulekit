@@ -242,74 +242,16 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         CallType calltype = $fallbackHandler.calltype;
         if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
-        if (calltype == CALLTYPE_STATIC) {
-            assembly {
-                // When compiled with the optimizer, the compiler relies on a certain assumptions on
-                // how
-                // the
-                // memory is used, therefore we need to guarantee memory safety (keeping the free
-                // memory
-                // point 0x40 slot intact,
-                // not going beyond the scratch space, etc)
-                // Solidity docs:
-                // https://docs.soliditylang.org/en/latest/assembly.html#memory-safety
-                function allocate(length) -> pos {
-                    pos := mload(0x40)
-                    mstore(0x40, add(pos, length))
-                }
-
-                let calldataPtr := allocate(calldatasize())
-                calldatacopy(calldataPtr, 0, calldatasize())
-
-                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                // Then the address without padding is stored right after the calldata
-                let senderPtr := allocate(20)
-                mstore(senderPtr, shl(96, caller()))
-
-                // Add 20 bytes for the address appended add the end
-                let success :=
-                    staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-                let returnDataPtr := allocate(returndatasize())
-                returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) { revert(returnDataPtr, returndatasize()) }
-                return(returnDataPtr, returndatasize())
-            }
-        }
+        // dis wont work. need Enum.Operation static, cause safe account emits event
+        // if (calltype == CALLTYPE_STATIC) {
+        //     return _executeStaticReturnData(
+        //         msg.sender, handler, 0, abi.encodePacked(callData, _msgSender())
+        //     );
+        // }
         if (calltype == CALLTYPE_SINGLE) {
-            assembly {
-                // When compiled with the optimizer, the compiler relies on a certain assumptions on
-                // how
-                // the
-                // memory is used, therefore we need to guarantee memory safety (keeping the free
-                // memory
-                // point 0x40 slot intact,
-                // not going beyond the scratch space, etc)
-                // Solidity docs:
-                // https://docs.soliditylang.org/en/latest/assembly.html#memory-safety
-                function allocate(length) -> pos {
-                    pos := mload(0x40)
-                    mstore(0x40, add(pos, length))
-                }
-
-                let calldataPtr := allocate(calldatasize())
-                calldatacopy(calldataPtr, 0, calldatasize())
-
-                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                // Then the address without padding is stored right after the calldata
-                let senderPtr := allocate(20)
-                mstore(senderPtr, shl(96, caller()))
-
-                // Add 20 bytes for the address appended add the end
-                let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-                let returnDataPtr := allocate(returndatasize())
-                returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) { revert(returnDataPtr, returndatasize()) }
-                return(returnDataPtr, returndatasize())
-            }
+            return
+                _executeReturnData(msg.sender, handler, 0, abi.encodePacked(callData, _msgSender()));
         }
-
         // TODO: do we actually want this? security questionable...
         if (calltype == CALLTYPE_DELEGATECALL) {
             return _executeDelegateCallReturnData(msg.sender, handler, callData);
