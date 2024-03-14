@@ -414,8 +414,6 @@ contract SafeERC7579 is
     {
         _initModuleManager();
 
-        // InitData memory initDatas = abi.decode(initCode, (InitData));
-
         uint256 length = validators.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata validator = validators[i];
