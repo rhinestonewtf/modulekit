@@ -149,16 +149,19 @@ contract SafeERC7579 is
     {
         address validator;
         uint256 nonce = userOp.nonce;
+
         // solhint-disable-next-line no-inline-assembly
         assembly {
             validator := shr(96, nonce)
         }
 
         // check if validator is enabled. If not, use Safe's checkSignatures()
-        if (!_isValidatorInstalled(validator)) return _validateSignatures(userOp);
-
-        // bubble up the return value of the validator module
-        validSignature = IValidator(validator).validateUserOp(userOp, userOpHash);
+        if (validator == address(0) || !_isValidatorInstalled(validator)) {
+            return _validateSignatures(userOp);
+        } else {
+            // bubble up the return value of the validator module
+            validSignature = IValidator(validator).validateUserOp(userOp, userOpHash);
+        }
 
         // pay prefund
         if (missingAccountFunds != 0) {

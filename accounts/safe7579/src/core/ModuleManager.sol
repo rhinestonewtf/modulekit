@@ -310,6 +310,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
             }
         }
 
+        // TODO: do we actually want this? security questionable...
         if (calltype == CALLTYPE_DELEGATECALL) {
             return _executeDelegateCallReturnData(msg.sender, handler, callData);
         }
