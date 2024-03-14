@@ -34,6 +34,10 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
 
     mapping(address account => mapping(address token => Config)) internal _config;
 
+    event AutoSaveExecuted(
+        address indexed smartAccount, address indexed token, uint256 amountReceived
+    );
+
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
@@ -57,7 +61,11 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
     }
 
     function onUninstall(bytes calldata data) external override {
-        // Todo
+        if (data.length == 0) return;
+        address[] memory tokens = abi.decode(data, (address[]));
+        for (uint256 i; i < tokens.length; i++) {
+            delete _config[msg.sender][tokens[i]];
+        }
     }
 
     function isInitialized(address smartAccount) external view returns (bool) {
@@ -76,7 +84,7 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
         pure
         returns (uint256)
     {
-        return amountReceived * percentage / 100;
+        return (amountReceived * percentage) / 100;
     }
 
     function autoSave(Params calldata params) external {
@@ -117,6 +125,8 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
 
         // execute deposit to vault on account
         _execute(approveAndDeposit);
+
+        emit AutoSaveExecuted(msg.sender, params.token, amountIn);
     }
 
     function validateSessionParams(
