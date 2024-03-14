@@ -65,7 +65,8 @@ To learn more about using ModuleKit, visit the [tools section](https://docs.rhin
   - [x] Validators
   - [x] Executors
   - [x] Hooks
-- [x] Different modular accounts
+  - [x] Fallbacks
+- [x] Different Modular Accounts
   - [x] ERC-7579
   - [x] Safe
   - [x] Biconomy
@@ -83,7 +84,7 @@ For feature or change requests, feel free to open a PR, start a discussion or ge
 
 For guidance on how to create PRs, see the [CONTRIBUTING](./CONTRIBUTING.md) guide.
 
-## Using this repo
+### Using this repo
 
 To install dependencies, run:
 
