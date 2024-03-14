@@ -151,12 +151,24 @@ contract Safe7579Test is TestBaseUtil {
         test_initializeAccount();
         MockFallback _fallback = new MockFallback();
         vm.prank(address(safe));
-        IERC7579Account(address(safe)).installModule(3, address(_fallback), "");
-        (uint256 ret, address erc2771Sender, address msgSender) =
-            MockFallback(address(safe)).target(1337);
+        IERC7579Account(address(safe)).installModule(
+            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_SINGLE, "")
+        );
+        (uint256 ret, address msgSender) = MockFallback(address(safe)).target(1337);
 
         assertEq(ret, 1337);
-        assertEq(erc2771Sender, address(this));
         assertEq(msgSender, address(safe));
+
+        vm.prank(address(safe));
+        IERC7579Account(address(safe)).installModule(
+            3,
+            address(_fallback),
+            abi.encode(MockFallback.target2.selector, CALLTYPE_DELEGATECALL, "")
+        );
+        (uint256 _ret, address _this, address _msgSender) =
+            MockFallback(address(safe)).target2(1337);
+
+        assertEq(_ret, 1337);
+        assertEq(_this, address(safe));
     }
 }

@@ -37,6 +37,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     error InitializerError();
     error ValidatorStorageHelperError();
     error NoFallbackHandler(bytes4 msgSig);
+    error FallbackInstalled(bytes4 msgSig);
 
     mapping(address smartAccount => ModuleManagerStorage moduleManagerStorage) internal
         $moduleManager;
@@ -176,16 +177,12 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
         (bytes4 functionSig, CallType calltype, bytes memory initData) =
             abi.decode(params, (bytes4, CallType, bytes));
-        if (_isFallbackHandlerInstalled(functionSig)) revert();
+        if (_isFallbackHandlerInstalled(functionSig)) revert FallbackInstalled(functionSig);
 
         FallbackHandler storage $fallbacks = $moduleManager[msg.sender]._fallbacks[functionSig];
         $fallbacks.calltype = calltype;
         $fallbacks.handler = handler;
 
-        //
-        // ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        // $mms.fallbackHandler = handler;
-        // // Initialize Fallback Module via Safe
         _execute({
             safe: msg.sender,
             target: handler,
@@ -230,71 +227,27 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
 
     // FALLBACK
     // solhint-disable-next-line no-complex-fallback
-    fallback() external payable override(Receiver) receiverFallback {
+    fallback(bytes calldata callData)
+        external
+        payable
+        override(Receiver)
+        receiverFallback
+        returns (bytes memory fallbackRet)
+    {
         FallbackHandler storage $fallbackHandler = $moduleManager[msg.sender]._fallbacks[msg.sig];
         address handler = $fallbackHandler.handler;
         CallType calltype = $fallbackHandler.calltype;
         if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
         if (calltype == CALLTYPE_STATIC) {
-            assembly {
-                function allocate(length) -> pos {
-                    pos := mload(0x40)
-                    mstore(0x40, add(pos, length))
-                }
-
-                let calldataPtr := allocate(calldatasize())
-                calldatacopy(calldataPtr, 0, calldatasize())
-
-                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                // Then the address without padding is stored right after the calldata
-                let senderPtr := allocate(20)
-                mstore(senderPtr, shl(96, caller()))
-
-                // Add 20 bytes for the address appended add the end
-                let success :=
-                    staticcall(gas(), handler, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-                let returnDataPtr := allocate(returndatasize())
-                returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) { revert(returnDataPtr, returndatasize()) }
-                return(returnDataPtr, returndatasize())
-            }
+            return _executeStaticReturnData(msg.sender, handler, 0, callData);
         }
         if (calltype == CALLTYPE_SINGLE) {
-            assembly {
-                function allocate(length) -> pos {
-                    pos := mload(0x40)
-                    mstore(0x40, add(pos, length))
-                }
-
-                let calldataPtr := allocate(calldatasize())
-                calldatacopy(calldataPtr, 0, calldatasize())
-
-                // The msg.sender address is shifted to the left by 12 bytes to remove the padding
-                // Then the address without padding is stored right after the calldata
-                let senderPtr := allocate(20)
-                mstore(senderPtr, shl(96, caller()))
-
-                // Add 20 bytes for the address appended add the end
-                let success := call(gas(), handler, 0, calldataPtr, add(calldatasize(), 20), 0, 0)
-
-                let returnDataPtr := allocate(returndatasize())
-                returndatacopy(returnDataPtr, 0, returndatasize())
-                if iszero(success) { revert(returnDataPtr, returndatasize()) }
-                return(returnDataPtr, returndatasize())
-            }
+            return _executeReturnData(msg.sender, handler, 0, callData);
         }
 
         if (calltype == CALLTYPE_DELEGATECALL) {
-            assembly {
-                calldatacopy(0, 0, calldatasize())
-                let result := delegatecall(gas(), handler, 0, calldatasize(), 0, 0)
-                returndatacopy(0, 0, returndatasize())
-                switch result
-                case 0 { revert(0, returndatasize()) }
-                default { return(0, returndatasize()) }
-            }
+            return _executeDelegateCallReturnData(msg.sender, handler, callData);
         }
     }
 }

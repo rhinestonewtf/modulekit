@@ -5,12 +5,17 @@ import { HandlerContext } from "@safe-global/safe-contracts/contracts/handler/Ha
 import { MockFallback as MockFallbackBase } from "@rhinestone/modulekit/src/mocks/MockFallback.sol";
 
 contract MockFallback is MockFallbackBase, HandlerContext {
-    function target(uint256 value)
+    function target(uint256 value) external returns (uint256 _value, address msgSender) {
+        _value = value;
+        msgSender = msg.sender;
+    }
+
+    function target2(uint256 value)
         external
-        returns (uint256 _value, address erc2771Sender, address msgSender)
+        returns (uint256 _value, address _this, address msgSender)
     {
         _value = value;
-        erc2771Sender = _msgSender();
         msgSender = msg.sender;
+        _this = address(this);
     }
 }
