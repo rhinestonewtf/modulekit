@@ -13,7 +13,7 @@
   "devDependencies": {
     "@rhinestone/modulekit": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
-    "permit2":"github:Uniswap/permit2",
+    "permit2": "github:Uniswap/permit2",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "@prb/math": "^4.0.2",
     "@safe-global/safe-contracts": "^1.4.1",
@@ -25,6 +25,7 @@
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "sentinellist": "github:zeroknots/sentinellist",
     "erc7579": "github:erc7579/erc7579-implementation#feature/hookRevert",
+    "solarray": "github:sablier-labs/solarray",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
     "solhint": "^4.1.1",
