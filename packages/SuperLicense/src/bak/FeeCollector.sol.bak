@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "./ILicensedModule.sol";
+import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/modules/ERC7579ValidatorBase.sol";
+import {
+    PackedUserOperation, UserOperationLib
+} from "@rhinestone/modulekit/src/external/ERC4337.sol";
+
+import {
+    ACCOUNT_EXEC_TYPE,
+    ERC7579ValidatorLib
+} from "@rhinestone/modulekit/src/modules/utils/ERC7579ValidatorLib.sol";
+
+import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
+
+struct Claim {
+    IERC20 token;
+    address[] modules;
+}
+
+contract FeeCollector is ERC7579ValidatorBase {
+    using ERC7579ValidatorLib for PackedUserOperation;
+    using ERC7579ValidatorLib for bytes;
+    using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
+
+    struct LicenseLog {
+        uint256 totalAmount;
+    }
+
+    mapping(address token => mapping(address smartAccount => LicenseLog log)) public tokenModules;
+
+    function _isValidRecipient(address recipient) internal pure returns (bool isValid) {
+        return true;
+    }
+
+    function validateUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        virtual
+        override
+        returns (ValidationData)
+    {
+        ACCOUNT_EXEC_TYPE accountExecType = userOp.callData.decodeExecType();
+        if (ACCOUNT_EXEC_TYPE.EXEC_SINGLE == accountExecType) {
+            return _validateSingleExec(userOp, userOpHash);
+        } else if (ACCOUNT_EXEC_TYPE.EXEC_BATCH == accountExecType) {
+            // return _validateBatchedExec(userOp, userOpHash);
+        } else {
+            // return _validatorError();
+        }
+    }
+
+    function _validateSingleExec(
+        PackedUserOperation calldata userOp,
+        bytes32
+    )
+        internal
+        returns (ValidationData vd)
+    {
+        bytes calldata signature = userOp.signature;
+        address smartAccount = userOp.sender;
+        (Claim memory claim) = abi.decode(signature, (Claim));
+
+        uint256 length = claim.modules.length;
+        uint256 amount;
+        for (uint256 i; i < length; i++) {
+            ISelfAccountingModule module = ISelfAccountingModule(claim.modules[i]);
+            amount += module.resetBalance(smartAccount, claim.token);
+        }
+
+        (address to, uint256 value, bytes calldata callData) =
+            ERC7579ValidatorLib.decodeCalldataSingle(userOp.callData);
+        if (to != address(claim.token)) revert();
+        bytes4 methodId = bytes4(callData[4:]);
+        if (methodId != claim.token.transfer.selector) revert();
+        (address recipient, uint256 txAmount) = abi.decode(callData[36:], (address, uint256));
+        if (txAmount > amount) revert();
+        if (!_isValidRecipient(recipient)) revert();
+    }
+
+    function isValidSignatureWithSender(
+        address sender,
+        bytes32 hash,
+        bytes calldata data
+    )
+        external
+        view
+        virtual
+        override
+        returns (bytes4)
+    { }
+}

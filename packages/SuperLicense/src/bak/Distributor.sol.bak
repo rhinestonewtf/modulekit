@@ -1,0 +1,72 @@
+import "forge-std/interfaces/IERC20.sol";
+import "./ILicensedModule.sol";
+
+contract Distributor {
+    uint48 constant TIMELOCK = 3 days;
+
+    struct TokenClaim {
+        uint256 outstanding;
+        uint256 paid;
+    }
+
+    struct ModuleAccessLog {
+        uint48 lastClaim;
+        uint48 timelock;
+        uint48 lastDistribute;
+    }
+
+    mapping(
+        address module => mapping(IERC20 token => mapping(address smartAccount => TokenClaim claim))
+    ) internal $moduleBalancesPerToken;
+
+    mapping(address module => mapping(address smartAccount => ModuleAccessLog log)) internal
+        $moduleLog;
+
+    function _isLicensedModule(address module) internal pure returns (bool) {
+        // TODO
+        return true;
+    }
+
+    modifier onlyLicensedModule(address module) {
+        if (!_isLicensedModule(module)) revert();
+        _;
+    }
+
+    function incrementClaim(
+        address smartAccount,
+        IERC20 token,
+        uint256 addAmount
+    )
+        external
+        onlyLicensedModule(msg.sender)
+    {
+        TokenClaim storage $tokenClaim = $moduleBalancesPerToken[msg.sender][token][smartAccount];
+        ModuleAccessLog storage $accessLog = $moduleLog[msg.sender][smartAccount];
+
+        $tokenClaim.outstanding += addAmount;
+        $accessLog.lastClaim = uint48(block.timestamp);
+    }
+
+    function distribute(
+        address module,
+        IERC20 token,
+        uint256 amount
+    )
+        external
+        onlyLicensedModule(module)
+    {
+        TokenClaim storage $tokenClaim = $moduleBalancesPerToken[module][token][msg.sender];
+        ModuleAccessLog storage $accessLog = $moduleLog[module][msg.sender];
+        require(
+            $tokenClaim.outstanding <= amount, "Distributor: amount exceeds outstanding balance"
+        );
+        $tokenClaim.paid += amount;
+        $tokenClaim.outstanding -= amount;
+        uint256 timelock = $accessLog.timelock;
+        timelock = (timelock != 0) ? timelock : TIMELOCK;
+        if ($accessLog.lastDistribute < block.timestamp - TIMELOCK) revert();
+
+        // TODO: change to safe transferfrom
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
+    }
+}

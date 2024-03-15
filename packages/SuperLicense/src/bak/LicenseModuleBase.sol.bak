@@ -1,0 +1,13 @@
+import "./Distributor.sol";
+
+abstract contract LicensedModuleBase {
+    Distributor internal immutable DISTRIBUTOR;
+
+    constructor(address rhinestoneDistributor) {
+        DISTRIBUTOR = Distributor(rhinestoneDistributor);
+    }
+
+    function _claim(address smartAccount, IERC20 token, uint256 addAmount) internal {
+        DISTRIBUTOR.incrementClaim({ smartAccount: smartAccount, token: token, addAmount: addAmount });
+    }
+}
