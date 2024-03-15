@@ -9,8 +9,6 @@ import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
 
-CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
-
 struct FallbackHandler {
     address handler;
     CallType calltype;
