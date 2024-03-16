@@ -8,8 +8,10 @@ import { CheckSignatures } from "checknsignatures/CheckNSignatures.sol";
 import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ModeLib, CallType, ModeCode, CALLTYPE_SINGLE } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import { LibSort } from "solady/src/utils/LibSort.sol";
 
 contract SocialRecovery is ERC7579ValidatorBase {
+    using LibSort for *;
     using SentinelListLib for SentinelListLib.SentinelList;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -19,6 +21,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
     error UnsopportedOperation();
     error InvalidGuardian(address guardian);
     error ThresholdNotSet();
+    error InvalidThreshold();
 
     SentinelListLib.SentinelList guardians;
     mapping(address account => uint256) thresholds;
@@ -31,9 +34,18 @@ contract SocialRecovery is ERC7579ValidatorBase {
         // Get the threshold and guardians from the data
         (uint256 threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
 
+        // Sort and uniquify the guardians to make sure a guardian is not reused
+        _guardians.sort();
+        _guardians.uniquifySorted();
+
         // Make sure the threshold is set
         if (threshold == 0) {
             revert ThresholdNotSet();
+        }
+
+        uint256 guardiansLength = _guardians.length;
+        if (guardiansLength < threshold) {
+            revert InvalidThreshold();
         }
 
         // Set threshold
@@ -43,7 +55,6 @@ contract SocialRecovery is ERC7579ValidatorBase {
         guardians.init();
 
         // Add guardians to the list
-        uint256 guardiansLength = _guardians.length;
         for (uint256 i = 0; i < guardiansLength; i++) {
             address _guardian = _guardians[i];
             if (_guardian == address(0)) {
@@ -82,6 +93,10 @@ contract SocialRecovery is ERC7579ValidatorBase {
         // Recover the signers from the signatures
         address[] memory signers =
             CheckSignatures.recoverNSignatures(userOpHash, userOp.signature, threshold);
+
+        // Sort and uniquify the signers to make sure a signer is not reused
+        signers.sort();
+        signers.uniquifySorted();
 
         // Check if the signers are guardians
         SentinelListLib.SentinelList storage _guardians = guardians;

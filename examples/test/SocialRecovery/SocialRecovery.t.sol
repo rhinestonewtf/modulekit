@@ -134,4 +134,19 @@ contract SocialRecoveryTest is RhinestoneModuleKit, Test {
         vm.expectRevert();
         userOpData.execUserOps();
     }
+
+    function testRecover__RevertWhen__SameGuardianUsed() public {
+        UserOpData memory userOpData = instance.getExecOps({
+            target: address(validator1),
+            value: 0,
+            callData: abi.encodeWithSelector(DemoValidator.count.selector),
+            txValidator: address(socialRecovery)
+        });
+
+        uint256[] memory privKeys = Solarray.uint256s(signer1.key, signer1.key);
+        bytes memory signature = sign(privKeys, userOpData.userOpHash);
+        userOpData.userOp.signature = signature;
+        vm.expectRevert();
+        userOpData.execUserOps();
+    }
 }
