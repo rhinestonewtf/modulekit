@@ -14,3 +14,4 @@ modulekit/=node_modules/@rhinestone/modulekit/packages/modulekit/
 erc4337-validation/=node_modules/erc4337-validation/src/
 @ERC4337/=node_modules/@ERC4337/
 @prb/math/=node_modules/@prb/math/
+checknsignatures/=node_modules/checknsignatures/src/
