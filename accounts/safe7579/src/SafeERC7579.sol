@@ -30,6 +30,7 @@ import {
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
+import { IERC1271 } from "./interfaces/IERC1271.sol";
 
 /**
  * @title ERC7579 Adapter for Safe accounts.
@@ -55,6 +56,12 @@ contract SafeERC7579 is
 
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
+
+    // keccak256("SafeMessage(bytes message)");
+    bytes32 private constant SAFE_MSG_TYPEHASH =
+        0x60b3cbf8b4a223d68d641b3b6ddf9a298e7f33710cf3d3a9d1146b5a6150fbca;
+    // keccak256("safeSignature(bytes32,bytes32,bytes,bytes)");
+    bytes4 private constant SAFE_SIGNATURE_MAGIC_VALUE = 0x5fd7e97d;
 
     /**
      * @inheritdoc IERC7579Account
@@ -201,7 +208,13 @@ contract SafeERC7579 is
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * Will use Safe's signed messages or checkSignatures features or ERC7579 validation modules
+     * if no signature is provided, it makes use of Safe's signedMessages
+     * if address(0) or a non-installed validator module is provided, it will use Safe's
+     * checkSignatures
+     * if a valid validator module is provided, it will use the module's validateUserOp function
+     *    @param hash message hash of ERC1271 request
+     *    @param data abi.encodePacked(address validationModule, bytes signatures)
      */
     function isValidSignature(
         bytes32 hash,
@@ -211,9 +224,27 @@ contract SafeERC7579 is
         view
         returns (bytes4 magicValue)
     {
+        ISafe safe = ISafe(msg.sender);
+
+        // check for safe's approved hashes
+        if (data.length == 0 && safe.signedMessages(hash) != 0) {
+            // return magic value
+            return IERC1271.isValidSignature.selector;
+        }
         address validationModule = address(bytes20(data[:20]));
 
-        if (!_isValidatorInstalled(validationModule)) return 0xFFFFFFFF;
+        if (validationModule == address(0) || !_isValidatorInstalled(validationModule)) {
+            bytes memory messageData = EIP712.encodeMessageData(
+                safe.domainSeparator(), SAFE_MSG_TYPEHASH, abi.encode(keccak256(abi.encode(hash)))
+            );
+
+            bytes32 messageHash = keccak256(messageData);
+
+            safe.checkSignatures(messageHash, messageData, data[20:]);
+            return IERC1271.isValidSignature.selector;
+        }
+
+        // use 7579 validation module
         magicValue =
             IValidator(validationModule).isValidSignatureWithSender(msg.sender, hash, data[20:]);
     }
@@ -452,5 +483,24 @@ contract SafeERC7579 is
     function getNonce(address safe, address validator) external view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = IEntryPoint(entryPoint()).getNonce(safe, key);
+    }
+}
+
+library EIP712 {
+    function encodeMessageData(
+        bytes32 domainSeparator,
+        bytes32 typeHash,
+        bytes memory message
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            bytes1(0x19),
+            bytes1(0x01),
+            domainSeparator,
+            keccak256(abi.encodePacked(typeHash, message))
+        );
     }
 }

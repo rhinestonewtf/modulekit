@@ -65,6 +65,8 @@ interface ISafe {
         external
         view;
 
+    function signedMessages(bytes32) external view returns (uint256);
+
     /**
      * @dev Returns the domain separator for this contract, as defined in the EIP-712 standard.
      * @return bytes32 The domain separator hash.
