@@ -7,19 +7,12 @@ import "../DataTypes.sol";
 import "../interfaces/ILicenseManager.sol";
 
 abstract contract LicenseSignerBase is ERC7579ValidatorBase {
-    struct SignerConf {
-        bool autoPermitEnabled;
-        uint256 foo;
-    }
-
     ILicenseManager immutable LICENSE_MANAGER;
     bytes32 immutable LICENSE_MANAGER_DOMAIN_SEPARATOR;
     address immutable PERMIT2;
     bytes32 immutable PERMIT2_DOMAIN_SEPARATOR;
 
     error UnauthorizedERC1271Request();
-
-    mapping(address smartAccount => mapping(address module => SignerConf)) internal _signer;
 
     constructor(address permit2, address licenseManager) {
         PERMIT2 = permit2;
