@@ -2,6 +2,8 @@
 pragma solidity ^0.8.20;
 
 interface ILicenseManager {
+    function domainSeparator() external view returns (bytes32);
+
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               Check for Active License                     */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/

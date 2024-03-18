@@ -11,9 +11,12 @@ contract LicenseManager is ILicenseManager, TxFee {
     constructor(
         IPermit2 permit2,
         address token,
-        SplitterConf splitterConf,
-        address signerModule
+        SplitterConf splitterConf
     )
-        ModuleMonetization(permit2, token, splitterConf, signerModule)
+        ModuleMonetization(permit2, token, splitterConf)
     { }
+
+    function domainSeparator() external view returns (bytes32) {
+        return _domainSeparator();
+    }
 }

@@ -11,15 +11,6 @@ import "forge-std/console2.sol";
 
 abstract contract TxFee is Subscription {
     using SafeTransferLib for address;
-    // using PermitHash for ISignatureTransfer.PermitTransformFrom;
-
-    struct LicenseManagerTxFee {
-        address module;
-        uint256 amount;
-    }
-
-    string constant TX_FEE_WITNESS = "LicenseManagerTxFee(address module, uint256 amount)";
-    bytes32 constant TX_FEE_HASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
 
     function approvalTxFee(address smartAccount, uint256 totalAmount) external {
         ModuleMoneyConf storage $moduleMonetization = _moduleMoneyConfs[msg.sender];
@@ -46,9 +37,12 @@ abstract contract TxFee is Subscription {
     {
         address splitter = _moduleMoneyConfs[msg.sender].splitter;
         uint256 nonce = 123; // todo iter
-        bytes32 witness = _hashTypedData(
-            keccak256(abi.encode(LicenseManagerTxFee({ module: msg.sender, amount: totalAmount })))
-        );
+
+        bytes memory message =
+            abi.encode(LicenseManagerTxFee({ module: msg.sender, amount: totalAmount }));
+        bytes32 witness = _hashTypedData(keccak256(message));
+        console2.log("witness");
+        console2.logBytes32(witness);
 
         ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
             .SignatureTransferDetails({
@@ -56,17 +50,19 @@ abstract contract TxFee is Subscription {
             requestedAmount: totalAmount //total amount sent to receiver
          });
 
+        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
+            permitted: ISignatureTransfer.TokenPermissions({ token: TOKEN, amount: totalAmount }),
+            nonce: nonce,
+            deadline: block.timestamp + 1000
+        });
+
         PERMIT2.permitWitnessTransferFrom({
-            permit: ISignatureTransfer.PermitTransferFrom({
-                permitted: ISignatureTransfer.TokenPermissions({ token: TOKEN, amount: totalAmount }),
-                nonce: nonce,
-                deadline: block.timestamp + 1000
-            }),
+            permit: permit,
             transferDetails: signatureTransfer,
             owner: smartAccount,
             witness: witness,
             witnessTypeString: TX_FEE_WITNESS,
-            signature: abi.encodePacked(SIGNER_MODULE, abi.encode(msg.sender, totalAmount))
+            signature: abi.encodePacked(signerModule, abi.encode(permit, message))
         });
     }
 

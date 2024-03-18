@@ -1,7 +1,7 @@
 import "forge-std/Test.sol";
 import "src/LicenseManager.sol";
 import "src/core/SplitterConf.sol";
-import "src/utils/Signer.sol";
+import "src/utils/TxFeeSigner.sol";
 
 import "forge-std/Test.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
@@ -31,7 +31,7 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
 
     LicenseManager licenseMgr;
     SplitterConf splitterConf;
-    Signer signer;
+    TxFeeSigner signer;
 
     function setUp() public {
         vm.warp(123_123_123);
@@ -46,9 +46,9 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         deal(instance.account, 100 ether);
-        signer = new Signer(permit2);
-        licenseMgr =
-            new LicenseManager(IPermit2(permit2), address(token), splitterConf, address(signer));
+        licenseMgr = new LicenseManager(IPermit2(permit2), address(token), splitterConf);
+        signer = new TxFeeSigner(permit2, address(licenseMgr));
+        licenseMgr.initialize(address(signer));
         licenseMgr.moduleRegistration(module.addr, receiver.addr);
 
         vm.prank(instance.account);
@@ -60,7 +60,7 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
             data: ""
         });
         vm.prank(instance.account);
-        signer.enableAutoPermit(address(module.addr));
+        signer.configure(module.addr, true);
     }
 
     function test_claimTxFee() public {

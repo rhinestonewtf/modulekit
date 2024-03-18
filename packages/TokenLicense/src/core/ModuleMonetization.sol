@@ -18,26 +18,18 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
     using SignatureCheckerLib for address;
 
     address internal immutable TOKEN;
-    address internal immutable SIGNER_MODULE;
+    address internal signerModule;
     IPermit2 internal immutable PERMIT2;
     GasliteSplitterFactory public immutable SPLITTER_FACTORY;
     SplitterConf internal immutable SPLITTER_CONF;
 
     mapping(address module => ModuleMoneyConf conf) internal _moduleMoneyConfs;
 
-    constructor(
-        IPermit2 permit2,
-        address token,
-        SplitterConf splitterConf,
-        address signerModule
-    )
-        EIP712()
-    {
+    constructor(IPermit2 permit2, address token, SplitterConf splitterConf) EIP712() {
         TOKEN = token;
         PERMIT2 = permit2;
         SPLITTER_CONF = splitterConf;
         SPLITTER_FACTORY = new GasliteSplitterFactory();
-        SIGNER_MODULE = signerModule;
         _initializeOwner(msg.sender);
     }
 
@@ -54,6 +46,10 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
     function transferOwner(address module, address newOwner) external onlyModuleOwner(module) {
         _moduleMoneyConfs[module].owner = newOwner;
         emit NewModuleOwner(module, newOwner);
+    }
+
+    function initialize(address _signerModule) external onlyOwner {
+        signerModule = _signerModule;
     }
 
     function updateModuleMonetization(

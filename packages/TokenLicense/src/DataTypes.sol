@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+string constant TX_FEE_WITNESS = "LicenseManagerTxFee(address module, uint256 amount)";
+bytes32 constant TX_FEE_WITNESS_HASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
+
+struct LicenseManagerTxFee {
+    address module;
+    uint256 amount;
+}
+
 struct PackedSignature {
     address module;
     bytes signature;

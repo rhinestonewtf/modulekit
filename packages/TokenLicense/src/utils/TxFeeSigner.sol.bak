@@ -4,14 +4,17 @@ pragma solidity ^0.8.17;
 import "@rhinestone/modulekit/src/Modules.sol";
 import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.sol";
 import "forge-std/console2.sol";
+import "../DataTypes.sol";
+import "../interfaces/ILicenseManager.sol";
 
-contract Signer is ERC7579ValidatorBase {
+contract TxFeeSigner is ERC7579ValidatorBase {
     struct SignerConf {
         bool autoPermitEnabled;
         uint256 foo;
     }
 
-    address immutable LICENSE_MANAGER;
+    ILicenseManager immutable LICENSE_MANAGER;
+    bytes32 immutable LICENSE_MANAGER_DOMAIN_SEPARATOR;
     string constant TX_FEE_WITNESS = "LicenseManagerTxFee(address module, uint256 amount)";
     address immutable PERMIT2;
 
@@ -19,8 +22,10 @@ contract Signer is ERC7579ValidatorBase {
 
     mapping(address smartAccount => mapping(address module => SignerConf)) internal _signer;
 
-    constructor(address permit2) {
+    constructor(address permit2, address licenseManager) {
         PERMIT2 = permit2;
+        LICENSE_MANAGER = ILicenseManager(licenseManager);
+        LICENSE_MANAGER_DOMAIN_SEPARATOR = LICENSE_MANAGER.domainSeparator();
     }
 
     function enableAutoPermit(address module) external {
@@ -56,7 +61,17 @@ contract Signer is ERC7579ValidatorBase {
         onlyPermit2(sender)
         returns (bytes4)
     {
+        bytes32 providedTypeHash = bytes32(data[:32]);
+        bytes calldata signature = data[32:];
+
+        bytes memory messageData = EIP712.encodeMessageData(
+            LICENSE_MANAGER_DOMAIN_SEPARATOR, TX_FEE_HASH, abi.encode(keccak256(abi.encode(hash)))
+        );
+
+        console2.log("hash");
         console2.logBytes32(hash);
+        console2.log("messageData");
+        console2.logBytes(messageData);
         (address module, uint256 totalAmount) = abi.decode(data, (address, uint256));
         if (!_signer[msg.sender][module].autoPermitEnabled) revert();
         console2.log(sender, module, totalAmount);
@@ -72,4 +87,23 @@ contract Signer is ERC7579ValidatorBase {
     }
 
     function isInitialized(address smartAccount) external view returns (bool) { }
+}
+
+library EIP712 {
+    function encodeMessageData(
+        bytes32 domainSeparator,
+        bytes32 typeHash,
+        bytes memory message
+    )
+        internal
+        pure
+        returns (bytes memory)
+    {
+        return abi.encodePacked(
+            bytes1(0x19),
+            bytes1(0x01),
+            domainSeparator,
+            keccak256(abi.encodePacked(typeHash, message))
+        );
+    }
 }
