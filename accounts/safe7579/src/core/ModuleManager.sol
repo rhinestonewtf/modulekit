@@ -7,12 +7,17 @@ import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
+
+struct FallbackHandler {
+    address handler;
+    CallType calltype;
+}
 
 struct ModuleManagerStorage {
     // linked list of executors. List is initialized by initializeAccount()
     SentinelListLib.SentinelList _executors;
-    // single fallback handler for all fallbacks
-    address fallbackHandler;
+    mapping(bytes4 selector => FallbackHandler fallbackHandler) _fallbacks;
 }
 
 /**
@@ -29,7 +34,8 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     error CannotRemoveLastValidator();
     error InitializerError();
     error ValidatorStorageHelperError();
-    error NoFallbackHandler();
+    error NoFallbackHandler(bytes4 msgSig);
+    error FallbackInstalled(bytes4 msgSig);
 
     mapping(address smartAccount => ModuleManagerStorage moduleManagerStorage) internal
         $moduleManager;
@@ -57,7 +63,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /**
      * install and initialize validator module
      */
-    function _installValidator(address validator, bytes memory data) internal virtual {
+    function _installValidator(address validator, bytes calldata data) internal virtual {
         $validators.push({ account: msg.sender, newEntry: validator });
 
         // Initialize Validator Module via Safe
@@ -72,7 +78,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /**
      * Uninstall and de-initialize validator module
      */
-    function _uninstallValidator(address validator, bytes memory data) internal {
+    function _uninstallValidator(address validator, bytes calldata data) internal {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
 
@@ -99,6 +105,9 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         isInstalled = $validators.contains({ account: msg.sender, entry: validator });
     }
 
+    /**
+     * Get paginated list of installed validators
+     */
     function getValidatorPaginated(
         address start,
         uint256 pageSize
@@ -119,7 +128,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     //  Manage Executors
     ////////////////////////////////////////////////////
 
-    function _installExecutor(address executor, bytes memory data) internal {
+    function _installExecutor(address executor, bytes calldata data) internal {
         SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
         $executors.push(executor);
         // Initialize Executor Module via Safe
@@ -166,10 +175,15 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /////////////////////////////////////////////////////
     //  Manage Fallback
     ////////////////////////////////////////////////////
-    function _installFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms.fallbackHandler = handler;
-        // Initialize Fallback Module via Safe
+    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+        (bytes4 functionSig, CallType calltype, bytes memory initData) =
+            abi.decode(params, (bytes4, CallType, bytes));
+        if (_isFallbackHandlerInstalled(functionSig)) revert FallbackInstalled(functionSig);
+
+        FallbackHandler storage $fallbacks = $moduleManager[msg.sender]._fallbacks[functionSig];
+        $fallbacks.calltype = calltype;
+        $fallbacks.handler = handler;
+
         _execute({
             safe: msg.sender,
             target: handler,
@@ -178,9 +192,16 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         });
     }
 
+    function _isFallbackHandlerInstalled(bytes4 functionSig) internal view virtual returns (bool) {
+        FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
+        return $fallback.handler != address(0);
+    }
+
     function _uninstallFallbackHandler(address handler, bytes calldata initData) internal virtual {
+        (bytes4 functionSig) = abi.decode(initData, (bytes4));
+
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms.fallbackHandler = address(0);
+        $mms._fallbacks[functionSig].handler = address(0);
         // De-Initialize Fallback Module via Safe
         _execute({
             safe: msg.sender,
@@ -190,35 +211,48 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         });
     }
 
-    function _getFallbackHandler() internal view virtual returns (address fallbackHandler) {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        return $mms.fallbackHandler;
-    }
+    function _isFallbackHandlerInstalled(
+        address _handler,
+        bytes calldata additionalContext
+    )
+        internal
+        view
+        virtual
+        returns (bool)
+    {
+        bytes4 functionSig = abi.decode(additionalContext, (bytes4));
 
-    function _isFallbackHandlerInstalled(address _handler) internal view virtual returns (bool) {
-        return _getFallbackHandler() == _handler;
-    }
-
-    function getActiveFallbackHandler() external view virtual returns (address) {
-        return _getFallbackHandler();
+        FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
+        return $fallback.handler == _handler;
     }
 
     // FALLBACK
     // solhint-disable-next-line no-complex-fallback
-    fallback() external payable override(Receiver) receiverFallback {
-        address handler = _getFallbackHandler();
-        if (handler == address(0)) revert NoFallbackHandler();
+    fallback(bytes calldata callData)
+        external
+        payable
+        override(Receiver)
+        receiverFallback
+        returns (bytes memory fallbackRet)
+    {
+        FallbackHandler storage $fallbackHandler = $moduleManager[msg.sender]._fallbacks[msg.sig];
+        address handler = $fallbackHandler.handler;
+        CallType calltype = $fallbackHandler.calltype;
+        if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
-        bytes memory retData = _executeReturnData({
-            safe: msg.sender,
-            target: handler,
-            value: msg.value,
-            callData: abi.encodePacked(msg.data, _msgSender()) // ERC2771
-         });
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            return(add(retData, 0x20), mload(retData))
+        // dis wont work. need Enum.Operation static, cause safe account emits event
+        // if (calltype == CALLTYPE_STATIC) {
+        //     return _executeStaticReturnData(
+        //         msg.sender, handler, 0, abi.encodePacked(callData, _msgSender())
+        //     );
+        // }
+        if (calltype == CALLTYPE_SINGLE) {
+            return
+                _executeReturnData(msg.sender, handler, 0, abi.encodePacked(callData, _msgSender()));
+        }
+        // TODO: do we actually want this? security questionable...
+        if (calltype == CALLTYPE_DELEGATECALL) {
+            return _executeDelegateCallReturnData(msg.sender, handler, callData);
         }
     }
 }
