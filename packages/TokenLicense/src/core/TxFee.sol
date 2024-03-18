@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
 import { Subscription } from "./Subscription.sol";
 import { ILicenseManager } from "../interfaces/ILicenseManager.sol";
+import { LicenseHash } from "../lib/LicenseHash.sol";
 import "../DataTypes.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
@@ -11,6 +12,8 @@ import "forge-std/console2.sol";
 
 abstract contract TxFee is Subscription {
     using SafeTransferLib for address;
+    using LicenseHash for LicenseManagerTxFee;
+    using LicenseHash for LicenseManagerSubscription;
 
     function claimTxFee(address smartAccount, uint256 totalAmount) external {
         ModuleMoneyConf storage $moduleMoneyConf = _moduleMoneyConfs[msg.sender];
@@ -19,9 +22,9 @@ abstract contract TxFee is Subscription {
         if (totalAmount == 0) return;
         if (splitter == address(0)) revert UnauthorizedModule();
 
-        bytes memory message =
-            abi.encode(LicenseManagerTxFee({ module: msg.sender, amount: totalAmount }));
-        bytes32 witness = _hashTypedData(keccak256(message));
+        LicenseManagerTxFee memory message =
+            LicenseManagerTxFee({ module: msg.sender, amount: totalAmount });
+        bytes32 witness = _hashTypedData(message.hash());
 
         ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
             .SignatureTransferDetails({
@@ -43,6 +46,7 @@ abstract contract TxFee is Subscription {
             witnessTypeString: TX_FEE_WITNESS,
             signature: abi.encodePacked(txFeeSessionKey, abi.encode(permit, message))
         });
+        emit TransactionFee(smartAccount, msg.sender, totalAmount);
     }
 
     function _calculateTxFee(
@@ -67,9 +71,13 @@ abstract contract TxFee is Subscription {
             _calculateSubscriptionFee($moduleMoney, $license);
         $license.validUntil = newValidUntil;
 
-        bytes memory message =
-            abi.encode(LicenseManagerSubscription({ module: msg.sender, amount: totalAmount }));
-        bytes32 witness = _hashTypedData(keccak256(message));
+        LicenseManagerSubscription memory message =
+            LicenseManagerSubscription({ module: msg.sender, amount: totalAmount });
+
+        // bytes memory message =
+        //     abi.encode(LicenseManagerSubscription({ module: msg.sender, amount: totalAmount }));
+        // bytes32 witness = _hashTypedData(keccak256(message));
+        bytes32 witness = _hashTypedData(message.hash());
 
         ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
             .SignatureTransferDetails({
@@ -91,6 +99,8 @@ abstract contract TxFee is Subscription {
             witnessTypeString: SUBSCRIPTION_WITNESS,
             signature: abi.encodePacked(subscriptionSessionKey, abi.encode(permit, message))
         });
+
+        emit SubscriptionFee(smartAccount, msg.sender, totalAmount, newValidUntil);
     }
 
     function _calculateSubscriptionFee(

@@ -22,13 +22,11 @@ interface ILicenseManager {
 
     error SubscriptionTooShort();
 
-    // function approvalSubscription(address module, uint256 amount) external;
-    // function signedSubscription(
-    //     address module,
-    //     uint256 amount,
-    //     bytes calldata signature
-    // )
-    //     external;
+    event TransactionFee(address indexed smartAccount, address indexed module, uint256 amount);
+    event SubscriptionFee(
+        address indexed smartAccount, address indexed module, uint256 amount, uint48 validUntil
+    );
+
     function claimTxFee(address smartAccount, uint256 totalAmount) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

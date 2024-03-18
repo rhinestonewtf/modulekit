@@ -3,7 +3,9 @@ pragma solidity ^0.8.20;
 
 string constant TX_FEE_WITNESS = "LicenseManagerTxFee(address module, uint256 amount)";
 bytes32 constant TX_FEE_WITNESS_TYPEHASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
+
 string constant SUBSCRIPTION_WITNESS = "LicenseManagerSubscription(address module, uint256 amount)";
+bytes32 constant SUBSCRIPTION_WITNESS_TYPEHASH = keccak256(abi.encodePacked(SUBSCRIPTION_WITNESS));
 
 struct LicenseManagerTxFee {
     address module;

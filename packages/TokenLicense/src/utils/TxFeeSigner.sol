@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "../DataTypes.sol";
 import "./LicenseSignerBase.sol";
 import "../interfaces/IERC1271.sol";
+import { LicenseHash } from "../lib/LicenseHash.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
 import "forge-std/console2.sol";
@@ -11,6 +12,7 @@ import "forge-std/console2.sol";
 contract TxFeeSigner is LicenseSignerBase {
     using EIP712Signer for bytes32;
     using EIP712Signer for ISignatureTransfer.PermitTransferFrom;
+    using LicenseHash for LicenseManagerTxFee;
 
     mapping(address smartAccount => mapping(address module => bool enabledTxFee)) internal _txFee;
 
@@ -48,16 +50,14 @@ contract TxFeeSigner is LicenseSignerBase {
         onlyPermit2(sender)
         returns (bytes4 magicValue)
     {
-        (ISignatureTransfer.PermitTransferFrom memory permit, bytes memory witnessMessage) =
-            abi.decode(encodedTxFee, (ISignatureTransfer.PermitTransferFrom, bytes));
-        bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(keccak256(witnessMessage));
+        (ISignatureTransfer.PermitTransferFrom memory permit, LicenseManagerTxFee memory txFee) =
+            abi.decode(encodedTxFee, (ISignatureTransfer.PermitTransferFrom, LicenseManagerTxFee));
+        bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(txFee.hash());
         bytes32 permitHash =
             permit.hashWithWitness(address(LICENSE_MANAGER), witness, TX_FEE_WITNESS);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
-        LicenseManagerTxFee memory txFeeDetails = abi.decode(witnessMessage, (LicenseManagerTxFee));
-
-        if (!isModulePaymentEnabled(msg.sender, txFeeDetails.module)) return 0xFFFFFFFF;
+        if (!isModulePaymentEnabled(msg.sender, txFee.module)) return 0xFFFFFFFF;
 
         if (expected1271Hash == hash) {
             return IERC1271.isValidSignature.selector;
