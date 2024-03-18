@@ -74,9 +74,6 @@ abstract contract TxFee is Subscription {
         LicenseManagerSubscription memory message =
             LicenseManagerSubscription({ module: msg.sender, amount: totalAmount });
 
-        // bytes memory message =
-        //     abi.encode(LicenseManagerSubscription({ module: msg.sender, amount: totalAmount }));
-        // bytes32 witness = _hashTypedData(keccak256(message));
         bytes32 witness = _hashTypedData(message.hash());
 
         ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
