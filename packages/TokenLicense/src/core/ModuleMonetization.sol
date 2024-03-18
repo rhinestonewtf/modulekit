@@ -18,12 +18,15 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
     using SignatureCheckerLib for address;
 
     address internal immutable TOKEN;
-    address internal signerModule;
+    address internal txFeeSessionKey;
+    address internal subscriptionSessionKey;
     IPermit2 internal immutable PERMIT2;
     GasliteSplitterFactory public immutable SPLITTER_FACTORY;
     SplitterConf internal immutable SPLITTER_CONF;
+    uint256 constant MAX_PERCENTAGE = 10;
 
     mapping(address module => ModuleMoneyConf conf) internal _moduleMoneyConfs;
+    mapping(address module => uint256 nonce) internal _moduleNonces;
 
     constructor(IPermit2 permit2, address token, SplitterConf splitterConf) EIP712() {
         TOKEN = token;
@@ -31,6 +34,12 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
         SPLITTER_CONF = splitterConf;
         SPLITTER_FACTORY = new GasliteSplitterFactory();
         _initializeOwner(msg.sender);
+    }
+
+    function _iterNonce(address module) internal returns (uint256 nonce) {
+        nonce = _moduleNonces[module] + 1;
+        _moduleNonces[module] = nonce;
+        nonce = uint256(bytes32(keccak256(abi.encodePacked(module, nonce))));
     }
 
     modifier onlyRegistry() {
@@ -48,8 +57,9 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
         emit NewModuleOwner(module, newOwner);
     }
 
-    function initialize(address _signerModule) external onlyOwner {
-        signerModule = _signerModule;
+    function initialize(address _txFeeSigner, address _subscriptionSigner) external onlyOwner {
+        txFeeSessionKey = _txFeeSigner;
+        subscriptionSessionKey = _subscriptionSigner;
     }
 
     function updateModuleMonetization(

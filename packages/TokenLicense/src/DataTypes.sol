@@ -2,9 +2,15 @@
 pragma solidity ^0.8.20;
 
 string constant TX_FEE_WITNESS = "LicenseManagerTxFee(address module, uint256 amount)";
-bytes32 constant TX_FEE_WITNESS_HASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
+bytes32 constant TX_FEE_WITNESS_TYPEHASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
+string constant SUBSCRIPTION_WITNESS = "LicenseManagerSubscription(address module, uint256 amount)";
 
 struct LicenseManagerTxFee {
+    address module;
+    uint256 amount;
+}
+
+struct LicenseManagerSubscription {
     address module;
     uint256 amount;
 }
@@ -16,7 +22,7 @@ struct PackedSignature {
 
 struct License {
     uint48 validUntil;
-    bool autoExtend;
+    uint48 renewalSeconds;
 }
 
 struct ModuleMoneyConf {

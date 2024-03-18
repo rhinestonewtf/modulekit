@@ -8,11 +8,12 @@ import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.so
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
 import "forge-std/console2.sol";
 
-contract TxFeeSigner is LicenseSignerBase {
+contract SubscriptionSigner is LicenseSignerBase {
     using EIP712Signer for bytes32;
     using EIP712Signer for ISignatureTransfer.PermitTransferFrom;
 
-    mapping(address smartAccount => mapping(address module => bool enabledTxFee)) internal _txFee;
+    mapping(address smartAccount => mapping(address module => bool enabledSubscription)) internal
+        _subscriptions;
 
     constructor(
         address permit2,
@@ -22,7 +23,7 @@ contract TxFeeSigner is LicenseSignerBase {
     { }
 
     function configure(address module, bool enabled) external {
-        _txFee[msg.sender][module] = enabled;
+        _subscriptions[msg.sender][module] = enabled;
     }
 
     function isModulePaymentEnabled(
@@ -33,7 +34,7 @@ contract TxFeeSigner is LicenseSignerBase {
         view
         returns (bool)
     {
-        return _txFee[smartAccount][module];
+        return _subscriptions[smartAccount][module];
     }
 
     function isValidSignatureWithSender(
@@ -52,12 +53,13 @@ contract TxFeeSigner is LicenseSignerBase {
             abi.decode(encodedTxFee, (ISignatureTransfer.PermitTransferFrom, bytes));
         bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(keccak256(witnessMessage));
         bytes32 permitHash =
-            permit.hashWithWitness(address(LICENSE_MANAGER), witness, TX_FEE_WITNESS);
+            permit.hashWithWitness(address(LICENSE_MANAGER), witness, SUBSCRIPTION_WITNESS);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
-        LicenseManagerTxFee memory txFeeDetails = abi.decode(witnessMessage, (LicenseManagerTxFee));
+        LicenseManagerSubscription memory subscription =
+            abi.decode(witnessMessage, (LicenseManagerSubscription));
 
-        if (!isModulePaymentEnabled(msg.sender, txFeeDetails.module)) return 0xFFFFFFFF;
+        if (!isModulePaymentEnabled(msg.sender, subscription.module)) return 0xFFFFFFFF;
 
         if (expected1271Hash == hash) {
             return IERC1271.isValidSignature.selector;

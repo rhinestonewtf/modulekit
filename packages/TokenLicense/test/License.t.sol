@@ -2,6 +2,7 @@ import "forge-std/Test.sol";
 import "src/LicenseManager.sol";
 import "src/core/SplitterConf.sol";
 import "src/utils/TxFeeSigner.sol";
+import "src/utils/SubscriptionSigner.sol";
 
 import "forge-std/Test.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
@@ -31,7 +32,8 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
 
     LicenseManager licenseMgr;
     SplitterConf splitterConf;
-    TxFeeSigner signer;
+    TxFeeSigner txSigner;
+    SubscriptionSigner subSigner;
 
     function setUp() public {
         vm.warp(123_123_123);
@@ -47,25 +49,40 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
         deal(address(token), instance.account, 100 ether);
         deal(instance.account, 100 ether);
         licenseMgr = new LicenseManager(IPermit2(permit2), address(token), splitterConf);
-        signer = new TxFeeSigner(permit2, address(licenseMgr));
-        licenseMgr.initialize(address(signer));
+        txSigner = new TxFeeSigner(permit2, address(licenseMgr));
+        subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
+        licenseMgr.initialize(address(txSigner), address(subSigner));
         licenseMgr.moduleRegistration(module.addr, receiver.addr);
 
-        vm.prank(instance.account);
+        vm.startPrank(instance.account);
         token.approve(permit2, type(uint256).max);
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: address(signer),
+            module: address(txSigner),
             data: ""
         });
-        vm.prank(instance.account);
-        signer.configure(module.addr, true);
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(subSigner),
+            data: ""
+        });
+        txSigner.configure(module.addr, true);
+        subSigner.configure(module.addr, true);
+
+        vm.stopPrank();
     }
 
     function test_claimTxFee() public {
         vm.startPrank(module.addr);
 
-        licenseMgr.permitTxFee(instance.account, 100, hex"41414141414141414141414141414141414141");
+        licenseMgr.claimTxFee(instance.account, 100);
+    }
+
+    function test_subscribe() public {
+        vm.startPrank(module.addr);
+
+        licenseMgr.claimSubscriptionRenewal(instance.account);
     }
 }

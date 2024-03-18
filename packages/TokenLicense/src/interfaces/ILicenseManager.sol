@@ -22,32 +22,21 @@ interface ILicenseManager {
 
     error SubscriptionTooShort();
 
-    function approvalSubscription(address module, uint256 amount) external;
-    function signedSubscription(
-        address module,
-        uint256 amount,
-        bytes calldata signature
-    )
-        external;
-    function approvalTxFee(address smartAccount, uint256 totalAmount) external;
-    function signedTxFee(
-        address smartAccount,
-        uint256 totalAmount,
-        bytes calldata signature
-    )
-        external;
-    function permitTxFee(
-        address smartAccount,
-        uint256 totalAmount,
-        bytes calldata signature
-    )
-        external;
+    // function approvalSubscription(address module, uint256 amount) external;
+    // function signedSubscription(
+    //     address module,
+    //     uint256 amount,
+    //     bytes calldata signature
+    // )
+    //     external;
+    function claimTxFee(address smartAccount, uint256 totalAmount) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               Configure Module Monetization                */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     error UnauthorizedModuleOwner();
+    error UnauthorizedModule();
 
     event NewSplitter(address indexed module, address indexed splitter);
     event NewModuleOwner(address indexed module, address indexed newOwner);
