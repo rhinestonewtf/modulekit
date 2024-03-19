@@ -68,7 +68,9 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
             module: address(subSigner),
             data: ""
         });
-        txSigner.configure(module.addr, true);
+        TxFeeSigner.TxConfig memory config =
+            TxFeeSigner.TxConfig({ enabled: true, maxTxPercentage: 5 });
+        txSigner.configure(module.addr, config);
         subSigner.configure(module.addr, true);
 
         vm.stopPrank();

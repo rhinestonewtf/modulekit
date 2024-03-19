@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-string constant TX_FEE_WITNESS = "LicenseManagerTxFee(address module, uint256 amount)";
+string constant TX_FEE_WITNESS =
+    "LicenseManagerTxFee(address module, uint256 amount, uint32 txPercentage)";
 bytes32 constant TX_FEE_WITNESS_TYPEHASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
 
 string constant SUBSCRIPTION_WITNESS = "LicenseManagerSubscription(address module, uint256 amount)";
@@ -10,6 +11,7 @@ bytes32 constant SUBSCRIPTION_WITNESS_TYPEHASH = keccak256(abi.encodePacked(SUBS
 struct LicenseManagerTxFee {
     address module;
     uint256 amount;
+    uint32 txPercentage;
 }
 
 struct LicenseManagerSubscription {

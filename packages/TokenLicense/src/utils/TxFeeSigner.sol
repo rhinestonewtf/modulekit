@@ -14,7 +14,12 @@ contract TxFeeSigner is LicenseSignerBase {
     using EIP712Signer for ISignatureTransfer.PermitTransferFrom;
     using LicenseHash for LicenseManagerTxFee;
 
-    mapping(address smartAccount => mapping(address module => bool enabledTxFee)) internal _txFee;
+    struct TxConfig {
+        bool enabled;
+        uint32 maxTxPercentage;
+    }
+
+    mapping(address smartAccount => mapping(address module => TxConfig config)) internal _txFee;
 
     constructor(
         address permit2,
@@ -23,8 +28,8 @@ contract TxFeeSigner is LicenseSignerBase {
         LicenseSignerBase(permit2, licenseManager)
     { }
 
-    function configure(address module, bool enabled) external {
-        _txFee[msg.sender][module] = enabled;
+    function configure(address module, TxConfig calldata config) external {
+        _txFee[msg.sender][module] = config;
     }
 
     function isModulePaymentEnabled(
@@ -35,7 +40,7 @@ contract TxFeeSigner is LicenseSignerBase {
         view
         returns (bool)
     {
-        return _txFee[smartAccount][module];
+        return _txFee[smartAccount][module].enabled;
     }
 
     function isValidSignatureWithSender(
@@ -57,7 +62,13 @@ contract TxFeeSigner is LicenseSignerBase {
             permit.hashWithWitness(address(LICENSE_MANAGER), witness, TX_FEE_WITNESS);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
+        console2.log("percentage in request", txFee.txPercentage);
+        console2.log("percentage in request", _txFee[msg.sender][txFee.module].maxTxPercentage);
+
         if (!isModulePaymentEnabled(msg.sender, txFee.module)) return 0xFFFFFFFF;
+        if (txFee.txPercentage > _txFee[msg.sender][txFee.module].maxTxPercentage) {
+            return 0xFFFFFFFF;
+        }
 
         if (expected1271Hash == hash) {
             return IERC1271.isValidSignature.selector;

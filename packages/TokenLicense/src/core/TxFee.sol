@@ -15,15 +15,22 @@ abstract contract TxFee is Subscription {
     using LicenseHash for LicenseManagerTxFee;
     using LicenseHash for LicenseManagerSubscription;
 
+    // TODO: add payer and licensee difference
     function claimTxFee(address smartAccount, uint256 totalAmount) external {
         ModuleMoneyConf storage $moduleMoneyConf = _moduleMoneyConfs[msg.sender];
         address splitter = $moduleMoneyConf.splitter;
-        totalAmount = _calculateTxFee(totalAmount, $moduleMoneyConf);
-        if (totalAmount == 0) return;
+        uint32 txPercentage;
+        (totalAmount, txPercentage) = _calculateTxFee(totalAmount, $moduleMoneyConf);
+        // if (totalAmount == 0) return;
         if (splitter == address(0)) revert UnauthorizedModule();
+        totalAmount = 1;
+        txPercentage = 5;
 
-        LicenseManagerTxFee memory message =
-            LicenseManagerTxFee({ module: msg.sender, amount: totalAmount });
+        LicenseManagerTxFee memory message = LicenseManagerTxFee({
+            module: msg.sender,
+            amount: totalAmount,
+            txPercentage: txPercentage
+        });
         bytes32 witness = _hashTypedData(message.hash());
 
         ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
@@ -55,9 +62,10 @@ abstract contract TxFee is Subscription {
     )
         internal
         view
-        returns (uint256)
+        returns (uint256 _totalAmount, uint32 txPercentage)
     {
-        return (totalAmount * $moduleMonetization.txPercentage) / 100;
+        txPercentage = $moduleMonetization.txPercentage;
+        _totalAmount = (totalAmount * txPercentage) / 100;
     }
 
     function claimSubscriptionRenewal(address smartAccount) external {
