@@ -1,8 +1,7 @@
 import "forge-std/Test.sol";
 import "src/LicenseManager.sol";
-import "src/core/SplitterConf.sol";
-import "src/utils/TxFeeSigner.sol";
-import "src/utils/SubscriptionSigner.sol";
+import "src/signer/TxFeeSigner.sol";
+import "src/signer/SubscriptionSigner.sol";
 
 import "forge-std/Test.sol";
 import "@rhinestone/modulekit/src/ModuleKit.sol";
@@ -31,7 +30,6 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
     address permit2;
 
     LicenseManager licenseMgr;
-    SplitterConf splitterConf;
     TxFeeSigner txSigner;
     SubscriptionSigner subSigner;
 
@@ -42,13 +40,11 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
         vm.deal(instance.account, 100 ether);
         permit2 = deployPermit2();
         token = new MockERC20();
-        splitterConf = new SplitterConf();
-        splitterConf.setConf(module.addr, Solarray.uint256s(90, 10));
 
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         deal(instance.account, 100 ether);
-        licenseMgr = new LicenseManager(IPermit2(permit2), address(token), splitterConf);
+        licenseMgr = new LicenseManager(IPermit2(permit2), address(token));
         txSigner = new TxFeeSigner(permit2, address(licenseMgr));
         subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
         licenseMgr.initialize(address(txSigner), address(subSigner));
@@ -69,22 +65,33 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
             data: ""
         });
         TxFeeSigner.TxConfig memory config =
-            TxFeeSigner.TxConfig({ enabled: true, maxTxPercentage: 5 });
+            TxFeeSigner.TxConfig({ enabled: true, maxTxPercentage: bps.wrap(500) });
         txSigner.configure(module.addr, config);
         subSigner.configure(module.addr, true);
 
         vm.stopPrank();
+
+        bps[] memory equities = new bps[](2);
+        equities[0] = bps.wrap(90);
+        equities[1] = bps.wrap(10);
+
+        licenseMgr.setRecord(
+            module.addr,
+            bps.wrap(100), // 1 %
+            Solarray.addresses(receiver.addr, address(this)),
+            equities
+        );
     }
 
     function test_claimTxFee() public {
         vm.startPrank(module.addr);
 
-        licenseMgr.claimTxFee(instance.account, 100);
+        licenseMgr.claimTxFee(instance.account, instance.account, IERC20(address(token)), 1_234_567);
     }
 
     function test_subscribe() public {
         vm.startPrank(module.addr);
 
-        licenseMgr.claimSubscriptionRenewal(instance.account);
+        licenseMgr.claimSubscriptionRenewal(instance.account, instance.account);
     }
 }

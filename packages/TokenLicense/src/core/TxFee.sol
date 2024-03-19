@@ -2,58 +2,61 @@
 pragma solidity ^0.8.20;
 
 import { SafeTransferLib } from "solady/src/utils/SafeTransferLib.sol";
-import { Subscription } from "./Subscription.sol";
+import { Shareholder } from "./Shareholder.sol";
 import { ILicenseManager } from "../interfaces/ILicenseManager.sol";
+import { ModuleMonetization } from "./ModuleMonetization.sol";
+import { LicenseCheck } from "./LicenseCheck.sol";
 import { LicenseHash } from "../lib/LicenseHash.sol";
 import "../DataTypes.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import "forge-std/console2.sol";
 
-abstract contract TxFee is Subscription {
+abstract contract TxFee is Shareholder, ModuleMonetization, LicenseCheck {
     using SafeTransferLib for address;
     using LicenseHash for LicenseManagerTxFee;
     using LicenseHash for LicenseManagerSubscription;
 
-    // TODO: add payer and licensee difference
-    function claimTxFee(address smartAccount, uint256 totalAmount) external {
-        ModuleMoneyConf storage $moduleMoneyConf = _moduleMoneyConfs[msg.sender];
-        address splitter = $moduleMoneyConf.splitter;
-        uint32 txPercentage;
-        (totalAmount, txPercentage) = _calculateTxFee(totalAmount, $moduleMoneyConf);
-        // if (totalAmount == 0) return;
-        if (splitter == address(0)) revert UnauthorizedModule();
-        totalAmount = 1;
-        txPercentage = 5;
+    function claimTxFee(
+        address smartAccount,
+        address sponsor,
+        IERC20 token,
+        uint256 totalAmount
+    )
+        external
+    {
+        (
+            uint256 feeAmount,
+            bps txPercentage,
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transferDetails
+        ) = getTokenPermissions({ module: msg.sender, token: token, totalAmount: totalAmount });
 
-        LicenseManagerTxFee memory message = LicenseManagerTxFee({
-            module: msg.sender,
-            amount: totalAmount,
-            txPercentage: txPercentage
-        });
-        bytes32 witness = _hashTypedData(message.hash());
-
-        ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
-            .SignatureTransferDetails({
-            to: splitter, // recipient address
-            requestedAmount: totalAmount //total amount sent to receiver
-         });
-
-        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
-            permitted: ISignatureTransfer.TokenPermissions({ token: TOKEN, amount: totalAmount }),
+        ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
+            .PermitBatchTransferFrom({
+            permitted: permissions,
             nonce: _iterNonce({ module: msg.sender }),
             deadline: block.timestamp
         });
 
+        LicenseManagerTxFee memory message = LicenseManagerTxFee({
+            amount: feeAmount,
+            module: msg.sender,
+            sponsor: sponsor,
+            txPercentage: txPercentage
+        });
+
         PERMIT2.permitWitnessTransferFrom({
             permit: permit,
-            transferDetails: signatureTransfer,
-            owner: smartAccount,
-            witness: witness,
+            transferDetails: transferDetails,
+            owner: sponsor,
+            witness: _hashTypedData(message.hash()),
             witnessTypeString: TX_FEE_WITNESS,
             signature: abi.encodePacked(txFeeSessionKey, abi.encode(permit, message))
         });
-        emit TransactionFee(smartAccount, msg.sender, totalAmount);
+
+        emit TransactionFee(msg.sender, smartAccount, sponsor, token, feeAmount);
     }
 
     function _calculateTxFee(
@@ -68,39 +71,46 @@ abstract contract TxFee is Subscription {
         _totalAmount = (totalAmount * txPercentage) / 100;
     }
 
-    function claimSubscriptionRenewal(address smartAccount) external {
+    function claimSubscriptionRenewal(address smartAccount, address sponsor) external {
         // how many seconds does the amount cover?
         ModuleMoneyConf storage $moduleMoney = _moduleMoneyConfs[msg.sender];
-        address splitter = $moduleMoney.splitter;
-        if (splitter == address(0)) revert UnauthorizedModule();
         License storage $license = _accountLicenses[msg.sender][smartAccount];
+
+        console2.log("foo");
 
         (uint48 newValidUntil, uint256 totalAmount) =
             _calculateSubscriptionFee($moduleMoney, $license);
         $license.validUntil = newValidUntil;
+        totalAmount = 1e18;
+
+        (
+            uint256 feeAmount,
+            ,
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transferDetails
+        ) = getTokenPermissions({
+            module: msg.sender,
+            token: $moduleMoney.token,
+            totalAmount: totalAmount
+        });
+
+        console2.log("foo");
 
         LicenseManagerSubscription memory message =
-            LicenseManagerSubscription({ module: msg.sender, amount: totalAmount });
+            LicenseManagerSubscription({ module: msg.sender, sponsor: sponsor, amount: feeAmount });
 
-        bytes32 witness = _hashTypedData(message.hash());
-
-        ISignatureTransfer.SignatureTransferDetails memory signatureTransfer = ISignatureTransfer
-            .SignatureTransferDetails({
-            to: splitter,
-            requestedAmount: totalAmount //total amount sent to receiver
-         });
-
-        ISignatureTransfer.PermitTransferFrom memory permit = ISignatureTransfer.PermitTransferFrom({
-            permitted: ISignatureTransfer.TokenPermissions({ token: TOKEN, amount: totalAmount }),
+        ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
+            .PermitBatchTransferFrom({
+            permitted: permissions,
             nonce: _iterNonce({ module: msg.sender }),
             deadline: block.timestamp
         });
 
         PERMIT2.permitWitnessTransferFrom({
             permit: permit,
-            transferDetails: signatureTransfer,
+            transferDetails: transferDetails,
             owner: smartAccount,
-            witness: witness,
+            witness: _hashTypedData(message.hash()),
             witnessTypeString: SUBSCRIPTION_WITNESS,
             signature: abi.encodePacked(subscriptionSessionKey, abi.encode(permit, message))
         });

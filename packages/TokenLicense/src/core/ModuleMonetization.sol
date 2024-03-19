@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import { GasliteSplitterFactory } from "../splitter/Factory.sol";
 import { GasliteSplitter } from "../splitter/Splitter.sol";
 import { Ownable } from "solady/src/auth/Ownable.sol";
-import { SplitterConf } from "./SplitterConf.sol";
 import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
@@ -21,18 +20,14 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
     address internal txFeeSessionKey;
     address internal subscriptionSessionKey;
     IPermit2 internal immutable PERMIT2;
-    GasliteSplitterFactory public immutable SPLITTER_FACTORY;
-    SplitterConf internal immutable SPLITTER_CONF;
     uint256 constant MAX_PERCENTAGE = 10;
 
     mapping(address module => ModuleMoneyConf conf) internal _moduleMoneyConfs;
     mapping(address module => uint256 nonce) internal _moduleNonces;
 
-    constructor(IPermit2 permit2, address token, SplitterConf splitterConf) EIP712() {
+    constructor(IPermit2 permit2, address token) EIP712() {
         TOKEN = token;
         PERMIT2 = permit2;
-        SPLITTER_CONF = splitterConf;
-        SPLITTER_FACTORY = new GasliteSplitterFactory();
         _initializeOwner(msg.sender);
     }
 
@@ -104,8 +99,6 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
                 signer.isValidSignatureNowCalldata(ECDSA.toEthSignedMessageHash(hash), signature);
             require(valid, "invalid signature");
         }
-
-        _setSplitter(module, newRecipients, newShares);
     }
 
     function resolveModuleRegistration(
@@ -123,13 +116,8 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
         recipients[0] = moduleDevBeneficiary;
         recipients[1] = owner();
 
-        uint256[] memory shares = SPLITTER_CONF.getEquity(moduleRecord);
-        require(shares.length == 2, "invalid equity");
-
         // TODO check upper bound for shares. owner should not be able to claim a huge amounts of
         // equity
-
-        _setSplitter(moduleRecord, recipients, shares);
 
         return true;
     }
@@ -152,30 +140,7 @@ abstract contract ModuleMonetization is ILicenseManager, EIP712, Ownable {
         external
         onlyOwner
     {
-        address[] memory recipients = new address[](2);
-        recipients[0] = moduleDevBeneficiary;
-        recipients[1] = owner();
-
-        uint256[] memory shares = SPLITTER_CONF.getEquity(moduleRecord);
-        require(shares.length == 2, "invalid equity");
-
         // TODO check upper bound for shares
-
-        _setSplitter(moduleRecord, recipients, shares);
-    }
-
-    function _setSplitter(
-        address module,
-        address[] memory recipients,
-        uint256[] memory shares
-    )
-        internal
-    {
-        address splitter = SPLITTER_FACTORY.findDeploymentAddress(
-            recipients, shares, false, keccak256(abi.encodePacked(module))
-        );
-        _moduleMoneyConfs[module].splitter = splitter;
-        emit NewSplitter(module, splitter);
     }
 
     function _domainNameAndVersion()

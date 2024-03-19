@@ -110,6 +110,41 @@ library EIP712Signer {
         );
     }
 
+    function hashWithWitness(
+        ISignatureTransfer.PermitBatchTransferFrom memory permit,
+        address permit2Sender,
+        bytes32 witness,
+        string memory witnessTypeString
+    )
+        internal
+        view
+        returns (bytes32)
+    {
+        bytes32 typeHash = keccak256(
+            abi.encodePacked(
+                PermitHash._PERMIT_BATCH_WITNESS_TRANSFER_FROM_TYPEHASH_STUB, witnessTypeString
+            )
+        );
+
+        uint256 numPermitted = permit.permitted.length;
+        bytes32[] memory tokenPermissionHashes = new bytes32[](numPermitted);
+
+        for (uint256 i = 0; i < numPermitted; ++i) {
+            tokenPermissionHashes[i] = _hashTokenPermissions(permit.permitted[i]);
+        }
+
+        return keccak256(
+            abi.encode(
+                typeHash,
+                keccak256(abi.encodePacked(tokenPermissionHashes)),
+                permit2Sender,
+                permit.nonce,
+                permit.deadline,
+                witness
+            )
+        );
+    }
+
     /**
      * copied from Permit PermitHash.sol, because function in lib is private
      */

@@ -9,13 +9,18 @@ import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.so
 import { PermitHash } from "permit2/src/libraries/PermitHash.sol";
 import "forge-std/console2.sol";
 
-contract SubscriptionSigner is LicenseSignerBase {
+contract TxFeeSigner is LicenseSignerBase {
     using EIP712Signer for bytes32;
     using EIP712Signer for ISignatureTransfer.PermitTransferFrom;
-    using LicenseHash for LicenseManagerSubscription;
+    using EIP712Signer for ISignatureTransfer.PermitBatchTransferFrom;
+    using LicenseHash for LicenseManagerTxFee;
 
-    mapping(address smartAccount => mapping(address module => bool enabledSubscription)) internal
-        _subscriptions;
+    struct TxConfig {
+        bool enabled;
+        bps maxTxPercentage;
+    }
+
+    mapping(address smartAccount => mapping(address module => TxConfig config)) internal _txFee;
 
     constructor(
         address permit2,
@@ -24,8 +29,8 @@ contract SubscriptionSigner is LicenseSignerBase {
         LicenseSignerBase(permit2, licenseManager)
     { }
 
-    function configure(address module, bool enabled) external {
-        _subscriptions[msg.sender][module] = enabled;
+    function configure(address module, TxConfig calldata config) external {
+        _txFee[msg.sender][module] = config;
     }
 
     function isModulePaymentEnabled(
@@ -36,7 +41,7 @@ contract SubscriptionSigner is LicenseSignerBase {
         view
         returns (bool)
     {
-        return _subscriptions[smartAccount][module];
+        return _txFee[smartAccount][module].enabled;
     }
 
     function isValidSignatureWithSender(
@@ -51,18 +56,22 @@ contract SubscriptionSigner is LicenseSignerBase {
         onlyPermit2(sender)
         returns (bytes4 magicValue)
     {
-        (
-            ISignatureTransfer.PermitTransferFrom memory permit,
-            LicenseManagerSubscription memory subscription
-        ) = abi.decode(
-            encodedTxFee, (ISignatureTransfer.PermitTransferFrom, LicenseManagerSubscription)
+        (ISignatureTransfer.PermitBatchTransferFrom memory permit, LicenseManagerTxFee memory txFee)
+        = abi.decode(
+            encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, LicenseManagerTxFee)
         );
-        bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(subscription.hash());
+        bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(txFee.hash());
         bytes32 permitHash =
-            permit.hashWithWitness(address(LICENSE_MANAGER), witness, SUBSCRIPTION_WITNESS);
+            permit.hashWithWitness(address(LICENSE_MANAGER), witness, TX_FEE_WITNESS);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
-        if (!isModulePaymentEnabled(msg.sender, subscription.module)) return 0xFFFFFFFF;
+        console2.log("percentage in request", bps.unwrap(txFee.txPercentage));
+        // console2.log("percentage in request", _txFee[msg.sender][txFee.module].maxTxPercentage);
+
+        if (!isModulePaymentEnabled(msg.sender, txFee.module)) return 0xFFFFFFFF;
+        if (txFee.txPercentage > _txFee[msg.sender][txFee.module].maxTxPercentage) {
+            return 0xFFFFFFFF;
+        }
 
         if (expected1271Hash == hash) {
             return IERC1271.isValidSignature.selector;

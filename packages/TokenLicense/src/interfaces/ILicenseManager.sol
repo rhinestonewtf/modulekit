@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+
 interface ILicenseManager {
     function domainSeparator() external view returns (bytes32);
 
@@ -22,12 +24,24 @@ interface ILicenseManager {
 
     error SubscriptionTooShort();
 
-    event TransactionFee(address indexed smartAccount, address indexed module, uint256 amount);
+    event TransactionFee(
+        address indexed module,
+        address indexed smartAccount,
+        address indexed sponsor,
+        IERC20 token,
+        uint256 amount
+    );
     event SubscriptionFee(
         address indexed smartAccount, address indexed module, uint256 amount, uint48 validUntil
     );
 
-    function claimTxFee(address smartAccount, uint256 totalAmount) external;
+    function claimTxFee(
+        address smartAccount,
+        address sponsor,
+        IERC20 token,
+        uint256 totalAmount
+    )
+        external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               Configure Module Monetization                */
