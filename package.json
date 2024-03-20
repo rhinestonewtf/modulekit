@@ -15,6 +15,7 @@
     "accounts/**"
   ],
   "devDependencies": {
+    "erc7579": "github:erc7579/erc7579-implementation",
     "prettier": "^2.8.8",
     "solhint": "^4.1.1"
   },
