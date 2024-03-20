@@ -12,15 +12,8 @@
   },
   "workspaces": [
     "packages/**",
-    "accounts/**",
-    "examples/"
+    "accounts/**"
   ],
-  "dependencies": {
-    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
-    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
-    "sentinellist": "github:zeroknots/sentinellist",
-    "erc7579": "github:erc7579/erc7579-implementation"
-  },
   "devDependencies": {
     "prettier": "^2.8.8",
     "solhint": "^4.1.1"
