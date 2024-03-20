@@ -1,13 +1,1 @@
-@ERC4337/=node_modules/@rhinestone/modulekit-foundry/node_modules/@ERC4337/
-@openzeppelin/=node_modules/@rhinestone/modulekit-foundry/node_modules/@openzeppelin/
-@prb/=node_modules/@rhinestone/modulekit-foundry/node_modules/@prb/
-@rhinestone/=node_modules/@rhinestone/
-@safe-global/=node_modules/@rhinestone/modulekit-foundry/node_modules/@safe-global/
-ds-test/=node_modules/@rhinestone/modulekit-foundry/node_modules/ds-test/
-erc4337-validation/=node_modules/@rhinestone/modulekit-foundry/node_modules/erc4337-validation/
-erc7579/=node_modules/@rhinestone/modulekit-foundry/node_modules/erc7579/
-forge-std/=node_modules/@rhinestone/modulekit-foundry/node_modules/forge-std/
-sentinellist/=node_modules/@rhinestone/modulekit-foundry/node_modules/sentinellist/
-solady/=node_modules/@rhinestone/modulekit-foundry/node_modules/solady/
-solarray/=node_modules/@rhinestone/modulekit-foundry/node_modules/solarray/
-solmate/=node_modules/@rhinestone/safe7579/node_modules/solmate/
+foobar/=packages/
