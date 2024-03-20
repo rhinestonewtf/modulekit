@@ -17,9 +17,6 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "@rhinestone/sessionkeymanager": "workspace:*",
-    "@rhinestone/safe7579": "workspace:*",
-    "@rhinestone/modulekit": "workspace:*",
     "prettier": "^2.8.8",
     "solhint": "^4.1.1"
   },

@@ -11,7 +11,7 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "devDependencies": {
-    "@rhinestone/modulekit": "workspace:*",
+    "@rhinestone/modulekit-foundry": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
     "@safe-global/safe-contracts": "^1.4.1",
     "@openzeppelin/contracts": "5.0.1",

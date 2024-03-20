@@ -11,7 +11,7 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "devDependencies": {
-    "@rhinestone/modulekit": "workspace:*",
+    "@rhinestone/modulekit-foundry": "workspace:*",
     "ds-test": "github:dapphub/ds-test",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",

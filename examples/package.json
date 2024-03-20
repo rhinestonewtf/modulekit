@@ -12,7 +12,6 @@
   },
   "devDependencies": {
     "@openzeppelin/contracts": "5.0.1",
-    "@rhinestone/modulekit": "workspace:*",
     "@rhinestone/safe7579": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
     "@prb/math": "^4.0.2",
