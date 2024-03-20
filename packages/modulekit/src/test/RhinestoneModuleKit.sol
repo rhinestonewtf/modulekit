@@ -121,7 +121,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         ERC7579BootstrapConfig[] memory validators,
         ERC7579BootstrapConfig[] memory executors,
         ERC7579BootstrapConfig memory hook,
-        ERC7579BootstrapConfig memory fallBack
+        ERC7579BootstrapConfig[] memory fallBack
     )
         internal
         returns (AccountInstance memory instance)
@@ -178,7 +178,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
         ERC7579BootstrapConfig memory hook = _emptyConfig();
 
-        ERC7579BootstrapConfig memory fallBack = _emptyConfig();
+        ERC7579BootstrapConfig[] memory fallBack = _emptyConfigs();
         instance = makeAccountInstance(salt, validators, executors, hook, fallBack);
     }
 

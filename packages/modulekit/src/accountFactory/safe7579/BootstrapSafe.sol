@@ -21,7 +21,7 @@ contract BootstrapSafe is ModuleManager, HookManager {
         ERC7579BootstrapConfig[] calldata _validators,
         ERC7579BootstrapConfig[] calldata _executors,
         ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _fallback
     )
         external
     {
@@ -40,10 +40,9 @@ contract BootstrapSafe is ModuleManager, HookManager {
         if (_hook.module != address(0)) {
             _installHook(_hook.module, _hook.data);
         }
-
-        // init fallback
-        if (_fallback.module != address(0)) {
-            _installFallbackHandler(_fallback.module, _fallback.data);
+        for (uint256 i; i < _fallback.length; i++) {
+            if (_fallback[i].module == address(0)) continue;
+            _installExecutor(_fallback[i].module, _fallback[i].data);
         }
     }
 
@@ -51,7 +50,7 @@ contract BootstrapSafe is ModuleManager, HookManager {
         ERC7579BootstrapConfig[] calldata _validators,
         ERC7579BootstrapConfig[] calldata _executors,
         ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _fallback
     )
         external
         view

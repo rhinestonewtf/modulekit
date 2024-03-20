@@ -82,7 +82,7 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
         ERC7579BootstrapConfig[] calldata _validators,
         ERC7579BootstrapConfig[] calldata _executors,
         ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig calldata _fallback
+        ERC7579BootstrapConfig[] calldata _fallback
     )
         external
         view
