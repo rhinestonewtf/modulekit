@@ -13,7 +13,7 @@ import {
 } from "@rhinestone/sessionkeymanager/src/SessionKeyManagerLib.sol";
 import "@rhinestone/modulekit/src/Mocks.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 import { IERC7579Account, Execution } from "@rhinestone/modulekit/src/Accounts.sol";
 import { FlashloanCallback } from "src/ColdStorage/FlashloanCallback.sol";

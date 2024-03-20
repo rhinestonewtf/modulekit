@@ -12,7 +12,7 @@ import { MockTarget } from "@rhinestone/modulekit/src/mocks/MockTarget.sol";
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { SafeProxyFactory } from
     "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
 import "src/utils/Launchpad.sol";
 
 import { Solarray } from "solarray/Solarray.sol";

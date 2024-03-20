@@ -9,7 +9,7 @@ import { UserOperation, UserOperationLib } from "../../external/ERC4337.sol";
 import { IERC7579Account } from "../../Accounts.sol";
 import { IERC1271 } from "../../interfaces/IERC1271.sol";
 import { ACCOUNT_EXEC_TYPE, ERC7579ValidatorLib } from "../../modules/utils/ERC7579ValidatorLib.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 
 import { UserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 

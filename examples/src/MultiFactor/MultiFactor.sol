@@ -5,7 +5,7 @@ import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { IERC7579Module } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 import { IERC7579Account, Execution } from "@rhinestone/modulekit/src/Accounts.sol";
 import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.sol";
-import { LibSort } from "solady/src/utils/LibSort.sol";
+import { LibSort } from "solady/utils/LibSort.sol";
 import { ECDSAFactor } from "./ECDSAFactor.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";

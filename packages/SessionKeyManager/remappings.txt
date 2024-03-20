@@ -1,4 +1,4 @@
-solady/=node_modules/solady/
+solady/=node_modules/solady/src/
 @rhinestone/=node_modules/@rhinestone/
 erc7579/=node_modules/erc7579/src/
 @ERC4337/=node_modules/@ERC4337/

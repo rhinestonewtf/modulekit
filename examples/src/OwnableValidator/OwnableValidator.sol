@@ -4,8 +4,8 @@ pragma solidity ^0.8.23;
 import { ERC7579ValidatorBase } from "@rhinestone/modulekit/src/Modules.sol";
 import { PackedUserOperation } from "@rhinestone/modulekit/src/external/ERC4337.sol";
 
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 contract OwnableValidator is ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
