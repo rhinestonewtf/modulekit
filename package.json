@@ -2,7 +2,7 @@
   "name": "@rhinestone/modulekit",
   "description": "ModuleKit is a development toolkit to build Smart Account Modules",
   "license": "MIT",
-  "version": "0.3.3",
+  "version": "0.3.7",
   "author": {
     "name": "zeroknots.eth",
     "url": "https://rhinestone.wtf"
@@ -60,7 +60,6 @@
     "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
     "prepack": "pnpm install",
-    "preinstall": "pnpm install",
     "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
     "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",
     "test": "forge test",
