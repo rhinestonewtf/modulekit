@@ -15,8 +15,6 @@
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@openzeppelin/contracts": "5.0.1",
     "@prb/math": "^4.0.2",
-    "@rhinestone/safe7579": "workspace:*",
-    "@rhinestone/sessionkeymanager": "workspace:*",
     "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
@@ -49,6 +47,7 @@
   },
   "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
+    "install": "echo examples",
     "fmt": "forge fmt",
     "build": "forge build",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",

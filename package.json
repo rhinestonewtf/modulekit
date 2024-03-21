@@ -14,9 +14,6 @@
     "packages/**",
     "accounts/**"
   ],
-  "dependencies": {
-    "@rhinestone/modulekit-core": "link:packages/modulekit-core"
-  },
   "devDependencies": {
     "prettier": "^2.8.8",
     "solhint": "^4.5.2"
@@ -55,7 +52,8 @@
     "gas:snapshot:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fork)?(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
-    "prepack": "cd packages/modulekit-core && pnpm install && cd ../..",
+    "install": "echo mainInstall",
+    "prepack": "pnpm install",
     "prepare": "",
     "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
     "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",

@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@rhinestone/modulekit-core':
-        specifier: link:packages/modulekit-core
-        version: link:packages/modulekit-core
     devDependencies:
       prettier:
         specifier: ^2.8.8
@@ -33,9 +29,6 @@ importers:
       '@prb/math':
         specifier: ^4.0.2
         version: 4.0.2
-      '@rhinestone/sessionkeymanager':
-        specifier: workspace:*
-        version: link:../../packages/SessionKeyManager
       '@safe-global/safe-contracts':
         specifier: ^1.4.1
         version: 1.4.1(ethers@5.4.0)
