@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@rhinestone/modulekit-core':
-        specifier: workspace:./packages/modulekit-core
+        specifier: link:packages/modulekit-core
         version: link:packages/modulekit-core
     devDependencies:
       prettier:
