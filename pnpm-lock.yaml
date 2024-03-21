@@ -7,6 +7,16 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@rhinestone/modulekit-foundry':
+        specifier: workspace:*
+        version: link:packages/modulekit
+      '@rhinestone/safe7579':
+        specifier: workspace:*
+        version: link:accounts/safe7579
+      '@rhinestone/sessionkeymanager':
+        specifier: workspace:*
+        version: link:packages/SessionKeyManager
     devDependencies:
       prettier:
         specifier: ^2.8.8
