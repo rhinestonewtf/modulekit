@@ -15,7 +15,7 @@
     "accounts/**"
   ],
   "dependencies": {
-    "@rhinestone/modulekit-foundry": "workspace:*",
+    "@rhinestone/modulekit-core": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
     "@rhinestone/safe7579": "workspace:*"
   },

@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@rhinestone/modulekit-foundry':
+      '@rhinestone/modulekit-core':
         specifier: workspace:*
         version: link:packages/modulekit
       '@rhinestone/safe7579':
