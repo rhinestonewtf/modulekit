@@ -53,7 +53,7 @@
     "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
     "install": "echo mainInstall",
-    "prepack": "pnpm install",
+    "prepack": "pnpm -r install",
     "prepare": "",
     "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
     "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",
