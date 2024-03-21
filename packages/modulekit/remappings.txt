@@ -1,5 +1,5 @@
 @rhinestone/=node_modules/@rhinestone/
-@rhinestone/modulekit/=./src/
+@rhinestone/modulekit/=src/
 @rhinestone/sessionkeymanager/=node_modules/@rhinestone/sessionkeymanager/
 @ERC4337/=node_modules/@ERC4337/
 account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/
