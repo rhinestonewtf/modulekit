@@ -64,8 +64,5 @@
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
-  },
-  "dependencies": {
-    "@rhinestone/modulekit-core": "workspace:^"
   }
 }
