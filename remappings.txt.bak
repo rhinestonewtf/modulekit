@@ -1,0 +1,2 @@
+@rhinestone/sessionkeymanager/=packages/SessionKeyManager/src/
+account-abstraction/=packages/modulekit/node_modules/@ERC4337/account-abstraction/contracts/

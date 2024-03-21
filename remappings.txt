@@ -1,4 +1,0 @@
-account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/
-account-abstraction-v0.6/=node_modules/@ERC4337/account-abstraction-v0.6/contracts/
-@rhinestone/sessionkeymanager/=packages/SessionKeyManager/src/
-erc7579/=node_modules/erc7579/src/
