@@ -15,9 +15,7 @@
     "accounts/**"
   ],
   "dependencies": {
-    "@rhinestone/modulekit-core": "workspace:*",
-    "@rhinestone/sessionkeymanager": "workspace:*",
-    "@rhinestone/safe7579": "workspace:*"
+    "@rhinestone/modulekit-core": "workspace:*"
   },
   "devDependencies": {
     "prettier": "^2.8.8",

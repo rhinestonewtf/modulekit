@@ -1,6 +1,6 @@
 {
   "name": "@rhinestone/modulekit-core",
-  "description": "ModuleKit is a development toolkit to build Smart Account Modules",
+  "description": "Modulekit  Core component",
   "license": "MIT",
   "version": "0.3.1",
   "author": {
