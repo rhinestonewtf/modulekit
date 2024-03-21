@@ -54,7 +54,6 @@
     "gas:snapshot:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fork)?(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
-    "install": "",
     "prepack": "pnpm install",
     "prepare": "",
     "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
