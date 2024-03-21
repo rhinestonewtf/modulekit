@@ -11,21 +11,21 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "devDependencies": {
-    "@safe-global/safe-contracts": "^1.4.1",
-    "@openzeppelin/contracts": "5.0.1",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
-    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
+    "@openzeppelin/contracts": "5.0.1",
     "@prb/math": "^4.0.2",
-    "forge-std": "github:foundry-rs/forge-std",
+    "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
+    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "erc7579": "github:erc7579/erc7579-implementation",
+    "forge-std": "github:foundry-rs/forge-std",
+    "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solmate": "github:transmissions11/solmate",
     "solhint": "^4.1.1",
-    "prettier": "^2.8.8"
+    "solmate": "github:transmissions11/solmate"
   },
   "files": [
     "artifacts",
@@ -64,5 +64,8 @@
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
+  },
+  "dependencies": {
+    "@rhinestone/modulekit-core": "workspace:^"
   }
 }

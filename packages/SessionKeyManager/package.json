@@ -11,15 +11,15 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "devDependencies": {
-    "ds-test": "github:dapphub/ds-test",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
-    "sentinellist": "github:zeroknots/sentinellist",
+    "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
+    "prettier": "^2.8.8",
+    "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
-    "solhint": "^4.1.1",
-    "prettier": "^2.8.8"
+    "solhint": "^4.1.1"
   },
   "files": [
     "artifacts",
@@ -60,5 +60,8 @@
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
+  },
+  "dependencies": {
+    "@rhinestone/modulekit-core": "workspace:^"
   }
 }
