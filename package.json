@@ -15,7 +15,7 @@
     "accounts/**"
   ],
   "dependencies": {
-    "@rhinestone/modulekit-core": "workspace:*"
+    "@rhinestone/modulekit-core": "workspace:./packages/modulekit-core"
   },
   "devDependencies": {
     "prettier": "^2.8.8",
