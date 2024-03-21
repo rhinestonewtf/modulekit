@@ -53,7 +53,7 @@
     "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
     "install": "",
-    "prepack": "pnpm recursive install -- @rhinestone/modulekit-core",
+    "prepack": "pnpm install",
     "prepare": "",
     "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
     "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",

@@ -16,10 +16,6 @@ importers:
         version: 4.5.2(typescript@5.4.3)
 
   accounts/safe7579:
-    dependencies:
-      '@rhinestone/modulekit-core':
-        specifier: workspace:^
-        version: link:../../packages/modulekit-core
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
@@ -68,10 +64,6 @@ importers:
         version: github.com/transmissions11/solmate/c892309933b25c03d32b1b0d674df7ae292ba925
 
   packages/SessionKeyManager:
-    dependencies:
-      '@rhinestone/modulekit-core':
-        specifier: workspace:^
-        version: link:../modulekit-core
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
