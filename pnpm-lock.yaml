@@ -8,9 +8,6 @@ importers:
 
   .:
     devDependencies:
-      '@rhinestone/modulekit-core':
-        specifier: workspace:*
-        version: link:packages/modulekit-core
       '@rhinestone/safe7579':
         specifier: workspace:*
         version: link:accounts/safe7579
@@ -103,10 +100,6 @@ importers:
         version: 4.5.2(typescript@5.4.3)
 
   packages/modulekit-core:
-    dependencies:
-      '@rhinestone/modulekit-core':
-        specifier: workspace:^
-        version: 'link:'
     devDependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
