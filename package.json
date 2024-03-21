@@ -1,4 +1,5 @@
 {
+  "name": "@rhinestone/modulekit",
   "description": "ModuleKit is a development toolkit to build Smart Account Modules",
   "license": "MIT",
   "version": "0.3.7",
