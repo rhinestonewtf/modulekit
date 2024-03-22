@@ -13,7 +13,7 @@ contract TxFeeSigner is LicenseSignerBase {
     using EIP712Signer for bytes32;
     using EIP712Signer for ISignatureTransfer.PermitTransferFrom;
     using EIP712Signer for ISignatureTransfer.PermitBatchTransferFrom;
-    using LicenseHash for LicenseManagerTxFee;
+    using LicenseHash for *;
 
     struct TxConfig {
         bool enabled;
@@ -56,22 +56,20 @@ contract TxFeeSigner is LicenseSignerBase {
         onlyPermit2(sender)
         returns (bytes4 magicValue)
     {
-        (ISignatureTransfer.PermitBatchTransferFrom memory permit, LicenseManagerTxFee memory txFee)
-        = abi.decode(
-            encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, LicenseManagerTxFee)
-        );
+        (ISignatureTransfer.PermitBatchTransferFrom memory permit, TransactionClaim memory txFee) =
+            abi.decode(encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, TransactionClaim));
         bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(txFee.hash());
         bytes32 permitHash =
-            permit.hashWithWitness(address(LICENSE_MANAGER), witness, TX_FEE_WITNESS);
+            permit.hashWithWitness(address(LICENSE_MANAGER), witness, TXCLAIM_STRING);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
-        console2.log("percentage in request", bps.unwrap(txFee.txPercentage));
+        // console2.log("percentage in request", bps.unwrap(txFee.txPercentage));
         // console2.log("percentage in request", _txFee[msg.sender][txFee.module].maxTxPercentage);
 
         if (!isModulePaymentEnabled(msg.sender, txFee.module)) return 0xFFFFFFFF;
-        if (txFee.txPercentage > _txFee[msg.sender][txFee.module].maxTxPercentage) {
-            return 0xFFFFFFFF;
-        }
+        // if (txFee.txPercentage > _txFee[msg.sender][txFee.module].maxTxPercentage) {
+        //     return 0xFFFFFFFF;
+        // }
 
         if (expected1271Hash == hash) {
             return IERC1271.isValidSignature.selector;

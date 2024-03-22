@@ -12,7 +12,7 @@ import "forge-std/console2.sol";
 contract SubscriptionSigner is LicenseSignerBase {
     using EIP712Signer for bytes32;
     using EIP712Signer for ISignatureTransfer.PermitBatchTransferFrom;
-    using LicenseHash for LicenseManagerSubscription;
+    using LicenseHash for *;
 
     mapping(address smartAccount => mapping(address module => bool enabledSubscription)) internal
         _subscriptions;
@@ -53,13 +53,11 @@ contract SubscriptionSigner is LicenseSignerBase {
     {
         (
             ISignatureTransfer.PermitBatchTransferFrom memory permit,
-            LicenseManagerSubscription memory subscription
-        ) = abi.decode(
-            encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, LicenseManagerSubscription)
-        );
+            TransactionClaim memory subscription
+        ) = abi.decode(encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, TransactionClaim));
         bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(subscription.hash());
         bytes32 permitHash =
-            permit.hashWithWitness(address(LICENSE_MANAGER), witness, SUBSCRIPTION_WITNESS);
+            permit.hashWithWitness(address(LICENSE_MANAGER), witness, SUBCLAIM_STRING);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
         if (!isModulePaymentEnabled(msg.sender, subscription.module)) return 0xFFFFFFFF;

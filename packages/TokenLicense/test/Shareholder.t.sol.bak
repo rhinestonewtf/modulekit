@@ -1,0 +1,89 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "forge-std/Test.sol";
+import "forge-std/console2.sol";
+import "src/DataTypes.sol";
+import { Solarray } from "solarray/Solarray.sol";
+
+import "src/core/Shareholder.sol";
+
+contract ShareholderTest is Test {
+    Shareholder share;
+
+    address shareholder1;
+    address shareholder2;
+    address shareholder3;
+    address module;
+    address referal;
+
+    function setUp() public {
+        share = new Shareholder();
+
+        module = makeAddr("module");
+        referal = makeAddr("referal");
+
+        shareholder1 = makeAddr("shareholder1");
+        shareholder2 = makeAddr("shareholder2");
+        shareholder3 = makeAddr("shareholder3");
+
+        ShareholderData[] memory shareholders = new ShareholderData[](3);
+        shareholders[0] = ShareholderData(shareholder1, 9900);
+        shareholders[1] = ShareholderData(shareholder2, 90);
+        shareholders[2] = ShareholderData(shareholder3, 10);
+
+        share.setShareholder(module, bps.wrap(500), shareholders);
+        share.setReferal(referal, bps.wrap(5000));
+    }
+
+    function test_getTransfers() public {
+        uint256 totalAmount = 100e3;
+
+        (
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transfers
+        ) = share.getFeeTransfers(module, makeAddr("token"), totalAmount);
+        assertEq(transfers[0].to, shareholder1);
+        assertEq(transfers[1].to, shareholder2);
+        assertEq(transfers[2].to, shareholder3);
+
+        console2.log("transfers[0].requestedAmount", transfers[0].requestedAmount);
+        console2.log("transfers[0].requestedAmount", transfers[1].requestedAmount);
+        console2.log("transfers[0].requestedAmount", transfers[2].requestedAmount);
+    }
+
+    function test_getRefereal() public {
+        uint256 totalAmount = 100e18;
+
+        (
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transfers
+        ) = share.getFeeTransfers(module, makeAddr("token"), totalAmount);
+
+        assertEq(permissions.length, 3);
+        assertEq(transfers.length, 3);
+
+        assertEq(transfers[0].to, shareholder1);
+        assertEq(transfers[1].to, shareholder2);
+        assertEq(transfers[2].to, shareholder3);
+
+        (
+            ISignatureTransfer.TokenPermissions[] memory permissionsRef,
+            ISignatureTransfer.SignatureTransferDetails[] memory transfersRef
+        ) = share.getFeeTransfers(module, makeAddr("token"), totalAmount, referal);
+
+        assertEq(permissionsRef.length, 4);
+        assertEq(transfersRef.length, 4);
+
+        assertEq(transfersRef[0].to, shareholder1);
+        assertEq(transfersRef[1].to, shareholder2);
+        assertEq(transfersRef[2].to, shareholder3);
+        assertEq(transfersRef[3].to, referal);
+
+        assertEq(transfers[0].requestedAmount, transfersRef[0].requestedAmount);
+        assertEq(transfers[1].requestedAmount, transfersRef[1].requestedAmount);
+        assertEq(transfersRef[2].requestedAmount, transfersRef[3].requestedAmount);
+        assertEq(transfers[2].requestedAmount / 2, transfersRef[2].requestedAmount);
+        assertEq(transfers[2].requestedAmount / 2, transfersRef[3].requestedAmount);
+    }
+}

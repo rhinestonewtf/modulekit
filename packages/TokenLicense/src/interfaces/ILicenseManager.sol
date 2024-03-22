@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { bps } from "../DataTypes.sol";
 
 interface ILicenseManager {
     function domainSeparator() external view returns (bytes32);
@@ -35,13 +36,7 @@ interface ILicenseManager {
         address indexed smartAccount, address indexed module, uint256 amount, uint48 validUntil
     );
 
-    function claimTxFee(
-        address smartAccount,
-        address sponsor,
-        IERC20 token,
-        uint256 totalAmount
-    )
-        external;
+    function claimTxFee(address smartAccount, address sponsor, uint256 totalAmount) external;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*               Configure Module Monetization                */
@@ -54,24 +49,12 @@ interface ILicenseManager {
     event NewModuleOwner(address indexed module, address indexed newOwner);
     event NewModuleMonetization(address indexed module);
 
-    function transferOwner(address module, address newOwner) external;
-    function updateModuleMonetization(
-        address module,
-        uint128 pricePerSecond,
-        uint32 txPercentage
+    function transferModuleOwnership(address module, address newOwner) external;
+
+    function moduleRegistration(
+        address moduleRecord,
+        bps fee,
+        address moduleDevBeneficiary
     )
         external;
-
-    function updateSplitter(
-        address module,
-        bytes[] calldata signatures,
-        address[] calldata newRecipients,
-        uint256[] calldata newShares
-    )
-        external;
-
-    function withdraw(address module) external;
-
-    function killMonetization(address module) external;
-    function moduleRegistration(address moduleRecord, address moduleDevBeneficiary) external;
 }

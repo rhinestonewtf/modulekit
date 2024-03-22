@@ -2,55 +2,43 @@
 pragma solidity ^0.8.20;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 
-string constant TX_FEE_WITNESS =
+string constant TXCLAIM_STRING =
     "LicenseManagerTxFee(address module, address payer, uint256 amount, uint32 txPercentage)";
-bytes32 constant TX_FEE_WITNESS_TYPEHASH = keccak256(abi.encodePacked(TX_FEE_WITNESS));
+bytes32 constant TXCLAIM_HASH = keccak256(abi.encodePacked(TXCLAIM_STRING));
 
-string constant SUBSCRIPTION_WITNESS = "LicenseManagerSubscription(address module, uint256 amount)";
-bytes32 constant SUBSCRIPTION_WITNESS_TYPEHASH = keccak256(abi.encodePacked(SUBSCRIPTION_WITNESS));
+string constant SUBCLAIM_STRING = "LicenseManagerSubscription(address module, uint256 amount)";
+bytes32 constant SUBCLAIM_HASH = keccak256(abi.encodePacked(SUBCLAIM_STRING));
 
-struct LicenseManagerTxFee {
+struct TransactionClaim {
     address module;
-    address sponsor;
-    uint256 amount;
-    bps txPercentage;
-}
-
-struct LicenseManagerSubscription {
-    address module;
-    address sponsor;
+    address smartAccount;
+    IERC20 token;
     uint256 amount;
 }
 
-struct PackedSignature {
+struct TransactionFeeSponsor {
     address module;
-    bytes signature;
+    address smartAccount;
+    address sponsor;
+    uint256 amount;
 }
 
-struct License {
+struct SubscriptionClaim {
+    address module;
+    address smartAccount;
+    uint256 amount;
+}
+
+struct LicenseRecord {
     uint48 validUntil;
     uint48 renewalSeconds;
 }
 
-struct ModuleMoneyConf {
-    address owner; // developer of module. can be transfered
-    address splitter; // receiver of fees
-    IERC20 token;
-    uint32 txPercentage; // percentage of transaction fees
-    uint128 pricePerSecond; // subscription price
-    uint32 minSubSeconds; // minimum subscription time
-}
-
-struct ShareholderRecord {
-    address addr;
-    uint32 equity;
-}
-
-struct ModuleRecordTxFee {
-    bps txPercentage;
-    address[] shareholders;
-    bps[] equities;
+struct SubscriptionConfig {
+    uint128 pricePerSecond;
+    uint128 minSubTime; // in seconds
 }
 
 error SubscriptionTooShort();

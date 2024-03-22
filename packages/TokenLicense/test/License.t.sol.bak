@@ -44,11 +44,13 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         deal(instance.account, 100 ether);
-        licenseMgr = new LicenseManager(IPermit2(permit2), address(token));
+        licenseMgr = new LicenseManager(IPermit2(permit2));
         txSigner = new TxFeeSigner(permit2, address(licenseMgr));
         subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
-        licenseMgr.initialize(address(txSigner), address(subSigner));
-        licenseMgr.moduleRegistration(module.addr, receiver.addr);
+        licenseMgr.initSigners(
+            address(txSigner), address(txSigner), address(subSigner), address(subSigner)
+        );
+        licenseMgr.init(bps.wrap(1000));
 
         vm.startPrank(instance.account);
         token.approve(permit2, type(uint256).max);
@@ -75,18 +77,17 @@ contract LicenseTest is RhinestoneModuleKit, DeployPermit2, Test {
         equities[0] = bps.wrap(90);
         equities[1] = bps.wrap(10);
 
-        licenseMgr.setRecord(
+        licenseMgr.moduleRegistration(
             module.addr,
             bps.wrap(100), // 1 %
-            Solarray.addresses(receiver.addr, address(this)),
-            equities
+            receiver.addr
         );
     }
 
     function test_claimTxFee() public {
         vm.startPrank(module.addr);
 
-        licenseMgr.claimTxFee(instance.account, instance.account, IERC20(address(token)), 1_234_567);
+        licenseMgr.claimTxFee(instance.account, instance.account, 1_234_567);
     }
 
     function test_subscribe() public {
