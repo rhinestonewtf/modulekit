@@ -3,17 +3,17 @@ pragma solidity ^0.8.20;
 
 import "../DataTypes.sol";
 
-interface IShareholder {
-    function getPermitTransfers(TransactionClaim calldata claim)
+interface IFeeMachine {
+    function getPermitTx(TransactionClaim calldata claim)
         external
         returns (
             ISignatureTransfer.TokenPermissions[] memory permissions,
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
         );
 
-    function getPermitTransfers(
+    function getPermitTx(
         TransactionClaim calldata claim,
-        address referal
+        address referral
     )
         external
         returns (
@@ -21,16 +21,16 @@ interface IShareholder {
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
         );
 
-    function getPermitTransfers(SubscriptionClaim calldata claim)
+    function getPermitSub(SubscriptionClaim calldata claim)
         external
         returns (
             ISignatureTransfer.TokenPermissions[] memory permissions,
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
         );
 
-    function getPermitTransfers(
+    function getPermitSub(
         SubscriptionClaim calldata claim,
-        address referal
+        address referral
     )
         external
         returns (

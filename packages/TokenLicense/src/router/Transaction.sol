@@ -12,13 +12,14 @@ abstract contract Transaction is ModuleRecords {
     using LicenseHash for *;
 
     function claimTxFee(TransactionClaim memory claim) external {
-        IShareholder shareholder = $moduleShareholders[msg.sender];
+        IFeeMachine shareholder = $moduleShareholders[msg.sender];
         (
             ISignatureTransfer.TokenPermissions[] memory permissions,
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        ) = shareholder.getPermitTransfers(claim);
+        ) = shareholder.getPermitTx(claim);
         uint256 feeAmount = permissions.totalAmount();
 
+        // TODO: enforce check fee caps
         claim.amount = feeAmount;
 
         ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
@@ -38,27 +39,95 @@ abstract contract Transaction is ModuleRecords {
         });
     }
 
-    // function claimTxFee(
-    //     TransactionClaim calldata claim,
-    //     address sponsor,
-    //     address reveral
-    // )
-    //     external
-    // {
-    //     IShareholder shareholder = $moduleShareholders[msg.sender];
-    //     (
-    //         ISignatureTransfer.TokenPermissions[] memory permissions,
-    //         ISignatureTransfer.SignatureTransferDetails[] memory transfers
-    //     ) = shareholder.getPermitTransfers(claim);
-    //
-    //     uint256 feeAmount = permissions.totalAmount();
-    //     claim.amount = feeAmount;
-    //
-    //     _distributeTransactionFee({
-    //         message: message,
-    //         sponsor: sponsor,
-    //         permissions: permissions,
-    //         transfers: transfers
-    //     });
-    // }
+    function claimTxFee(TransactionClaim memory claim, address referral) external {
+        IFeeMachine shareholder = $moduleShareholders[msg.sender];
+        (
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transfers
+        ) = shareholder.getPermitTx(claim, referral);
+        uint256 feeAmount = permissions.totalAmount();
+
+        // TODO: enforce check fee caps
+        claim.amount = feeAmount;
+
+        ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
+            .PermitBatchTransferFrom({
+            permitted: permissions,
+            nonce: _iterModuleNonce({ module: msg.sender }),
+            deadline: block.timestamp
+        });
+
+        PERMIT2.permitWitnessTransferFrom({
+            permit: permit,
+            transferDetails: transfers,
+            owner: claim.smartAccount,
+            witness: _hashTypedData(claim.hash()),
+            witnessTypeString: TXCLAIM_STRING,
+            signature: abi.encodePacked(SIGNER_TX_SELF, abi.encode(permit, claim))
+        });
+    }
+
+    function claimTxFee(address sponsor, TransactionClaim memory claim) external {
+        IFeeMachine shareholder = $moduleShareholders[msg.sender];
+        (
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transfers
+        ) = shareholder.getPermitTx(claim);
+        uint256 feeAmount = permissions.totalAmount();
+
+        // TODO: enforce check fee caps
+
+        claim.amount = feeAmount;
+
+        ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
+            .PermitBatchTransferFrom({
+            permitted: permissions,
+            nonce: _iterModuleNonce({ module: msg.sender }),
+            deadline: block.timestamp
+        });
+
+        PERMIT2.permitWitnessTransferFrom({
+            permit: permit,
+            transferDetails: transfers,
+            owner: sponsor,
+            witness: _hashTypedData(claim.hash(sponsor)),
+            witnessTypeString: TXCLAIM_SPONSOR_STRING,
+            signature: abi.encodePacked(SIGNER_TX_SPONSOR, abi.encode(permit, claim))
+        });
+    }
+
+    function claimTxFee(
+        address sponsor,
+        TransactionClaim memory claim,
+        address referral
+    )
+        external
+    {
+        IFeeMachine shareholder = $moduleShareholders[msg.sender];
+        (
+            ISignatureTransfer.TokenPermissions[] memory permissions,
+            ISignatureTransfer.SignatureTransferDetails[] memory transfers
+        ) = shareholder.getPermitTx(claim, referral);
+        uint256 feeAmount = permissions.totalAmount();
+
+        // TODO: enforce check fee caps
+
+        claim.amount = feeAmount;
+
+        ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
+            .PermitBatchTransferFrom({
+            permitted: permissions,
+            nonce: _iterModuleNonce({ module: msg.sender }),
+            deadline: block.timestamp
+        });
+
+        PERMIT2.permitWitnessTransferFrom({
+            permit: permit,
+            transferDetails: transfers,
+            owner: sponsor,
+            witness: _hashTypedData(claim.hash(sponsor)),
+            witnessTypeString: TXCLAIM_SPONSOR_STRING,
+            signature: abi.encodePacked(SIGNER_TX_SPONSOR, abi.encode(permit, claim))
+        });
+    }
 }

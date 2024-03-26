@@ -4,14 +4,14 @@ pragma solidity ^0.8.20;
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import "forge-std/console2.sol";
 import "../DataTypes.sol";
-import "./IShareholder.sol";
+import "./IFeeMachine.sol";
 
 struct ShareholderData {
     address addr;
     uint64 shares;
 }
 
-contract Shareholder is IShareholder {
+contract FeeMachine is IFeeMachine {
     using Math for uint256;
     using MathLib for uint256;
 
@@ -24,7 +24,7 @@ contract Shareholder is IShareholder {
 
     mapping(address module => ShareholderRecord record) internal $moduleShares;
 
-    mapping(address referal => bps dialution) internal $referralFees;
+    mapping(address referral => bps dialution) internal $referralFees;
 
     function setShareholder(
         address module,
@@ -46,11 +46,11 @@ contract Shareholder is IShareholder {
         $moduleShares[module].shareholdersLength = uint8(length);
     }
 
-    function setReferal(address referal, bps dialution) external {
-        $referralFees[referal] = dialution;
+    function setreferral(address referral, bps dialution) external {
+        $referralFees[referral] = dialution;
     }
 
-    function getPermitTransfers(TransactionClaim calldata claim)
+    function getPermitTx(TransactionClaim calldata claim)
         public
         view
         returns (
@@ -88,9 +88,9 @@ contract Shareholder is IShareholder {
         }
     }
 
-    function getPermitTransfers(
+    function getPermitTx(
         TransactionClaim calldata claim,
-        address referal
+        address referral
     )
         public
         view
@@ -99,14 +99,14 @@ contract Shareholder is IShareholder {
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
         )
     {
-        (permissions, transfers) = getPermitTransfers(claim);
+        (permissions, transfers) = getPermitTx(claim);
 
         // dialute last shareholder
         uint256 length = permissions.length;
         uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
-        uint256 referalAmount = _amountLastShareholder.percent($referralFees[referal]);
+        uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
 
-        uint256 dialutedAmount = _amountLastShareholder - referalAmount;
+        uint256 dialutedAmount = _amountLastShareholder - referralAmount;
         transfers[length - 1].requestedAmount = dialutedAmount;
         permissions[length - 1].amount = dialutedAmount;
 
@@ -117,12 +117,12 @@ contract Shareholder is IShareholder {
         }
 
         transfers[length] = ISignatureTransfer.SignatureTransferDetails({
-            to: referal,
-            requestedAmount: referalAmount
+            to: referral,
+            requestedAmount: referralAmount
         });
         permissions[length] = ISignatureTransfer.TokenPermissions({
             token: address(claim.token),
-            amount: referalAmount
+            amount: referralAmount
         });
     }
 
@@ -144,24 +144,81 @@ contract Shareholder is IShareholder {
         return 0;
     }
 
-    function getPermitTransfers(SubscriptionClaim calldata claim)
-        external
+    function getPermitSub(SubscriptionClaim calldata claim)
+        public
+        view
         override
         returns (
             ISignatureTransfer.TokenPermissions[] memory permissions,
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
         )
-    { }
+    {
+        ShareholderRecord storage $record = $moduleShares[claim.module];
 
-    function getPermitTransfers(
+        uint256 length = $record.shareholdersLength;
+        uint256 totalShares = $record.totalShares;
+
+        uint256 totalAmount = claim.amount.percent($record.fee);
+
+        permissions = new ISignatureTransfer.TokenPermissions[](length);
+        transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
+        for (uint256 i; i < length; i++) {
+            ShareholderData memory shareholder = $record.shareholders[i];
+            uint256 _amount = _convertToAssets({
+                shares: shareholder.shares,
+                totalShares: totalShares,
+                totalAmount: totalAmount,
+                rounding: Math.Rounding.Floor
+            });
+
+            permissions[i] = ISignatureTransfer.TokenPermissions({
+                token: address(claim.token),
+                amount: _amount
+            });
+
+            transfers[i] = ISignatureTransfer.SignatureTransferDetails({
+                to: shareholder.addr,
+                requestedAmount: _amount
+            });
+        }
+    }
+
+    function getPermitSub(
         SubscriptionClaim calldata claim,
-        address referal
+        address referral
     )
         external
+        view
         override
         returns (
             ISignatureTransfer.TokenPermissions[] memory permissions,
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
         )
-    { }
+    {
+        (permissions, transfers) = getPermitSub(claim);
+
+        // dialute last shareholder
+        uint256 length = permissions.length;
+        uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
+        uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
+
+        uint256 dialutedAmount = _amountLastShareholder - referralAmount;
+        transfers[length - 1].requestedAmount = dialutedAmount;
+        permissions[length - 1].amount = dialutedAmount;
+
+        // push +1 length to permissions and transfers
+        assembly {
+            mstore(permissions, add(mload(permissions), 1))
+            mstore(transfers, add(mload(transfers), 1))
+        }
+
+        transfers[length] = ISignatureTransfer.SignatureTransferDetails({
+            to: referral,
+            requestedAmount: referralAmount
+        });
+        permissions[length] = ISignatureTransfer.TokenPermissions({
+            token: address(claim.token),
+            amount: referralAmount
+        });
+    }
 }

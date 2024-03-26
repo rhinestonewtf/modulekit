@@ -53,8 +53,10 @@ contract SubscriptionSigner is LicenseSignerBase {
     {
         (
             ISignatureTransfer.PermitBatchTransferFrom memory permit,
-            TransactionClaim memory subscription
-        ) = abi.decode(encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, TransactionClaim));
+            SubscriptionClaim memory subscription
+        ) = abi.decode(
+            encodedTxFee, (ISignatureTransfer.PermitBatchTransferFrom, SubscriptionClaim)
+        );
         bytes32 witness = LICENSE_MANAGER_DOMAIN_SEPARATOR.hashTypedData(subscription.hash());
         bytes32 permitHash =
             permit.hashWithWitness(address(LICENSE_MANAGER), witness, SUBCLAIM_STRING);

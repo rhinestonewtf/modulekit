@@ -15,13 +15,13 @@ contract ShareholderTest is Test {
     address shareholder2;
     address shareholder3;
     address module;
-    address referal;
+    address referral;
 
     function setUp() public {
         share = new Shareholder();
 
         module = makeAddr("module");
-        referal = makeAddr("referal");
+        referral = makeAddr("referral");
 
         shareholder1 = makeAddr("shareholder1");
         shareholder2 = makeAddr("shareholder2");
@@ -33,7 +33,7 @@ contract ShareholderTest is Test {
         shareholders[2] = ShareholderData(shareholder3, 10);
 
         share.setShareholder(module, bps.wrap(500), shareholders);
-        share.setReferal(referal, bps.wrap(5000));
+        share.setreferral(referral, bps.wrap(5000));
     }
 
     function test_getTransfers() public {
@@ -70,7 +70,7 @@ contract ShareholderTest is Test {
         (
             ISignatureTransfer.TokenPermissions[] memory permissionsRef,
             ISignatureTransfer.SignatureTransferDetails[] memory transfersRef
-        ) = share.getFeeTransfers(module, makeAddr("token"), totalAmount, referal);
+        ) = share.getFeeTransfers(module, makeAddr("token"), totalAmount, referral);
 
         assertEq(permissionsRef.length, 4);
         assertEq(transfersRef.length, 4);
@@ -78,7 +78,7 @@ contract ShareholderTest is Test {
         assertEq(transfersRef[0].to, shareholder1);
         assertEq(transfersRef[1].to, shareholder2);
         assertEq(transfersRef[2].to, shareholder3);
-        assertEq(transfersRef[3].to, referal);
+        assertEq(transfersRef[3].to, referral);
 
         assertEq(transfers[0].requestedAmount, transfersRef[0].requestedAmount);
         assertEq(transfers[1].requestedAmount, transfersRef[1].requestedAmount);

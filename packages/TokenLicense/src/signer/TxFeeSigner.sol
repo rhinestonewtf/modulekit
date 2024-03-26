@@ -63,13 +63,7 @@ contract TxFeeSigner is LicenseSignerBase {
             permit.hashWithWitness(address(LICENSE_MANAGER), witness, TXCLAIM_STRING);
         bytes32 expected1271Hash = PERMIT2_DOMAIN_SEPARATOR.hashTypedData(permitHash);
 
-        // console2.log("percentage in request", bps.unwrap(txFee.txPercentage));
-        // console2.log("percentage in request", _txFee[msg.sender][txFee.module].maxTxPercentage);
-
         if (!isModulePaymentEnabled(msg.sender, txFee.module)) return 0xFFFFFFFF;
-        // if (txFee.txPercentage > _txFee[msg.sender][txFee.module].maxTxPercentage) {
-        //     return 0xFFFFFFFF;
-        // }
 
         if (expected1271Hash == hash) {
             return IERC1271.isValidSignature.selector;

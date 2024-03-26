@@ -11,7 +11,8 @@ contract TransactionFeeTest is BaseTest {
             module: module.addr,
             smartAccount: instance.account,
             token: IERC20(address(token)),
-            amount: 100e18
+            amount: 100e18,
+            data: ""
         });
         licenseMgr.claimTxFee(claim);
 

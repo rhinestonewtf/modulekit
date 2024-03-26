@@ -5,7 +5,7 @@ import "../DataTypes.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 import { Ownable } from "solady/src/auth/Ownable.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
-import "../splitter/IShareholder.sol";
+import "../splitter/IFeeMachine.sol";
 
 abstract contract ModuleRecords is Ownable, EIP712 {
     IPermit2 internal immutable PERMIT2;
@@ -16,7 +16,7 @@ abstract contract ModuleRecords is Ownable, EIP712 {
     address internal SIGNER_SUB_SPONSOR;
 
     mapping(address module => uint256 nonce) internal _moduleNonces;
-    mapping(address module => IShareholder shareholder) internal $moduleShareholders;
+    mapping(address module => IFeeMachine shareholder) internal $moduleShareholders;
 
     constructor(IPermit2 permit2) EIP712() {
         PERMIT2 = permit2;
@@ -44,7 +44,7 @@ abstract contract ModuleRecords is Ownable, EIP712 {
         SIGNER_SUB_SPONSOR = signerSubSponsor;
     }
 
-    function registerShareholder(address module, IShareholder shareholder) external onlyOwner {
+    function registerShareholder(address module, IFeeMachine shareholder) external onlyOwner {
         $moduleShareholders[module] = shareholder;
     }
 

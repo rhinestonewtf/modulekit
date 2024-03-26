@@ -12,8 +12,8 @@ import {
 } from "@rhinestone/modulekit/src/external/ERC7579.sol";
 
 import "src/LicenseManager.sol";
-import "src/splitter/Shareholder.sol";
-import "src/splitter/IShareholder.sol";
+import "src/splitter/FeeMachine.sol";
+import "src/splitter/IFeeMachine.sol";
 import "src/signer/TxFeeSigner.sol";
 import "src/signer/SubscriptionSigner.sol";
 
@@ -37,12 +37,12 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
     LicenseManager licenseMgr;
     TxFeeSigner txSigner;
     SubscriptionSigner subSigner;
-    Shareholder shareholder;
+    FeeMachine shareholder;
 
     address shareholder1;
     address shareholder2;
     address shareholder3;
-    address referal;
+    address referral;
 
     function setUp() public virtual {
         vm.warp(123_123_123);
@@ -50,7 +50,7 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
         shareholder1 = makeAddr("shareholder1");
         shareholder2 = makeAddr("shareholder2");
         shareholder3 = makeAddr("shareholder3");
-        referal = makeAddr("referal");
+        referral = makeAddr("referral");
 
         ShareholderData[] memory shareholders = new ShareholderData[](3);
         shareholders[0] = ShareholderData(shareholder1, 9900);
@@ -68,13 +68,13 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
         licenseMgr = new LicenseManager(IPermit2(permit2));
         txSigner = new TxFeeSigner(permit2, address(licenseMgr));
         subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
-        shareholder = new Shareholder();
+        shareholder = new FeeMachine();
         licenseMgr.initSigners(
             address(txSigner), address(txSigner), address(subSigner), address(subSigner)
         );
 
         shareholder.setShareholder(module.addr, bps.wrap(500), shareholders);
-        shareholder.setReferal(referal, bps.wrap(5000));
+        shareholder.setreferral(referral, bps.wrap(5000));
         // licenseMgr.init(bps.wrap(1000));
 
         vm.startPrank(instance.account);
@@ -98,6 +98,6 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
 
         vm.stopPrank();
 
-        licenseMgr.registerShareholder(module.addr, IShareholder(address(shareholder)));
+        licenseMgr.registerShareholder(module.addr, IFeeMachine(address(shareholder)));
     }
 }

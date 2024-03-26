@@ -6,11 +6,15 @@ import "./Transaction.sol";
 import "../lib/ClaimLib.sol";
 import "../lib/LicenseHash.sol";
 
+import "forge-std/console2.sol";
+
 abstract contract Subscription is Transaction {
     using ClaimLib for ISignatureTransfer.TokenPermissions[];
     using LicenseHash for *;
 
     error SubscriptionAmountTooLow(uint256 amount, uint256 minAmount);
+
+    event NewSubscription(address account, address module, uint48 newValidUntil);
 
     mapping(address module => mapping(address account => LicenseRecord)) internal $activeLicenses;
     mapping(address module => SubscriptionConfig conf) internal $moduleSubPricing;
@@ -23,7 +27,7 @@ abstract contract Subscription is Transaction {
         (
             ISignatureTransfer.TokenPermissions[] memory permissions,
             ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        ) = shareholder.getPermitTransfers(claim);
+        ) = shareholder.getPermitSub(claim);
         uint256 feeAmount = permissions.totalAmount();
         claim.amount = feeAmount;
 
@@ -39,9 +43,24 @@ abstract contract Subscription is Transaction {
             transferDetails: transfers,
             owner: claim.smartAccount,
             witness: _hashTypedData(claim.hash()),
-            witnessTypeString: TXCLAIM_STRING,
-            signature: abi.encodePacked(SIGNER_TX_SELF, abi.encode(permit, claim))
+            witnessTypeString: SUBCLAIM_STRING,
+            signature: abi.encodePacked(SIGNER_SUB_SELF, abi.encode(permit, claim))
         });
+
+        emit NewSubscription(
+            claim.smartAccount, module, $activeLicenses[module][claim.smartAccount].validUntil
+        );
+    }
+
+    function setSubscriptionConfig(
+        address module,
+        uint128 pricePerSecond,
+        uint128 minSubTime
+    )
+        external
+    {
+        $moduleSubPricing[module] =
+            SubscriptionConfig({ pricePerSecond: pricePerSecond, minSubTime: minSubTime });
     }
 
     function _calculateSubscriptionFee(

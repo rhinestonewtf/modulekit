@@ -5,30 +5,44 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 
 string constant TXCLAIM_STRING =
-    "LicenseManagerTxFee(address module, address payer, uint256 amount, uint32 txPercentage)";
+    "TransactionClaim(address module, address smartAccount, address token, uint256 amount, bytes data)";
 bytes32 constant TXCLAIM_HASH = keccak256(abi.encodePacked(TXCLAIM_STRING));
 
-string constant SUBCLAIM_STRING = "LicenseManagerSubscription(address module, uint256 amount)";
+string constant TXCLAIM_SPONSOR_STRING =
+    "TransactionFeeSponsor(address sponsor, TransactionClaim(address module, address smartAccount, address token, uint256 amount, bytes data))";
+
+string constant SUBCLAIM_STRING =
+    "SubscriptionClaim(address module, address smartAccount, address token, uint256 amount, bytes data)";
 bytes32 constant SUBCLAIM_HASH = keccak256(abi.encodePacked(SUBCLAIM_STRING));
+
+string constant SUBCLAIM_SPONSOR_STRING =
+    "SubscriptionFeeSponsor(address sponsor, SubscriptionClaim(address module, address smartAccount, address token, uint256 amount, bytes data))";
+bytes32 constant SUBCLAIM_SPONSOR_HASH = keccak256(abi.encodePacked(SUBCLAIM_SPONSOR_STRING));
 
 struct TransactionClaim {
     address module;
     address smartAccount;
     IERC20 token;
     uint256 amount;
+    bytes data;
 }
 
 struct TransactionFeeSponsor {
-    address module;
-    address smartAccount;
     address sponsor;
-    uint256 amount;
+    TransactionClaim claim;
 }
 
 struct SubscriptionClaim {
     address module;
     address smartAccount;
+    IERC20 token;
     uint256 amount;
+    bytes data;
+}
+
+struct SubscriptionFeeSponsor {
+    address sponsor;
+    SubscriptionClaim claim;
 }
 
 struct LicenseRecord {
