@@ -20,7 +20,7 @@ abstract contract Subscription is Transaction {
     mapping(address module => SubscriptionConfig conf) internal $moduleSubPricing;
 
     function subscriptionRenewal(address module, SubscriptionClaim memory claim) external {
-        IShareholder shareholder = $moduleShareholders[module];
+        IFeeMachine shareholder = $moduleShareholders[module];
         $activeLicenses[module][claim.smartAccount].validUntil =
             _calculateSubscriptionFee(claim.smartAccount, module, claim.amount);
 

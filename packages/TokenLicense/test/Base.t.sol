@@ -37,25 +37,25 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
     LicenseManager licenseMgr;
     TxFeeSigner txSigner;
     SubscriptionSigner subSigner;
-    FeeMachine shareholder;
+    FeeMachine feemachine;
 
-    address shareholder1;
-    address shareholder2;
-    address shareholder3;
+    address feemachine1;
+    address feemachine2;
+    address feemachine3;
     address referral;
 
     function setUp() public virtual {
         vm.warp(123_123_123);
 
-        shareholder1 = makeAddr("shareholder1");
-        shareholder2 = makeAddr("shareholder2");
-        shareholder3 = makeAddr("shareholder3");
+        feemachine1 = makeAddr("shareholder1");
+        feemachine2 = makeAddr("shareholder2");
+        feemachine3 = makeAddr("shareholder3");
         referral = makeAddr("referral");
 
-        ShareholderData[] memory shareholders = new ShareholderData[](3);
-        shareholders[0] = ShareholderData(shareholder1, 9900);
-        shareholders[1] = ShareholderData(shareholder2, 90);
-        shareholders[2] = ShareholderData(shareholder3, 10);
+        ShareholderData[] memory feemachines = new ShareholderData[](3);
+        feemachines[0] = ShareholderData(feemachine1, 9900);
+        feemachines[1] = ShareholderData(feemachine2, 90);
+        feemachines[2] = ShareholderData(feemachine3, 10);
 
         instance = makeAccountInstance("instance");
         instance.deployAccount();
@@ -68,13 +68,13 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
         licenseMgr = new LicenseManager(IPermit2(permit2));
         txSigner = new TxFeeSigner(permit2, address(licenseMgr));
         subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
-        shareholder = new FeeMachine();
+        feemachine = new FeeMachine();
         licenseMgr.initSigners(
             address(txSigner), address(txSigner), address(subSigner), address(subSigner)
         );
 
-        shareholder.setShareholder(module.addr, bps.wrap(500), shareholders);
-        shareholder.setreferral(referral, bps.wrap(5000));
+        feemachine.setShareholder(module.addr, bps.wrap(500), feemachines);
+        feemachine.setreferral(referral, bps.wrap(5000));
         // licenseMgr.init(bps.wrap(1000));
 
         vm.startPrank(instance.account);
@@ -98,6 +98,6 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
 
         vm.stopPrank();
 
-        licenseMgr.registerShareholder(module.addr, IFeeMachine(address(shareholder)));
+        licenseMgr.newFeeMachine(module.addr, IFeeMachine(address(feemachine)));
     }
 }

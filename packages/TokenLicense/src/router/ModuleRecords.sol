@@ -4,11 +4,13 @@ pragma solidity ^0.8.20;
 import "../DataTypes.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 import { Ownable } from "solady/src/auth/Ownable.sol";
+import { OwnableRoles } from "solady/src/auth/OwnableRoles.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import "../splitter/IFeeMachine.sol";
 
-abstract contract ModuleRecords is Ownable, EIP712 {
+abstract contract ModuleRecords is OwnableRoles, EIP712 {
     IPermit2 internal immutable PERMIT2;
+    uint256 constant ROLE_RESOLVER = _ROLE_1;
 
     address internal SIGNER_TX_SELF;
     address internal SIGNER_TX_SPONSOR;
@@ -44,7 +46,13 @@ abstract contract ModuleRecords is Ownable, EIP712 {
         SIGNER_SUB_SPONSOR = signerSubSponsor;
     }
 
-    function registerShareholder(address module, IFeeMachine shareholder) external onlyOwner {
+    function newFeeMachine(
+        address module,
+        IFeeMachine shareholder
+    )
+        external
+        onlyRolesOrOwner(ROLE_RESOLVER)
+    {
         $moduleShareholders[module] = shareholder;
     }
 
