@@ -6,6 +6,8 @@ import "erc7579/lib/ModeLib.sol";
 import "erc7579/lib/ExecutionLib.sol";
 import { TestBaseUtil, MockTarget, MockFallback } from "./Base.t.sol";
 
+import "forge-std/console2.sol";
+
 contract MSATest is TestBaseUtil {
     function setUp() public override {
         super.setUp();
@@ -116,5 +118,11 @@ contract MSATest is TestBaseUtil {
         assertEq(ret, 1337);
         assertEq(erc2771Sender, address(this));
         assertEq(msgSender, address(safe));
+    }
+
+    function test_accountId() public {
+        string memory id = IERC7579Account(address(safe)).accountId();
+
+        assertEq(id, "safe1.4.1.erc7579.v0.0.1");
     }
 }

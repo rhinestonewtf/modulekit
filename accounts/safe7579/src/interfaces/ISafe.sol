@@ -59,6 +59,8 @@ interface ISafe {
      */
     function domainSeparator() external view returns (bytes32);
 
+    function VERSION() external pure returns (string memory);
+
     function getStorageAt(uint256 offset, uint256 length) external view returns (bytes memory);
 
     /**
