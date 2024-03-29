@@ -81,12 +81,28 @@ function formatGasValue(
     returns (string memory formattedValue)
 {
     if (prevValue == 0) {
-        formattedValue = string.concat(toString(newValue), " gas");
+        formattedValue = string.concat(formatGas(newValue), " gas");
     } else {
         formattedValue = string.concat(
-            toString(newValue), " gas (diff: ", toString(int256(newValue) - int256(prevValue)), ")"
+            formatGas(newValue), " gas (diff: ", formatGas(int256(newValue) - int256(prevValue)), ")"
         );
     }
+}
+
+function formatGas(uint256 value) internal pure returns (string memory) {
+    string memory str = toString(value);
+    bytes memory bStr = bytes(str);
+    bytes memory result = new bytes(bStr.length + (bStr.length - 1) / 3);
+
+    uint256 j = 0;
+    for (uint256 i = 0; i < bStr.length; i++) {
+        if (i > 0 && i % 3 == 0) {
+            result[j++] = '_';
+        }
+        result[j++] = bStr[bStr.length - i - 1];
+    }
+
+    return string(result);
 }
 
 interface GasDebug {
