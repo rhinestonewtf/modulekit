@@ -133,7 +133,13 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         if (!_isValidatorInstalled(validator)) return _validateSignatures(userOp);
 
         // bubble up the return value of the validator module
-        validSignature = IValidator(validator).validateUserOp(userOp, userOpHash);
+        bytes memory retData = _executeReturnData({
+            safe: msg.sender,
+            target: validator,
+            value: 0,
+            callData: abi.encodeCall(IValidator.validateUserOp, (userOp, userOpHash))
+        });
+        validSignature = abi.decode(retData, (uint256));
 
         // pay prefund
         if (missingAccountFunds != 0) {
