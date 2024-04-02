@@ -53,10 +53,7 @@ contract FeeMachine is IFeeMachine {
     function getPermitTx(TransactionClaim calldata claim)
         public
         view
-        returns (
-            ISignatureTransfer.TokenPermissions[] memory permissions,
-            ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        )
+        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
     {
         ShareholderRecord storage $record = $moduleShares[claim.module];
 
@@ -65,7 +62,6 @@ contract FeeMachine is IFeeMachine {
 
         uint256 totalAmount = claim.amount.percent($record.fee);
 
-        permissions = new ISignatureTransfer.TokenPermissions[](length);
         transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
         for (uint256 i; i < length; i++) {
             ShareholderData memory shareholder = $record.shareholders[i];
@@ -74,11 +70,6 @@ contract FeeMachine is IFeeMachine {
                 totalShares: totalShares,
                 totalAmount: totalAmount,
                 rounding: Math.Rounding.Floor
-            });
-
-            permissions[i] = ISignatureTransfer.TokenPermissions({
-                token: address(claim.token),
-                amount: _amount
             });
 
             transfers[i] = ISignatureTransfer.SignatureTransferDetails({
@@ -94,35 +85,26 @@ contract FeeMachine is IFeeMachine {
     )
         public
         view
-        returns (
-            ISignatureTransfer.TokenPermissions[] memory permissions,
-            ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        )
+        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
     {
-        (permissions, transfers) = getPermitTx(claim);
+        transfers = getPermitTx(claim);
 
         // dialute last shareholder
-        uint256 length = permissions.length;
+        uint256 length = transfers.length;
         uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
         uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
 
         uint256 dialutedAmount = _amountLastShareholder - referralAmount;
         transfers[length - 1].requestedAmount = dialutedAmount;
-        permissions[length - 1].amount = dialutedAmount;
 
         // push +1 length to permissions and transfers
         assembly {
-            mstore(permissions, add(mload(permissions), 1))
             mstore(transfers, add(mload(transfers), 1))
         }
 
         transfers[length] = ISignatureTransfer.SignatureTransferDetails({
             to: referral,
             requestedAmount: referralAmount
-        });
-        permissions[length] = ISignatureTransfer.TokenPermissions({
-            token: address(claim.token),
-            amount: referralAmount
         });
     }
 
@@ -148,10 +130,7 @@ contract FeeMachine is IFeeMachine {
         public
         view
         override
-        returns (
-            ISignatureTransfer.TokenPermissions[] memory permissions,
-            ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        )
+        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
     {
         ShareholderRecord storage $record = $moduleShares[claim.module];
 
@@ -160,7 +139,6 @@ contract FeeMachine is IFeeMachine {
 
         uint256 totalAmount = claim.amount.percent($record.fee);
 
-        permissions = new ISignatureTransfer.TokenPermissions[](length);
         transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
         for (uint256 i; i < length; i++) {
             ShareholderData memory shareholder = $record.shareholders[i];
@@ -169,11 +147,6 @@ contract FeeMachine is IFeeMachine {
                 totalShares: totalShares,
                 totalAmount: totalAmount,
                 rounding: Math.Rounding.Floor
-            });
-
-            permissions[i] = ISignatureTransfer.TokenPermissions({
-                token: address(claim.token),
-                amount: _amount
             });
 
             transfers[i] = ISignatureTransfer.SignatureTransferDetails({
@@ -190,35 +163,26 @@ contract FeeMachine is IFeeMachine {
         external
         view
         override
-        returns (
-            ISignatureTransfer.TokenPermissions[] memory permissions,
-            ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        )
+        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
     {
-        (permissions, transfers) = getPermitSub(claim);
+        transfers = getPermitSub(claim);
 
         // dialute last shareholder
-        uint256 length = permissions.length;
+        uint256 length = transfers.length;
         uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
         uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
 
         uint256 dialutedAmount = _amountLastShareholder - referralAmount;
         transfers[length - 1].requestedAmount = dialutedAmount;
-        permissions[length - 1].amount = dialutedAmount;
 
         // push +1 length to permissions and transfers
         assembly {
-            mstore(permissions, add(mload(permissions), 1))
             mstore(transfers, add(mload(transfers), 1))
         }
 
         transfers[length] = ISignatureTransfer.SignatureTransferDetails({
             to: referral,
             requestedAmount: referralAmount
-        });
-        permissions[length] = ISignatureTransfer.TokenPermissions({
-            token: address(claim.token),
-            amount: referralAmount
         });
     }
 }

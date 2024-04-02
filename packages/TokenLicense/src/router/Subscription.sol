@@ -9,6 +9,7 @@ import "../lib/LicenseHash.sol";
 import "forge-std/console2.sol";
 
 abstract contract Subscription is Transaction {
+    using TokenPermissionsLib for ISignatureTransfer.SignatureTransferDetails[];
     using ClaimLib for ISignatureTransfer.TokenPermissions[];
     using LicenseHash for *;
 
@@ -24,28 +25,10 @@ abstract contract Subscription is Transaction {
         $activeLicenses[module][claim.smartAccount].validUntil =
             _calculateSubscriptionFee(claim.smartAccount, module, claim.amount);
 
-        (
-            ISignatureTransfer.TokenPermissions[] memory permissions,
-            ISignatureTransfer.SignatureTransferDetails[] memory transfers
-        ) = shareholder.getPermitSub(claim);
-        uint256 feeAmount = permissions.totalAmount();
-        claim.amount = feeAmount;
+        ISignatureTransfer.SignatureTransferDetails[] memory transfers =
+            shareholder.getPermitSub(claim);
 
-        ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
-            .PermitBatchTransferFrom({
-            permitted: permissions,
-            nonce: _iterModuleNonce({ module: msg.sender }),
-            deadline: block.timestamp
-        });
-
-        PERMIT2.permitWitnessTransferFrom({
-            permit: permit,
-            transferDetails: transfers,
-            owner: claim.smartAccount,
-            witness: _hashTypedData(claim.hash()),
-            witnessTypeString: SUBCLAIM_STRING,
-            signature: abi.encodePacked(SIGNER_SUB_SELF, abi.encode(permit, claim))
-        });
+        uint256 totalAmount = _handleClaim(claim.smartAccount, claim, transfers);
 
         emit NewSubscription(
             claim.smartAccount, module, $activeLicenses[module][claim.smartAccount].validUntil
@@ -93,5 +76,61 @@ abstract contract Subscription is Transaction {
 
     function checkLicenseUntil(address account, address module) public view returns (uint48) {
         return $activeLicenses[module][account].validUntil;
+    }
+
+    function _handleClaim(
+        address payer,
+        SubscriptionClaim memory claim,
+        ISignatureTransfer.SignatureTransferDetails[] memory transfers
+    )
+        internal
+        returns (uint256 totalAmount)
+    {
+        ISignatureTransfer.TokenPermissions[] memory permissions;
+        // no swap required. just transfer the token from the smart account to the beneficiaries
+        if (address(claim.token) == FEE_TOKEN) {
+            (permissions, totalAmount) = transfers.makeTokenPermissions(FEE_TOKEN);
+
+            claim.amount = totalAmount;
+
+            ISignatureTransfer.PermitBatchTransferFrom memory permit = ISignatureTransfer
+                .PermitBatchTransferFrom({
+                permitted: permissions,
+                nonce: _iterModuleNonce({ module: msg.sender }),
+                deadline: block.timestamp
+            });
+
+            PERMIT2.permitWitnessTransferFrom({
+                permit: permit,
+                transferDetails: transfers,
+                owner: payer,
+                witness: _hashTypedData(claim.hash()),
+                witnessTypeString: TXCLAIM_STRING,
+                signature: abi.encodePacked(SIGNER_TX_SELF, abi.encode(permit, claim))
+            });
+        }
+        // swap required
+        else {
+            exactOutputSingle(
+                SwapParams({
+                    tokenIn: address(claim.token),
+                    tokenOut: address(FEE_TOKEN),
+                    fee: 3000,
+                    amountOut: claim.amount, // TODO this means the claim must have the USD amount
+                    sqrtPriceLimitX96: 0,
+                    payer: payer,
+                    recipient: address(this)
+                })
+            );
+            // execution flow will call uniswapV3Callback(). which will send the token from the
+            // smart account to the LP
+            // LP will send the fee token to address(this)
+            uint256 length = transfers.length;
+            // Send token to beneficiaries
+
+            for (uint256 i; i < length; i++) {
+                IERC20(FEE_TOKEN).transfer(transfers[i].to, transfers[i].requestedAmount);
+            }
+        }
     }
 }

@@ -7,8 +7,9 @@ import { Ownable } from "solady/src/auth/Ownable.sol";
 import { OwnableRoles } from "solady/src/auth/OwnableRoles.sol";
 import { EIP712 } from "solady/src/utils/EIP712.sol";
 import "../splitter/IFeeMachine.sol";
+import "./SwapperUniV3.sol";
 
-abstract contract ModuleRecords is OwnableRoles, EIP712 {
+abstract contract ModuleRecords is OwnableRoles, EIP712, Swapper {
     IPermit2 internal immutable PERMIT2;
     uint256 constant ROLE_RESOLVER = _ROLE_1;
 

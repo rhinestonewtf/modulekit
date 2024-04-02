@@ -20,8 +20,9 @@ import "src/signer/SubscriptionSigner.sol";
 import { DeployPermit2 } from "permit2/test/utils/DeployPermit2.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import "forge-std/Test.sol";
+import "./Fork.t.sol";
 
-contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
+contract BaseTest is RhinestoneModuleKit, DeployPermit2, ForkTest {
     using ModuleKitHelpers for *;
     using ModuleKitSCM for *;
     using ModuleKitUserOp for *;
@@ -44,8 +45,8 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
     address feemachine3;
     address referral;
 
-    function setUp() public virtual {
-        vm.warp(123_123_123);
+    function setUp() public virtual override {
+        super.setUp();
 
         feemachine1 = makeAddr("shareholder1");
         feemachine2 = makeAddr("shareholder2");
@@ -61,11 +62,12 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
         instance.deployAccount();
         vm.deal(instance.account, 100 ether);
         permit2 = deployPermit2();
-        token = new MockERC20();
-        token.initialize("Mock Token", "MTK", 18);
-        deal(address(token), instance.account, 100 ether);
+        deal(address(usdc), instance.account, 100_000 ether);
+        deal(address(weth), instance.account, 100_000 ether);
+        vm.label(address(usdc), "USDC");
+        vm.label(address(weth), "WETH");
         deal(instance.account, 100 ether);
-        licenseMgr = new LicenseManager(IPermit2(permit2));
+        licenseMgr = new LicenseManager(IPermit2(permit2), poolFactory, usdc);
         txSigner = new TxFeeSigner(permit2, address(licenseMgr));
         subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
         feemachine = new FeeMachine();
@@ -78,7 +80,8 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, Test {
         // licenseMgr.init(bps.wrap(1000));
 
         vm.startPrank(instance.account);
-        token.approve(permit2, type(uint256).max);
+        IERC20(usdc).approve(permit2, type(uint256).max);
+        weth.approve(permit2, type(uint256).max);
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,

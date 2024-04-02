@@ -18,4 +18,20 @@ contract TransactionFeeTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    function test_swap() public {
+        vm.startPrank(module.addr);
+        console2.log("approve");
+
+        TransactionClaim memory claim = TransactionClaim({
+            module: module.addr,
+            smartAccount: instance.account,
+            token: IERC20(address(weth)),
+            amount: 100e18,
+            data: ""
+        });
+        licenseMgr.claimTxFee(claim);
+
+        vm.stopPrank();
+    }
 }
