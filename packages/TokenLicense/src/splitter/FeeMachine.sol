@@ -50,7 +50,10 @@ contract FeeMachine is IFeeMachine {
         $referralFees[referral] = dialution;
     }
 
-    function getPermitTx(TransactionClaim calldata claim)
+    function getSplit(
+        Claim calldata claim,
+        address referral
+    )
         public
         view
         returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
@@ -60,7 +63,7 @@ contract FeeMachine is IFeeMachine {
         uint256 length = $record.shareholdersLength;
         uint256 totalShares = $record.totalShares;
 
-        uint256 totalAmount = claim.amount.percent($record.fee);
+        uint256 totalAmount = claim.usdAmount.percent($record.fee);
 
         transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
         for (uint256 i; i < length; i++) {
@@ -79,35 +82,64 @@ contract FeeMachine is IFeeMachine {
         }
     }
 
-    function getPermitTx(
-        TransactionClaim calldata claim,
-        address referral
-    )
-        public
-        view
-        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
-    {
-        transfers = getPermitTx(claim);
-
-        // dialute last shareholder
-        uint256 length = transfers.length;
-        uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
-        uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
-
-        uint256 dialutedAmount = _amountLastShareholder - referralAmount;
-        transfers[length - 1].requestedAmount = dialutedAmount;
-
-        // push +1 length to permissions and transfers
-        assembly {
-            mstore(transfers, add(mload(transfers), 1))
-        }
-
-        transfers[length] = ISignatureTransfer.SignatureTransferDetails({
-            to: referral,
-            requestedAmount: referralAmount
-        });
-    }
-
+    // function getPermitTx(TransactionClaim calldata claim)
+    //     public
+    //     view
+    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
+    // {
+    //     ShareholderRecord storage $record = $moduleShares[claim.module];
+    //
+    //     uint256 length = $record.shareholdersLength;
+    //     uint256 totalShares = $record.totalShares;
+    //
+    //     uint256 totalAmount = claim.amount.percent($record.fee);
+    //
+    //     transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
+    //     for (uint256 i; i < length; i++) {
+    //         ShareholderData memory shareholder = $record.shareholders[i];
+    //         uint256 _amount = _convertToAssets({
+    //             shares: shareholder.shares,
+    //             totalShares: totalShares,
+    //             totalAmount: totalAmount,
+    //             rounding: Math.Rounding.Floor
+    //         });
+    //
+    //         transfers[i] = ISignatureTransfer.SignatureTransferDetails({
+    //             to: shareholder.addr,
+    //             requestedAmount: _amount
+    //         });
+    //     }
+    // }
+    //
+    // function getPermitTx(
+    //     TransactionClaim calldata claim,
+    //     address referral
+    // )
+    //     public
+    //     view
+    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
+    // {
+    //     transfers = getPermitTx(claim);
+    //
+    //     // dialute last shareholder
+    //     uint256 length = transfers.length;
+    //     uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
+    //     uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
+    //
+    //     uint256 dialutedAmount = _amountLastShareholder - referralAmount;
+    //     transfers[length - 1].requestedAmount = dialutedAmount;
+    //
+    //     // push +1 length to permissions and transfers
+    //     assembly {
+    //         mstore(transfers, add(mload(transfers), 1))
+    //     }
+    //
+    //     transfers[length] = ISignatureTransfer.SignatureTransferDetails({
+    //         to: referral,
+    //         requestedAmount: referralAmount
+    //     });
+    // }
+    //
     function _convertToAssets(
         uint64 shares,
         uint256 totalShares,
@@ -126,63 +158,63 @@ contract FeeMachine is IFeeMachine {
         return 0;
     }
 
-    function getPermitSub(SubscriptionClaim calldata claim)
-        public
-        view
-        override
-        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
-    {
-        ShareholderRecord storage $record = $moduleShares[claim.module];
+    // function getPermitSub(SubscriptionClaim calldata claim)
+    //     public
+    //     view
+    //     override
+    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
+    // {
+    //     ShareholderRecord storage $record = $moduleShares[claim.module];
+    //
+    //     uint256 length = $record.shareholdersLength;
+    //     uint256 totalShares = $record.totalShares;
+    //
+    //     uint256 totalAmount = claim.amount.percent($record.fee);
+    //
+    //     transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
+    //     for (uint256 i; i < length; i++) {
+    //         ShareholderData memory shareholder = $record.shareholders[i];
+    //         uint256 _amount = _convertToAssets({
+    //             shares: shareholder.shares,
+    //             totalShares: totalShares,
+    //             totalAmount: totalAmount,
+    //             rounding: Math.Rounding.Floor
+    //         });
+    //
+    //         transfers[i] = ISignatureTransfer.SignatureTransferDetails({
+    //             to: shareholder.addr,
+    //             requestedAmount: _amount
+    //         });
+    //     }
+    // }
 
-        uint256 length = $record.shareholdersLength;
-        uint256 totalShares = $record.totalShares;
-
-        uint256 totalAmount = claim.amount.percent($record.fee);
-
-        transfers = new ISignatureTransfer.SignatureTransferDetails[](length);
-        for (uint256 i; i < length; i++) {
-            ShareholderData memory shareholder = $record.shareholders[i];
-            uint256 _amount = _convertToAssets({
-                shares: shareholder.shares,
-                totalShares: totalShares,
-                totalAmount: totalAmount,
-                rounding: Math.Rounding.Floor
-            });
-
-            transfers[i] = ISignatureTransfer.SignatureTransferDetails({
-                to: shareholder.addr,
-                requestedAmount: _amount
-            });
-        }
-    }
-
-    function getPermitSub(
-        SubscriptionClaim calldata claim,
-        address referral
-    )
-        external
-        view
-        override
-        returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
-    {
-        transfers = getPermitSub(claim);
-
-        // dialute last shareholder
-        uint256 length = transfers.length;
-        uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
-        uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
-
-        uint256 dialutedAmount = _amountLastShareholder - referralAmount;
-        transfers[length - 1].requestedAmount = dialutedAmount;
-
-        // push +1 length to permissions and transfers
-        assembly {
-            mstore(transfers, add(mload(transfers), 1))
-        }
-
-        transfers[length] = ISignatureTransfer.SignatureTransferDetails({
-            to: referral,
-            requestedAmount: referralAmount
-        });
-    }
+    // function getPermitSub(
+    //     SubscriptionClaim calldata claim,
+    //     address referral
+    // )
+    //     external
+    //     view
+    //     override
+    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers)
+    // {
+    //     transfers = getPermitSub(claim);
+    //
+    //     // dialute last shareholder
+    //     uint256 length = transfers.length;
+    //     uint256 _amountLastShareholder = transfers[length - 1].requestedAmount;
+    //     uint256 referralAmount = _amountLastShareholder.percent($referralFees[referral]);
+    //
+    //     uint256 dialutedAmount = _amountLastShareholder - referralAmount;
+    //     transfers[length - 1].requestedAmount = dialutedAmount;
+    //
+    //     // push +1 length to permissions and transfers
+    //     assembly {
+    //         mstore(transfers, add(mload(transfers), 1))
+    //     }
+    //
+    //     transfers[length] = ISignatureTransfer.SignatureTransferDetails({
+    //         to: referral,
+    //         requestedAmount: referralAmount
+    //     });
+    // }
 }

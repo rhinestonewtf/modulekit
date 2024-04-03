@@ -4,45 +4,23 @@ pragma solidity ^0.8.20;
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IPermit2, ISignatureTransfer } from "permit2/src/interfaces/IPermit2.sol";
 
-string constant TXCLAIM_STRING =
-    "TransactionClaim(address module, address smartAccount, address token, uint256 amount, bytes data)";
-bytes32 constant TXCLAIM_HASH = keccak256(abi.encodePacked(TXCLAIM_STRING));
+string constant CLAIM_STRING =
+    "Claim(ClaimType claimType, address module, address smartAccount, address payToken, uint256 usdAmount, bytes data)";
+bytes32 constant CLAIM_HASH = keccak256(abi.encodePacked(CLAIM_STRING));
 
-string constant TXCLAIM_SPONSOR_STRING =
-    "TransactionFeeSponsor(address sponsor, TransactionClaim(address module, address smartAccount, address token, uint256 amount, bytes data))";
+enum ClaimType {
+    Transaction,
+    Subscription,
+    SingleCharge
+}
 
-string constant SUBCLAIM_STRING =
-    "SubscriptionClaim(address module, address smartAccount, address token, uint256 amount, bytes data)";
-bytes32 constant SUBCLAIM_HASH = keccak256(abi.encodePacked(SUBCLAIM_STRING));
-
-string constant SUBCLAIM_SPONSOR_STRING =
-    "SubscriptionFeeSponsor(address sponsor, SubscriptionClaim(address module, address smartAccount, address token, uint256 amount, bytes data))";
-bytes32 constant SUBCLAIM_SPONSOR_HASH = keccak256(abi.encodePacked(SUBCLAIM_SPONSOR_STRING));
-
-struct TransactionClaim {
+struct Claim {
+    ClaimType claimType;
     address module;
     address smartAccount;
-    IERC20 token;
-    uint256 amount;
+    IERC20 payToken;
+    uint256 usdAmount;
     bytes data;
-}
-
-struct TransactionFeeSponsor {
-    address sponsor;
-    TransactionClaim claim;
-}
-
-struct SubscriptionClaim {
-    address module;
-    address smartAccount;
-    IERC20 token;
-    uint256 amount;
-    bytes data;
-}
-
-struct SubscriptionFeeSponsor {
-    address sponsor;
-    SubscriptionClaim claim;
 }
 
 struct LicenseRecord {

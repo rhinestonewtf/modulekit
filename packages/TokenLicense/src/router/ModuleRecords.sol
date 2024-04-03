@@ -13,10 +13,7 @@ abstract contract ModuleRecords is OwnableRoles, EIP712, Swapper {
     IPermit2 internal immutable PERMIT2;
     uint256 constant ROLE_RESOLVER = _ROLE_1;
 
-    address internal SIGNER_TX_SELF;
-    address internal SIGNER_TX_SPONSOR;
-    address internal SIGNER_SUB_SELF;
-    address internal SIGNER_SUB_SPONSOR;
+    address internal SIGNER;
 
     mapping(address module => uint256 nonce) internal _moduleNonces;
     mapping(address module => IFeeMachine shareholder) internal $moduleShareholders;
@@ -32,19 +29,8 @@ abstract contract ModuleRecords is OwnableRoles, EIP712, Swapper {
         nonce = uint256(bytes32(keccak256(abi.encodePacked(module, nonce))));
     }
 
-    function initSigners(
-        address signerTxSelf,
-        address signerTxSponsor,
-        address signerSubSelf,
-        address signerSubSponsor
-    )
-        external
-        onlyOwner
-    {
-        SIGNER_TX_SELF = signerTxSelf;
-        SIGNER_TX_SPONSOR = signerTxSponsor;
-        SIGNER_SUB_SELF = signerSubSelf;
-        SIGNER_SUB_SPONSOR = signerSubSponsor;
+    function initSigners(address signerModule) external onlyOwner {
+        SIGNER = signerModule;
     }
 
     function newFeeMachine(

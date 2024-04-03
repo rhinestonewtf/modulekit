@@ -1,4 +1,4 @@
-pragma solidity >=0.5.0;
+pragma solidity >=0.8.0;
 
 /// @title Provides functions for deriving a pool address from the factory, tokens, and the fee
 library PoolAddress {
@@ -44,13 +44,15 @@ library PoolAddress {
     {
         require(key.token0 < key.token1);
         pool = address(
-            bytes20(
-                keccak256(
-                    abi.encodePacked(
-                        hex"ff",
-                        factory,
-                        keccak256(abi.encode(key.token0, key.token1, key.fee)),
-                        POOL_INIT_CODE_HASH
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            hex"ff",
+                            factory,
+                            keccak256(abi.encode(key.token0, key.token1, key.fee)),
+                            POOL_INIT_CODE_HASH
+                        )
                     )
                 )
             )

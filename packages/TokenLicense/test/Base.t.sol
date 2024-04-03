@@ -14,8 +14,7 @@ import {
 import "src/LicenseManager.sol";
 import "src/splitter/FeeMachine.sol";
 import "src/splitter/IFeeMachine.sol";
-import "src/signer/TxFeeSigner.sol";
-import "src/signer/SubscriptionSigner.sol";
+import "src/signer/MultiSigner.sol";
 
 import { DeployPermit2 } from "permit2/test/utils/DeployPermit2.sol";
 import { Solarray } from "solarray/Solarray.sol";
@@ -36,8 +35,7 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, ForkTest {
     address permit2;
 
     LicenseManager licenseMgr;
-    TxFeeSigner txSigner;
-    SubscriptionSigner subSigner;
+    MultiSigner signer;
     FeeMachine feemachine;
 
     address feemachine1;
@@ -63,17 +61,14 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, ForkTest {
         vm.deal(instance.account, 100 ether);
         permit2 = deployPermit2();
         deal(address(usdc), instance.account, 100_000 ether);
-        deal(address(weth), instance.account, 100_000 ether);
+        deal(address(weth), instance.account, 100_000_000 ether);
         vm.label(address(usdc), "USDC");
         vm.label(address(weth), "WETH");
         deal(instance.account, 100 ether);
         licenseMgr = new LicenseManager(IPermit2(permit2), poolFactory, usdc);
-        txSigner = new TxFeeSigner(permit2, address(licenseMgr));
-        subSigner = new SubscriptionSigner(permit2, address(licenseMgr));
+        signer = new MultiSigner(permit2, address(licenseMgr));
         feemachine = new FeeMachine();
-        licenseMgr.initSigners(
-            address(txSigner), address(txSigner), address(subSigner), address(subSigner)
-        );
+        licenseMgr.initSigners(address(signer));
 
         feemachine.setShareholder(module.addr, bps.wrap(500), feemachines);
         feemachine.setreferral(referral, bps.wrap(5000));
@@ -85,19 +80,22 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, ForkTest {
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: address(txSigner),
+            module: address(signer),
             data: ""
         });
 
-        instance.installModule({
-            moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: address(subSigner),
-            data: ""
-        });
-        TxFeeSigner.TxConfig memory config =
-            TxFeeSigner.TxConfig({ enabled: true, maxTxPercentage: bps.wrap(500) });
-        txSigner.configure(module.addr, config);
-        subSigner.configure(module.addr, true);
+        ClaimType[] memory claimTypes = new ClaimType[](1);
+        claimTypes[0] = ClaimType.Transaction;
+
+        MultiSigner.FeePermissions[] memory permissions = new MultiSigner.FeePermissions[](1);
+        permissions[0] = MultiSigner.FeePermissions({ enabled: true, usdAmountMax: 1000 ether });
+
+        signer.configureSelfPay(module.addr, claimTypes, permissions);
+
+        // TxFeeSigner.TxConfig memory config =
+        //     TxFeeSigner.TxConfig({ enabled: true, maxTxPercentage: bps.wrap(500) });
+        // txSigner.configure(module.addr, config);
+        // subSigner.configure(module.addr, true);
 
         vm.stopPrank();
 
