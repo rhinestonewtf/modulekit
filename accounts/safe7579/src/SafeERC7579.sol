@@ -146,6 +146,7 @@ contract SafeERC7579 is
         external
         payable
         override
+        onlyEntryPointOrSelf
         returns (uint256 validSignature)
     {
         address validator;
@@ -158,7 +159,7 @@ contract SafeERC7579 is
 
         // check if validator is enabled. If not, use Safe's checkSignatures()
         if (validator == address(0) || !_isValidatorInstalled(validator)) {
-            return _validateSignatures(userOp);
+            validSignature = _validateSignatures(userOp);
         } else {
             // bubble up the return value of the validator module
             bytes memory retData = _executeReturnData(
