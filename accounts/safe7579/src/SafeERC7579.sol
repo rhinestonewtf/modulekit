@@ -174,7 +174,7 @@ contract SafeERC7579 is
         // pay prefund
         if (missingAccountFunds != 0) {
             _execute({
-                safe: userOp.getSender(),
+                safe: msg.sender,
                 target: entryPoint(),
                 value: missingAccountFunds,
                 callData: ""
@@ -197,7 +197,7 @@ contract SafeERC7579 is
             uint48 validUntil,
             bytes calldata signatures
         ) = _getSafeOp(userOp);
-        try ISafe(payable(userOp.getSender())).checkSignatures(
+        try ISafe(payable(msg.sender)).checkSignatures(
             keccak256(operationData), operationData, signatures
         ) {
             // The timestamps are validated by the entry point,
@@ -397,7 +397,7 @@ contract SafeERC7579 is
             // result of `abi.encode`-ing the individual fields.
             EncodedSafeOpStruct memory encodedSafeOp = EncodedSafeOpStruct({
                 typeHash: SAFE_OP_TYPEHASH,
-                safe: userOp.sender,
+                safe: msg.sender,
                 nonce: userOp.nonce,
                 initCodeHash: keccak256(userOp.initCode),
                 callDataHash: keccak256(userOp.callData),
