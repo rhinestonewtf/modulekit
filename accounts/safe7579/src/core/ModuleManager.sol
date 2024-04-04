@@ -206,8 +206,14 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         return $fallback.handler != address(0);
     }
 
-    function _uninstallFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        (bytes4 functionSig) = abi.decode(initData, (bytes4));
+    function _uninstallFallbackHandler(
+        address handler,
+        bytes calldata deInitData
+    )
+        internal
+        virtual
+    {
+        bytes4 functionSig = bytes4(deInitData[0:4]);
 
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         $mms._fallbacks[functionSig].handler = address(0);
@@ -216,7 +222,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
             safe: msg.sender,
             target: handler,
             value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (initData))
+            callData: abi.encodeWithSelector(IModule.onUninstall.selector, (deInitData[4:]))
         });
     }
 

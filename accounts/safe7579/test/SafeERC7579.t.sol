@@ -164,7 +164,7 @@ contract Safe7579Test is TestBaseUtil {
 
         vm.prank(address(safe));
         IERC7579Account(address(safe)).uninstallModule(
-            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_SINGLE, "")
+            3, address(_fallback), abi.encodePacked(MockFallback.target.selector, "")
         );
         vm.prank(address(safe));
         IERC7579Account(address(safe)).installModule(
