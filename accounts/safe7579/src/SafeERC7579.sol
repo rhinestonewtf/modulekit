@@ -131,14 +131,8 @@ contract SafeERC7579 is
     /**
      * @inheritdoc IERC7579Account
      */
-    function executeUserOp(PackedUserOperation calldata userOp)
-        external
-        payable
-        override
-        onlyEntryPointOrSelf
-    {
-        (bool success,) = address(this).delegatecall(userOp.callData[4:]);
-        if (!success) revert ExecutionFailed();
+    function executeUserOp(PackedUserOperation calldata userOp) external payable override {
+        revert Unsupported();
     }
 
     /**
@@ -266,6 +260,7 @@ contract SafeERC7579 is
         external
         payable
         override
+        withHook
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
@@ -287,6 +282,7 @@ contract SafeERC7579 is
         external
         payable
         override
+        withHook
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
