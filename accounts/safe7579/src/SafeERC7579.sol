@@ -199,8 +199,8 @@ contract SafeERC7579 is
         try ISafe(payable(userOp.getSender())).checkSignatures(
             keccak256(operationData), operationData, signatures
         ) {
-            // The timestamps are validated by the entry point, therefore we will not check them
-            // again
+            // The timestamps are validated by the entry point,
+            // therefore we will not check them again
             validationData = _packValidationData(false, validUntil, validAfter);
         } catch {
             validationData = _packValidationData(true, validUntil, validAfter);

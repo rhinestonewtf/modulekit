@@ -37,6 +37,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     error InitializerError();
     error ValidatorStorageHelperError();
     error NoFallbackHandler(bytes4 msgSig);
+    error InvalidFallbackHandler(bytes4 msgSig);
     error FallbackInstalled(bytes4 msgSig);
 
     mapping(address smartAccount => ModuleManagerStorage moduleManagerStorage) internal
@@ -180,6 +181,12 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
         (bytes4 functionSig, CallType calltype, bytes memory initData) =
             abi.decode(params, (bytes4, CallType, bytes));
+
+        // disallow calls to onInstall or onUninstall.
+        // this could create a security issue
+        if (
+            functionSig == IModule.onInstall.selector || functionSig == IModule.onUninstall.selector
+        ) revert InvalidFallbackHandler(functionSig);
         if (_isFallbackHandlerInstalled(functionSig)) revert FallbackInstalled(functionSig);
 
         FallbackHandler storage $fallbacks = $moduleManager[msg.sender]._fallbacks[functionSig];
