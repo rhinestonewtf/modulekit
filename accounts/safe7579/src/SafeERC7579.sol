@@ -167,7 +167,13 @@ contract SafeERC7579 is
             return _validateSignatures(userOp);
         } else {
             // bubble up the return value of the validator module
-            validSignature = IValidator(validator).validateUserOp(userOp, userOpHash);
+            bytes memory retData = _executeReturnData(
+                msg.sender,
+                validator,
+                0,
+                abi.encodeCall(IValidator.validateUserOp, (userOp, userOpHash))
+            );
+            validSignature = abi.decode(retData, (uint256));
         }
 
         // pay prefund
