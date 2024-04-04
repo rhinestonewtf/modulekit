@@ -146,7 +146,7 @@ contract SafeERC7579 is
         external
         payable
         override
-        onlyEntryPointOrSelf
+        onlyEntryPoint
         returns (uint256 validSignature)
     {
         address validator;
