@@ -435,43 +435,24 @@ contract SafeERC7579 is
     }
 
     function initializeAccount(bytes calldata callData) external payable override {
-        // TODO: destructuring callData
+        ModuleInit[] calldata validators;
+        assembly ("memory-safe") {
+            let dataPointer := add(callData.offset, calldataload(callData.offset))
+
+            validators.offset := add(dataPointer, 32)
+            validators.length := calldataload(dataPointer)
+        }
+        initializeAccount(validators);
     }
 
-    function initializeAccount(
-        ModuleInit[] calldata validators,
-        ModuleInit[] calldata executors,
-        ModuleInit[] calldata fallbacks,
-        ModuleInit[] calldata hooks
-    )
-        public
-        payable
-        override
-    {
+    function initializeAccount(ModuleInit[] calldata validators) public payable {
+        // this will revert if already initialized
         _initModuleManager();
 
         uint256 length = validators.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata validator = validators[i];
             _installValidator(validator.module, validator.initData);
-        }
-
-        length = executors.length;
-        for (uint256 i; i < length; i++) {
-            ModuleInit calldata executor = executors[i];
-            _installExecutor(executor.module, executor.initData);
-        }
-
-        length = fallbacks.length;
-        for (uint256 i; i < length; i++) {
-            ModuleInit calldata fallBack = fallbacks[i];
-            _installFallbackHandler(fallBack.module, fallBack.initData);
-        }
-
-        length = hooks.length;
-        for (uint256 i; i < length; i++) {
-            ModuleInit calldata hook = hooks[i];
-            _installFallbackHandler(hook.module, hook.initData);
         }
 
         emit Safe7579Initialized(msg.sender);

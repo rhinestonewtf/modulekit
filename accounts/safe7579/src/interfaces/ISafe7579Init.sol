@@ -7,12 +7,5 @@ interface ISafe7579Init {
         bytes initData;
     }
 
-    function initializeAccount(
-        ModuleInit[] calldata validators,
-        ModuleInit[] calldata executors,
-        ModuleInit[] calldata fallbacks,
-        ModuleInit[] calldata hooks
-    )
-        external
-        payable;
+    function initializeAccount(ModuleInit[] calldata validators) external payable;
 }

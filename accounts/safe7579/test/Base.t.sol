@@ -54,16 +54,13 @@ contract TestBaseUtil is Test {
         ISafe7579Init.ModuleInit[] memory executors = new ISafe7579Init.ModuleInit[](1);
         executors[0] =
             ISafe7579Init.ModuleInit({ module: address(defaultExecutor), initData: bytes("") });
-        ISafe7579Init.ModuleInit[] memory fallbacks = new ISafe7579Init.ModuleInit[](0);
-        ISafe7579Init.ModuleInit[] memory hooks = new ISafe7579Init.ModuleInit[](0);
+        // ISafe7579Init.ModuleInit[] memory fallbacks = new ISafe7579Init.ModuleInit[](0);
+        // ISafe7579Init.ModuleInit[] memory hooks = new ISafe7579Init.ModuleInit[](0);
 
         bytes memory initializer = launchpad.getInitCode({
             signers: Solarray.addresses(signer1.addr, signer2.addr),
             threshold: 2,
-            validators: validators,
-            executors: executors,
-            fallbacks: fallbacks,
-            hooks: hooks
+            validators: validators
         });
         // computer counterfactual address for SafeProxy
         safe = Safe(
@@ -77,7 +74,18 @@ contract TestBaseUtil is Test {
                 })
             )
         );
-        userOpInitCode = initCode(initializer, salt);
+
+        PackedUserOperation memory userOp =
+            getDefaultUserOp(address(safe), address(defaultValidator));
+
+        userOp.callData =
+            abi.encodeCall(SafeERC7579.installModule, (2, address(defaultExecutor), bytes("")));
+        userOp.initCode = initCode(initializer, salt);
+        PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
+        userOps[0] = userOp;
+        deal(address(safe), 1 ether);
+
+        entrypoint.handleOps(userOps, payable(address(0x69)));
     }
 
     function initCode(

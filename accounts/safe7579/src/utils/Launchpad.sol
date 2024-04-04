@@ -23,15 +23,12 @@ contract Safe7579Launchpad {
 
     function initSafe7579(
         address safe7579,
-        ISafe7579Init.ModuleInit[] calldata validators,
-        ISafe7579Init.ModuleInit[] calldata executors,
-        ISafe7579Init.ModuleInit[] calldata fallbacks,
-        ISafe7579Init.ModuleInit[] calldata hooks
+        ISafe7579Init.ModuleInit[] calldata validators
     )
         public
     {
         ISafe(address(this)).enableModule(safe7579);
-        SafeERC7579(payable(safe7579)).initializeAccount(validators, executors, fallbacks, hooks);
+        SafeERC7579(payable(safe7579)).initializeAccount(abi.encode(validators));
     }
 
     function predictSafeAddress(
@@ -68,18 +65,14 @@ contract Safe7579Launchpad {
     function getInitCode(
         address[] memory signers,
         uint256 threshold,
-        ISafe7579Init.ModuleInit[] calldata validators,
-        ISafe7579Init.ModuleInit[] calldata executors,
-        ISafe7579Init.ModuleInit[] calldata fallbacks,
-        ISafe7579Init.ModuleInit[] calldata hooks
+        ISafe7579Init.ModuleInit[] calldata validators
     )
         external
         view
         returns (bytes memory initCode)
     {
-        bytes memory safeLaunchPadSetup = abi.encodeCall(
-            this.initSafe7579, (address(SAFE7579Singleton), validators, executors, fallbacks, hooks)
-        );
+        bytes memory safeLaunchPadSetup =
+            abi.encodeCall(this.initSafe7579, (address(SAFE7579Singleton), validators));
         // SETUP SAFE
         initCode = abi.encodeCall(
             ISafe.setup,

@@ -16,7 +16,6 @@ contract Safe7579Test is TestBaseUtil {
     function setUp() public override {
         super.setUp();
         target = new MockTarget();
-        deal(address(safe), 1 ether);
     }
 
     modifier alreadyInitialized(bool initNow) {
@@ -41,7 +40,6 @@ contract Safe7579Test is TestBaseUtil {
                 ExecutionLib.encodeSingle(address(target), uint256(0), setValueOnTarget)
             )
         );
-        userOp.initCode = userOpInitCode;
         userOp.callData = userOpCalldata;
         // Create userOps array
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
