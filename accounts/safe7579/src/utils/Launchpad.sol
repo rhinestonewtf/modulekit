@@ -10,7 +10,7 @@ import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
  * as well as initializing Safe7579 for the SafeProxy
  */
 contract Safe7579Launchpad {
-    address immutable SAFE7579Singleton;
+    address public immutable SAFE7579Singleton;
 
     constructor(address _safe7579Singleton) {
         SAFE7579Singleton = _safe7579Singleton;

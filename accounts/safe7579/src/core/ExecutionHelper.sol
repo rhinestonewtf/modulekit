@@ -8,8 +8,6 @@ import {
     Enum
 } from "@safe-global/safe-contracts/contracts/accessors/SimulateTxAccessor.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title Helper contract to execute transactions from a safe
  * All functions implemented in this contract check,
@@ -19,7 +17,7 @@ import "forge-std/console2.sol";
 abstract contract ExecutionHelper {
     error ExecutionFailed();
 
-    SimulateTxAccessor immutable SIMULATETX;
+    SimulateTxAccessor private immutable SIMULATETX;
 
     constructor() {
         SIMULATETX = new SimulateTxAccessor();
