@@ -9,6 +9,8 @@ import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
 
+CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
+
 struct FallbackHandler {
     address handler;
     CallType calltype;
@@ -240,12 +242,11 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         CallType calltype = $fallbackHandler.calltype;
         if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
-        // dis wont work. need Enum.Operation static, cause safe account emits event
-        // if (calltype == CALLTYPE_STATIC) {
-        //     return _executeStaticReturnData(
-        //         msg.sender, handler, 0, abi.encodePacked(callData, _msgSender())
-        //     );
-        // }
+        if (calltype == CALLTYPE_STATIC) {
+            return _executeStaticReturnData(
+                msg.sender, handler, 0, abi.encodePacked(callData, _msgSender())
+            );
+        }
         if (calltype == CALLTYPE_SINGLE) {
             return
                 _executeReturnData(msg.sender, handler, 0, abi.encodePacked(callData, _msgSender()));

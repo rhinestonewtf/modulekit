@@ -3,6 +3,12 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
+import {
+    SimulateTxAccessor,
+    Enum
+} from "@safe-global/safe-contracts/contracts/accessors/SimulateTxAccessor.sol";
+
+import "forge-std/console2.sol";
 
 /**
  * @title Helper contract to execute transactions from a safe
@@ -12,6 +18,12 @@ import { ISafe } from "../interfaces/ISafe.sol";
  */
 abstract contract ExecutionHelper {
     error ExecutionFailed();
+
+    SimulateTxAccessor immutable SIMULATETX;
+
+    constructor() {
+        SIMULATETX = new SimulateTxAccessor();
+    }
 
     /**
      * Execute call on Safe
@@ -115,6 +127,9 @@ abstract contract ExecutionHelper {
 
     /**
      * Execute staticcall on Safe, get return value from call
+     * Safe does not implement Enum.Operation for staticcall.
+     * we are using a trick, of nudging the Safe account to delegatecall to the SimulateTxAccessor,
+     * and call simulate()
      * @dev This function will revert if the call fails
      * @param safe address of the safe
      * @param target address of the contract to call
@@ -129,13 +144,20 @@ abstract contract ExecutionHelper {
         bytes memory callData
     )
         internal
-        view
         returns (bytes memory returnData)
     {
         bool success;
-        (success, returnData) = safe.staticcall(
-            abi.encodeCall(ISafe.execTransactionFromModuleReturnData, (target, value, callData, 0))
+        // this is the return data from the Safe.execTransactionFromModuleReturnData call. NOT the
+        // simulation
+        (success, returnData) = ISafe(safe).execTransactionFromModuleReturnData(
+            address(SIMULATETX),
+            0,
+            abi.encodeCall(SIMULATETX.simulate, (target, value, callData, Enum.Operation.Call)),
+            1
         );
+        if (!success) revert ExecutionFailed();
+        // decode according to simulate() return values
+        (, success, returnData) = abi.decode(returnData, (uint256, bool, bytes));
         if (!success) revert ExecutionFailed();
     }
 }

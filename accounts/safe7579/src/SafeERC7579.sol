@@ -131,7 +131,7 @@ contract SafeERC7579 is
     /**
      * @inheritdoc IERC7579Account
      */
-    function executeUserOp(PackedUserOperation calldata userOp) external payable override {
+    function executeUserOp(PackedUserOperation calldata /*userOp*/ ) external payable override {
         revert Unsupported();
     }
 
