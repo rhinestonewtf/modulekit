@@ -70,7 +70,7 @@ contract DollarCostAverage is ERC7579ExecutorBase, SessionKeyBase {
     function dca(Params calldata params) external {
         IERC7579Account smartAccount = IERC7579Account(msg.sender);
 
-        Execution[] memory executions = UniswapV3Integration.approveAndSwap({
+        Execution[] memory executions = UniswapV3Integration.approveAndSwapExactInput({
             smartAccount: msg.sender,
             tokenIn: IERC20(params.tokenIn),
             tokenOut: IERC20(params.tokenOut),

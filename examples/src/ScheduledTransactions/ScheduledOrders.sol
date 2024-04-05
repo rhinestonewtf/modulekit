@@ -20,7 +20,7 @@ contract ScheduledOrders is SchedulingBase {
         (address tokenIn, address tokenOut, uint256 amountIn, uint160 sqrtPriceLimitX96) =
             abi.decode(executionConfig.executionData, (address, address, uint256, uint160));
 
-        Execution[] memory executions = UniswapV3Integration.approveAndSwap({
+        Execution[] memory executions = UniswapV3Integration.approveAndSwapExactInput({
             smartAccount: msg.sender,
             tokenIn: IERC20(tokenIn),
             tokenOut: IERC20(tokenOut),

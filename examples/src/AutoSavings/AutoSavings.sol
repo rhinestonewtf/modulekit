@@ -99,7 +99,7 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
         // if underlying asset is not the same as the token, add a swap
         address underlying = vault.asset();
         if (params.token != underlying) {
-            Execution[] memory swap = UniswapV3Integration.approveAndSwap({
+            Execution[] memory swap = UniswapV3Integration.approveAndSwapExactInput({
                 smartAccount: msg.sender,
                 tokenIn: IERC20(params.token),
                 tokenOut: IERC20(underlying),
