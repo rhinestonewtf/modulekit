@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {
     SWAPROUTER_ADDRESS,
     SWAPROUTER_DEFAULTFEE,
-    WRAPPED_NATIVE_ADDRESS
+    WETH_ADDRESS
 } from "../helpers/MainnetAddresses.sol";
 import { ISwapRouter } from "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
@@ -65,7 +65,7 @@ library UniswapV3Integration {
     {
         exec = Execution({
             target: SWAPROUTER_ADDRESS,
-            value: address(tokenIn) == WRAPPED_NATIVE_ADDRESS ? amountIn : 0,
+            value: address(tokenIn) == WETH_ADDRESS ? amountIn : 0,
             callData: abi.encodeWithSelector(
                 ISwapRouter.exactInputSingle.selector,
                 ISwapRouter.ExactInputSingleParams({
@@ -102,7 +102,7 @@ library UniswapV3Integration {
     {
         exec = Execution({
             target: SWAPROUTER_ADDRESS,
-            value: address(tokenIn) == WRAPPED_NATIVE_ADDRESS ? amountInMaximum : 0,
+            value: address(tokenIn) == WETH_ADDRESS ? amountInMaximum : 0,
             callData: abi.encodeWithSelector(
                 ISwapRouter.exactOutputSingle.selector,
                 ISwapRouter.ExactOutputSingleParams({
