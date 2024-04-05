@@ -89,7 +89,7 @@ function formatGasValue(
     }
 }
 
-function formatGas(uint256 value) internal pure returns (string memory) {
+function formatGas(uint256 value) pure returns (string memory) {
     string memory str = toString(value);
     bytes memory bStr = bytes(str);
     bytes memory result = new bytes(bStr.length + (bStr.length - 1) / 3);
