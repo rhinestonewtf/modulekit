@@ -84,7 +84,7 @@ function formatGasValue(
         formattedValue = string.concat(formatGas(newValue), " gas");
     } else {
         formattedValue = string.concat(
-            formatGas(newValue), " gas (diff: ", formatGas(int256(newValue) - int256(prevValue)), ")"
+            formatGas(newValue), " gas (diff: ", formatGas(uint256(newValue) - uint256(prevValue)), ")"
         );
     }
 }
