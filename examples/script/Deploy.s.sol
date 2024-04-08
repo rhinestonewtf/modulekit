@@ -27,27 +27,27 @@ contract DeployScript is Script {
         vm.startBroadcast(vm.envUint("PK"));
 
         // Deploy Modules
-        // AutoSavingToVault autoSavings = new AutoSavingToVault{ salt: salt }();
+        AutoSavingToVault autoSavings = new AutoSavingToVault{ salt: salt }();
 
-        // AutoSendSessionKey autoSend = new AutoSendSessionKey{ salt: salt }();
+        AutoSendSessionKey autoSend = new AutoSendSessionKey{ salt: salt }();
 
         FlashloanCallback flashloanCallback = new FlashloanCallback{ salt: salt }();
         FlashloanLender flashloanLender = new FlashloanLender{ salt: salt }();
-        // ColdStorageHook coldStorageHook = new ColdStorageHook{ salt: salt }();
-        // ColdStorageExecutor coldStorageExecutor = new ColdStorageExecutor{ salt: salt }();
+        ColdStorageHook coldStorageHook = new ColdStorageHook{ salt: salt }();
+        ColdStorageExecutor coldStorageExecutor = new ColdStorageExecutor{ salt: salt }();
 
-        // DeadmanSwitch deadmanSwitch = new DeadmanSwitch{ salt: salt }();
+        DeadmanSwitch deadmanSwitch = new DeadmanSwitch{ salt: salt }();
 
-        // DollarCostAverage dollarCostAverage = new DollarCostAverage{ salt: salt }();
+        DollarCostAverage dollarCostAverage = new DollarCostAverage{ salt: salt }();
 
-        // MultiFactor multiFactor = new MultiFactor{ salt: salt }();
+        MultiFactor multiFactor = new MultiFactor{ salt: salt }();
 
-        // OwnableValidator ownableValidator = new OwnableValidator{ salt: salt }();
+        OwnableValidator ownableValidator = new OwnableValidator{ salt: salt }();
 
-        // ScheduledOrders scheduledOrders = new ScheduledOrders{ salt: salt }();
-        // ScheduledTransfers scheduledTransfers = new ScheduledTransfers{ salt: salt }();
+        ScheduledOrders scheduledOrders = new ScheduledOrders{ salt: salt }();
+        ScheduledTransfers scheduledTransfers = new ScheduledTransfers{ salt: salt }();
 
-        // WebAuthnValidator webAuthnValidator = new WebAuthnValidator{ salt: salt }();
+        WebAuthnValidator webAuthnValidator = new WebAuthnValidator{ salt: salt }();
 
         vm.stopBroadcast();
     }
