@@ -89,8 +89,8 @@ contract LaunchpadBase is Test {
             signerData: abi.encode(Solarray.addresses(signer1.addr, signer2.addr)),
             setupTo: address(launchpad),
             setupData: abi.encodeCall(
-                SafeSignerLaunchpad.initSafe7579WithRegistry,
-                (address(safe7579), validators, executors, fallbacks, hook, registryInit)
+                SafeSignerLaunchpad.initSafe7579,
+                (address(safe7579), validators, executors, fallbacks, hook)
                 ),
             fallbackHandler: address(safe7579)
         });
@@ -104,7 +104,14 @@ contract LaunchpadBase is Test {
         });
 
         bytes memory factoryInitializer = abi.encodeCall(
-            SafeSignerLaunchpad.preValidationSetup, (initHash, address(safe7579), "")
+            SafeSignerLaunchpad.preValidationSetup,
+            (
+                initHash,
+                address(registryInit.registry),
+                abi.encodeCall(
+                    IERC7484.trustAttesters, (registryInit.threshold, registryInit.attesters)
+                    )
+            )
         );
 
         PackedUserOperation memory userOp =

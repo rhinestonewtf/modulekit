@@ -5,6 +5,7 @@ import { IERC7484 } from "src/interfaces/IERC7484.sol";
 
 contract MockRegistry is IERC7484 {
     event NewTrustedAttesters();
+    event Log(address sender);
 
     function check(address module) external view override { }
 
@@ -48,6 +49,7 @@ contract MockRegistry is IERC7484 {
     { }
 
     function trustAttesters(uint8 threshold, address[] calldata attesters) external override {
+        emit Log(msg.sender);
         emit NewTrustedAttesters();
     }
 }

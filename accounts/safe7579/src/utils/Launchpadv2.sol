@@ -12,6 +12,8 @@ import { SafeStorage } from "@safe-global/safe-contracts/contracts/libraries/Saf
 import { ISignatureValidator } from
     "@safe-global/safe-contracts/contracts/interfaces/ISignatureValidator.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title SafeOpLaunchpad - A contract for Safe initialization with custom unique signers that would
  * violate ERC-4337 factory rules.
@@ -135,6 +137,8 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
 
     receive() external payable { }
 
+    function setupRegistry(address[] calldata attesters, uint8 threshold) external { }
+
     function preValidationSetup(
         bytes32 initHash,
         address to,
@@ -144,6 +148,7 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         onlyProxy
     {
         _setInitHash(initHash);
+        console2.log("this", address(this));
         if (to != address(0)) {
             (bool success,) = to.delegatecall(preInit);
             require(success, "Pre-initialization failed");
@@ -265,6 +270,7 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         external
         onlySupportedEntryPoint
     {
+        // update singleton to Safe account impl
         SafeStorage.singleton = singleton;
         {
             // address[] memory owners = new address[](1);

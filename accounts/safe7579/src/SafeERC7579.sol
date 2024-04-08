@@ -574,7 +574,6 @@ contract SafeERC7579 is
         uint8 threshold
     )
         external
-        onlyEntryPointOrSelf
     {
         _configureRegistry(registry, attesters, threshold);
     }

@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import "../interfaces/IERC7484.sol";
+import "./ExecutionHelper.sol";
 
-contract RegistryAdapter {
+abstract contract RegistryAdapter is ExecutionHelper {
     event ERC7484RegistryConfigured(address indexed smartAccount, address indexed registry);
 
     mapping(address smartAccount => IERC7484 registry) internal $registry;
@@ -11,7 +12,7 @@ contract RegistryAdapter {
     modifier withRegistry(address module, uint256 moduleType) {
         IERC7484 registry = $registry[msg.sender];
         if (address(registry) != address(0)) {
-            registry.check(module, moduleType);
+            registry.checkForAccount(msg.sender, module, moduleType);
         }
         _;
     }
@@ -24,6 +25,11 @@ contract RegistryAdapter {
         internal
     {
         $registry[msg.sender] = registry;
-        registry.trustAttesters(threshold, attesters);
+        _execute(
+            msg.sender,
+            address(registry),
+            0,
+            abi.encodeCall(IERC7484.trustAttesters, (threshold, attesters))
+        );
     }
 }
