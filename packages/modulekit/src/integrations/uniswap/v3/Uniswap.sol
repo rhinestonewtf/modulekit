@@ -8,7 +8,6 @@ import { ERC20Integration } from "../../ERC20.sol";
 import { IERC7579Account, Execution } from "../../../Accounts.sol";
 
 /// @author zeroknots
-
 library UniswapV3Integration {
     using ERC20Integration for IERC20;
 
