@@ -28,8 +28,6 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
 
     Account internal signer = makeAccount("signer");
 
-    bytes32 internal sessionKeyDigest;
-
     function setUp() public {
         instance = makeAccountInstance("instance");
         vm.warp(17_999_999);
@@ -44,22 +42,6 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
 
         vault1 = new MockERC4626(tokenIn, "vUSDC", "vUSDC");
         vault2 = new MockERC4626(tokenOut, "vwETH", "vwETH");
-
-        sessionKeyData = abi.encode(
-            AutoSavingToVault.ScopedAccess({
-                sessionKeySigner: signer.addr,
-                onlyToken: address(tokenIn),
-                maxAmount: 10_000 ** 18
-            })
-        );
-
-        (, sessionKeyDigest) = instance.installSessionKey({
-            sessionKeyModule: address(autosavings),
-            validUntil: uint48(block.timestamp + 7 days),
-            validAfter: uint48(block.timestamp - 7 days),
-            sessionKeyData: sessionKeyData,
-            txValidator: address(instance.defaultValidator)
-        });
 
         AutoSavingToVault.Config memory savingForToken = AutoSavingToVault.Config({
             percentage: 100, // 100 = 1%
@@ -92,8 +74,6 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
             target: address(autosavings),
             value: 0,
             callData: abi.encodeCall(AutoSavingToVault.autoSave, (params)),
-            sessionKeyDigest: sessionKeyDigest,
-            sessionKeySignature: ecdsaSign(signer.key, sessionKeyDigest),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
         // It should deposit correct percentage

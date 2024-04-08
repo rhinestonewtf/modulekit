@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { IERC7579Account } from "modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase, SessionKeyBase } from "modulekit/src/Modules.sol";
+import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 
-abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
+abstract contract SchedulingBase is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -35,7 +33,6 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
     }
 
     struct ExecutorAccess {
-        address sessionKeySigner;
         uint256 jobId;
     }
 
@@ -116,43 +113,6 @@ abstract contract SchedulingBase is ERC7579ExecutorBase, SessionKeyBase {
 
     // abstract methohd to be implemented by the inheriting contract
     function executeOrder(uint256 jobId) external virtual;
-
-    function validateSessionParams(
-        address destinationContract,
-        uint256 callValue,
-        bytes calldata callData,
-        bytes calldata _sessionKeyData,
-        bytes calldata /*_callSpecificData*/
-    )
-        external
-        view
-        virtual
-        override
-        returns (address)
-    {
-        ExecutorAccess memory access = abi.decode(_sessionKeyData, (ExecutorAccess));
-
-        bytes4 targetSelector = bytes4(callData[:4]);
-
-        uint256 jobId = abi.decode(callData[4:], (uint256));
-        if (targetSelector != this.executeOrder.selector) {
-            revert InvalidMethod(targetSelector);
-        }
-
-        if (jobId != access.jobId) {
-            revert InvalidJob();
-        }
-
-        if (destinationContract != address(this)) {
-            revert InvalidRecipient();
-        }
-
-        if (callValue != 0) {
-            revert InvalidValue();
-        }
-
-        return access.sessionKeySigner;
-    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL

@@ -6,9 +6,9 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
 import { UniswapV3Integration } from "modulekit/src/Integrations.sol";
 import { Execution } from "modulekit/src/Accounts.sol";
-import { ERC7579ExecutorBase, SessionKeyBase } from "modulekit/src/Modules.sol";
+import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 
-contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
+contract AutoSavingToVault is ERC7579ExecutorBase {
     using ERC4626Integration for *;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -18,12 +18,6 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
     struct Params {
         address token;
         uint256 amountReceived;
-    }
-
-    struct ScopedAccess {
-        address sessionKeySigner;
-        address onlyToken;
-        uint256 maxAmount;
     }
 
     struct Config {
@@ -127,35 +121,6 @@ contract AutoSavingToVault is ERC7579ExecutorBase, SessionKeyBase {
         _execute(approveAndDeposit);
 
         emit AutoSaveExecuted(msg.sender, params.token, amountIn);
-    }
-
-    function validateSessionParams(
-        address destinationContract,
-        uint256 callValue,
-        bytes calldata callData,
-        bytes calldata _sessionKeyData,
-        bytes calldata /*_callSpecificData*/
-    )
-        public
-        virtual
-        override
-        onlyFunctionSig(this.autoSave.selector, bytes4(callData[:4]))
-        onlyZeroValue(callValue)
-        onlyThis(destinationContract)
-        returns (address)
-    {
-        ScopedAccess memory access = abi.decode(_sessionKeyData, (ScopedAccess));
-        Params memory params = abi.decode(callData[4:], (Params));
-
-        if (params.token != access.onlyToken) {
-            revert InvalidRecipient();
-        }
-
-        if (params.amountReceived > access.maxAmount) {
-            revert InvalidRecipient();
-        }
-
-        return access.sessionKeySigner;
     }
 
     /*//////////////////////////////////////////////////////////////////////////

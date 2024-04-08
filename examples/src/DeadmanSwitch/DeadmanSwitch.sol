@@ -78,6 +78,7 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
             signature: userOp.signature
         });
 
+        // TODO: this could be a security issue or at least unpredictable behavior
         return _packValidationData({
             sigFailed: !sigValid,
             validAfter: config.lastAccess + config.timeout,
