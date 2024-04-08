@@ -143,6 +143,8 @@ contract LaunchpadBase is Test {
         deal(address(userOp.sender), 1 ether);
 
         entrypoint.handleOps(userOps, payable(address(0x69)));
+
+        safe = Safe(payable(predict));
     }
 
     function _initCode(

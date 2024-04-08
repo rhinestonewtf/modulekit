@@ -35,6 +35,8 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
 import { IERC7484 } from "./interfaces/IERC7484.sol";
+
+import "forge-std/console2.sol";
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * By using Safe's Fallback and Execution modules,
@@ -187,14 +189,10 @@ contract SafeERC7579 is
     }
 
     /**
-     * @inheritdoc IERC7579Account
-     */
-    function executeUserOp(PackedUserOperation calldata /*userOp*/ ) external payable override {
-        revert Unsupported();
-    }
-
-    /**
-     * @inheritdoc IERC7579Account
+     *  ERC4337 v0.7 validation function
+     * @dev expects that a ERC7579 validator module is encoded within the UserOp nonce.
+     *         if no validator module is provided, it will fallback to validate the transaction with
+     *         Safe's signers
      */
     function validateUserOp(
         PackedUserOperation calldata userOp,
@@ -203,7 +201,6 @@ contract SafeERC7579 is
     )
         external
         payable
-        override
         returns (uint256 validSignature)
     {
         address validator;
@@ -319,7 +316,6 @@ contract SafeERC7579 is
         payable
         override
         withHook
-        // withRegistry(module, moduleType)
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
@@ -548,13 +544,13 @@ contract SafeERC7579 is
         length = executors.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata executor = executors[i];
-            _installValidator(executor.module, executor.initData);
+            _installExecutor(executor.module, executor.initData);
         }
 
         length = fallbacks.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata _fallback = fallbacks[i];
-            _installValidator(_fallback.module, _fallback.initData);
+            _installFallbackHandler(_fallback.module, _fallback.initData);
         }
 
         _installHook(hook.module, hook.initData);
