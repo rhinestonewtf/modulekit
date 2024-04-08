@@ -133,7 +133,13 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         if (!_isValidatorInstalled(validator)) return _validateSignatures(userOp);
 
         // bubble up the return value of the validator module
-        validSignature = IValidator(validator).validateUserOp(userOp, userOpHash);
+        bytes memory retData = _executeReturnData({
+            safe: msg.sender,
+            target: validator,
+            value: 0,
+            callData: abi.encodeCall(IValidator.validateUserOp, (userOp, userOpHash))
+        });
+        validSignature = abi.decode(retData, (uint256));
 
         // pay prefund
         if (missingAccountFunds != 0) {
@@ -263,8 +269,11 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     /**
      * @inheritdoc IERC7579Account
      */
-    function accountId() external pure override returns (string memory accountImplementationId) {
-        return "safe-erc7579.v0.0.0";
+    function accountId() external view override returns (string memory accountImplementationId) {
+        string memory version = ISafe(msg.sender).VERSION();
+
+        accountImplementationId =
+            string(abi.encodePacked("safe", abi.encodePacked(version), ".erc7579.v0.0.1"));
     }
 
     /**
