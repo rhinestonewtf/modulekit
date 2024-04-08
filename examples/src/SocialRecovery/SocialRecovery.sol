@@ -8,7 +8,7 @@ import { CheckSignatures } from "checknsignatures/CheckNSignatures.sol";
 import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ModeLib, CallType, ModeCode, CALLTYPE_SINGLE } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { LibSort } from "solady/src/utils/LibSort.sol";
+import { LibSort } from "solady/utils/LibSort.sol";
 
 contract SocialRecovery is ERC7579ValidatorBase {
     using LibSort for *;

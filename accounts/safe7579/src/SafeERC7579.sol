@@ -50,9 +50,10 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         external
         payable
         override
-        withHook // ! this modifier has side effects / external calls
         onlyEntryPointOrSelf
     {
+        (address hook, bytes memory hookPreContext) = _doPreHook();
+
         CallType callType = mode.getCallType();
 
         if (callType == CALLTYPE_BATCH) {
@@ -65,6 +66,9 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         } else {
             revert UnsupportedCallType(callType);
         }
+
+        // TODO: add correct data
+        _doPostHook(hook, hookPreContext, true, new bytes(0));
     }
 
     /**
@@ -78,9 +82,10 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         payable
         override
         onlyExecutorModule
-        withHook // ! this modifier has side effects / external calls
         returns (bytes[] memory returnData)
     {
+        (address hook, bytes memory hookPreContext) = _doPreHook();
+
         CallType callType = mode.getCallType();
 
         if (callType == CALLTYPE_BATCH) {
@@ -94,24 +99,25 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         } else {
             revert UnsupportedCallType(callType);
         }
+
+        // TODO: add correct data
+        _doPostHook(hook, hookPreContext, true, new bytes(0));
     }
 
-    /**
-     * @inheritdoc IERC7579Account
-     */
-    function executeUserOp(PackedUserOperation calldata userOp)
+    // TODO: comments
+    function executeUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
         external
         payable
-        override
         onlyEntryPointOrSelf
     {
         (bool success,) = address(this).delegatecall(userOp.callData[4:]);
         if (!success) revert ExecutionFailed();
     }
 
-    /**
-     * @inheritdoc IERC7579Account
-     */
+    // TODO: comments
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,

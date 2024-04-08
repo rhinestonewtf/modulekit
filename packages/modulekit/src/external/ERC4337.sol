@@ -13,5 +13,7 @@ import {
     _packValidationData
 } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 import { IStakeManager } from "@ERC4337/account-abstraction/contracts/interfaces/IStakeManager.sol";
+import { IAccount as IERC4337 } from
+    "@ERC4337/account-abstraction/contracts/interfaces/IAccount.sol";
 
 /* solhint-enable no-unused-import */

@@ -25,6 +25,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
     function preCheck(
         address msgSender,
+        uint256 msgValue,
         bytes calldata msgData
     )
         external
@@ -147,9 +148,15 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     //     revert HookInvalidSelector();
     // }
 
-    function postCheck(bytes calldata hookData) external override returns (bool success) {
-        if (hookData.length == 0) return true;
-        return onPostCheck(hookData);
+    function postCheck(
+        bytes calldata hookData,
+        bool executionSuccess,
+        bytes calldata executionReturnValue
+    )
+        external
+        override
+    {
+        onPostCheck(hookData, executionSuccess, executionReturnValue);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -226,7 +233,12 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                                      POSTCHECK
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onPostCheck(bytes calldata hookData) internal virtual returns (bool success) {
-        return true;
-    }
+    function onPostCheck(
+        bytes calldata hookData,
+        bool executionSuccess,
+        bytes calldata executionReturnValue
+    )
+        internal
+        virtual
+    { }
 }

@@ -1,4 +1,4 @@
-solady/=node_modules/solady/
+solady/=node_modules/solady/src/
 @rhinestone/=node_modules/@rhinestone/
 modulekit/=node_modules/@rhinestone/modulekit/packages/modulekit/
 erc7579/=node_modules/erc7579/src/

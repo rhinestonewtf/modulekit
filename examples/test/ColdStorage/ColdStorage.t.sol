@@ -13,7 +13,7 @@ import {
 } from "@rhinestone/sessionkeymanager/src/SessionKeyManagerLib.sol";
 import "modulekit/src/Mocks.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 import { IERC7579Account, Execution } from "modulekit/src/Accounts.sol";
 import { FlashloanCallback } from "src/ColdStorage/FlashloanCallback.sol";
@@ -188,7 +188,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
                 ColdStorageExecutor.executeOnSubAccount.selector,
                 address(coldStorage.account),
                 subAccountCallData
-                ),
+            ),
             txValidator: address(ownableValidator)
         });
 
@@ -211,7 +211,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
                 ColdStorageExecutor.executeOnSubAccount.selector,
                 address(coldStorage.account),
                 subAccountCallData
-                ),
+            ),
             txValidator: address(ownableValidator)
         });
         bytes memory signature = signHash(owner.key, userOpData.userOpHash);
@@ -230,7 +230,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
             value: 0,
             callData: abi.encodeWithSelector(
                 MockERC20.transfer.selector, address(mainAccount.account), amountToWithdraw
-                )
+            )
         });
 
         _requestWithdraw(action, 0);
@@ -267,7 +267,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
             value: 0,
             callData: abi.encodeWithSelector(
                 MockERC20.transfer.selector, address(mainAccount.account), 100
-                )
+            )
         });
 
         _requestWithdraw(newAction, 0);

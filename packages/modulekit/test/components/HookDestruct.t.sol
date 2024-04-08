@@ -10,6 +10,7 @@ import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 contract HookDestructTest is Test, ERC7579HookDestruct {
     struct Log {
         address msgSender;
+        uint256 msgValue;
         bytes msgData;
         mapping(uint256 index => Execution) executions;
         uint256 executionsLength;
@@ -28,6 +29,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
 
     function test_executeSingle(
         address msgSender,
+        uint256 msgValue,
         address target,
         uint256 value,
         bytes memory data
@@ -40,6 +42,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
         bytes memory callData =
             abi.encodeCall(IERC7579Account.executeFromExecutor, (mode, execution));
         _log.msgData = callData;
+        _log.msgValue = msgValue;
         _log.msgSender = msgSender;
 
         _log.executionsLength = 1;
@@ -47,11 +50,18 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
         _log.executions[0].value = value;
         _log.executions[0].callData = data;
 
-        bytes memory hookData = ERC7579HookDestruct(address(this)).preCheck(msgSender, callData);
+        bytes memory hookData =
+            ERC7579HookDestruct(address(this)).preCheck(msgSender, msgValue, callData);
         assertEq(hookData, "onExecute");
     }
 
-    function test_executeBatch(address msgSender, Execution[] memory _execution) public {
+    function test_executeBatch(
+        address msgSender,
+        uint256 msgValue,
+        Execution[] memory _execution
+    )
+        public
+    {
         vm.assume(_execution.length > 0);
         ModeCode mode = ModeLib.encodeSimpleBatch();
         bytes memory execution = ExecutionLib.encodeBatch(_execution);
@@ -59,6 +69,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
             abi.encodeCall(IERC7579Account.executeFromExecutor, (mode, execution));
 
         _log.msgData = callData;
+        _log.msgValue = msgValue;
         _log.msgSender = msgSender;
 
         _log.executionsLength = _execution.length;
@@ -68,12 +79,14 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
             _log.executions[i].callData = _execution[i].callData;
         }
 
-        bytes memory hookData = ERC7579HookDestruct(address(this)).preCheck(msgSender, callData);
+        bytes memory hookData =
+            ERC7579HookDestruct(address(this)).preCheck(msgSender, msgValue, callData);
         assertEq(hookData, "onExecuteBatch");
     }
 
     function test_installModule(
         address msgSender,
+        uint256 msgValue,
         address moduleAddress,
         uint256 moduleType,
         bytes memory data
@@ -85,13 +98,15 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
         bytes memory callData =
             abi.encodeCall(IERC7579Account.installModule, (moduleType, moduleAddress, data));
         _log.msgData = callData;
+        _log.msgValue = msgValue;
         _log.msgSender = msgSender;
 
         _installLog.module = moduleAddress;
         _installLog.moduleType = moduleType;
         _installLog.initData = data;
 
-        bytes memory hookData = ERC7579HookDestruct(address(this)).preCheck(msgSender, callData);
+        bytes memory hookData =
+            ERC7579HookDestruct(address(this)).preCheck(msgSender, msgValue, callData);
         assertEq(hookData, "onInstall", "return value wrong");
     }
 
@@ -211,11 +226,14 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
         returns (bytes memory hookData)
     { }
 
-    function onPostCheck(bytes calldata hookData)
+    function onPostCheck(
+        bytes calldata hookData,
+        bool executionSuccess,
+        bytes calldata executionReturnValue
+    )
         internal
         virtual
         override
-        returns (bool success)
     { }
 
     function onInstall(bytes calldata) public { }

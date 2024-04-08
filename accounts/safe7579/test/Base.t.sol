@@ -10,7 +10,7 @@ import { MockFallback } from "./mocks/MockFallback.sol";
 import { MockTarget } from "modulekit/src/mocks/MockTarget.sol";
 
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
-import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
 
 import "./dependencies/EntryPoint.sol";
 

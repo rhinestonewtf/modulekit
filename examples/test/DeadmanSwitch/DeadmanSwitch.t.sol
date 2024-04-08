@@ -10,7 +10,7 @@ import { MODULE_TYPE_VALIDATOR, MODULE_TYPE_HOOK } from "modulekit/src/external/
 
 import "src/DeadmanSwitch/DeadmanSwitch.sol";
 import "forge-std/interfaces/IERC20.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 contract DeadmanSwitchTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for *;

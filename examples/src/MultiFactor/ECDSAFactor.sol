@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
 
 abstract contract ECDSAFactor is ERC7579ValidatorBase {
