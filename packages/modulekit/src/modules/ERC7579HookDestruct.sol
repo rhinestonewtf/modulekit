@@ -164,7 +164,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     )
         internal
         virtual
-        returns (bytes memory hookData);
+        returns (bytes memory hookData)
+    { }
 
     function onExecuteBatch(
         address msgSender,
@@ -172,7 +173,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     )
         internal
         virtual
-        returns (bytes memory hookData);
+        returns (bytes memory hookData)
+    { }
 
     function onExecuteFromExecutor(
         address msgSender,
@@ -182,7 +184,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     )
         internal
         virtual
-        returns (bytes memory hookData);
+        returns (bytes memory hookData)
+    { }
 
     function onExecuteBatchFromExecutor(
         address msgSender,
@@ -190,7 +193,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     )
         internal
         virtual
-        returns (bytes memory hookData);
+        returns (bytes memory hookData)
+    { }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -204,7 +208,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     )
         internal
         virtual
-        returns (bytes memory hookData);
+        returns (bytes memory hookData)
+    { }
 
     function onUninstallModule(
         address msgSender,
@@ -214,11 +219,14 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     )
         internal
         virtual
-        returns (bytes memory hookData);
+        returns (bytes memory hookData)
+    { }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      POSTCHECK
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onPostCheck(bytes calldata hookData) internal virtual returns (bool success);
+    function onPostCheck(bytes calldata hookData) internal virtual returns (bool success) {
+        return true;
+    }
 }

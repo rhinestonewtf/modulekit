@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.19;
 
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import { ERC7579HookDestruct } from "modulekit/src/modules/ERC7579HookDestruct.sol";
-import { Execution } from "modulekit/src/Accounts.sol";
+import { ERC7579HookDestruct, Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 
 contract ColdStorageHook is ERC7579HookDestruct {
     /*//////////////////////////////////////////////////////////////////////////

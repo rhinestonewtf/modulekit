@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
-import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
+import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { EntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
@@ -24,7 +24,7 @@ struct Auxiliary {
     ISessionKeyManager sessionKeyManager;
     ExtensibleFallbackHandler fallbackHandler;
     ERC7579Bootstrap bootstrap;
-    IERC7484Registry registry;
+    IERC7484 registry;
     address initialTrustedAttester;
     MockFactory mockFactory;
 }
