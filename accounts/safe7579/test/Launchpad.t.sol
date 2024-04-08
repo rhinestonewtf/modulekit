@@ -8,14 +8,14 @@ import { MockValidator } from "./mocks/MockValidator.sol";
 import { MockRegistry } from "./mocks/MockRegistry.sol";
 import { MockExecutor } from "./mocks/MockExecutor.sol";
 import { MockFallback } from "./mocks/MockFallback.sol";
-import { MockTarget } from "@rhinestone/modulekit/src/mocks/MockTarget.sol";
+import { MockTarget } from "./mocks/MockTarget.sol";
 
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import {
     SafeProxy,
     SafeProxyFactory
 } from "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
 import "src/utils/Launchpadv2.sol";
 import "src/utils/SignerFactory.sol";
 import "src/interfaces/ISafe7579Init.sol";

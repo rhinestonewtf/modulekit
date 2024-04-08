@@ -10,18 +10,23 @@ import {
 
 /**
  * @title Helper contract to execute transactions from a safe
- * All functions implemented in this contract check,
- * that the transaction was successful
+ *
  * @author zeroknots.eth
  */
 abstract contract ExecutionHelper {
     error ExecutionFailed();
+
+    event TryExecutionFailed(uint256 numberInBatch);
 
     SimulateTxAccessor private immutable SIMULATETX;
 
     constructor() {
         SIMULATETX = new SimulateTxAccessor();
     }
+
+    /////////////////////////////////////////////////////
+    //  DEFAULT EXEC TYPE
+    ////////////////////////////////////////////////////
 
     /**
      * Execute call on Safe
@@ -122,6 +127,128 @@ abstract contract ExecutionHelper {
                 _executeReturnData(safe, execution.target, execution.value, execution.callData);
         }
     }
+
+    /////////////////////////////////////////////////////
+    //  TRY EXEC TYPE
+    ////////////////////////////////////////////////////
+
+    /**
+     * Try Execute call on Safe
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param target address of the contract to call
+     * @param value value of the transaction
+     * @param callData data of the transaction
+     */
+    function _tryExecute(
+        address safe,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+    {
+        bool success = ISafe(safe).execTransactionFromModule(target, value, callData, 0);
+        if (!success) emit TryExecutionFailed(0);
+    }
+
+    /**
+     * Try Execute call on Safe, get return value from call
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param target address of the contract to call
+     * @param value value of the transaction
+     * @param callData data of the transaction
+     * @return returnData data returned from the call
+     */
+    function _tryExecuteReturnData(
+        address safe,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+        returns (bytes memory returnData)
+    {
+        bool success;
+        (success, returnData) =
+            ISafe(safe).execTransactionFromModuleReturnData(target, value, callData, 0);
+        if (!success) emit TryExecutionFailed(0);
+    }
+
+    /**
+     * Try Execute call on Safe
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param executions ERC-7579 struct for batched executions
+     */
+    function _tryExecute(address safe, Execution[] calldata executions) internal {
+        uint256 length = executions.length;
+        for (uint256 i; i < length; i++) {
+            Execution calldata execution = executions[i];
+
+            bool success = ISafe(safe).execTransactionFromModule(
+                execution.target, execution.value, execution.callData, 0
+            );
+            if (!success) emit TryExecutionFailed(i);
+        }
+    }
+
+    function _tryExecuteDelegateCall(
+        address safe,
+        address target,
+        bytes calldata callData
+    )
+        internal
+    {
+        bool success = ISafe(safe).execTransactionFromModule(target, 0, callData, 1);
+        if (!success) emit TryExecutionFailed(0);
+    }
+
+    function _tryExecuteDelegateCallReturnData(
+        address safe,
+        address target,
+        bytes calldata callData
+    )
+        internal
+        returns (bytes memory returnData)
+    {
+        bool success;
+        (success, returnData) =
+            ISafe(safe).execTransactionFromModuleReturnData(target, 0, callData, 1);
+        if (!success) emit TryExecutionFailed(0);
+    }
+
+    /**
+     * Execute call on Safe
+     * @dev This function will revert if the call fails
+     * @param safe address of the safe
+     * @param executions ERC-7579 struct for batched executions
+     * @return returnDatas  array returned datas from the batched calls
+     */
+    function _tryExecuteReturnData(
+        address safe,
+        Execution[] calldata executions
+    )
+        internal
+        returns (bytes[] memory returnDatas)
+    {
+        uint256 length = executions.length;
+        returnDatas = new bytes[](length);
+        for (uint256 i; i < length; i++) {
+            Execution calldata execution = executions[i];
+
+            bool success;
+            (success, returnDatas[i]) = ISafe(safe).execTransactionFromModuleReturnData(
+                execution.target, execution.value, execution.callData, 0
+            );
+            if (!success) emit TryExecutionFailed(i);
+        }
+    }
+
+    /////////////////////////////////////////////////////
+    //  STATICCALL
+    ////////////////////////////////////////////////////
 
     /**
      * Execute staticcall on Safe, get return value from call

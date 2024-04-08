@@ -5,8 +5,11 @@ import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.s
 import { IMSA } from "erc7579/interfaces/IMSA.sol";
 import {
     CallType,
+    ExecType,
     ModeCode,
     ModeLib,
+    EXECTYPE_DEFAULT,
+    EXECTYPE_TRY,
     CALLTYPE_SINGLE,
     CALLTYPE_BATCH,
     CALLTYPE_DELEGATECALL
@@ -77,21 +80,47 @@ contract SafeERC7579 is
         withHook // ! this modifier has side effects / external calls
         onlyEntryPointOrSelf
     {
-        CallType callType = mode.getCallType();
+        CallType callType;
+        ExecType execType;
+        assembly {
+            callType := mode
+            execType := shl(8, mode)
+        }
 
-        if (callType == CALLTYPE_BATCH) {
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            _execute(msg.sender, executions);
-        } else if (callType == CALLTYPE_SINGLE) {
-            (address target, uint256 value, bytes calldata callData) =
-                executionCalldata.decodeSingle();
-            _execute(msg.sender, target, value, callData);
-        } else if (callType == CALLTYPE_DELEGATECALL) {
-            address target = address(bytes20(executionCalldata[:20]));
-            bytes calldata callData = executionCalldata[20:];
-            _executeDelegateCall(msg.sender, target, callData);
-        } else {
-            revert UnsupportedCallType(callType);
+        if (execType == EXECTYPE_DEFAULT) {
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                _execute(msg.sender, executions);
+            } else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                _execute(msg.sender, target, value, callData);
+            } else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                _executeDelegateCall(msg.sender, target, callData);
+            } else {
+                revert UnsupportedCallType(callType);
+            }
+        } else if (execType == EXECTYPE_TRY) {
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                _tryExecute(msg.sender, executions);
+            } else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                _tryExecute(msg.sender, target, value, callData);
+            } else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                _tryExecuteDelegateCall(msg.sender, target, callData);
+            } else {
+                revert UnsupportedCallType(callType);
+            }
+        }
+        // account reverts when using unsupported execution type
+        else {
+            revert UnsupportedExecType(execType);
         }
     }
 
@@ -106,26 +135,54 @@ contract SafeERC7579 is
         payable
         override
         onlyExecutorModule
+        withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
         withHook // ! this modifier has side effects / external calls
         returns (bytes[] memory returnData)
     {
-        CallType callType = mode.getCallType();
-
-        if (callType == CALLTYPE_BATCH) {
-            Execution[] calldata executions = executionCalldata.decodeBatch();
-            returnData = _executeReturnData(msg.sender, executions);
-        } else if (callType == CALLTYPE_SINGLE) {
-            (address target, uint256 value, bytes calldata callData) =
-                executionCalldata.decodeSingle();
-            returnData = new bytes[](1);
-            returnData[0] = _executeReturnData(msg.sender, target, value, callData);
-        } else if (callType == CALLTYPE_DELEGATECALL) {
-            address target = address(bytes20(executionCalldata[:20]));
-            bytes calldata callData = executionCalldata[20:];
-            returnData = new bytes[](1);
-            returnData[0] = _executeDelegateCallReturnData(msg.sender, target, callData);
-        } else {
-            revert UnsupportedCallType(callType);
+        CallType callType;
+        ExecType execType;
+        assembly {
+            callType := mode
+            execType := shl(8, mode)
+        }
+        if (execType == EXECTYPE_DEFAULT) {
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                returnData = _executeReturnData(msg.sender, executions);
+            } else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                returnData = new bytes[](1);
+                returnData[0] = _executeReturnData(msg.sender, target, value, callData);
+            } else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                returnData = new bytes[](1);
+                returnData[0] = _executeDelegateCallReturnData(msg.sender, target, callData);
+            } else {
+                revert UnsupportedCallType(callType);
+            }
+        } else if (execType == EXECTYPE_TRY) {
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                returnData = _tryExecuteReturnData(msg.sender, executions);
+            } else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                returnData = new bytes[](1);
+                returnData[0] = _tryExecuteReturnData(msg.sender, target, value, callData);
+            } else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                returnData = new bytes[](1);
+                returnData[0] = _tryExecuteDelegateCallReturnData(msg.sender, target, callData);
+            } else {
+                revert UnsupportedCallType(callType);
+            }
+        }
+        // account reverts when using unsupported execution type
+        else {
+            revert UnsupportedExecType(execType);
         }
     }
 
@@ -444,7 +501,6 @@ contract SafeERC7579 is
             validators.offset := add(dataPointer, 32)
             validators.length := calldataload(dataPointer)
         }
-        // initializeAccount(validators);
     }
 
     function initializeAccountWithRegistry(
