@@ -5,9 +5,18 @@ import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
+import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
+
+import {
+    IValidator,
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK
+} from "erc7579/interfaces/IERC7579Module.sol";
 
 CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
 
@@ -27,7 +36,7 @@ struct ModuleManagerStorage {
  * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
+abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
 
@@ -66,7 +75,13 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /**
      * install and initialize validator module
      */
-    function _installValidator(address validator, bytes calldata data) internal virtual {
+    function _installValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        withRegistry(validator, MODULE_TYPE_VALIDATOR)
+    {
         $validators.push({ account: msg.sender, newEntry: validator });
 
         // Initialize Validator Module via Safe
@@ -131,7 +146,13 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     //  Manage Executors
     ////////////////////////////////////////////////////
 
-    function _installExecutor(address executor, bytes calldata data) internal {
+    function _installExecutor(
+        address executor,
+        bytes calldata data
+    )
+        internal
+        withRegistry(executor, MODULE_TYPE_EXECUTOR)
+    {
         SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
         $executors.push(executor);
         // Initialize Executor Module via Safe
@@ -178,7 +199,14 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     /////////////////////////////////////////////////////
     //  Manage Fallback
     ////////////////////////////////////////////////////
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+    function _installFallbackHandler(
+        address handler,
+        bytes calldata params
+    )
+        internal
+        virtual
+        withRegistry(handler, MODULE_TYPE_FALLBACK)
+    {
         (bytes4 functionSig, CallType calltype, bytes memory initData) =
             abi.decode(params, (bytes4, CallType, bytes));
 

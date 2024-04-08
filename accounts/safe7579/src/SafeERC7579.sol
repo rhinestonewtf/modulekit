@@ -31,13 +31,14 @@ import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
-
+import { IERC7484 } from "./interfaces/IERC7484.sol";
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * By using Safe's Fallback and Execution modules,
  * this contract creates full ERC7579 compliance to Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
+
 contract SafeERC7579 is
     ISafeOp,
     IERC7579Account,
@@ -261,6 +262,7 @@ contract SafeERC7579 is
         payable
         override
         withHook
+        // withRegistry(module, moduleType)
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
@@ -442,18 +444,64 @@ contract SafeERC7579 is
             validators.offset := add(dataPointer, 32)
             validators.length := calldataload(dataPointer)
         }
-        initializeAccount(validators);
+        // initializeAccount(validators);
     }
 
-    function initializeAccount(ModuleInit[] calldata validators) public payable {
+    function initializeAccountWithRegistry(
+        ModuleInit[] calldata validators,
+        ModuleInit[] calldata executors,
+        ModuleInit[] calldata fallbacks,
+        ModuleInit calldata hook,
+        RegistryInit calldata registryInit
+    )
+        public
+        payable
+    {
+        _configureRegistry(registryInit.registry, registryInit.attesters, registryInit.threshold);
+        _initModules(validators, executors, fallbacks, hook);
+    }
+
+    function initializeAccount(
+        ModuleInit[] calldata validators,
+        ModuleInit[] calldata executors,
+        ModuleInit[] calldata fallbacks,
+        ModuleInit calldata hook
+    )
+        public
+        payable
+    {
+        _initModules(validators, executors, fallbacks, hook);
+    }
+
+    function _initModules(
+        ModuleInit[] calldata validators,
+        ModuleInit[] calldata executors,
+        ModuleInit[] calldata fallbacks,
+        ModuleInit calldata hook
+    )
+        internal
+    {
         // this will revert if already initialized
         _initModuleManager();
-
         uint256 length = validators.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata validator = validators[i];
             _installValidator(validator.module, validator.initData);
         }
+
+        length = executors.length;
+        for (uint256 i; i < length; i++) {
+            ModuleInit calldata executor = executors[i];
+            _installValidator(executor.module, executor.initData);
+        }
+
+        length = fallbacks.length;
+        for (uint256 i; i < length; i++) {
+            ModuleInit calldata _fallback = fallbacks[i];
+            _installValidator(_fallback.module, _fallback.initData);
+        }
+
+        _installHook(hook.module, hook.initData);
 
         emit Safe7579Initialized(msg.sender);
     }
@@ -466,6 +514,17 @@ contract SafeERC7579 is
     function getNonce(address safe, address validator) external view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = IEntryPoint(entryPoint()).getNonce(safe, key);
+    }
+
+    function setRegistry(
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
+    )
+        external
+        onlyEntryPointOrSelf
+    {
+        _configureRegistry(registry, attesters, threshold);
     }
 }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ModuleManager } from "./ModuleManager.sol";
+import { ModuleManager, MODULE_TYPE_HOOK } from "./ModuleManager.sol";
 import { IHook, IModule } from "erc7579/interfaces/IERC7579Module.sol";
 
 /**
@@ -49,7 +49,14 @@ abstract contract HookManager is ModuleManager {
         });
     }
 
-    function _installHook(address hook, bytes calldata data) internal virtual {
+    function _installHook(
+        address hook,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withRegistry(hook, MODULE_TYPE_HOOK)
+    {
         address currentHook = $hookManager[msg.sender];
         if (currentHook != address(0)) {
             revert HookAlreadyInstalled(currentHook);
