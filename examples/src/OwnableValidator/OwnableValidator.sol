@@ -14,8 +14,6 @@ contract OwnableValidator is ERC7579ValidatorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    error AlreadyInitialized();
-
     mapping(address subAccout => address owner) public owners;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -23,7 +21,8 @@ contract OwnableValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        if (isInitialized(msg.sender)) revert AlreadyInitialized();
+        address account = msg.sender;
+        if (isInitialized(account)) revert AlreadyInitialized(account);
         owners[msg.sender] = address(uint160(bytes20(data[0:20])));
     }
 

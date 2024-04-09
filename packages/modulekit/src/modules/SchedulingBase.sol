@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
+import { ERC7579ExecutorBase } from "./ERC7579ExecutorBase.sol";
 
 abstract contract SchedulingBase is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////

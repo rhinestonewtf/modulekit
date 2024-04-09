@@ -9,8 +9,6 @@ contract RegistryHook is ERC7579HookDestruct {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    error AlreadyInitialized();
-
     event RegistrySet(address indexed smartAccount, address registry);
 
     mapping(address account => address) registry;
@@ -20,10 +18,10 @@ contract RegistryHook is ERC7579HookDestruct {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        if (isInitialized(msg.sender)) revert AlreadyInitialized();
+        address account = msg.sender;
+        if (isInitialized(account)) revert AlreadyInitialized(account);
 
         address registryAddress = address(uint160(bytes20(data[0:20])));
-        address account = msg.sender;
 
         registry[account] = registryAddress;
         emit RegistrySet({ smartAccount: account, registry: registryAddress });

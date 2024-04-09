@@ -10,8 +10,8 @@ import { ColdStorageExecutor } from "../src/ColdStorage/ColdStorageExecutor.sol"
 import { DeadmanSwitch } from "../src/DeadmanSwitch/DeadmanSwitch.sol";
 import { MultiFactor } from "../src/MultiFactor/MultiFactor.sol";
 import { OwnableValidator } from "../src/OwnableValidator/OwnableValidator.sol";
-import { ScheduledOrders } from "../src/ScheduledTransactions/ScheduledOrders.sol";
-import { ScheduledTransfers } from "../src/ScheduledTransactions/ScheduledTransfers.sol";
+import { ScheduledOrders } from "../src/ScheduledOrders/ScheduledOrders.sol";
+import { ScheduledTransfers } from "../src/ScheduledTransfers/ScheduledTransfers.sol";
 import { WebAuthnValidator } from "../src/WebAuthnValidator/WebAuthnValidator.sol";
 
 /**

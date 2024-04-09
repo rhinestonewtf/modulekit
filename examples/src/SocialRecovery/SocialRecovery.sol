@@ -12,13 +12,12 @@ import { LibSort } from "solady/utils/LibSort.sol";
 
 contract SocialRecovery is ERC7579ValidatorBase {
     using LibSort for *;
-    using SentinelListLib for SentinelListLib.SentinelList;
+    using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
 
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    error AlreadyInitialized();
     error UnsopportedOperation();
     error InvalidGuardian(address guardian);
     error ThresholdNotSet();
@@ -32,7 +31,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        if (isInitialized(msg.sender)) revert AlreadyInitialized();
+        if (isInitialized(msg.sender)) revert AlreadyInitialized(msg.sender);
 
         // Get the threshold and guardians from the data
         (uint256 threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
@@ -99,8 +98,8 @@ contract SocialRecovery is ERC7579ValidatorBase {
         guardians.push(msg.sender, guardian);
     }
 
-    function removeGuardian(address guardian) external {
-        guardians.remove(msg.sender, guardian);
+    function removeGuardian(address prevGuardian, address guardian) external {
+        guardians.pop(msg.sender, prevGuardian, guardian);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -130,10 +129,10 @@ contract SocialRecovery is ERC7579ValidatorBase {
         signers.uniquifySorted();
 
         // Check if the signers are guardians
-        SentinelListLib.SentinelList storage _guardians = guardians;
+        SentinelList4337Lib.SentinelList storage _guardians = guardians;
         uint256 validSigners;
         for (uint256 i = 0; i < signers.length; i++) {
-            if (_guardians.contains(signers[i])) {
+            if (_guardians.contains(msg.sender, signers[i])) {
                 validSigners++;
             }
         }
