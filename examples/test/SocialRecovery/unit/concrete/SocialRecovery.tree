@@ -1,0 +1,81 @@
+SocialRecoveryTest
+└─ when onInstall is called
+   ├─ when module is intialized
+   │  └─ it should revert
+   └─ when module is not intialized
+     ├─ when threshold is 0
+     │  └─ it should revert
+     └─ when threshold is not 0
+       ├─ it should set the threshold
+       ├─ when guardians length is less than threshold
+       │  └─ it should revert
+       └─ when guardians length is not less than threshold
+           ├─ when guardians include 0 address
+           │  └─ it should revert
+           ├─ when guardians include duplicates
+           │  └─ it should set only unique guardians
+           ├─ when guardians include no duplicates
+             └─ it should set all guardians
+
+└─ when onUninstall is called
+    ├─ it should remove the threshold
+    └─ it should remove the guardians
+
+└─ when isInitialized is called
+   ├─ when module is not intialized
+   │  └─ it should return false
+   └─ when module is intialized
+      └─ it should return true
+
+└─ when setThreshold is called
+  ├─ when threshold is 0
+  │   └─ it should revert
+  └─ when threshold is not 0
+    ├─ when threshold is higher than guardians length
+    │   └─ it should revert
+    └─ when threshold is not higher than guardians length
+        └─ it should set the threshold
+
+└─ when addGuardian is called
+    ├─ when guardian is 0 address
+    │  └─ it should revert
+    ├─ when guardian is already added
+    │  └─ it should revert
+    └─ when guardian is not added
+        └─ it should add the guardian
+
+└─ when removeGuardian is called
+   └─ it should remove the guardian
+
+└─ when validateUserOp is called
+   ├─ when threshold is not set
+   │  └─ it should return 1
+   └─ when threshold is set
+      ├─ when the signatures are not valid
+      │  └─ it should return 1
+      └─ when the signatures are valid
+        ├─ when the unique signatures are less than threshold
+        │  └─ it should return 1
+        └─ when the unique signatures are greater than threshold
+            ├─ when execution type is not CallType Single
+            │  └─ it should return 1
+            └─ when execution type is CallType Single
+                ├─ when execution target is not an installed validator
+                │  └─ it should return 1
+                └─ when execution target is an installed validator
+                    └─ it should return 0
+
+└─ when isValidSignatureWithSender is called
+   └─ it should revert
+
+└─ when name is called
+   └─ it should return SocialRecoveryValidator
+
+└─ when version is called
+   └─ it should return 1.0.0
+
+└─ when isModuleType is called
+   ├─ when typeID is 1
+   │  └─ it should return true
+   └─ when typeID is not 1
+      └─ it should return false

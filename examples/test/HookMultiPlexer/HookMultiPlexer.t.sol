@@ -15,7 +15,7 @@ import {
 import { HookMultiPlexer } from "src/HookMultiPlexer/HookMultiPlexer.sol";
 import "forge-std/interfaces/IERC20.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
-import { MockHook } from "./mocks/MockHook.sol";
+import { MockHook } from "test/mocks/MockHook.sol";
 
 import "erc7579/lib/ModeLib.sol";
 

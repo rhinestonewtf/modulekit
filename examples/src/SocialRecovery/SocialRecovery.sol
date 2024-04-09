@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
 import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
-import { SentinelListLib } from "sentinellist/SentinelList.sol";
+import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { CheckSignatures } from "checknsignatures/CheckNSignatures.sol";
 import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ModeLib, CallType, ModeCode, CALLTYPE_SINGLE } from "erc7579/lib/ModeLib.sol";
@@ -18,12 +18,13 @@ contract SocialRecovery is ERC7579ValidatorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error AlreadyInitialized();
     error UnsopportedOperation();
     error InvalidGuardian(address guardian);
     error ThresholdNotSet();
     error InvalidThreshold();
 
-    SentinelListLib.SentinelList guardians;
+    SentinelList4337Lib.SentinelList guardians;
     mapping(address account => uint256) thresholds;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -31,6 +32,8 @@ contract SocialRecovery is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
+        if (isInitialized(msg.sender)) revert AlreadyInitialized();
+
         // Get the threshold and guardians from the data
         (uint256 threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
 
@@ -51,8 +54,11 @@ contract SocialRecovery is ERC7579ValidatorBase {
         // Set threshold
         thresholds[msg.sender] = threshold;
 
+        // Get the account
+        address account = msg.sender;
+
         // Initialize the guardian list
-        guardians.init();
+        guardians.init(account);
 
         // Add guardians to the list
         for (uint256 i = 0; i < guardiansLength; i++) {
@@ -60,7 +66,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
             if (_guardian == address(0)) {
                 revert InvalidGuardian(_guardian);
             }
-            guardians.push(_guardian);
+            guardians.push(account, _guardian);
         }
     }
 
@@ -68,8 +74,33 @@ contract SocialRecovery is ERC7579ValidatorBase {
         // todo
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(address smartAccount) public view returns (bool) {
         return thresholds[smartAccount] != 0;
+    }
+
+    function setThreshold(uint256 threshold) external {
+        if (threshold == 0) {
+            revert InvalidThreshold();
+        }
+        // TODO check if the threshold is less than the number of guardians
+
+        thresholds[msg.sender] = threshold;
+    }
+
+    function addGuardian(address guardian) external {
+        if (guardian == address(0)) {
+            revert InvalidGuardian(guardian);
+        }
+
+        if (guardians.contains(msg.sender, guardian)) {
+            revert InvalidGuardian(guardian);
+        }
+
+        guardians.push(msg.sender, guardian);
+    }
+
+    function removeGuardian(address guardian) external {
+        guardians.remove(msg.sender, guardian);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -169,7 +200,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
     }
 
     function version() external pure returns (string memory) {
-        return "0.0.1";
+        return "1.0.0";
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {

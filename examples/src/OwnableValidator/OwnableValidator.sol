@@ -14,6 +14,8 @@ contract OwnableValidator is ERC7579ValidatorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error AlreadyInitialized();
+
     mapping(address subAccout => address owner) public owners;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -21,17 +23,20 @@ contract OwnableValidator is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        if (data.length == 0) return;
-        address owner = abi.decode(data, (address));
-        owners[msg.sender] = owner;
+        if (isInitialized(msg.sender)) revert AlreadyInitialized();
+        owners[msg.sender] = address(uint160(bytes20(data[0:20])));
     }
 
     function onUninstall(bytes calldata) external override {
         delete owners[msg.sender];
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(address smartAccount) public view returns (bool) {
         return owners[smartAccount] != address(0);
+    }
+
+    function setOwner(address owner) external {
+        owners[msg.sender] = owner;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -50,7 +55,7 @@ contract OwnableValidator is ERC7579ValidatorBase {
         bool validSig = owners[userOp.sender].isValidSignatureNow(
             ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature
         );
-        return _packValidationData(!validSig, type(uint48).max, 0);
+        return validSig ? VALIDATION_SUCCESS : VALIDATION_FAILED;
     }
 
     function isValidSignatureWithSender(
@@ -78,7 +83,7 @@ contract OwnableValidator is ERC7579ValidatorBase {
     }
 
     function version() external pure returns (string memory) {
-        return "0.0.1";
+        return "1.0.0";
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {

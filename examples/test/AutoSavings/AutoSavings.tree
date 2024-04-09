@@ -4,7 +4,7 @@ AutoSavingsTest
    │  ├─ It should successfully validate
    │  └─ It should execute deposit
    ├─ When signer is valid
-   │  ├─ It should deposit
+   │  ├─ it should deposit
    │  ├─ It should deposit correct percentage
    │  └─ It should update spending limit
    └─ When deposit amount larger than max

@@ -9,6 +9,8 @@ contract RegistryHook is ERC7579HookDestruct {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error AlreadyInitialized();
+
     event RegistrySet(address indexed smartAccount, address registry);
 
     mapping(address account => address) registry;
@@ -18,17 +20,22 @@ contract RegistryHook is ERC7579HookDestruct {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        (address registryAddress) = abi.decode(data, (address));
-        registry[msg.sender] = registryAddress;
-        emit RegistrySet(msg.sender, registryAddress);
-        // todo add attesters?
+        if (isInitialized(msg.sender)) revert AlreadyInitialized();
+
+        address registryAddress = address(uint160(bytes20(data[0:20])));
+        address account = msg.sender;
+
+        registry[account] = registryAddress;
+        emit RegistrySet({ smartAccount: account, registry: registryAddress });
+
+        // TODO add attesters?
     }
 
     function onUninstall(bytes calldata data) external override {
         delete registry[msg.sender];
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(address smartAccount) public view returns (bool) {
         return registry[smartAccount] != address(0);
     }
 
@@ -63,12 +70,12 @@ contract RegistryHook is ERC7579HookDestruct {
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
-    function version() external pure virtual returns (string memory) {
-        return "1.0.0";
-    }
-
     function name() external pure virtual returns (string memory) {
         return "RegistryHook";
+    }
+
+    function version() external pure virtual returns (string memory) {
+        return "1.0.0";
     }
 
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
