@@ -40,6 +40,7 @@ contract LaunchpadBase is Test {
 
     IEntryPoint entrypoint;
     bytes userOpInitCode;
+    IERC7484 registry;
 
     struct Setup {
         address singleton;
@@ -55,8 +56,9 @@ contract LaunchpadBase is Test {
         entrypoint = etchEntrypoint();
         singleton = new Safe();
         safeProxyFactory = new SafeProxyFactory();
+        registry = new MockRegistry();
         safe7579 = new SafeERC7579();
-        launchpad = new SafeSignerLaunchpad(address(entrypoint));
+        launchpad = new SafeSignerLaunchpad(address(entrypoint), registry);
         uniqueSignerFactory = new UniqueSignerFactory();
         uint256 key = 1;
         uniqueSigner = new TestUniqueSigner(key);
@@ -77,59 +79,39 @@ contract LaunchpadBase is Test {
         ISafe7579Init.ModuleInit memory hook =
             ISafe7579Init.ModuleInit({ module: address(0), initData: bytes("") });
 
-        ISafe7579Init.RegistryInit memory registryInit = ISafe7579Init.RegistryInit({
-            registry: IERC7484(address(new MockRegistry())),
-            attesters: Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
-            threshold: 2
-        });
-
-        Setup memory _setup = Setup({
+        SafeSignerLaunchpad.InitData memory initData = SafeSignerLaunchpad.InitData({
             singleton: address(singleton),
-            signerFactory: address(uniqueSignerFactory),
-            signerData: abi.encode(Solarray.addresses(signer1.addr, signer2.addr)),
+            owners: Solarray.addresses(signer1.addr),
+            threshold: 1,
             setupTo: address(launchpad),
             setupData: abi.encodeCall(
-                SafeSignerLaunchpad.initSafe7579,
-                (address(safe7579), validators, executors, fallbacks, hook)
+                SafeSignerLaunchpad.initSafe7579WithRegistry,
+                (
+                    address(safe7579),
+                    validators,
+                    executors,
+                    fallbacks,
+                    hook,
+                    Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
+                    2
+                )
                 ),
-            fallbackHandler: address(safe7579)
+            safeFallbackHandler: address(safe7579),
+            callData: ""
         });
-        bytes32 initHash = launchpad.getInitHash({
-            singleton: _setup.singleton,
-            signerFactory: _setup.signerFactory,
-            signerData: _setup.signerData,
-            setupTo: _setup.setupTo,
-            setupData: _setup.setupData,
-            fallbackHandler: _setup.fallbackHandler
-        });
+        bytes32 initHash = launchpad.hash(initData);
 
-        bytes memory factoryInitializer = abi.encodeCall(
-            SafeSignerLaunchpad.preValidationSetup,
-            (
-                initHash,
-                address(registryInit.registry),
-                abi.encodeCall(
-                    IERC7484.trustAttesters, (registryInit.threshold, registryInit.attesters)
-                    )
-            )
-        );
+        bytes memory factoryInitializer =
+            abi.encodeCall(SafeSignerLaunchpad.preValidationSetup, (initHash, address(0), ""));
 
         PackedUserOperation memory userOp =
             getDefaultUserOp(address(safe), address(defaultValidator));
 
-        userOp.callData = abi.encodeCall(
-            SafeSignerLaunchpad.initializeThenUserOp,
-            (
-                _setup.singleton,
-                _setup.signerFactory,
-                _setup.signerData,
-                _setup.setupTo,
-                _setup.setupData,
-                _setup.fallbackHandler,
-                ""
-            )
-        );
-        userOp.initCode = _initCode(factoryInitializer, salt);
+        {
+            userOp.callData =
+                abi.encodePacked(SafeSignerLaunchpad.executeUserOp.selector, abi.encode(initData));
+            userOp.initCode = _initCode(factoryInitializer, salt);
+        }
 
         address predict = launchpad.predictSafeAddress({
             singleton: address(launchpad),

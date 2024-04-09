@@ -2,11 +2,18 @@
 pragma solidity ^0.8.22;
 
 import { IAccount, PackedUserOperation } from "account-abstraction/interfaces/IAccount.sol";
-import { _packValidationData } from "account-abstraction/core/Helpers.sol";
+import {
+    _packValidationData,
+    _parseValidationData,
+    ValidationData
+} from "account-abstraction/core/Helpers.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 import { IUniqueSignerFactory } from "./SignerFactory.sol";
 import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
+import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { SafeERC7579 } from "../SafeERC7579.sol";
+
+import { IValidator } from "erc7579/interfaces/IERC7579Module.sol";
 
 import { SafeStorage } from "@safe-global/safe-contracts/contracts/libraries/SafeStorage.sol";
 import { ISignatureValidator } from
@@ -21,6 +28,16 @@ import "forge-std/console2.sol";
  * deploys the account.
  */
 contract SafeSignerLaunchpad is IAccount, SafeStorage {
+    struct InitData {
+        address singleton;
+        address[] owners;
+        uint256 threshold;
+        address setupTo;
+        bytes setupData;
+        address safeFallbackHandler;
+        bytes callData;
+    }
+
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
 
@@ -57,12 +74,14 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
 
     address private immutable SELF;
     address public immutable SUPPORTED_ENTRYPOINT;
+    IERC7484 public immutable REGISTRY;
 
-    constructor(address entryPoint) {
+    constructor(address entryPoint, IERC7484 registry) {
         require(entryPoint != address(0), "Invalid entry point");
 
         SELF = address(this);
         SUPPORTED_ENTRYPOINT = entryPoint;
+        REGISTRY = registry;
     }
 
     function initSafe7579WithRegistry(
@@ -71,13 +90,22 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         ISafe7579Init.ModuleInit[] calldata executors,
         ISafe7579Init.ModuleInit[] calldata fallbacks,
         ISafe7579Init.ModuleInit calldata hook,
-        ISafe7579Init.RegistryInit calldata registryInit
+        address[] calldata attesters,
+        uint8 threshold
     )
         public
     {
         ISafe(address(this)).enableModule(safe7579);
         SafeERC7579(payable(safe7579)).initializeAccountWithRegistry(
-            validators, executors, fallbacks, hook, registryInit
+            validators,
+            executors,
+            fallbacks,
+            hook,
+            ISafe7579Init.RegistryInit({
+                registry: REGISTRY,
+                attesters: attesters,
+                threshold: threshold
+            })
         );
     }
 
@@ -94,37 +122,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         SafeERC7579(payable(safe7579)).initializeAccount(validators, executors, fallbacks, hook);
     }
 
-    function predictSafeAddress(
-        address singleton,
-        address safeProxyFactory,
-        bytes memory creationCode,
-        bytes32 salt,
-        bytes memory factoryInitializer
-    )
-        external
-        pure
-        returns (address safeProxy)
-    {
-        salt = keccak256(abi.encodePacked(keccak256(factoryInitializer), salt));
-
-        safeProxy = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            bytes1(0xff),
-                            address(safeProxyFactory),
-                            salt,
-                            keccak256(
-                                abi.encodePacked(creationCode, uint256(uint160(address(singleton))))
-                            )
-                        )
-                    )
-                )
-            )
-        );
-    }
-
     modifier onlyProxy() {
         require(singleton == SELF, "Not called from proxy");
         _;
@@ -136,8 +133,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
     }
 
     receive() external payable { }
-
-    function setupRegistry(address[] calldata attesters, uint8 threshold) external { }
 
     function preValidationSetup(
         bytes32 initHash,
@@ -155,50 +150,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         }
     }
 
-    function getInitHash(
-        address singleton,
-        address signerFactory,
-        bytes memory signerData,
-        address setupTo,
-        bytes memory setupData,
-        address fallbackHandler
-    )
-        public
-        view
-        returns (bytes32 initHash)
-    {
-        initHash = keccak256(
-            abi.encodePacked(
-                bytes1(0x19),
-                bytes1(0x01),
-                _domainSeparator(),
-                keccak256(
-                    abi.encode(
-                        SAFE_INIT_TYPEHASH,
-                        singleton,
-                        signerFactory,
-                        keccak256(signerData),
-                        setupTo,
-                        keccak256(setupData),
-                        fallbackHandler
-                    )
-                )
-            )
-        );
-    }
-
-    function getOperationHash(
-        bytes32 userOpHash,
-        uint48 validAfter,
-        uint48 validUntil
-    )
-        public
-        view
-        returns (bytes32 operationHash)
-    {
-        operationHash = keccak256(_getOperationData(userOpHash, validAfter, validUntil));
-    }
-
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
@@ -210,45 +161,16 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         onlySupportedEntryPoint
         returns (uint256 validationData)
     {
-        address signerFactory;
-        bytes memory signerData;
-        {
-            require(
-                this.initializeThenUserOp.selector == bytes4(userOp.callData[:4]),
-                "invalid user operation data"
-            );
-
-            address singleton;
-            address setupTo;
-            bytes memory setupData;
-            address fallbackHandler;
-            (singleton, signerFactory, signerData, setupTo, setupData, fallbackHandler,) = abi
-                .decode(userOp.callData[4:], (address, address, bytes, address, bytes, address, bytes));
-            bytes32 initHash = getInitHash(
-                singleton, signerFactory, signerData, setupTo, setupData, fallbackHandler
-            );
-
-            require(initHash == _initHash(), "invalid init hash");
-        }
-
-        uint48 validAfter;
-        uint48 validUntil;
-        bytes calldata signature;
-        {
-            bytes calldata sig = userOp.signature;
-            validAfter = uint48(bytes6(sig[0:6]));
-            validUntil = uint48(bytes6(sig[6:12]));
-            signature = sig[12:];
-        }
-
-        bytes memory operationData = _getOperationData(userOpHash, validAfter, validUntil);
-        // bytes4 magicValue = IUniqueSignerFactory(signerFactory).isValidSignatureForSigner(
-        //     operationData, signature, signerData
-        // );
-        bytes4 magicValue = ISignatureValidator.isValidSignature.selector;
-        validationData = _packValidationData(
-            magicValue != ISignatureValidator.isValidSignature.selector, validUntil, validAfter
+        require(
+            this.executeUserOp.selector == bytes4(userOp.callData[:4]),
+            "invalid user operation data"
         );
+
+        InitData memory initData = abi.decode(userOp.callData[4:], (InitData));
+
+        require(hash(initData) == _initHash(), "invalid init hash");
+
+        // TODO: is it a problem that we dont validate the signature with the validator here?
 
         if (missingAccountFunds > 0) {
             // solhint-disable-next-line no-inline-assembly
@@ -258,33 +180,29 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         }
     }
 
-    // TODO: change to executeUserOp
-    function initializeThenUserOp(
-        address singleton,
-        address signerFactory,
-        bytes calldata signerData,
-        address setupTo,
-        bytes calldata setupData,
-        address fallbackHandler,
-        bytes memory callData
+    function executeUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
     )
         external
         onlySupportedEntryPoint
     {
+        InitData memory initData = abi.decode(userOp.callData[4:], (InitData));
         // update singleton to Safe account impl
-        SafeStorage.singleton = singleton;
-        {
-            // address[] memory owners = new address[](1);
-            // owners[0] = IUniqueSignerFactory(signerFactory).createSigner(signerData);
+        SafeStorage.singleton = initData.singleton;
 
-            (address[] memory owners) = abi.decode(signerData, (address[]));
+        ISafe(address(this)).setup(
+            initData.owners,
+            initData.threshold,
+            initData.setupTo,
+            initData.setupData,
+            initData.safeFallbackHandler,
+            address(0),
+            0,
+            payable(address(0))
+        );
 
-            ISafe(address(this)).setup(
-                owners, 1, setupTo, setupData, fallbackHandler, address(0), 0, payable(address(0))
-            );
-        }
-
-        (bool success, bytes memory returnData) = address(this).delegatecall(callData);
+        (bool success, bytes memory returnData) = address(this).delegatecall(initData.callData);
         if (!success) {
             // solhint-disable-next-line no-inline-assembly
             assembly ("memory-safe") {
@@ -293,6 +211,20 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         }
 
         _setInitHash(0);
+
+        // validate user operation
+        address validator;
+        uint256 nonce = userOp.nonce;
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            validator := shr(96, nonce)
+        }
+
+        uint256 ret = IValidator(validator).validateUserOp(userOp, userOpHash);
+        // TODO: unpack properly
+        // consider comparing validUntil/validAfter to userOp.signature
+        if (ret != 0) revert();
     }
 
     function _domainSeparator() internal view returns (bytes32) {
@@ -343,5 +275,52 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         }
         /* solhint-enable no-inline-assembly */
         return size > 0;
+    }
+
+    function getOperationHash(
+        bytes32 userOpHash,
+        uint48 validAfter,
+        uint48 validUntil
+    )
+        public
+        view
+        returns (bytes32 operationHash)
+    {
+        operationHash = keccak256(_getOperationData(userOpHash, validAfter, validUntil));
+    }
+
+    function predictSafeAddress(
+        address singleton,
+        address safeProxyFactory,
+        bytes memory creationCode,
+        bytes32 salt,
+        bytes memory factoryInitializer
+    )
+        external
+        pure
+        returns (address safeProxy)
+    {
+        salt = keccak256(abi.encodePacked(keccak256(factoryInitializer), salt));
+
+        safeProxy = address(
+            uint160(
+                uint256(
+                    keccak256(
+                        abi.encodePacked(
+                            bytes1(0xff),
+                            address(safeProxyFactory),
+                            salt,
+                            keccak256(
+                                abi.encodePacked(creationCode, uint256(uint160(address(singleton))))
+                            )
+                        )
+                    )
+                )
+            )
+        );
+    }
+
+    function hash(InitData memory data) public returns (bytes32) {
+        return keccak256(abi.encode(data));
     }
 }
