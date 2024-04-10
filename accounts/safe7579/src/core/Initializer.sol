@@ -5,7 +5,6 @@ import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
 import "./ModuleManager.sol";
 import { HookManager } from "./HookManager.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
-import "forge-std/console2.sol";
 
 abstract contract Initializer is ISafe7579Init, HookManager {
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;

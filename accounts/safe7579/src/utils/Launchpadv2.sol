@@ -83,6 +83,11 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         REGISTRY = registry;
     }
 
+    modifier onlyDelegatecall() {
+        require(msg.sender == address(this), "Only delegatecall");
+        _;
+    }
+
     function initSafe7579(
         address safe7579,
         ISafe7579Init.ModuleInit[] calldata validators,
@@ -93,6 +98,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         uint8 threshold
     )
         public
+        onlyDelegatecall
     {
         ISafe(address(this)).enableModule(safe7579);
         SafeERC7579(payable(safe7579)).initializeAccount({
