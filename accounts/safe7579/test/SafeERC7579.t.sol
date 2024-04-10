@@ -9,8 +9,6 @@ import "./Launchpad.t.sol";
 import "forge-std/console2.sol";
 
 contract Safe7579Test is LaunchpadBase {
-    MockTarget target;
-
     function setUp() public override {
         super.setUp();
         target = new MockTarget();

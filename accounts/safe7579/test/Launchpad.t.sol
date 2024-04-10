@@ -8,6 +8,9 @@ import { MockValidator } from "./mocks/MockValidator.sol";
 import { MockRegistry } from "./mocks/MockRegistry.sol";
 import { MockExecutor } from "./mocks/MockExecutor.sol";
 import { MockFallback } from "./mocks/MockFallback.sol";
+import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import { ModeLib } from "erc7579/lib/ModeLib.sol";
+import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { MockTarget } from "./mocks/MockTarget.sol";
 
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
@@ -32,6 +35,7 @@ contract LaunchpadBase is Test {
 
     MockValidator defaultValidator;
     MockExecutor defaultExecutor;
+    MockTarget target;
 
     Account signer1 = makeAccount("signer1");
     Account signer2 = makeAccount("signer2");
@@ -61,6 +65,7 @@ contract LaunchpadBase is Test {
         // Set up Modules
         defaultValidator = new MockValidator();
         defaultExecutor = new MockExecutor();
+        target = new MockTarget();
 
         bytes32 salt;
 
@@ -93,7 +98,17 @@ contract LaunchpadBase is Test {
             ),
             safe7579: address(safe7579),
             validators: validators,
-            callData: ""
+            callData: abi.encodeCall(
+                IERC7579Account.execute,
+                (
+                    ModeLib.encodeSimpleSingle(),
+                    ExecutionLib.encodeSingle({
+                        target: address(target),
+                        value: 0,
+                        callData: abi.encodeCall(MockTarget.set, (1337))
+                    })
+                )
+            )
         });
         bytes32 initHash = launchpad.hash(initData);
 
@@ -129,6 +144,8 @@ contract LaunchpadBase is Test {
         entrypoint.handleOps(userOps, payable(address(0x69)));
 
         safe = Safe(payable(predict));
+
+        assertEq(target.value(), 1337);
     }
 
     function _initCode(

@@ -4,7 +4,10 @@ pragma solidity ^0.8.23;
 contract MockTarget {
     uint256 public value;
 
+    event Access(address sender);
+
     function set(uint256 _value) public returns (uint256) {
+        emit Access(msg.sender);
         value = _value;
         return _value;
     }

@@ -202,17 +202,22 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
             paymentReceiver: payable(address(0))
         });
 
-        // encoded in here can be the initializeAccount() call
-        (bool success, bytes memory returnData) = address(this).delegatecall(initData.callData);
+        // reset initHash
+        _setInitHash(0);
+        // call function on safe7579 as safe. attach address(this)
+        // to comply with 2771 access control
+        (bool success, bytes memory returnData) = address(initData.safe7579).call(
+            abi.encodePacked(
+                initData.callData, // encode arbitrary execution here. i.e. IERC7579.execute()
+                address(this) // ERC2771 access control
+            )
+        );
         if (!success) {
             // solhint-disable-next-line no-inline-assembly
             assembly ("memory-safe") {
                 revert(add(returnData, 0x20), mload(returnData))
             }
         }
-
-        // reset initHash
-        _setInitHash(0);
     }
 
     function _domainSeparator() internal view returns (bytes32) {
