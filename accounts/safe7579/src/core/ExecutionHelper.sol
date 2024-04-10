@@ -16,7 +16,7 @@ import {
 abstract contract ExecutionHelper {
     error ExecutionFailed();
 
-    event TryExecutionFailed(uint256 numberInBatch);
+    event TryExecutionFailed(address safe, uint256 numberInBatch);
 
     SimulateTxAccessor private immutable SIMULATETX;
 
@@ -149,7 +149,7 @@ abstract contract ExecutionHelper {
         internal
     {
         bool success = ISafe(safe).execTransactionFromModule(target, value, callData, 0);
-        if (!success) emit TryExecutionFailed(0);
+        if (!success) emit TryExecutionFailed(safe, 0);
     }
 
     /**
@@ -173,7 +173,7 @@ abstract contract ExecutionHelper {
         bool success;
         (success, returnData) =
             ISafe(safe).execTransactionFromModuleReturnData(target, value, callData, 0);
-        if (!success) emit TryExecutionFailed(0);
+        if (!success) emit TryExecutionFailed(safe, 0);
     }
 
     /**
@@ -190,7 +190,7 @@ abstract contract ExecutionHelper {
             bool success = ISafe(safe).execTransactionFromModule(
                 execution.target, execution.value, execution.callData, 0
             );
-            if (!success) emit TryExecutionFailed(i);
+            if (!success) emit TryExecutionFailed(safe, i);
         }
     }
 
@@ -202,7 +202,7 @@ abstract contract ExecutionHelper {
         internal
     {
         bool success = ISafe(safe).execTransactionFromModule(target, 0, callData, 1);
-        if (!success) emit TryExecutionFailed(0);
+        if (!success) emit TryExecutionFailed(safe, 0);
     }
 
     function _tryExecuteDelegateCallReturnData(
@@ -216,7 +216,7 @@ abstract contract ExecutionHelper {
         bool success;
         (success, returnData) =
             ISafe(safe).execTransactionFromModuleReturnData(target, 0, callData, 1);
-        if (!success) emit TryExecutionFailed(0);
+        if (!success) emit TryExecutionFailed(safe, 0);
     }
 
     /**
@@ -242,7 +242,7 @@ abstract contract ExecutionHelper {
             (success, returnDatas[i]) = ISafe(safe).execTransactionFromModuleReturnData(
                 execution.target, execution.value, execution.callData, 0
             );
-            if (!success) emit TryExecutionFailed(i);
+            if (!success) emit TryExecutionFailed(safe, i);
         }
     }
 
