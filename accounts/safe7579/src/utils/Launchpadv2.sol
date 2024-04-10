@@ -320,6 +320,16 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
     }
 
     function hash(InitData memory data) public returns (bytes32) {
-        return keccak256(abi.encode(data));
+        return keccak256(
+            abi.encode(
+                data.singleton,
+                data.owners,
+                data.threshold,
+                data.setupTo,
+                data.setupData,
+                data.safe7579,
+                data.validators
+            )
+        );
     }
 }
