@@ -80,7 +80,7 @@ contract LaunchpadBase is Test {
             threshold: 1,
             setupTo: address(launchpad),
             setupData: abi.encodeCall(
-                Safe7579Launchpad.initSafe7579WithRegistry,
+                Safe7579Launchpad.initSafe7579,
                 (
                     address(safe7579),
                     new ISafe7579Init.ModuleInit[](0),

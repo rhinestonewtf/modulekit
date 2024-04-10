@@ -5,6 +5,7 @@ import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
 import "./ModuleManager.sol";
 import { HookManager } from "./HookManager.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
+import "forge-std/console2.sol";
 
 abstract contract Initializer is ISafe7579Init, HookManager {
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
@@ -50,6 +51,10 @@ abstract contract Initializer is ISafe7579Init, HookManager {
         internal
     {
         uint256 length = validators.length;
+        // _initModules may be used via launchpad or directly by already deployed Safe accounts
+        // if this function is called by the launchpad, validators will be initialized via
+        // launchpadValidators()
+        // to avoid double initialization, we check if the validators are already initialized
         if (!$validators.alreadyInitialized({ account: msg.sender })) {
             $validators.init({ account: msg.sender });
             for (uint256 i; i < length; i++) {
@@ -59,21 +64,12 @@ abstract contract Initializer is ISafe7579Init, HookManager {
         } else if (length != 0) {
             revert InvalidInitData(msg.sender);
         }
-        _initModules(executors, fallbacks, hook);
-    }
 
-    function _initModules(
-        ModuleInit[] calldata executors,
-        ModuleInit[] calldata fallbacks,
-        ModuleInit calldata hook
-    )
-        internal
-    {
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        // this will revert if already initialized
+        // this will revert if already initialized.
         $mms._executors.init();
 
-        uint256 length = executors.length;
+        length = executors.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata executor = executors[i];
             _installExecutor(executor.module, executor.initData);

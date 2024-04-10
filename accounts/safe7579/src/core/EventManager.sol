@@ -11,22 +11,8 @@ contract EventEmitter {
         emit ModuleInstalled(moduleTypeId, module);
     }
 
-    function emitModulesInstalled(uint256 moduleTypeId, address[] calldata modules) external {
-        uint256 length = modules.length;
-        for (uint256 i; i < length; i++) {
-            emit ModuleInstalled(moduleTypeId, modules[i]);
-        }
-    }
-
     function emitModuleUninstalled(uint256 moduleTypeId, address module) external {
         emit ModuleUninstalled(moduleTypeId, module);
-    }
-
-    function emitModulesUninstalled(uint256 moduleTypeId, address[] calldata modules) external {
-        uint256 length = modules.length;
-        for (uint256 i; i < length; i++) {
-            emit ModuleUninstalled(moduleTypeId, modules[i]);
-        }
     }
 }
 
@@ -38,22 +24,18 @@ contract EventManager is ExecutionHelper {
     }
 
     function _emitModuleInstall(uint256 moduleTypeId, address module) internal {
-        bool success = ISafe(msg.sender).execTransactionFromModule(
-            address(EVENT),
-            0,
-            abi.encodeCall(EventEmitter.emitModuleInstalled, (moduleTypeId, module)),
-            1
-        );
-        if (!success) revert ExecutionFailed();
+        _executeDelegateCallMemory({
+            safe: msg.sender,
+            target: address(EVENT),
+            callData: abi.encodeCall(EventEmitter.emitModuleInstalled, (moduleTypeId, module))
+        });
     }
 
     function _emitModuleUninstall(uint256 moduleTypeId, address module) internal {
-        bool success = ISafe(msg.sender).execTransactionFromModule(
-            address(EVENT),
-            0,
-            abi.encodeCall(EventEmitter.emitModuleUninstalled, (moduleTypeId, module)),
-            1
-        );
-        if (!success) revert ExecutionFailed();
+        _executeDelegateCallMemory({
+            safe: msg.sender,
+            target: address(EVENT),
+            callData: abi.encodeCall(EventEmitter.emitModuleUninstalled, (moduleTypeId, module))
+        });
     }
 }

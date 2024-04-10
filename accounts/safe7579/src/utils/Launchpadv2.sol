@@ -83,7 +83,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         REGISTRY = registry;
     }
 
-    function initSafe7579WithRegistry(
+    function initSafe7579(
         address safe7579,
         ISafe7579Init.ModuleInit[] calldata validators,
         ISafe7579Init.ModuleInit[] calldata executors,

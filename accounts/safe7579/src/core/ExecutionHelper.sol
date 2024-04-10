@@ -91,6 +91,17 @@ abstract contract ExecutionHelper {
         if (!success) revert ExecutionFailed();
     }
 
+    function _executeDelegateCallMemory(
+        address safe,
+        address target,
+        bytes memory callData
+    )
+        internal
+    {
+        bool success = ISafe(safe).execTransactionFromModule(target, 0, callData, 1);
+        if (!success) revert ExecutionFailed();
+    }
+
     function _executeDelegateCallReturnData(
         address safe,
         address target,
