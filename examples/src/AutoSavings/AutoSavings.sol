@@ -7,9 +7,11 @@ import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
 import { UniswapV3Integration } from "modulekit/src/Integrations.sol";
 import { Execution } from "modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
+import { SentinelListLib } from "sentinellist/SentinelList.sol";
 
-contract AutoSavingToVault is ERC7579ExecutorBase {
+contract AutoSavings is ERC7579ExecutorBase {
     using ERC4626Integration for *;
+    using SentinelListLib for SentinelListLib.SentinelList;
 
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
@@ -26,7 +28,8 @@ contract AutoSavingToVault is ERC7579ExecutorBase {
         uint128 sqrtPriceLimitX96;
     }
 
-    mapping(address account => mapping(address token => Config)) internal _config;
+    mapping(address account => mapping(address token => Config)) public config;
+    mapping(address account => SentinelListLib.SentinelList) tokens;
 
     event AutoSaveExecuted(
         address indexed smartAccount, address indexed token, uint256 amountReceived
@@ -36,34 +39,39 @@ contract AutoSavingToVault is ERC7579ExecutorBase {
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    function getConfig(address account, address token) public view returns (Config memory) {
-        return _config[account][token];
-    }
-
-    function setConfig(address token, Config memory config) public {
-        // TODO check for min / max sqrtPriceLimitX96
-        _config[msg.sender][token] = config;
-    }
-
     function onInstall(bytes calldata data) external override {
-        if (data.length == 0) return;
-        (address[] memory tokens, Config[] memory log) = abi.decode(data, (address[], Config[]));
+        address account = msg.sender;
+        if (isInitialized(account)) revert AlreadyInitialized(account);
 
-        for (uint256 i; i < tokens.length; i++) {
-            _config[msg.sender][tokens[i]] = log[i];
+        (address[] memory _tokens, Config[] memory log) = abi.decode(data, (address[], Config[]));
+
+        tokens[account].init();
+
+        uint256 tokenLength = _tokens.length;
+        for (uint256 i; i < tokenLength; i++) {
+            address _token = _tokens[i];
+
+            config[account][_token] = log[i];
+            tokens[account].push(_token);
         }
     }
 
-    function onUninstall(bytes calldata data) external override {
-        if (data.length == 0) return;
-        address[] memory tokens = abi.decode(data, (address[]));
-        for (uint256 i; i < tokens.length; i++) {
-            delete _config[msg.sender][tokens[i]];
-        }
+    function onUninstall(bytes calldata) external override {
+        // TODO
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
-        // Todo
+    function isInitialized(address smartAccount) public view returns (bool) {
+        return tokens[smartAccount].alreadyInitialized();
+    }
+
+    function setConfig(address token, Config memory _config) public {
+        // TODO check for min / max sqrtPriceLimitX96
+        address account = msg.sender;
+
+        config[account][token] = _config;
+        if (!tokens[account].contains(token)) {
+            tokens[account].push(token);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -83,7 +91,7 @@ contract AutoSavingToVault is ERC7579ExecutorBase {
 
     function autoSave(Params calldata params) external {
         // get vault that was configured for this token
-        Config memory conf = _config[msg.sender][params.token];
+        Config memory conf = config[msg.sender][params.token];
         IERC4626 vault = IERC4626(conf.vault);
 
         // calc amount that is subject to be saved
@@ -132,10 +140,10 @@ contract AutoSavingToVault is ERC7579ExecutorBase {
     }
 
     function name() external pure virtual returns (string memory) {
-        return "AutoSaving";
+        return "AutoSavings";
     }
 
     function version() external pure virtual returns (string memory) {
-        return "0.0.1";
+        return "1.0.0";
     }
 }

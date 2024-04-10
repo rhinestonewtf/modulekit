@@ -13,7 +13,7 @@ contract ScheduledTransfers is SchedulingBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function executeOrder(uint256 jobId) external override canExecute(jobId) {
-        ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
+        ExecutionConfig storage executionConfig = executionLog[msg.sender][jobId];
 
         executionConfig.lastExecutionTime = uint48(block.timestamp);
         executionConfig.numberOfExecutionsCompleted += 1;
@@ -42,10 +42,10 @@ contract ScheduledTransfers is SchedulingBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function name() external pure virtual returns (string memory) {
-        return "Scheduled Transfers";
+        return "ScheduledTransfers";
     }
 
     function version() external pure virtual returns (string memory) {
-        return "0.0.1";
+        return "1.0.0";
     }
 }

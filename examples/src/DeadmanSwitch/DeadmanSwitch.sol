@@ -82,9 +82,10 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         returns (ValidationData)
     {
         DeadmanSwitchStorage memory _config = config[userOp.sender];
-        if (_config.nominee == address(0)) return VALIDATION_FAILED;
+        address nominee = _config.nominee;
+        if (nominee == address(0)) return VALIDATION_FAILED;
 
-        bool sigValid = _config.nominee.isValidSignatureNow({
+        bool sigValid = nominee.isValidSignatureNow({
             hash: ECDSA.toEthSignedMessageHash(userOpHash),
             signature: userOp.signature
         });

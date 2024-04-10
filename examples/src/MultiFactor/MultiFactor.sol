@@ -41,9 +41,8 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external {
-        // check if module is already initialized
-        if (data.length == 0) return;
-        if (multiFactorConfig[msg.sender].threshold != 0) revert("Already Initialized");
+        address account = msg.sender;
+        if (isInitialized(account)) revert AlreadyInitialized(account);
 
         // TODO: slice this with packed / calldata
         (
@@ -68,8 +67,8 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         config.threshold = 0;
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
-        return multiFactorConfig[msg.sender].threshold != 0;
+    function isInitialized(address smartAccount) public view returns (bool) {
+        return multiFactorConfig[smartAccount].threshold != 0;
     }
 
     function setConfig(
@@ -396,6 +395,6 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     }
 
     function version() external pure returns (string memory) {
-        return "0.0.1";
+        return "1.0.0";
     }
 }

@@ -9,18 +9,15 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     error InvalidExecution();
-    error InvalidInstall();
-    error InvalidJob();
 
     event ExecutionAdded(address indexed smartAccount, uint256 indexed jobId);
     event ExecutionTriggered(address indexed smartAccount, uint256 indexed jobId);
     event ExecutionStatusUpdated(address indexed smartAccount, uint256 indexed jobId);
     event ExecutionsCancelled(address indexed smartAccount);
 
-    mapping(address smartAccount => mapping(uint256 jobId => ExecutionConfig)) internal
-        _executionLog;
+    mapping(address smartAccount => mapping(uint256 jobId => ExecutionConfig)) public executionLog;
 
-    mapping(address smartAccount => uint256 jobCount) internal _accountJobCount;
+    mapping(address smartAccount => uint256 jobCount) public accountJobCount;
 
     struct ExecutionConfig {
         uint48 executeInterval;
@@ -41,8 +38,9 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        if (_accountJobCount[msg.sender] != 0) {
-            revert InvalidInstall();
+        address account = msg.sender;
+        if (isInitialized(account)) {
+            revert AlreadyInitialized(account);
         }
 
         (
@@ -52,10 +50,9 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
             bytes memory executionData
         ) = abi.decode(data, (uint48, uint16, uint48, bytes));
 
-        uint256 jobId = _accountJobCount[msg.sender] + 1;
-        _accountJobCount[msg.sender]++;
+        uint256 jobId = accountJobCount[account]++;
 
-        _executionLog[msg.sender][jobId] = ExecutionConfig({
+        executionLog[account][jobId] = ExecutionConfig({
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
@@ -65,21 +62,23 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
             executionData: executionData
         });
 
-        emit ExecutionAdded(msg.sender, jobId);
+        emit ExecutionAdded(account, jobId);
     }
 
     function onUninstall(bytes calldata) external {
-        uint256 count = _accountJobCount[msg.sender];
-        for (uint256 i = 1; i <= count; i++) {
-            delete _executionLog[msg.sender][i];
-        }
-        _accountJobCount[msg.sender] = 0;
+        address account = msg.sender;
 
-        emit ExecutionsCancelled(msg.sender);
+        uint256 count = accountJobCount[account];
+        for (uint256 i = 1; i <= count; i++) {
+            delete executionLog[account][i];
+        }
+        accountJobCount[account] = 0;
+
+        emit ExecutionsCancelled(account);
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
-        return _accountJobCount[smartAccount] != 0;
+    function isInitialized(address smartAccount) public view returns (bool) {
+        return accountJobCount[smartAccount] != 0;
     }
 
     function addOrder(ExecutionConfig calldata executionConfig) external {
@@ -87,24 +86,12 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     }
 
     function toggleOrder(uint256 jobId) external {
-        ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
+        address account = msg.sender;
+
+        ExecutionConfig storage executionConfig = executionLog[account][jobId];
         executionConfig.isEnabled = !executionConfig.isEnabled;
-        emit ExecutionStatusUpdated(msg.sender, jobId);
-    }
 
-    function getAccountJobDetails(
-        address smartAccount,
-        uint256 jobId
-    )
-        external
-        view
-        returns (ExecutionConfig memory)
-    {
-        return _executionLog[smartAccount][jobId];
-    }
-
-    function getAccountJobCount(address smartAccount) external view returns (uint256) {
-        return _accountJobCount[smartAccount];
+        emit ExecutionStatusUpdated(account, jobId);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -119,10 +106,12 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function _createExecution(ExecutionConfig calldata data) internal {
-        uint256 jobId = _accountJobCount[msg.sender] + 1;
-        _accountJobCount[msg.sender]++;
+        address account = msg.sender;
 
-        _executionLog[msg.sender][jobId] = ExecutionConfig({
+        uint256 jobId = accountJobCount[account] + 1;
+        accountJobCount[account]++;
+
+        executionLog[account][jobId] = ExecutionConfig({
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
@@ -132,11 +121,11 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
             executionData: data.executionData
         });
 
-        emit ExecutionAdded(msg.sender, jobId);
+        emit ExecutionAdded(account, jobId);
     }
 
     function _isExecutionValid(uint256 jobId) internal view {
-        ExecutionConfig storage executionConfig = _executionLog[msg.sender][jobId];
+        ExecutionConfig storage executionConfig = executionLog[msg.sender][jobId];
 
         if (!executionConfig.isEnabled) {
             revert InvalidExecution();
