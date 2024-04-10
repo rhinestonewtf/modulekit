@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import { Script } from "forge-std/Script.sol";
-import { AutoSavingToVault } from "../src/AutoSavings/AutoSavings.sol";
+import { AutoSavings } from "../src/AutoSavings/AutoSavings.sol";
 import { FlashloanCallback } from "../src/ColdStorage/FlashloanCallback.sol";
 import { FlashloanLender } from "../src/ColdStorage/FlashloanLender.sol";
 import { ColdStorageHook } from "../src/ColdStorage/ColdStorageHook.sol";
@@ -25,7 +25,7 @@ contract DeployScript is Script {
         vm.startBroadcast(vm.envUint("PK"));
 
         // Deploy Modules
-        AutoSavingToVault autoSavings = new AutoSavingToVault{ salt: salt }();
+        AutoSavings autoSavings = new AutoSavings{ salt: salt }();
 
         FlashloanCallback flashloanCallback = new FlashloanCallback{ salt: salt }();
         FlashloanLender flashloanLender = new FlashloanLender{ salt: salt }();

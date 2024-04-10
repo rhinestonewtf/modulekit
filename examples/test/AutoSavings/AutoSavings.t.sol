@@ -7,7 +7,7 @@ import "modulekit/src/Helpers.sol";
 import "modulekit/src/Core.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 import "solmate/test/utils/mocks/MockERC4626.sol";
-import { AutoSavingToVault } from "src/AutoSavings/AutoSavings.sol";
+import { AutoSavings } from "src/AutoSavings/AutoSavings.sol";
 
 import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 
@@ -17,7 +17,7 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
     using ModuleKitUserOp for *;
 
     AccountInstance internal instance;
-    AutoSavingToVault internal autosavings;
+    AutoSavings internal autosavings;
 
     MockERC20 internal tokenIn;
     MockERC20 internal tokenOut;
@@ -32,7 +32,7 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
         instance = makeAccountInstance("instance");
         vm.warp(17_999_999);
 
-        autosavings = new AutoSavingToVault();
+        autosavings = new AutoSavings();
         tokenIn = new MockERC20("USDC", "USDC", 18);
         vm.label(address(tokenIn), "USDC");
         tokenIn.mint(instance.account, 1_000_000);
@@ -43,7 +43,7 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
         vault1 = new MockERC4626(tokenIn, "vUSDC", "vUSDC");
         vault2 = new MockERC4626(tokenOut, "vwETH", "vwETH");
 
-        AutoSavingToVault.Config memory savingForToken = AutoSavingToVault.Config({
+        AutoSavings.Config memory savingForToken = AutoSavings.Config({
             percentage: 100, // 100 = 1%
             vault: address(vault2),
             sqrtPriceLimitX96: 0
@@ -54,7 +54,7 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
             data: ""
         });
         vm.prank(instance.account);
-        autosavings.setConfig({ token: address(tokenIn), config: savingForToken });
+        autosavings.setConfig({ token: address(tokenIn), _config: savingForToken });
     }
 
     modifier whenModuleIsCalled() {
@@ -68,12 +68,12 @@ contract AutoSavingsTest is RhinestoneModuleKit, Test {
 
     function test_WhenSignerIsValid() external whenModuleIsCalled {
         // It should deposit
-        AutoSavingToVault.Params memory params =
-            AutoSavingToVault.Params({ token: address(tokenIn), amountReceived: 100 });
+        AutoSavings.Params memory params =
+            AutoSavings.Params({ token: address(tokenIn), amountReceived: 100 });
         instance.getExecOps({
             target: address(autosavings),
             value: 0,
-            callData: abi.encodeCall(AutoSavingToVault.autoSave, (params)),
+            callData: abi.encodeCall(AutoSavings.autoSave, (params)),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
         // It should deposit correct percentage
