@@ -43,26 +43,12 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
             revert AlreadyInitialized(account);
         }
 
-        (
-            uint48 executeInterval,
-            uint16 numberOfExecutions,
-            uint48 startDate,
-            bytes memory executionData
-        ) = abi.decode(data, (uint48, uint16, uint48, bytes));
-
-        uint256 jobId = accountJobCount[account]++;
-
-        executionLog[account][jobId] = ExecutionConfig({
-            numberOfExecutionsCompleted: 0,
-            isEnabled: true,
-            lastExecutionTime: 0,
-            executeInterval: executeInterval,
-            numberOfExecutions: numberOfExecutions,
-            startDate: startDate,
-            executionData: executionData
+        _createExecution({
+            executeInterval: uint48(bytes6(data[0:6])),
+            numberOfExecutions: uint16(bytes2(data[6:8])),
+            startDate: uint48(bytes6(data[8:14])),
+            executionData: data[14:]
         });
-
-        emit ExecutionAdded(account, jobId);
     }
 
     function onUninstall(bytes calldata) external {
@@ -82,7 +68,12 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     }
 
     function addOrder(ExecutionConfig calldata executionConfig) external {
-        _createExecution(executionConfig);
+        _createExecution({
+            executeInterval: executionConfig.executeInterval,
+            numberOfExecutions: executionConfig.numberOfExecutions,
+            startDate: executionConfig.startDate,
+            executionData: executionConfig.executionData
+        });
     }
 
     function toggleOrder(uint256 jobId) external {
@@ -105,20 +96,26 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _createExecution(ExecutionConfig calldata data) internal {
+    function _createExecution(
+        uint48 executeInterval,
+        uint16 numberOfExecutions,
+        uint48 startDate,
+        bytes calldata executionData
+    )
+        internal
+    {
         address account = msg.sender;
 
-        uint256 jobId = accountJobCount[account] + 1;
-        accountJobCount[account]++;
+        uint256 jobId = accountJobCount[account]++;
 
         executionLog[account][jobId] = ExecutionConfig({
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
-            executeInterval: data.executeInterval,
-            numberOfExecutions: data.numberOfExecutions,
-            startDate: data.startDate,
-            executionData: data.executionData
+            executeInterval: executeInterval,
+            numberOfExecutions: numberOfExecutions,
+            startDate: startDate,
+            executionData: executionData
         });
 
         emit ExecutionAdded(account, jobId);
