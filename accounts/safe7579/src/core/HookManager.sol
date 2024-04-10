@@ -68,6 +68,7 @@ abstract contract HookManager is ModuleManager {
             value: 0,
             callData: abi.encodeCall(IModule.onInstall, (data))
         });
+        _emitModuleInstall(MODULE_TYPE_HOOK, hook);
     }
 
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
@@ -78,6 +79,7 @@ abstract contract HookManager is ModuleManager {
             value: 0,
             callData: abi.encodeCall(IModule.onUninstall, (data))
         });
+        _emitModuleUninstall(MODULE_TYPE_HOOK, hook);
     }
 
     function _isHookInstalled(address module) internal view returns (bool) {

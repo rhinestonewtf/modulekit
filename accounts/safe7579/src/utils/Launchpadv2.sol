@@ -85,6 +85,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
 
     function initSafe7579WithRegistry(
         address safe7579,
+        ISafe7579Init.ModuleInit[] calldata validators,
         ISafe7579Init.ModuleInit[] calldata executors,
         ISafe7579Init.ModuleInit[] calldata fallbacks,
         ISafe7579Init.ModuleInit calldata hook,
@@ -94,28 +95,17 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         public
     {
         ISafe(address(this)).enableModule(safe7579);
-        SafeERC7579(payable(safe7579)).initializeAccountWithRegistry(
-            executors,
-            fallbacks,
-            hook,
-            ISafe7579Init.RegistryInit({
+        SafeERC7579(payable(safe7579)).initializeAccount({
+            validators: validators,
+            executors: executors,
+            fallbacks: fallbacks,
+            hook: hook,
+            registryInit: ISafe7579Init.RegistryInit({
                 registry: REGISTRY,
                 attesters: attesters,
                 threshold: threshold
             })
-        );
-    }
-
-    function initSafe7579(
-        address safe7579,
-        ISafe7579Init.ModuleInit[] calldata executors,
-        ISafe7579Init.ModuleInit[] calldata fallbacks,
-        ISafe7579Init.ModuleInit calldata hook
-    )
-        public
-    {
-        ISafe(address(this)).enableModule(safe7579);
-        SafeERC7579(payable(safe7579)).initializeAccount(executors, fallbacks, hook);
+        });
     }
 
     modifier onlyProxy() {

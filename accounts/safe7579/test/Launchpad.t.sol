@@ -83,6 +83,7 @@ contract LaunchpadBase is Test {
                 Safe7579Launchpad.initSafe7579WithRegistry,
                 (
                     address(safe7579),
+                    new ISafe7579Init.ModuleInit[](0),
                     executors,
                     fallbacks,
                     hook,

@@ -15,19 +15,12 @@ interface ISafe7579Init {
         uint8 threshold;
     }
 
-    function initializeAccountWithRegistry(
+    function initializeAccount(
+        ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
         ModuleInit calldata hook,
         RegistryInit calldata registryInit
-    )
-        external
-        payable;
-
-    function initializeAccount(
-        ModuleInit[] calldata executors,
-        ModuleInit[] calldata fallbacks,
-        ModuleInit calldata hook
     )
         external
         payable;

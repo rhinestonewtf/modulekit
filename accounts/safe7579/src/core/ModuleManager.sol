@@ -7,6 +7,7 @@ import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
+import { EventManager } from "./EventManager.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
 
@@ -36,7 +37,13 @@ struct ModuleManagerStorage {
  * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, RegistryAdapter {
+abstract contract ModuleManager is
+    AccessControl,
+    Receiver,
+    ExecutionHelper,
+    RegistryAdapter,
+    EventManager
+{
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
 
@@ -57,16 +64,6 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
     modifier onlyExecutorModule() {
         if (!_isExecutorInstalled(_msgSender())) revert InvalidModule(_msgSender());
         _;
-    }
-
-    /**
-     * Initializes linked list that handles installed Validator and Executor
-     */
-    function _initModuleManager() internal {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        // this will revert if list is already initialized
-        $validators.init({ account: msg.sender });
-        $mms._executors.init();
     }
 
     /////////////////////////////////////////////////////
@@ -91,6 +88,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
             value: 0,
             callData: abi.encodeCall(IModule.onInstall, (data))
         });
+        _emitModuleInstall(MODULE_TYPE_VALIDATOR, validator);
     }
 
     /**
@@ -107,6 +105,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
             value: 0,
             callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
         });
+        _emitModuleUninstall(MODULE_TYPE_VALIDATOR, validator);
     }
 
     /**
@@ -162,6 +161,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
             value: 0,
             callData: abi.encodeCall(IModule.onInstall, (data))
         });
+        _emitModuleInstall(MODULE_TYPE_EXECUTOR, executor);
     }
 
     function _uninstallExecutor(address executor, bytes calldata data) internal {
@@ -176,6 +176,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
             value: 0,
             callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
         });
+        _emitModuleUninstall(MODULE_TYPE_EXECUTOR, executor);
     }
 
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
@@ -227,6 +228,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
             value: 0,
             callData: abi.encodeCall(IModule.onInstall, (initData))
         });
+        _emitModuleInstall(MODULE_TYPE_FALLBACK, handler);
     }
 
     function _isFallbackHandlerInstalled(bytes4 functionSig) internal view virtual returns (bool) {
@@ -246,6 +248,7 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper, Reg
             value: 0,
             callData: abi.encodeCall(IModule.onUninstall, (initData))
         });
+        _emitModuleUninstall(MODULE_TYPE_FALLBACK, handler);
     }
 
     function _isFallbackHandlerInstalled(

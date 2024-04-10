@@ -37,7 +37,6 @@ import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
-import { IERC7484 } from "./interfaces/IERC7484.sol";
 
 import "forge-std/console2.sol";
 /**
@@ -324,7 +323,6 @@ contract SafeERC7579 is
         else if (moduleType == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
         else if (moduleType == MODULE_TYPE_HOOK) _installHook(module, initData);
         else revert UnsupportedModuleType(moduleType);
-        _emitModuleInstall(moduleType, module);
     }
 
     /**
@@ -346,7 +344,6 @@ contract SafeERC7579 is
         else if (moduleType == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         else if (moduleType == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
         else revert UnsupportedModuleType(moduleType);
-        _emitModuleUninstall(moduleType, module);
     }
 
     /**
@@ -498,16 +495,6 @@ contract SafeERC7579 is
     function getNonce(address safe, address validator) external view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = IEntryPoint(entryPoint()).getNonce(safe, key);
-    }
-
-    function setRegistry(
-        IERC7484 registry,
-        address[] calldata attesters,
-        uint8 threshold
-    )
-        external
-    {
-        _configureRegistry(registry, attesters, threshold);
     }
 
     function initializeAccount(bytes calldata callData) external payable { }
