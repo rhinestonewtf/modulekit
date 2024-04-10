@@ -178,6 +178,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         uint256 validatorsLength = initData.validators.length;
         for (uint256 i; i < validatorsLength; i++) {
             address validatorModule = initData.validators[i].module;
+            IValidator(validatorModule).onInstall(initData.validators[i].initData);
             emit ModuleInstalled(1, validatorModule);
             if (validatorModule == validator) userOpValidatorInstalled = true;
         }
