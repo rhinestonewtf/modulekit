@@ -1,43 +1,56 @@
-OwnableValidatorTest
-└─ when onInstall is called
-   ├─ when module is intialized
-   │  └─ it should revert
-   └─ when module is not intialized
-     └─ it should set the owner of msg.sender
+OwnableValidatorTest::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    └── it should set the owner of msg.sender
      
 
-└─ when onUninstall is called
-   └─ it should remove the owner
+OwnableValidatorTest::onUninstall
+└── it should remove the owner of msg.sender
 
-└─ when isInitialized is called
-   ├─ when module is not intialized
-   │  └─ it should return false
-   └─ when module is intialized
-      └─ it should return true
 
-└─ when setOwner is called
-   └─ it should set the owner of msg.sender
+OwnableValidatorTest::isInitialized
+└── when isInitialized is called
+    ├── when module is not intialized
+    │   └── it should return false
+    └── when module is intialized
+        └── it should return true
 
-└─ when validateUserOp is called
-   ├─ when signature is invalid
-   │  └─ it should return 1
-   └─ when signature is valid
-      └─ it should return 0
 
-└─ when isValidSignatureWithSender is called
-   ├─ when signature is invalid
-   │  └─ it should return ERC1271_FALSE
-   └─ when signature is valid
-      └─ it should return ERC1271_MAGIC_VALUE
+OwnableValidatorTest::setOwner
+└── when setOwner is called
+    └── it should set the owner of msg.sender
 
-└─ when name is called
-   └─ it should return OwnableValidator
 
-└─ when version is called
-   └─ it should return 1.0.0
+OwnableValidatorTest::validateUserOp
+└── when validateUserOp is called
+    ├── when signature is invalid
+    │   └── it should return 1
+    └── when signature is valid
+        └── it should return 0
 
-└─ when isModuleType is called
-   ├─ when typeID is 1
-   │  └─ it should return true
-   └─ when typeID is not 1
-      └─ it should return false
+
+OwnableValidatorTest::isValidSignatureWithSender
+└── when isValidSignatureWithSender is called
+    ├── when signature is invalid
+    │   └── it should return ERC1271_FALSE
+    └── when signature is valid
+        └── it should return ERC1271_MAGIC_VALUE
+
+
+OwnableValidatorTest::name
+└── when name is called
+    └── it should return OwnableValidator
+
+
+OwnableValidatorTest::version
+└── when version is called
+    └── it should return 1.0.0
+
+
+OwnableValidatorTest::isModuleType
+└── when isModuleType is called
+    ├── when typeID is 1
+    │   └── it should return true
+    └── when typeID is not 1
+        └── it should return false
