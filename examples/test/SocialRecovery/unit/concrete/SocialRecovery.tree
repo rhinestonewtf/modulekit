@@ -1,4 +1,4 @@
-SocialRecoveryTest::onInstall
+SocialRecovery::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
@@ -17,19 +17,19 @@ SocialRecoveryTest::onInstall
                 └── it should set all guardians
 
 
-SocialRecoveryTest::onUninstall
+SocialRecovery::onUninstall
 ├── it should remove the threshold
 └── it should remove the guardians
 
 
-SocialRecoveryTest::isInitialized
+SocialRecovery::isInitialized
 ├── when module is not intialized
 │   └── it should return false
 └── when module is intialized
     └── it should return true
 
 
-SocialRecoveryTest::setThreshold
+SocialRecovery::setThreshold
 ├── when threshold is 0
 │   └── it should revert
 └── when threshold is not 0
@@ -39,7 +39,7 @@ SocialRecoveryTest::setThreshold
         └── it should set the threshold
 
 
-SocialRecoveryTest::addGuardian
+SocialRecovery::addGuardian
 ├── when guardian is 0 address
 │   └── it should revert
 ├── when guardian is already added
@@ -48,11 +48,11 @@ SocialRecoveryTest::addGuardian
     └── it should add the guardian
 
 
-SocialRecoveryTest::removeGuardian
+SocialRecovery::removeGuardian
 └── it should remove the guardian
 
 
-SocialRecoveryTest::validateUserOp
+SocialRecovery::validateUserOp
 ├── when threshold is not set
 │   └── it should return 1
 └── when threshold is set
@@ -71,19 +71,19 @@ SocialRecoveryTest::validateUserOp
                     └── it should return 0
 
 
-SocialRecoveryTest::isValidSignatureWithSender
+SocialRecovery::isValidSignatureWithSender
 └── it should revert
 
 
-SocialRecoveryTest::name
+SocialRecovery::name
 └── it should return SocialRecoveryValidator
 
 
-SocialRecoveryTest::version
+SocialRecovery::version
 └── it should return 1.0.0
 
 
-SocialRecoveryTest::isModuleType
+SocialRecovery::isModuleType
 ├── when typeID is 1
 │   └── it should return true
 └── when typeID is not 1

@@ -19,10 +19,11 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         address nominee;
     }
 
-    mapping(address account => DeadmanSwitchStorage config) private _lastAccess;
+    mapping(address account => DeadmanSwitchStorage) public config;
 
     event Recovery(address account, address nominee);
 
+    error UnsopportedOperation();
     error MissingCondition();
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -30,39 +31,37 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external {
-        if (data.length == 0) return;
-        (address nominee, uint48 timeout) = abi.decode(data, (address, uint48));
-        DeadmanSwitchStorage storage config = _lastAccess[msg.sender];
+        address account = msg.sender;
+        if (isInitialized(account)) revert AlreadyInitialized(account);
 
-        config.lastAccess = uint48(block.timestamp);
-        config.timeout = timeout;
-        config.nominee = nominee;
+        address nominee = address(uint160(bytes20(data[0:20])));
+        uint48 timeout = uint48(bytes6(data[20:26]));
+
+        config[account] = DeadmanSwitchStorage({
+            lastAccess: uint48(block.timestamp),
+            timeout: timeout,
+            nominee: nominee
+        });
     }
 
     function onUninstall(bytes calldata) external override {
-        delete _lastAccess[msg.sender];
+        delete config[msg.sender];
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) { }
-
-    function lastAccess(address account) external view returns (uint48) {
-        return _lastAccess[account].lastAccess;
+    function isInitialized(address smartAccount) public view returns (bool) {
+        return config[smartAccount].nominee != address(0);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
-    function preCheck(
-        address msgSender,
-        uint256 msgValue,
-        bytes calldata msgData
-    )
-        external
-        returns (bytes memory)
-    {
-        DeadmanSwitchStorage storage config = _lastAccess[msg.sender];
-        config.lastAccess = uint48(block.timestamp);
+    function preCheck(address, uint256, bytes calldata) external returns (bytes memory) {
+        address account = msg.sender;
+        if (!isInitialized(account)) return "";
+
+        DeadmanSwitchStorage storage _config = config[account];
+        _config.lastAccess = uint48(block.timestamp);
     }
 
     function postCheck(
@@ -82,9 +81,10 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        DeadmanSwitchStorage memory config = _lastAccess[userOp.sender];
-        if (config.nominee == address(0)) return VALIDATION_FAILED;
-        bool sigValid = config.nominee.isValidSignatureNow({
+        DeadmanSwitchStorage memory _config = config[userOp.sender];
+        if (_config.nominee == address(0)) return VALIDATION_FAILED;
+
+        bool sigValid = _config.nominee.isValidSignatureNow({
             hash: ECDSA.toEthSignedMessageHash(userOpHash),
             signature: userOp.signature
         });
@@ -92,7 +92,7 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         // TODO: this could be a security issue or at least unpredictable behavior
         return _packValidationData({
             sigFailed: !sigValid,
-            validAfter: config.lastAccess + config.timeout,
+            validAfter: _config.lastAccess + _config.timeout,
             validUntil: type(uint48).max
         });
     }
@@ -107,7 +107,8 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
         override
         returns (bytes4)
     {
-        return EIP1271_FAILED;
+        // ERC-1271 not supported for deadman switch
+        revert UnsopportedOperation();
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -119,10 +120,10 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
     }
 
     function version() external pure returns (string memory) {
-        return "0.0.1";
+        return "1.0.0";
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_HOOK;
+        return typeID == TYPE_HOOK || typeID == TYPE_VALIDATOR;
     }
 }

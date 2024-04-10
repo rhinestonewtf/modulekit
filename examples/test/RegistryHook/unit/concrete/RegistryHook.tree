@@ -1,4 +1,4 @@
-RegistryHookTest::onInstall
+RegistryHook::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
@@ -6,23 +6,23 @@ RegistryHookTest::onInstall
     └── it should emit RegistrySet
 
 
-RegistryHookTest::onUninstall
+RegistryHook::onUninstall
 └── it should remove the registry
 
 
-RegistryHookTest::isInitialized
+RegistryHook::isInitialized
 ├── when module is not intialized
 │   └── it should return false
 └── when module is intialized
     └── it should return true
 
 
-RegistryHookTest::setRegistry
+RegistryHook::setRegistry
 ├── it should set the registry of msg.sender
 └── it should emit RegistrySet
 
 
-RegistryHookTest::preCheck
+RegistryHook::preCheck
 ├── when function is not installModule
 │   └── it should return
 └── when function is installModule
@@ -32,19 +32,19 @@ RegistryHookTest::preCheck
         └── it should return
 
 
-RegistryHookTest::postCheck
+RegistryHook::postCheck
 └── it should return
 
 
-RegistryHookTest::name
+RegistryHook::name
 └── it should return RegistryHook
 
 
-RegistryHookTest::version
+RegistryHook::version
 └── it should return 1.0.0
 
 
-RegistryHookTest::isModuleType
+RegistryHook::isModuleType
 ├── when typeID is 4
 │   └── it should return true
 └── when typeID is not 4

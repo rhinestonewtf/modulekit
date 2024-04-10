@@ -1,15 +1,15 @@
-OwnableValidatorTest::onInstall
+OwnableValidator::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
     └── it should set the owner of msg.sender
      
 
-OwnableValidatorTest::onUninstall
+OwnableValidator::onUninstall
 └── it should remove the owner of msg.sender
 
 
-OwnableValidatorTest::isInitialized
+OwnableValidator::isInitialized
 └── when isInitialized is called
     ├── when module is not intialized
     │   └── it should return false
@@ -17,12 +17,12 @@ OwnableValidatorTest::isInitialized
         └── it should return true
 
 
-OwnableValidatorTest::setOwner
+OwnableValidator::setOwner
 └── when setOwner is called
     └── it should set the owner of msg.sender
 
 
-OwnableValidatorTest::validateUserOp
+OwnableValidator::validateUserOp
 └── when validateUserOp is called
     ├── when signature is invalid
     │   └── it should return 1
@@ -30,7 +30,7 @@ OwnableValidatorTest::validateUserOp
         └── it should return 0
 
 
-OwnableValidatorTest::isValidSignatureWithSender
+OwnableValidator::isValidSignatureWithSender
 └── when isValidSignatureWithSender is called
     ├── when signature is invalid
     │   └── it should return ERC1271_FALSE
@@ -38,17 +38,17 @@ OwnableValidatorTest::isValidSignatureWithSender
         └── it should return ERC1271_MAGIC_VALUE
 
 
-OwnableValidatorTest::name
+OwnableValidator::name
 └── when name is called
     └── it should return OwnableValidator
 
 
-OwnableValidatorTest::version
+OwnableValidator::version
 └── when version is called
     └── it should return 1.0.0
 
 
-OwnableValidatorTest::isModuleType
+OwnableValidator::isModuleType
 └── when isModuleType is called
     ├── when typeID is 1
     │   └── it should return true
