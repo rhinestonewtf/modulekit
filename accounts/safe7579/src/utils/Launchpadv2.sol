@@ -22,21 +22,20 @@ import { ISignatureValidator } from
 import "forge-std/console2.sol";
 
 /**
- * @title SafeOpLaunchpad - A contract for Safe initialization with custom unique signers that would
- * violate ERC-4337 factory rules.
- * @dev The is intended to be set as a Safe proxy's implementation for ERC-4337 user operation that
- * deploys the account.
  */
-contract SafeSignerLaunchpad is IAccount, SafeStorage {
+contract Safe7579Launchpad is IAccount, SafeStorage {
     struct InitData {
         address singleton;
         address[] owners;
         uint256 threshold;
         address setupTo;
         bytes setupData;
-        address safeFallbackHandler;
+        address safe7579;
+        ISafe7579Init.ModuleInit[] validators;
         bytes callData;
     }
+
+    event ModuleInstalled(uint256 moduleTypeId, address module);
 
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         keccak256("EIP712Domain(uint256 chainId,address verifyingContract)");
@@ -86,7 +85,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
 
     function initSafe7579WithRegistry(
         address safe7579,
-        ISafe7579Init.ModuleInit[] calldata validators,
         ISafe7579Init.ModuleInit[] calldata executors,
         ISafe7579Init.ModuleInit[] calldata fallbacks,
         ISafe7579Init.ModuleInit calldata hook,
@@ -97,7 +95,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
     {
         ISafe(address(this)).enableModule(safe7579);
         SafeERC7579(payable(safe7579)).initializeAccountWithRegistry(
-            validators,
             executors,
             fallbacks,
             hook,
@@ -111,7 +108,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
 
     function initSafe7579(
         address safe7579,
-        ISafe7579Init.ModuleInit[] calldata validators,
         ISafe7579Init.ModuleInit[] calldata executors,
         ISafe7579Init.ModuleInit[] calldata fallbacks,
         ISafe7579Init.ModuleInit calldata hook
@@ -119,7 +115,7 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         public
     {
         ISafe(address(this)).enableModule(safe7579);
-        SafeERC7579(payable(safe7579)).initializeAccount(validators, executors, fallbacks, hook);
+        SafeERC7579(payable(safe7579)).initializeAccount(executors, fallbacks, hook);
     }
 
     modifier onlyProxy() {
@@ -143,7 +139,6 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         onlyProxy
     {
         _setInitHash(initHash);
-        console2.log("this", address(this));
         if (to != address(0)) {
             (bool success,) = to.delegatecall(preInit);
             require(success, "Pre-initialization failed");
@@ -162,16 +157,37 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         returns (uint256 validationData)
     {
         require(
-            this.executeUserOp.selector == bytes4(userOp.callData[:4]),
-            "invalid user operation data"
+            this.setupSafe.selector == bytes4(userOp.callData[:4]), "invalid user operation data"
         );
 
         InitData memory initData = abi.decode(userOp.callData[4:], (InitData));
-
         require(hash(initData) == _initHash(), "invalid init hash");
 
-        // TODO: is it a problem that we dont validate the signature with the validator here?
+        // get validator from nonce encoding
+        address validator;
+        uint256 nonce = userOp.nonce;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            validator := shr(96, nonce)
+        }
 
+        // initialize validator on behalf of the safe account
+        ISafe7579Init(initData.safe7579).launchpadValidators(initData.validators);
+
+        bool userOpValidatorInstalled;
+        uint256 validatorsLength = initData.validators.length;
+        for (uint256 i; i < validatorsLength; i++) {
+            address validatorModule = initData.validators[i].module;
+            emit ModuleInstalled(1, validatorModule);
+            if (validatorModule == validator) userOpValidatorInstalled = true;
+        }
+        // if the validator in the userOp was not installed, it MUST not be used to validate
+        if (!userOpValidatorInstalled) return 1;
+
+        // validate userOp with selected validation module
+        validationData = IValidator(validator).validateUserOp(userOp, userOpHash);
+
+        // pay back gas to EntryPoint
         if (missingAccountFunds > 0) {
             // solhint-disable-next-line no-inline-assembly
             assembly ("memory-safe") {
@@ -180,28 +196,22 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
         }
     }
 
-    function executeUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    )
-        external
-        onlySupportedEntryPoint
-    {
-        InitData memory initData = abi.decode(userOp.callData[4:], (InitData));
+    function setupSafe(InitData calldata initData) external onlySupportedEntryPoint {
         // update singleton to Safe account impl
         SafeStorage.singleton = initData.singleton;
 
-        ISafe(address(this)).setup(
-            initData.owners,
-            initData.threshold,
-            initData.setupTo,
-            initData.setupData,
-            initData.safeFallbackHandler,
-            address(0),
-            0,
-            payable(address(0))
-        );
+        ISafe(address(this)).setup({
+            _owners: initData.owners,
+            _threshold: initData.threshold,
+            to: initData.setupTo,
+            data: initData.setupData,
+            fallbackHandler: initData.safe7579,
+            paymentToken: address(0),
+            payment: 0,
+            paymentReceiver: payable(address(0))
+        });
 
+        // encoded in here can be the initializeAccount() call
         (bool success, bytes memory returnData) = address(this).delegatecall(initData.callData);
         if (!success) {
             // solhint-disable-next-line no-inline-assembly
@@ -210,21 +220,8 @@ contract SafeSignerLaunchpad is IAccount, SafeStorage {
             }
         }
 
+        // reset initHash
         _setInitHash(0);
-
-        // validate user operation
-        address validator;
-        uint256 nonce = userOp.nonce;
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            validator := shr(96, nonce)
-        }
-
-        uint256 ret = IValidator(validator).validateUserOp(userOp, userOpHash);
-        // TODO: unpack properly
-        // consider comparing validUntil/validAfter to userOp.signature
-        if (ret != 0) revert();
     }
 
     function _domainSeparator() internal view returns (bytes32) {

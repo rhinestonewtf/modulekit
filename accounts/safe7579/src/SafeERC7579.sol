@@ -24,6 +24,8 @@ import {
 } from "erc7579/interfaces/IERC7579Module.sol";
 import { AccessControl } from "./core/AccessControl.sol";
 import { HookManager } from "./core/HookManager.sol";
+import { EventManager } from "./core/EventManager.sol";
+import "./core/ModuleManager.sol";
 import { ISafeOp, SAFE_OP_TYPEHASH } from "./interfaces/ISafeOp.sol";
 import { ISafe } from "./interfaces/ISafe.sol";
 import {
@@ -50,8 +52,11 @@ contract SafeERC7579 is
     ISafe7579Init,
     AccessControl,
     IMSA,
-    HookManager
+    HookManager,
+    EventManager
 {
+    using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
+    using SentinelListLib for SentinelListLib.SentinelList;
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
@@ -323,7 +328,7 @@ contract SafeERC7579 is
         else if (moduleType == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
         else if (moduleType == MODULE_TYPE_HOOK) _installHook(module, initData);
         else revert UnsupportedModuleType(moduleType);
-        emit ModuleInstalled(moduleType, module);
+        _emitModuleInstall(moduleType, module);
     }
 
     /**
@@ -345,7 +350,7 @@ contract SafeERC7579 is
         else if (moduleType == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
         else if (moduleType == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
         else revert UnsupportedModuleType(moduleType);
-        emit ModuleUninstalled(moduleType, module);
+        _emitModuleUninstall(moduleType, module);
     }
 
     /**
@@ -500,7 +505,6 @@ contract SafeERC7579 is
     }
 
     function initializeAccountWithRegistry(
-        ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
         ModuleInit calldata hook,
@@ -510,11 +514,10 @@ contract SafeERC7579 is
         payable
     {
         _configureRegistry(registryInit.registry, registryInit.attesters, registryInit.threshold);
-        _initModules(validators, executors, fallbacks, hook);
+        _initModules(executors, fallbacks, hook);
     }
 
     function initializeAccount(
-        ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
         ModuleInit calldata hook
@@ -522,38 +525,49 @@ contract SafeERC7579 is
         public
         payable
     {
-        _initModules(validators, executors, fallbacks, hook);
+        _initModules(executors, fallbacks, hook);
+    }
+
+    function launchpadValidators(ModuleInit[] calldata validators) external payable override {
+        $validators.init({ account: msg.sender });
+        uint256 length = validators.length;
+        for (uint256 i; i < length; i++) {
+            ModuleInit calldata validator = validators[i];
+            $validators.push({ account: msg.sender, newEntry: validator.module });
+            // @dev No events emitted here. Launchpad is expected to do this.
+            // at this point, the safeproxy singleton is not yet updated to the SafeSingleton
+            // calling execTransactionFromModule is not available yet.
+        }
     }
 
     function _initModules(
-        ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
         ModuleInit calldata hook
     )
         internal
     {
+        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         // this will revert if already initialized
-        _initModuleManager();
-        uint256 length = validators.length;
-        for (uint256 i; i < length; i++) {
-            ModuleInit calldata validator = validators[i];
-            _installValidator(validator.module, validator.initData);
-        }
+        // TODO: check that validator list is already initialized
+        $mms._executors.init();
 
-        length = executors.length;
+        uint256 length = executors.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata executor = executors[i];
             _installExecutor(executor.module, executor.initData);
+            _emitModuleInstall(MODULE_TYPE_EXECUTOR, executor.module);
         }
 
         length = fallbacks.length;
         for (uint256 i; i < length; i++) {
             ModuleInit calldata _fallback = fallbacks[i];
             _installFallbackHandler(_fallback.module, _fallback.initData);
+            _emitModuleInstall(MODULE_TYPE_FALLBACK, _fallback.module);
         }
 
         _installHook(hook.module, hook.initData);
+        _emitModuleInstall(MODULE_TYPE_HOOK, hook.module);
 
         emit Safe7579Initialized(msg.sender);
     }

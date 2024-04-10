@@ -16,7 +16,6 @@ interface ISafe7579Init {
     }
 
     function initializeAccountWithRegistry(
-        ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
         ModuleInit calldata hook,
@@ -26,11 +25,12 @@ interface ISafe7579Init {
         payable;
 
     function initializeAccount(
-        ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
         ModuleInit calldata hook
     )
         external
         payable;
+
+    function launchpadValidators(ModuleInit[] calldata validators) external payable;
 }

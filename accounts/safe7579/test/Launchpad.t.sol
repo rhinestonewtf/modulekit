@@ -28,9 +28,7 @@ contract LaunchpadBase is Test {
     Safe singleton;
     Safe safe;
     SafeProxyFactory safeProxyFactory;
-    TestUniqueSigner uniqueSigner;
-    UniqueSignerFactory uniqueSignerFactory;
-    SafeSignerLaunchpad launchpad;
+    Safe7579Launchpad launchpad;
 
     MockValidator defaultValidator;
     MockExecutor defaultExecutor;
@@ -58,10 +56,7 @@ contract LaunchpadBase is Test {
         safeProxyFactory = new SafeProxyFactory();
         registry = new MockRegistry();
         safe7579 = new SafeERC7579();
-        launchpad = new SafeSignerLaunchpad(address(entrypoint), registry);
-        uniqueSignerFactory = new UniqueSignerFactory();
-        uint256 key = 1;
-        uniqueSigner = new TestUniqueSigner(key);
+        launchpad = new Safe7579Launchpad(address(entrypoint), registry);
 
         // Set up Modules
         defaultValidator = new MockValidator();
@@ -79,37 +74,36 @@ contract LaunchpadBase is Test {
         ISafe7579Init.ModuleInit memory hook =
             ISafe7579Init.ModuleInit({ module: address(0), initData: bytes("") });
 
-        SafeSignerLaunchpad.InitData memory initData = SafeSignerLaunchpad.InitData({
+        Safe7579Launchpad.InitData memory initData = Safe7579Launchpad.InitData({
             singleton: address(singleton),
             owners: Solarray.addresses(signer1.addr),
             threshold: 1,
             setupTo: address(launchpad),
             setupData: abi.encodeCall(
-                SafeSignerLaunchpad.initSafe7579WithRegistry,
+                Safe7579Launchpad.initSafe7579WithRegistry,
                 (
                     address(safe7579),
-                    validators,
                     executors,
                     fallbacks,
                     hook,
                     Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
                     2
                 )
-                ),
-            safeFallbackHandler: address(safe7579),
+            ),
+            safe7579: address(safe7579),
+            validators: validators,
             callData: ""
         });
         bytes32 initHash = launchpad.hash(initData);
 
         bytes memory factoryInitializer =
-            abi.encodeCall(SafeSignerLaunchpad.preValidationSetup, (initHash, address(0), ""));
+            abi.encodeCall(Safe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
 
         PackedUserOperation memory userOp =
             getDefaultUserOp(address(safe), address(defaultValidator));
 
         {
-            userOp.callData =
-                abi.encodePacked(SafeSignerLaunchpad.executeUserOp.selector, abi.encode(initData));
+            userOp.callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
             userOp.initCode = _initCode(factoryInitializer, salt);
         }
 
