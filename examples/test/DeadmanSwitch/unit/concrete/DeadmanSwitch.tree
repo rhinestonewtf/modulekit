@@ -19,6 +19,7 @@ DeadmanSwitch::isInitialized
 
 DeadmanSwitch::preCheck
 ├── when module is not intialized
+│   ├── it should not update the lastAccess
 │   └── it should return
 └── when module is intialized
     └── it set the lastAccess to the current block timestamp
@@ -35,7 +36,10 @@ DeadmanSwitch::validateUserOp
     ├── when signature is invalid
     │   └── it should return 1
     └── when signature is valid
-        └── it should return 0
+        ├── when sufficient time has not passed
+        │   └── it should return 1
+        └── when sufficient time has passed
+            └── it should return 0
 
 
 DeadmanSwitch::isValidSignatureWithSender

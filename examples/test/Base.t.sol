@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { Test } from "forge-std/Test.sol";
+import { console2 } from "forge-std/console2.sol";
 
 abstract contract BaseTest is Test {
     /*//////////////////////////////////////////////////////////////////////////
