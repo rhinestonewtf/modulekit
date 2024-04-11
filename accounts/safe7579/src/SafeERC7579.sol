@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { IMSA } from "erc7579/interfaces/IMSA.sol";
+import "./lib/ExecOnSafeLib.sol";
 import {
     CallType,
     ExecType,
@@ -48,6 +49,7 @@ contract SafeERC7579 is
     Initializer,
     IMSA
 {
+    using ExecOnSafeLib for ISafe;
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
@@ -73,7 +75,6 @@ contract SafeERC7579 is
         external
         payable
         override
-        withHook // ! this modifier has side effects / external calls
         onlyEntryPointOrSelf
     {
         CallType callType;
@@ -88,11 +89,11 @@ contract SafeERC7579 is
         if (execType == EXECTYPE_DEFAULT) {
             if (callType == CALLTYPE_BATCH) {
                 Execution[] calldata executions = executionCalldata.decodeBatch();
-                _execute(msg.sender, executions);
+                ISafe(msg.sender).hookedExec(executions);
             } else if (callType == CALLTYPE_SINGLE) {
                 (address target, uint256 value, bytes calldata callData) =
                     executionCalldata.decodeSingle();
-                _execute(msg.sender, target, value, callData);
+                _execute({ safe: msg.sender, target: target, value: value, callData: callData });
             } else if (callType == CALLTYPE_DELEGATECALL) {
                 address target = address(bytes20(executionCalldata[:20]));
                 bytes calldata callData = executionCalldata[20:];
@@ -134,7 +135,6 @@ contract SafeERC7579 is
         override
         onlyExecutorModule
         withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
-        withHook // ! this modifier has side effects / external calls
         returns (bytes[] memory returnData)
     {
         CallType callType;
@@ -298,7 +298,7 @@ contract SafeERC7579 is
 
         // use 7579 validation module
         magicValue =
-            IValidator(validationModule).isValidSignatureWithSender(msg.sender, hash, data[20:]);
+            IValidator(validationModule).isValidSignatureWithSender(_msgSender(), hash, data[20:]);
     }
 
     /**
