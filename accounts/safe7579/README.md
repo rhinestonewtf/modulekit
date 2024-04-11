@@ -1,3 +1,38 @@
+## How Safe7579 works
+
+Safe7579 provides full ERC4337 and ERC7579 compliance to Safe accounts by serving as the Safe's FallbackHandler and an enabled module. This setup allows Safe accounts to utilize all ERC7579 modules. A launchpad is developed to facilitate the setup of new safes with Safe7579 using the EntryPoint factory.
+
+## How does the Launchpad work
+
+1. **Creation by Factory:**
+
+   - Bundler informs Entrypoint to handleUserOps.
+   - Entrypoint calls SenderCreator to call SafeProxyFactory
+   - SenderCreator requests SafeProxy creation from SafeProxyFactory using createProxyWithNonce.
+   - SafeProxyFactory creates a new SafeProxy using create2.
+   - SafeProxy is created with a singleton address set to Launchpad (!)
+   - InitHash is stored in the SafeProxy storage
+
+2. **Validation Phase:**
+
+   - Entrypoint validates user operations in SafeProxy via validateUserOp.
+   - SafeProxy delegates validation to Launchpad.
+   - Launchpad ensures the presence of initHash from phase 1 and calls Safe7579.launchpadValidators.
+   - ValidatorModule gets installed by Launchpad
+   - ValidatorModule validates user operations and returns packedValidationData.
+   - Launchpad returns packedValidationData to SafeProxy, SafeProxy returns to Entrypoint.
+
+3. **Execution Phase:**
+   - Entrypoint triggers launchpad.setupSafe in SafeProxy.
+   - SafeProxy delegates the setup to Launchpad
+   - LaunchPad upgradres SafeStorage.singleton to SafeSingleton
+   - LaunchPad calls SafeProxy.setup() to initialize SafeSingleton
+   - Setup function in SafeProxy.setup() delegatecalls to lauchpad.initSafe7579
+   - initSafe7579() initilazies Safe7579 with executors, fallbacks, hooks, IERC7484 registry
+
+This detailed sequence outlines the creation, validation, and execution phases in the system's operation.
+
+```mermaid
 sequenceDiagram
 participant Bundler
 participant Entrypoint
@@ -12,7 +47,7 @@ participant EventEmitter
 participant ValidatorModule
 participant Executor
 
-rect rgb(255,179,186)
+alt Creation by Factory
 Bundler->>Entrypoint: handleUserOps
 Entrypoint->>SenderCreator: create this initcode
 SenderCreator->>+SafeProxyFactory: createProxyWithNonce(launchpad, intializer, salt)
@@ -25,7 +60,7 @@ SafeProxy-->>SafeProxyFactory: created
 SafeProxyFactory-->>Entrypoint: created sender
 end
 
-rect rgb(255,179,186)
+alt Validation Phase
 Entrypoint->>+SafeProxy: validateUserOp
 SafeProxy-->>Launchpad: validateUserOp [delegatecall]
 Note right of Launchpad: only initializeThenUserOp.selector
@@ -44,7 +79,8 @@ ValidatorModule ->> Launchpad: packedValidationData
 Launchpad-->>SafeProxy: packedValidationData
 SafeProxy->>-Entrypoint: packedValidationData
 end
-rect rgb(186,225,255)
+
+alt Execution Phase
 Entrypoint->>+SafeProxy: setupSafe
 SafeProxy-->>Launchpad: setupSafe [delegatecall]
 Note over SafeProxy, Launchpad: sstore safe.singleton == SafeSingleton
@@ -74,3 +110,25 @@ end
 Safe7579->>SafeProxy: exec done
 SafeProxy->-Entrypoint: exec done
 end
+```
+
+## Authors / Credits✨
+
+Thanks to the following people who have contributed to this project:
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="http://twitter.com/zeroknotsETH/"><img src="https://pbs.twimg.com/profile_images/1639062011387715590/bNmZ5Gpf_400x400.jpg" width="100px;" alt=""/><br /><sub><b>zeroknots (rhinestone)</b></sub></a><br /><a href="https://github.com/zeroknots" title="Code">💻</a></td>
+
+<td align="center"><a href="https://twitter.com/abstractooor"><img src="https://avatars.githubusercontent.com/u/26718079" width="100px;" alt=""/><br /><sub><b>Konrad (rhinestone)</b></sub></a><br /><a href="https://github.com/kopy-kat" title="Spec">📝</a> </td>
+
+<td align="center"><a href="https://twitter.com/NLordello"><img src="https://avatars.githubusercontent.com/u/4210206" width="100px;" alt=""/><br /><sub><b>Nicholas Rodrigues Lordello
+</b></sub></a><br /><a href="https://github.com/ nlordell" title="Review / Launchpad Idea">📝</a> </td>
+
+  </tr>
+</table>
+
+Special Thanks to the Safe Team for their support and guidance in the development of Safe7579.

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import "./ExecutionHelper.sol";
+import { ExecutionHelper } from "./ExecutionHelper.sol";
 
 contract EventEmitter {
     event ModuleInstalled(uint256 moduleTypeId, address module);

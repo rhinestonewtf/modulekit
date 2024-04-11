@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "../interfaces/IERC7484.sol";
-import "./ExecutionHelper.sol";
+import { IERC7484 } from "../interfaces/IERC7484.sol";
+import { ExecutionHelper } from "./ExecutionHelper.sol";
 
 abstract contract RegistryAdapter is ExecutionHelper {
     event ERC7484RegistryConfigured(address indexed smartAccount, address indexed registry);

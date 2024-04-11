@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ModuleManager, MODULE_TYPE_HOOK } from "./ModuleManager.sol";
+import { ModuleManager } from "./ModuleManager.sol";
 import { IHook, IModule } from "erc7579/interfaces/IERC7579Module.sol";
+import { MODULE_TYPE_HOOK } from "erc7579/interfaces/IERC7579Module.sol";
 
 /**
  * @title reference implementation of HookManager

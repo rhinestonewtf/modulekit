@@ -23,10 +23,7 @@ import {
     MODULE_TYPE_FALLBACK
 } from "erc7579/interfaces/IERC7579Module.sol";
 import { AccessControl } from "./core/AccessControl.sol";
-import { HookManager } from "./core/HookManager.sol";
-import { EventManager } from "./core/EventManager.sol";
 import { Initializer } from "./core/Initializer.sol";
-import "./core/ModuleManager.sol";
 import { ISafeOp, SAFE_OP_TYPEHASH } from "./interfaces/ISafeOp.sol";
 import { ISafe } from "./interfaces/ISafe.sol";
 import {
@@ -38,14 +35,11 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
 
-import "forge-std/console2.sol";
 /**
  * @title ERC7579 Adapter for Safe accounts.
- * By using Safe's Fallback and Execution modules,
- * this contract creates full ERC7579 compliance to Safe accounts
- * @author zeroknots.eth | rhinestone.wtf
+ * creates full ERC7579 compliance to Safe accounts
+ * @author rhinestone | zeroknots.eth, Konrad Kopp (@kopy-kat)
  */
-
 contract SafeERC7579 is
     ISafeOp,
     IERC7579Account,
@@ -84,6 +78,8 @@ contract SafeERC7579 is
     {
         CallType callType;
         ExecType execType;
+
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             callType := mode
             execType := shl(8, mode)
@@ -143,6 +139,7 @@ contract SafeERC7579 is
     {
         CallType callType;
         ExecType execType;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             callType := mode
             execType := shl(8, mode)

@@ -12,9 +12,7 @@ import { AccessControl } from "./AccessControl.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
 
 import {
-    IValidator,
     MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_HOOK,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK
 } from "erc7579/interfaces/IERC7579Module.sol";
