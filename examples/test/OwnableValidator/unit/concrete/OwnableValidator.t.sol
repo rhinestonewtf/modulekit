@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { BaseTest } from "test/Base.t.sol";
-import { OwnableValidator } from "src/OwnableValidator/OwnableValidator.sol";
+import { BaseTest, console2 } from "test/Base.t.sol";
+import { OwnableValidator, ERC7579ValidatorBase } from "src/OwnableValidator/OwnableValidator.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
 import { PackedUserOperation, getEmptyUserOperation } from "test/utils/UserOperation.sol";
 import { signHash } from "test/utils/Signature.sol";
+import { EIP1271_MAGIC_VALUE } from "test/utils/Constants.sol";
 
 contract OwnableValidatorTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
@@ -18,7 +19,7 @@ contract OwnableValidatorTest is BaseTest {
                                     VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
-    uint256 _threshold = 1;
+    uint256 _threshold = 2;
     address[] _owners;
     uint256[] _ownerPks;
 
@@ -186,6 +187,8 @@ contract OwnableValidatorTest is BaseTest {
 
     function test_SetThresholdRevertWhen_ThresholdIs0() external whenModuleIsIntialized {
         // it should revert
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
         vm.expectRevert(OwnableValidator.InvalidThreshold.selector);
         validator.setThreshold(0);
     }
@@ -211,10 +214,9 @@ contract OwnableValidatorTest is BaseTest {
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
         uint256 oldThreshold = validator.threshold(address(this));
-        uint256 newThreshold = 2;
+        uint256 newThreshold = 1;
         assertNotEq(oldThreshold, newThreshold);
 
-        vm.expectRevert(OwnableValidator.InvalidThreshold.selector);
         validator.setThreshold(newThreshold);
 
         assertEq(validator.threshold(address(this)), newThreshold);
@@ -254,7 +256,7 @@ contract OwnableValidatorTest is BaseTest {
 
         address[] memory owners = validator.getOwners(address(this));
         assertEq(owners.length, 3);
-        assertEq(owners[2], newOwner);
+        assertEq(owners[0], newOwner);
     }
 
     function test_RemoveOwnerRevertWhen_ModuleIsNotIntialized() external {
@@ -269,7 +271,7 @@ contract OwnableValidatorTest is BaseTest {
         // it should remove the owner
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
-        validator.removeOwner(_owners[1], _owners[0]);
+        validator.removeOwner(_owners[0], _owners[1]);
     }
 
     function test_GetOwnersShouldGetAllOwners() external {
@@ -286,11 +288,28 @@ contract OwnableValidatorTest is BaseTest {
         // it should return 1
         PackedUserOperation memory userOp = getEmptyUserOperation();
         userOp.sender = address(this);
-        bytes32 userOpHash = bytes32(0);
+        bytes32 userOpHash = bytes32(keccak256("userOpHash"));
+
+        uint256 validationData =
+            ERC7579ValidatorBase.ValidationData.unwrap(validator.validateUserOp(userOp, userOpHash));
+        assertEq(validationData, 1);
     }
 
     function test_ValidateUserOpWhenTheSignaturesAreNotValid() public whenThresholdIsSet {
         // it should return 1
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
+        PackedUserOperation memory userOp = getEmptyUserOperation();
+        userOp.sender = address(this);
+        bytes32 userOpHash = bytes32(keccak256("userOpHash"));
+
+        bytes memory signature1 = signHash(uint256(1), userOpHash);
+        bytes memory signature2 = signHash(uint256(2), userOpHash);
+        userOp.signature = abi.encodePacked(signature1, signature2);
+
+        uint256 validationData =
+            ERC7579ValidatorBase.ValidationData.unwrap(validator.validateUserOp(userOp, userOpHash));
+        assertEq(validationData, 1);
     }
 
     function test_ValidateUserOpWhenTheUniqueSignaturesAreLessThanThreshold()
@@ -299,6 +318,19 @@ contract OwnableValidatorTest is BaseTest {
         whenTheSignaturesAreValid
     {
         // it should return 1
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
+        PackedUserOperation memory userOp = getEmptyUserOperation();
+        userOp.sender = address(this);
+        bytes32 userOpHash = bytes32(keccak256("userOpHash"));
+
+        bytes memory signature1 = signHash(_ownerPks[0], userOpHash);
+        bytes memory signature2 = signHash(uint256(2), userOpHash);
+        userOp.signature = abi.encodePacked(signature1, signature2);
+
+        uint256 validationData =
+            ERC7579ValidatorBase.ValidationData.unwrap(validator.validateUserOp(userOp, userOpHash));
+        assertEq(validationData, 1);
     }
 
     function test_ValidateUserOpWhenTheUniqueSignaturesAreGreaterThanThreshold()
@@ -307,10 +339,29 @@ contract OwnableValidatorTest is BaseTest {
         whenTheSignaturesAreValid
     {
         // it should return 0
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
+        PackedUserOperation memory userOp = getEmptyUserOperation();
+        userOp.sender = address(this);
+        bytes32 userOpHash = bytes32(keccak256("userOpHash"));
+
+        bytes memory signature1 = signHash(_ownerPks[0], userOpHash);
+        bytes memory signature2 = signHash(_ownerPks[1], userOpHash);
+        userOp.signature = abi.encodePacked(signature1, signature2);
+
+        uint256 validationData =
+            ERC7579ValidatorBase.ValidationData.unwrap(validator.validateUserOp(userOp, userOpHash));
+        assertEq(validationData, 0);
     }
 
     function test_IsValidSignatureWithSenderWhenThresholdIsNotSet() public {
-        // it should return EIP1271_FAILED
+        // it should revert
+        address sender = address(1);
+        bytes32 hash = bytes32(keccak256("hash"));
+        bytes memory data = "";
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.ThresholdNotSet.selector));
+        bytes4 result = validator.isValidSignatureWithSender(sender, hash, data);
     }
 
     function test_IsValidSignatureWithSenderWhenTheSignaturesAreNotValid()
@@ -318,6 +369,17 @@ contract OwnableValidatorTest is BaseTest {
         whenThresholdIsSet
     {
         // it should return EIP1271_FAILED
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
+        address sender = address(1);
+        bytes32 hash = bytes32(keccak256("hash"));
+
+        bytes memory signature1 = signHash(uint256(1), hash);
+        bytes memory signature2 = signHash(uint256(2), hash);
+        bytes memory data = abi.encodePacked(signature1, signature2);
+
+        bytes4 result = validator.isValidSignatureWithSender(sender, hash, data);
+        assertNotEq(result, EIP1271_MAGIC_VALUE);
     }
 
     function test_IsValidSignatureWithSenderWhenTheUniqueSignaturesAreLessThanThreshold()
@@ -326,6 +388,17 @@ contract OwnableValidatorTest is BaseTest {
         whenTheSignaturesAreValid
     {
         // it should return EIP1271_FAILED
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
+        address sender = address(1);
+        bytes32 hash = bytes32(keccak256("hash"));
+
+        bytes memory signature1 = signHash(_ownerPks[0], hash);
+        bytes memory signature2 = signHash(uint256(2), hash);
+        bytes memory data = abi.encodePacked(signature1, signature2);
+
+        bytes4 result = validator.isValidSignatureWithSender(sender, hash, data);
+        assertNotEq(result, EIP1271_MAGIC_VALUE);
     }
 
     function test_IsValidSignatureWithSenderWhenTheUniqueSignaturesAreGreaterThanThreshold()
@@ -334,6 +407,17 @@ contract OwnableValidatorTest is BaseTest {
         whenTheSignaturesAreValid
     {
         // it should return ERC1271_MAGIC_VALUE
+        test_OnInstallWhenOwnersIncludeNoDuplicates();
+
+        address sender = address(1);
+        bytes32 hash = bytes32(keccak256("hash"));
+
+        bytes memory signature1 = signHash(_ownerPks[0], hash);
+        bytes memory signature2 = signHash(_ownerPks[1], hash);
+        bytes memory data = abi.encodePacked(signature1, signature2);
+
+        bytes4 result = validator.isValidSignatureWithSender(sender, hash, data);
+        assertEq(result, EIP1271_MAGIC_VALUE);
     }
 
     function test_Name() public {

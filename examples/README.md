@@ -47,7 +47,7 @@ Tested:
   - [ ] Integration
   - [ ] Fuzz
 - [ ] OwnableValidator
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
   - [ ] Fuzz
 - [ ] RegistryHook

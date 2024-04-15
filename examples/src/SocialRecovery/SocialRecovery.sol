@@ -9,6 +9,7 @@ import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ModeLib, CallType, ModeCode, CALLTYPE_SINGLE } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 contract SocialRecovery is ERC7579ValidatorBase {
     using LibSort for *;
@@ -122,8 +123,9 @@ contract SocialRecovery is ERC7579ValidatorBase {
         }
 
         // Recover the signers from the signatures
-        address[] memory signers =
-            CheckSignatures.recoverNSignatures(userOpHash, userOp.signature, _threshold);
+        address[] memory signers = CheckSignatures.recoverNSignatures(
+            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature, _threshold
+        );
 
         // Sort and uniquify the signers to make sure a signer is not reused
         signers.sort();

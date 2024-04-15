@@ -8,6 +8,9 @@ import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { SentinelList4337Lib, SENTINEL } from "sentinellist/SentinelList4337.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
 import { CheckSignatures } from "checknsignatures/CheckNSignatures.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+
+import "forge-std/console2.sol";
 
 contract OwnableValidator is ERC7579ValidatorBase {
     using LibSort for *;
@@ -136,8 +139,9 @@ contract OwnableValidator is ERC7579ValidatorBase {
         }
 
         // Recover the signers from the signatures
-        address[] memory signers =
-            CheckSignatures.recoverNSignatures(userOpHash, userOp.signature, _threshold);
+        address[] memory signers = CheckSignatures.recoverNSignatures(
+            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature, _threshold
+        );
 
         // Sort and uniquify the signers to make sure a signer is not reused
         signers.sort();
@@ -178,7 +182,8 @@ contract OwnableValidator is ERC7579ValidatorBase {
         }
 
         // Recover the signers from the signatures
-        address[] memory signers = CheckSignatures.recoverNSignatures(hash, data, _threshold);
+        address[] memory signers =
+            CheckSignatures.recoverNSignatures(ECDSA.toEthSignedMessageHash(hash), data, _threshold);
 
         // Sort and uniquify the signers to make sure a signer is not reused
         signers.sort();
