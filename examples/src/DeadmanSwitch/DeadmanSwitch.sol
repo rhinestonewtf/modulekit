@@ -90,11 +90,11 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
             signature: userOp.signature
         });
 
-        // TODO: revert back
-        if (sigValid && block.timestamp > _config.lastAccess + _config.timeout) {
-            return VALIDATION_SUCCESS;
-        }
-        return VALIDATION_FAILED;
+        return _packValidationData({
+            sigFailed: !sigValid,
+            validAfter: _config.lastAccess + _config.timeout,
+            validUntil: type(uint48).max
+        });
     }
 
     function isValidSignatureWithSender(

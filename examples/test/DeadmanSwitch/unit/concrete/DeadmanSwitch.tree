@@ -34,12 +34,9 @@ DeadmanSwitch::validateUserOp
 │   └── it should return 1
 └── when module is intialized
     ├── when signature is invalid
-    │   └── it should return 1
+    │   └── it should return invalid sig
     └── when signature is valid
-        ├── when sufficient time has not passed
-        │   └── it should return 1
-        └── when sufficient time has passed
-            └── it should return 0
+        └── it should return valid sig and valid after
 
 
 DeadmanSwitch::isValidSignatureWithSender

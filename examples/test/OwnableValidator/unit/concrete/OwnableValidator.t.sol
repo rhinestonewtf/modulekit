@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { BaseTest, console2 } from "test/Base.t.sol";
 import { OwnableValidator, ERC7579ValidatorBase } from "src/OwnableValidator/OwnableValidator.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
-import { PackedUserOperation, getEmptyUserOperation } from "test/utils/UserOperation.sol";
+import { PackedUserOperation, getEmptyUserOperation } from "test/utils/ERC4337.sol";
 import { signHash } from "test/utils/Signature.sol";
 import { EIP1271_MAGIC_VALUE } from "test/utils/Constants.sol";
 

@@ -4,7 +4,12 @@ pragma solidity ^0.8.23;
 import { BaseTest } from "test/Base.t.sol";
 import { DeadmanSwitch, ERC7579ValidatorBase } from "src/DeadmanSwitch/DeadmanSwitch.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
-import { PackedUserOperation, getEmptyUserOperation } from "test/utils/UserOperation.sol";
+import {
+    PackedUserOperation,
+    getEmptyUserOperation,
+    parseValidationData,
+    ValidationData
+} from "test/utils/ERC4337.sol";
 import { signHash } from "test/utils/Signature.sol";
 
 contract DeadmanSwitchTest is BaseTest {
@@ -134,31 +139,25 @@ contract DeadmanSwitchTest is BaseTest {
         assertEq(validationData, 1);
     }
 
-    function test_ValidateUserOpWhenSufficientTimeHasNotPassed()
-        external
-        whenModuleIsIntialized
-        whenSignatureIsValid
-    {
-        // it should return 1
+    function test_ValidateUserOpWhenSignatureIsInvalid() public whenModuleIsIntialized {
+        // it should return invalid sig
         test_OnInstallWhenModuleIsNotIntialized();
 
         PackedUserOperation memory userOp = getEmptyUserOperation();
         userOp.sender = address(this);
         bytes32 userOpHash = keccak256("userOpHash");
 
-        userOp.signature = signHash(_nomineePk, userOpHash);
+        userOp.signature = signHash(uint256(1), userOpHash);
 
         uint256 validationData =
             ERC7579ValidatorBase.ValidationData.unwrap(dms.validateUserOp(userOp, userOpHash));
-        assertEq(validationData, 1);
+        ValidationData memory data = parseValidationData(validationData);
+
+        assertEq(data.aggregator, address(1));
     }
 
-    function test_ValidateUserOpWhenSufficientTimeHasPassed()
-        external
-        whenModuleIsIntialized
-        whenSignatureIsValid
-    {
-        // it should return 0
+    function test_ValidateUserOpWhenSignatureIsValid() public whenModuleIsIntialized {
+        // it should return valid sig and valid after
         test_OnInstallWhenModuleIsNotIntialized();
 
         PackedUserOperation memory userOp = getEmptyUserOperation();
@@ -169,11 +168,13 @@ contract DeadmanSwitchTest is BaseTest {
 
         (uint48 lastAccess, uint48 timeout, address nominee) = dms.config(address(this));
 
-        vm.warp(block.timestamp + 2);
-
         uint256 validationData =
             ERC7579ValidatorBase.ValidationData.unwrap(dms.validateUserOp(userOp, userOpHash));
-        assertEq(validationData, 0);
+        ValidationData memory data = parseValidationData(validationData);
+
+        assertEq(data.aggregator, address(0));
+        assertEq(lastAccess + timeout, data.validAfter);
+        assertEq(type(uint48).max, data.validUntil);
     }
 
     function test_IsValidSignatureWithSenderShouldRevert() public {

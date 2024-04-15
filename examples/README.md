@@ -26,10 +26,6 @@ Tested:
   - [ ] Unit
   - [ ] Integration
   - [ ] Fuzz
-- [ ] OwnableExecutor
-  - [ ] Unit
-  - [ ] Integration
-  - [ ] Fuzz
 - [ ] Flashloan
   - [ ] Unit
   - [ ] Integration
@@ -43,6 +39,10 @@ Tested:
   - [ ] Integration
   - [ ] Fuzz
 - [ ] MFA
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] OwnableExecutor
   - [ ] Unit
   - [ ] Integration
   - [ ] Fuzz
