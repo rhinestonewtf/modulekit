@@ -16,6 +16,57 @@ Modules:
 - Automated Token Revocation
 - Webauthn Validator
 
+Tested:
+
+- [ ] AutoSavings
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] ColdStorageHook
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] OwnableExecutor
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] Flashloan
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] DeadmanSwitch
+  - [x] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] HookMultiPlexer
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] MFA
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] OwnableValidator
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] RegistryHook
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] ScheduledOrders
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] ScheduledTransactions
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+- [ ] SocialRecovery
+  - [ ] Unit
+  - [ ] Integration
+  - [ ] Fuzz
+
 ## Usage as part of ModuleKit
 
 ### Install dependencies

@@ -24,7 +24,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
     error InvalidThreshold();
 
     SentinelList4337Lib.SentinelList guardians;
-    mapping(address account => uint256) thresholds;
+    mapping(address account => uint256) threshold;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -34,24 +34,25 @@ contract SocialRecovery is ERC7579ValidatorBase {
         if (isInitialized(msg.sender)) revert AlreadyInitialized(msg.sender);
 
         // Get the threshold and guardians from the data
-        (uint256 threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
+        (uint256 _threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
 
         // Sort and uniquify the guardians to make sure a guardian is not reused
         _guardians.sort();
         _guardians.uniquifySorted();
 
         // Make sure the threshold is set
-        if (threshold == 0) {
+        if (_threshold == 0) {
             revert ThresholdNotSet();
         }
 
+        // Make sure the threshold is less than the number of guardians
         uint256 guardiansLength = _guardians.length;
-        if (guardiansLength < threshold) {
+        if (guardiansLength < _threshold) {
             revert InvalidThreshold();
         }
 
         // Set threshold
-        thresholds[msg.sender] = threshold;
+        threshold[msg.sender] = _threshold;
 
         // Get the account
         address account = msg.sender;
@@ -70,20 +71,20 @@ contract SocialRecovery is ERC7579ValidatorBase {
     }
 
     function onUninstall(bytes calldata) external override {
-        // todo
+        // TODO
     }
 
     function isInitialized(address smartAccount) public view returns (bool) {
-        return thresholds[smartAccount] != 0;
+        return threshold[smartAccount] != 0;
     }
 
-    function setThreshold(uint256 threshold) external {
-        if (threshold == 0) {
+    function setThreshold(uint256 _threshold) external {
+        if (_threshold == 0) {
             revert InvalidThreshold();
         }
         // TODO check if the threshold is less than the number of guardians
 
-        thresholds[msg.sender] = threshold;
+        threshold[msg.sender] = _threshold;
     }
 
     function addGuardian(address guardian) external {
@@ -115,14 +116,14 @@ contract SocialRecovery is ERC7579ValidatorBase {
         returns (ValidationData)
     {
         // Get the threshold and check that its set
-        uint256 threshold = thresholds[msg.sender];
-        if (threshold == 0) {
+        uint256 _threshold = threshold[msg.sender];
+        if (_threshold == 0) {
             return VALIDATION_FAILED;
         }
 
         // Recover the signers from the signatures
         address[] memory signers =
-            CheckSignatures.recoverNSignatures(userOpHash, userOp.signature, threshold);
+            CheckSignatures.recoverNSignatures(userOpHash, userOp.signature, _threshold);
 
         // Sort and uniquify the signers to make sure a signer is not reused
         signers.sort();
@@ -147,7 +148,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
         }
 
         // Check if the threshold is met and the execution is allowed and return the result
-        if (validSigners >= threshold && isAllowedExecution) {
+        if (validSigners >= _threshold && isAllowedExecution) {
             return VALIDATION_SUCCESS;
         }
         return VALIDATION_FAILED;

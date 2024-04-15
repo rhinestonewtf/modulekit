@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { BaseTest, console2 } from "test/Base.t.sol";
+import { BaseTest } from "test/Base.t.sol";
 import { DeadmanSwitch, ERC7579ValidatorBase } from "src/DeadmanSwitch/DeadmanSwitch.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
-import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
-import { getEmptyUserOperation } from "test/utils/UserOperation.sol";
+import { PackedUserOperation, getEmptyUserOperation } from "test/utils/UserOperation.sol";
 import { signHash } from "test/utils/Signature.sol";
 
 contract DeadmanSwitchTest is BaseTest {
@@ -189,7 +188,6 @@ contract DeadmanSwitchTest is BaseTest {
 
     function test_NameShouldReturnDeadmanSwitch() public {
         // it should return DeadmanSwitch
-
         string memory name = dms.name();
         assertEq(name, "DeadmanSwitch");
     }

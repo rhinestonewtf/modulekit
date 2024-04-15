@@ -5,7 +5,7 @@ import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 
-contract ColdStorageExecutor is ERC7579ExecutorBase {
+contract OwnableExecutor is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
