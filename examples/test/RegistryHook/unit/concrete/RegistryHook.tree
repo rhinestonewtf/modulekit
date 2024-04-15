@@ -18,8 +18,11 @@ RegistryHook::isInitialized
 
 
 RegistryHook::setRegistry
-├── it should set the registry of msg.sender
-└── it should emit RegistrySet
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should set the registry of msg.sender
+    └── it should emit RegistrySet
 
 
 RegistryHook::preCheck

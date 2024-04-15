@@ -51,7 +51,7 @@ Tested:
   - [ ] Integration
   - [ ] Fuzz
 - [ ] RegistryHook
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
   - [ ] Fuzz
 - [ ] ScheduledOrders

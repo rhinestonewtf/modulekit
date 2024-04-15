@@ -11,7 +11,7 @@ contract RegistryHook is ERC7579HookDestruct {
 
     event RegistrySet(address indexed smartAccount, address registry);
 
-    mapping(address account => address) registry;
+    mapping(address account => address) public registry;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -38,8 +38,11 @@ contract RegistryHook is ERC7579HookDestruct {
     }
 
     function setRegistry(address _registry) external {
-        registry[msg.sender] = _registry;
-        emit RegistrySet(msg.sender, _registry);
+        address account = msg.sender;
+        if (!isInitialized(account)) revert NotInitialized(account);
+
+        registry[account] = _registry;
+        emit RegistrySet(account, _registry);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

@@ -10,8 +10,6 @@ import { LibSort } from "solady/utils/LibSort.sol";
 import { CheckSignatures } from "checknsignatures/CheckNSignatures.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
-import "forge-std/console2.sol";
-
 contract OwnableValidator is ERC7579ValidatorBase {
     using LibSort for *;
     using SignatureCheckerLib for address;
