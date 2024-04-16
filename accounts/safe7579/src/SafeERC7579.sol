@@ -65,6 +65,34 @@ contract SafeERC7579 is
     // keccak256("safeSignature(bytes32,bytes32,bytes,bytes)");
     bytes4 private constant SAFE_SIGNATURE_MAGIC_VALUE = 0x5fd7e97d;
 
+    function _execute(
+        ModeCode mode,
+        bytes calldata executionCalldata
+    )
+        internal
+        returns (bytes[] memory returnData)
+    {
+        CallType callType;
+        ExecType execType;
+        address hook = getActiveHook();
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            callType := mode
+            execType := shl(8, mode)
+        }
+
+        if (execType == EXECTYPE_DEFAULT) {
+            returnData = HookedExecOnSafeLib.hookedExec(executionCalldata, callType, hook);
+        } else if (execType == EXECTYPE_TRY) {
+            returnData = HookedExecOnSafeLib.hookedTryExec(executionCalldata, callType, hook);
+        }
+        // account reverts when using unsupported execution type
+        else {
+            revert UnsupportedExecType(execType);
+        }
+    }
+
     /**
      * @inheritdoc IERC7579Account
      */
@@ -77,50 +105,7 @@ contract SafeERC7579 is
         override
         onlyEntryPointOrSelf
     {
-        CallType callType;
-        ExecType execType;
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            callType := mode
-            execType := shl(8, mode)
-        }
-
-        if (execType == EXECTYPE_DEFAULT) {
-            if (callType == CALLTYPE_BATCH) {
-                Execution[] calldata executions = executionCalldata.decodeBatch();
-                ISafe(msg.sender).hookedExec(executions);
-            } else if (callType == CALLTYPE_SINGLE) {
-                (address target, uint256 value, bytes calldata callData) =
-                    executionCalldata.decodeSingle();
-                _execute({ safe: msg.sender, target: target, value: value, callData: callData });
-            } else if (callType == CALLTYPE_DELEGATECALL) {
-                address target = address(bytes20(executionCalldata[:20]));
-                bytes calldata callData = executionCalldata[20:];
-                _executeDelegateCall(msg.sender, target, callData);
-            } else {
-                revert UnsupportedCallType(callType);
-            }
-        } else if (execType == EXECTYPE_TRY) {
-            if (callType == CALLTYPE_BATCH) {
-                Execution[] calldata executions = executionCalldata.decodeBatch();
-                _tryExecute(msg.sender, executions);
-            } else if (callType == CALLTYPE_SINGLE) {
-                (address target, uint256 value, bytes calldata callData) =
-                    executionCalldata.decodeSingle();
-                _tryExecute(msg.sender, target, value, callData);
-            } else if (callType == CALLTYPE_DELEGATECALL) {
-                address target = address(bytes20(executionCalldata[:20]));
-                bytes calldata callData = executionCalldata[20:];
-                _tryExecuteDelegateCall(msg.sender, target, callData);
-            } else {
-                revert UnsupportedCallType(callType);
-            }
-        }
-        // account reverts when using unsupported execution type
-        else {
-            revert UnsupportedExecType(execType);
-        }
+        _execute(mode, executionCalldata);
     }
 
     /**
@@ -137,53 +122,16 @@ contract SafeERC7579 is
         withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
         returns (bytes[] memory returnData)
     {
-        CallType callType;
-        ExecType execType;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            callType := mode
-            execType := shl(8, mode)
-        }
-        if (execType == EXECTYPE_DEFAULT) {
-            if (callType == CALLTYPE_BATCH) {
-                Execution[] calldata executions = executionCalldata.decodeBatch();
-                returnData = _executeReturnData(msg.sender, executions);
-            } else if (callType == CALLTYPE_SINGLE) {
-                (address target, uint256 value, bytes calldata callData) =
-                    executionCalldata.decodeSingle();
-                returnData = new bytes[](1);
-                returnData[0] = _executeReturnData(msg.sender, target, value, callData);
-            } else if (callType == CALLTYPE_DELEGATECALL) {
-                address target = address(bytes20(executionCalldata[:20]));
-                bytes calldata callData = executionCalldata[20:];
-                returnData = new bytes[](1);
-                returnData[0] = _executeDelegateCallReturnData(msg.sender, target, callData);
-            } else {
-                revert UnsupportedCallType(callType);
-            }
-        } else if (execType == EXECTYPE_TRY) {
-            if (callType == CALLTYPE_BATCH) {
-                Execution[] calldata executions = executionCalldata.decodeBatch();
-                returnData = _tryExecuteReturnData(msg.sender, executions);
-            } else if (callType == CALLTYPE_SINGLE) {
-                (address target, uint256 value, bytes calldata callData) =
-                    executionCalldata.decodeSingle();
-                returnData = new bytes[](1);
-                returnData[0] = _tryExecuteReturnData(msg.sender, target, value, callData);
-            } else if (callType == CALLTYPE_DELEGATECALL) {
-                address target = address(bytes20(executionCalldata[:20]));
-                bytes calldata callData = executionCalldata[20:];
-                returnData = new bytes[](1);
-                returnData[0] = _tryExecuteDelegateCallReturnData(msg.sender, target, callData);
-            } else {
-                revert UnsupportedCallType(callType);
-            }
-        }
-        // account reverts when using unsupported execution type
-        else {
-            revert UnsupportedExecType(execType);
-        }
+        return _execute(mode, executionCalldata);
     }
+
+    function executeUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
+        external
+        payable
+    { }
 
     /**
      *  ERC4337 v0.7 validation function
@@ -198,6 +146,7 @@ contract SafeERC7579 is
     )
         external
         payable
+        onlyEntryPointOrSelf
         returns (uint256 validSignature)
     {
         address validator;
@@ -213,23 +162,17 @@ contract SafeERC7579 is
             return _validateSignatures(userOp);
         } else {
             // bubble up the return value of the validator module
-            bytes memory retData = _executeReturnData(
-                msg.sender,
-                validator,
-                0,
-                abi.encodeCall(IValidator.validateUserOp, (userOp, userOpHash))
-            );
+            bytes memory retData = ISafe(msg.sender).execReturn({
+                target: validator,
+                value: 0,
+                callData: abi.encodeCall(IValidator.validateUserOp, (userOp, userOpHash))
+            });
             validSignature = abi.decode(retData, (uint256));
         }
 
         // pay prefund
         if (missingAccountFunds != 0) {
-            _execute({
-                safe: userOp.getSender(),
-                target: entryPoint(),
-                value: missingAccountFunds,
-                callData: ""
-            });
+            ISafe(msg.sender).exec({ target: entryPoint(), value: missingAccountFunds, callData: "" });
         }
     }
 
@@ -312,7 +255,6 @@ contract SafeERC7579 is
         external
         payable
         override
-        withHook
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
@@ -333,7 +275,6 @@ contract SafeERC7579 is
         external
         payable
         override
-        withHook
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);

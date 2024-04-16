@@ -28,6 +28,7 @@ abstract contract Initializer is ISafe7579Init, HookManager {
      * ModuleInstalled events. this has to be done by the launchpad
      */
     function launchpadValidators(ModuleInit[] calldata validators) external payable override {
+        // this will revert if already initialized
         $validators.init({ account: msg.sender });
         uint256 length = validators.length;
         for (uint256 i; i < length; i++) {

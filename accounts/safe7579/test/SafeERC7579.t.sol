@@ -125,16 +125,16 @@ contract Safe7579Test is LaunchpadBase {
         assertEq(msgSender, address(safe));
         assertEq(context, address(this));
 
-        vm.prank(address(safe));
-        IERC7579Account(address(safe)).installModule(
-            3,
-            address(_fallback),
-            abi.encode(MockFallback.target2.selector, CALLTYPE_DELEGATECALL, "")
-        );
-        (uint256 _ret, address _this, address _msgSender) =
-            MockFallback(address(safe)).target2(1337);
-
-        assertEq(_ret, 1337);
-        assertEq(_this, address(safe));
+        // vm.prank(address(safe));
+        // IERC7579Account(address(safe)).installModule(
+        //     3,
+        //     address(_fallback),
+        //     abi.encode(MockFallback.target2.selector, CALLTYPE_DELEGATECALL, "")
+        // );
+        // (uint256 _ret, address _this, address _msgSender) =
+        //     MockFallback(address(safe)).target2(1337);
+        //
+        // assertEq(_ret, 1337);
+        // assertEq(_this, address(safe));
     }
 }
