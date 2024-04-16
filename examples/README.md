@@ -43,7 +43,7 @@ Tested:
   - [ ] Integration
   - [ ] Fuzz
 - [ ] OwnableExecutor
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
   - [ ] Fuzz
 - [ ] OwnableValidator

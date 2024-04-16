@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { BaseTest, console2 } from "test/Base.t.sol";
+import { BaseTest } from "test/Base.t.sol";
 import { OwnableValidator, ERC7579ValidatorBase } from "src/OwnableValidator/OwnableValidator.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
 import { PackedUserOperation, getEmptyUserOperation } from "test/utils/ERC4337.sol";
