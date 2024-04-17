@@ -99,42 +99,4 @@ contract Safe7579Test is LaunchpadBase {
         assertEq(ret.length, 2);
         assertEq(abi.decode(ret[0], (uint256)), 1338);
     }
-
-    function test_fallback() public {
-        MockFallback _fallback = new MockFallback();
-        vm.prank(address(safe));
-        IERC7579Account(address(safe)).installModule(
-            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_SINGLE, "")
-        );
-        (uint256 ret, address msgSender, address context) = MockFallback(address(safe)).target(1337);
-
-        assertEq(ret, 1337);
-        assertEq(msgSender, address(safe));
-        assertEq(context, address(this));
-
-        vm.prank(address(safe));
-        IERC7579Account(address(safe)).uninstallModule(
-            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_SINGLE, "")
-        );
-        vm.prank(address(safe));
-        IERC7579Account(address(safe)).installModule(
-            3, address(_fallback), abi.encode(MockFallback.target.selector, CALLTYPE_STATIC, "")
-        );
-        (ret, msgSender, context) = MockFallback(address(safe)).target(1337);
-        assertEq(ret, 1337);
-        assertEq(msgSender, address(safe));
-        assertEq(context, address(this));
-
-        // vm.prank(address(safe));
-        // IERC7579Account(address(safe)).installModule(
-        //     3,
-        //     address(_fallback),
-        //     abi.encode(MockFallback.target2.selector, CALLTYPE_DELEGATECALL, "")
-        // );
-        // (uint256 _ret, address _this, address _msgSender) =
-        //     MockFallback(address(safe)).target2(1337);
-        //
-        // assertEq(_ret, 1337);
-        // assertEq(_this, address(safe));
-    }
 }

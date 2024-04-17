@@ -227,8 +227,8 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         return $fallback.handler != address(0);
     }
 
-    function _uninstallFallbackHandler(address handler, bytes calldata initData) internal virtual {
-        (bytes4 functionSig) = abi.decode(initData, (bytes4));
+    function _uninstallFallbackHandler(address handler, bytes calldata context) internal virtual {
+        (bytes4 functionSig, bytes memory initData) = abi.decode(context, (bytes4, bytes));
 
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         $mms._fallbacks[functionSig].handler = address(0);
@@ -251,6 +251,8 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         returns (bool)
     {
         bytes4 functionSig = abi.decode(additionalContext, (bytes4));
+
+        // TODO: check that no onInstall / onUninstall is called
 
         FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
         return $fallback.handler == _handler;

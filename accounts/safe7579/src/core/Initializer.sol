@@ -49,7 +49,7 @@ abstract contract Initializer is ISafe7579Init, HookManager {
      * @param executors executor modules and initData
      * @param executors executor modules and initData
      * @param fallbacks fallback modules and initData
-     * @param hook hook module and initData
+     * @param hooks hook module and initData
      * @param registryInit (OPTIONAL) registry, attesters and threshold for IERC7484 Registry
      *                    If not provided, the registry will be set to the zero address, and no
      *                    registry checks will be performed
@@ -58,7 +58,7 @@ abstract contract Initializer is ISafe7579Init, HookManager {
         ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
-        ModuleInit calldata hook,
+        ModuleInit[] calldata hooks,
         RegistryInit calldata registryInit
     )
         public
@@ -66,14 +66,14 @@ abstract contract Initializer is ISafe7579Init, HookManager {
     {
         _configureRegistry(registryInit.registry, registryInit.attesters, registryInit.threshold);
         // this will revert if already initialized
-        _initModules(validators, executors, fallbacks, hook);
+        _initModules(validators, executors, fallbacks, hooks);
     }
 
     function _initModules(
         ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
-        ModuleInit calldata hook
+        ModuleInit[] calldata hooks
     )
         internal
     {
@@ -111,7 +111,12 @@ abstract contract Initializer is ISafe7579Init, HookManager {
             _installFallbackHandler(_fallback.module, _fallback.initData);
         }
 
-        _installHook(hook.module, hook.initData);
+        length = hooks.length;
+        for (uint256 i; i < length; i++) {
+            ModuleInit calldata hook = hooks[i];
+            // enable module on Safe7579,  initialize module via Safe, emit events
+            _installHook(hook.module, hook.initData);
+        }
 
         emit Safe7579Initialized(msg.sender);
     }

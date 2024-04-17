@@ -7,6 +7,7 @@ contract MockTarget {
     event Access(address sender);
 
     function set(uint256 _value) public returns (uint256) {
+        if (_value == type(uint256).max) revert();
         emit Access(msg.sender);
         value = _value;
         return _value;

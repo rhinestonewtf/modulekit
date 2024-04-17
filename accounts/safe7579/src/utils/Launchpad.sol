@@ -85,7 +85,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         address safe7579,
         ISafe7579Init.ModuleInit[] calldata executors,
         ISafe7579Init.ModuleInit[] calldata fallbacks,
-        ISafe7579Init.ModuleInit calldata hook,
+        ISafe7579Init.ModuleInit[] calldata hooks,
         address[] calldata attesters,
         uint8 threshold
     )
@@ -97,7 +97,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
             validators: new ISafe7579Init.ModuleInit[](0),
             executors: executors,
             fallbacks: fallbacks,
-            hook: hook,
+            hooks: hooks,
             registryInit: ISafe7579Init.RegistryInit({
                 registry: REGISTRY,
                 attesters: attesters,

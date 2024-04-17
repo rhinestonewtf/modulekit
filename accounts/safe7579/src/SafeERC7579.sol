@@ -36,6 +36,8 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * creates full ERC7579 compliance to Safe accounts
@@ -53,6 +55,7 @@ contract SafeERC7579 is
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
+    using HookedExecOnSafeLib for ISafe;
 
     error Unsupported();
 
@@ -74,7 +77,7 @@ contract SafeERC7579 is
     {
         CallType callType;
         ExecType execType;
-        address hook = getActiveHook();
+        address hook = getActiveHook(msg.sig);
 
         // solhint-disable-next-line no-inline-assembly
         assembly {
@@ -257,11 +260,16 @@ contract SafeERC7579 is
         override
         onlyEntryPointOrSelf
     {
+        // address hook = getActiveHook();
+        address hook = address(0);
+        bytes memory hookPreContext = ISafe(msg.sender).preHook(hook);
+
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
         else if (moduleType == MODULE_TYPE_EXECUTOR) _installExecutor(module, initData);
         else if (moduleType == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
         else if (moduleType == MODULE_TYPE_HOOK) _installHook(module, initData);
         else revert UnsupportedModuleType(moduleType);
+        ISafe(msg.sender).postHook(hook, hookPreContext, true, "");
     }
 
     /**
@@ -326,7 +334,7 @@ contract SafeERC7579 is
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
             return _isFallbackHandlerInstalled(module, additionalContext);
         } else if (moduleType == MODULE_TYPE_HOOK) {
-            return _isHookInstalled(module);
+            return _isHookInstalled(module, additionalContext);
         } else {
             return false;
         }
@@ -336,8 +344,8 @@ contract SafeERC7579 is
      * @inheritdoc IERC7579Account
      */
     function accountId() external view override returns (string memory accountImplementationId) {
-        string memory safeVersion = ISafe(_msgSender()).VERSION();
-        return string(abi.encodePacked(safeVersion, "erc7579.v0.0.0"));
+        string memory safeVersion = ISafe(msg.sender).VERSION();
+        return string(abi.encodePacked("safe-", safeVersion, ".erc7579.v0.0.1"));
     }
 
     /**

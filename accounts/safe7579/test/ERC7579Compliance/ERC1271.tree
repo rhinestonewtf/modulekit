@@ -1,0 +1,6 @@
+ERC1271Test
+└── When forwarding ERC1271
+    └── It should select the correct validator
+    └── It should forward the correct msgSender
+    └── It should slice the correct signature
+    └── It should implement fallback to safe signature checks

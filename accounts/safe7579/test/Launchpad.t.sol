@@ -75,8 +75,7 @@ contract LaunchpadBase is Test {
         executors[0] =
             ISafe7579Init.ModuleInit({ module: address(defaultExecutor), initData: bytes("") });
         ISafe7579Init.ModuleInit[] memory fallbacks = new ISafe7579Init.ModuleInit[](0);
-        ISafe7579Init.ModuleInit memory hook =
-            ISafe7579Init.ModuleInit({ module: address(0), initData: bytes("") });
+        ISafe7579Init.ModuleInit[] memory hooks = new ISafe7579Init.ModuleInit[](0);
 
         Safe7579Launchpad.InitData memory initData = Safe7579Launchpad.InitData({
             singleton: address(singleton),
@@ -89,7 +88,7 @@ contract LaunchpadBase is Test {
                     address(safe7579),
                     executors,
                     fallbacks,
-                    hook,
+                    hooks,
                     Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
                     2
                 )

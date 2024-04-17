@@ -1,0 +1,9 @@
+Executions4337Test
+├── When executing on valid target // implement single, batch and delegatecall
+│   └── It should pass
+├── When executing single on invalid target //implement single, batch and delegatecall
+│   └── It should revert
+├── When try executing on valid target // implement single, batch and delegatecall
+│   └── It should pass
+└── When try executing single on invalid target //implement single, batch and delegatecall
+    └── It should emit at the correct index

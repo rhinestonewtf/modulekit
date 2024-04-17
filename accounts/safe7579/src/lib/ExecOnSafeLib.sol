@@ -204,7 +204,8 @@ library HookedExecOnSafeLib {
     using TryExecOnSafeLib for ISafe;
     using ExecutionLib for bytes;
 
-    function preHook(ISafe safe, address withHook) private returns (bytes memory hookPreContext) {
+    function preHook(ISafe safe, address withHook) internal returns (bytes memory hookPreContext) {
+        if (withHook == address(0)) return "";
         hookPreContext = abi.decode(
             safe.execReturn({
                 target: withHook,
@@ -222,8 +223,9 @@ library HookedExecOnSafeLib {
         bool excutionSuccess,
         bytes memory executionReturnValue
     )
-        private
+        internal
     {
+        if (withHook == address(0)) return;
         safe.execReturn({
             target: withHook,
             value: 0,
@@ -274,10 +276,9 @@ library HookedExecOnSafeLib {
         returns (bytes[] memory retDatas)
     {
         bool success;
-        bool hookEnabled = hook != address(0);
         ISafe safe = ISafe(msg.sender);
         bytes memory preHookContext;
-        if (hookEnabled) preHookContext = preHook(safe, hook);
+        preHookContext = preHook(safe, hook);
 
         if (callType == CALLTYPE_BATCH) {
             Execution[] calldata executions = executionCalldata.decodeBatch();
@@ -295,7 +296,7 @@ library HookedExecOnSafeLib {
         } else {
             revert UnsupportedCallType(callType);
         }
-        if (hookEnabled) postHook(safe, hook, preHookContext, true, abi.encode(retDatas));
+        postHook(safe, hook, preHookContext, true, abi.encode(retDatas));
     }
 }
 

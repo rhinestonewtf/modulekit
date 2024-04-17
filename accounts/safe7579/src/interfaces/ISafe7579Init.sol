@@ -19,7 +19,7 @@ interface ISafe7579Init {
         ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
-        ModuleInit calldata hook,
+        ModuleInit[] calldata hooks,
         RegistryInit calldata registryInit
     )
         external
