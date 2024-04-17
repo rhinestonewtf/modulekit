@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
 import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
-import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
+import { SentinelList4337Lib, SENTINEL } from "sentinellist/SentinelList4337.sol";
 import { CheckSignatures } from "checknsignatures/CheckNSignatures.sol";
 import { IERC7579Account } from "modulekit/src/Accounts.sol";
 import { ModeLib, CallType, ModeCode, CALLTYPE_SINGLE } from "erc7579/lib/ModeLib.sol";
@@ -25,7 +25,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
     error InvalidThreshold();
 
     SentinelList4337Lib.SentinelList guardians;
-    mapping(address account => uint256) threshold;
+    mapping(address account => uint256) public threshold;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -73,6 +73,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
 
     function onUninstall(bytes calldata) external override {
         // TODO
+        threshold[msg.sender] = 0;
     }
 
     function isInitialized(address smartAccount) public view returns (bool) {
@@ -80,28 +81,43 @@ contract SocialRecovery is ERC7579ValidatorBase {
     }
 
     function setThreshold(uint256 _threshold) external {
+        address account = msg.sender;
+        if (!isInitialized(account)) revert NotInitialized(account);
+
         if (_threshold == 0) {
             revert InvalidThreshold();
         }
-        // TODO check if the threshold is less than the number of guardians
 
-        threshold[msg.sender] = _threshold;
+        // TODO check if the threshold is less than the number of guardians
+        threshold[account] = _threshold;
     }
 
     function addGuardian(address guardian) external {
+        address account = msg.sender;
+        if (!isInitialized(account)) revert NotInitialized(account);
+
         if (guardian == address(0)) {
             revert InvalidGuardian(guardian);
         }
 
-        if (guardians.contains(msg.sender, guardian)) {
+        if (guardians.contains(account, guardian)) {
             revert InvalidGuardian(guardian);
         }
 
-        guardians.push(msg.sender, guardian);
+        guardians.push(account, guardian);
     }
 
     function removeGuardian(address prevGuardian, address guardian) external {
         guardians.pop(msg.sender, prevGuardian, guardian);
+    }
+
+    function getGuardians(address account)
+        external
+        view
+        returns (address[] memory guardiansArray)
+    {
+        // TODO: return length
+        (guardiansArray,) = guardians.getEntriesPaginated(account, SENTINEL, 10);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -116,8 +132,11 @@ contract SocialRecovery is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
+        // Get the account
+        address account = userOp.sender;
+
         // Get the threshold and check that its set
-        uint256 _threshold = threshold[msg.sender];
+        uint256 _threshold = threshold[account];
         if (_threshold == 0) {
             return VALIDATION_FAILED;
         }
@@ -132,10 +151,9 @@ contract SocialRecovery is ERC7579ValidatorBase {
         signers.uniquifySorted();
 
         // Check if the signers are guardians
-        SentinelList4337Lib.SentinelList storage _guardians = guardians;
         uint256 validSigners;
         for (uint256 i = 0; i < signers.length; i++) {
-            if (_guardians.contains(msg.sender, signers[i])) {
+            if (guardians.contains(account, signers[i])) {
                 validSigners++;
             }
         }
@@ -146,7 +164,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
         if (selector == IERC7579Account.execute.selector) {
             // Decode and check the execution
             // Only single executions to installed validators are allowed
-            isAllowedExecution = _decodeAndCheckExecution(userOp.callData);
+            isAllowedExecution = _decodeAndCheckExecution(account, userOp.callData);
         }
 
         // Check if the threshold is met and the execution is allowed and return the result
@@ -174,7 +192,10 @@ contract SocialRecovery is ERC7579ValidatorBase {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _decodeAndCheckExecution(bytes calldata callData)
+    function _decodeAndCheckExecution(
+        address account,
+        bytes calldata callData
+    )
         internal
         returns (bool isAllowedExecution)
     {
@@ -187,7 +208,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
             (address to,,) = ExecutionLib.decodeSingle(callData[100:]);
 
             // Check if the module is installed as a validator
-            return IERC7579Account(msg.sender).isModuleInstalled(TYPE_VALIDATOR, to, "");
+            return IERC7579Account(account).isModuleInstalled(TYPE_VALIDATOR, to, "");
         } else {
             return false;
         }

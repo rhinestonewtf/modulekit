@@ -30,26 +30,39 @@ SocialRecovery::isInitialized
 
 
 SocialRecovery::setThreshold
-├── when threshold is 0
+├── when module is not intialized
 │   └── it should revert
-└── when threshold is not 0
-    ├── when threshold is higher than guardians length
+└── when module is intialized
+    ├── when threshold is 0
     │   └── it should revert
-    └── when threshold is not higher than guardians length
-        └── it should set the threshold
+    └── when threshold is not 0
+        ├── when threshold is higher than guardians length
+        │   └── it should revert
+        └── when threshold is not higher than guardians length
+            └── it should set the threshold
 
 
 SocialRecovery::addGuardian
-├── when guardian is 0 address
+├── when module is not intialized
 │   └── it should revert
-├── when guardian is already added
-│   └── it should revert
-└── when guardian is not added
-    └── it should add the guardian
+└── when module is intialized
+    ├── when guardian is 0 address
+    │   └── it should revert
+    ├── when guardian is already added
+    │   └── it should revert
+    └── when guardian is not added
+        └── it should add the guardian
 
 
 SocialRecovery::removeGuardian
-└── it should remove the guardian
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should remove the guardian
+
+
+SocialRecovery::getGuardians
+└── it should get all guardians
 
 
 SocialRecovery::validateUserOp

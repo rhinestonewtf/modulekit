@@ -261,9 +261,7 @@ contract OwnableValidatorTest is BaseTest {
 
     function test_RemoveOwnerRevertWhen_ModuleIsNotIntialized() external {
         // it should revert
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC7579Module.NotInitialized.selector, address(this))
-        );
+        vm.expectRevert();
         validator.removeOwner(_owners[1], _owners[0]);
     }
 
@@ -361,7 +359,7 @@ contract OwnableValidatorTest is BaseTest {
         bytes memory data = "";
 
         vm.expectRevert(abi.encodeWithSelector(OwnableValidator.ThresholdNotSet.selector));
-        bytes4 result = validator.isValidSignatureWithSender(sender, hash, data);
+        validator.isValidSignatureWithSender(sender, hash, data);
     }
 
     function test_IsValidSignatureWithSenderWhenTheSignaturesAreNotValid()

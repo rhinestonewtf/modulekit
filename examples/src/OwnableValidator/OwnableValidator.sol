@@ -103,10 +103,7 @@ contract OwnableValidator is ERC7579ValidatorBase {
     }
 
     function removeOwner(address prevOwner, address owner) external {
-        address account = msg.sender;
-        if (!isInitialized(account)) revert NotInitialized(account);
-
-        owners.pop(account, prevOwner, owner);
+        owners.pop(msg.sender, prevOwner, owner);
     }
 
     function getOwners(address account) external view returns (address[] memory ownersArray) {

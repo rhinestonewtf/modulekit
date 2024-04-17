@@ -52,7 +52,7 @@ Tested:
   - [x] Unit
   - [ ] Integration
 - [ ] SocialRecovery
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
 
 ## Usage as part of ModuleKit
