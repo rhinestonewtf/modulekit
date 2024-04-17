@@ -49,7 +49,7 @@ Tested:
   - [x] Unit
   - [ ] Integration
 - [ ] ScheduledTransactions
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
 - [ ] SocialRecovery
   - [ ] Unit

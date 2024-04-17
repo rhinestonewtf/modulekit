@@ -2,16 +2,16 @@
 pragma solidity ^0.8.23;
 
 import { BaseTest } from "test/Base.t.sol";
-import { ScheduledOrders, SchedulingBase } from "src/ScheduledOrders/ScheduledOrders.sol";
-import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
+import { ScheduledTransfers, SchedulingBase } from "src/ScheduledTransfers/ScheduledTransfers.sol";
+import { IERC7579Module, Execution } from "modulekit/src/external/ERC7579.sol";
 import { MockTarget } from "test/mocks/MockTarget.sol";
 
-contract ScheduledOrdersTest is BaseTest {
+contract ScheduledTransfersTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
                                     CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    ScheduledOrders internal executor;
+    ScheduledTransfers internal executor;
     MockTarget internal target;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -21,7 +21,7 @@ contract ScheduledOrdersTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        executor = new ScheduledOrders();
+        executor = new ScheduledTransfers();
         target = new MockTarget();
 
         vm.warp(1_713_357_071);
@@ -68,8 +68,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -88,8 +89,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -172,8 +174,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -192,8 +195,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -253,8 +257,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -289,8 +294,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 1;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -326,8 +332,9 @@ contract ScheduledOrdersTest is BaseTest {
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp + 1 days);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -357,15 +364,16 @@ contract ScheduledOrdersTest is BaseTest {
         whenTheOrderIsDue
         whenAllExecutionsHaveNotBeenCompleted
     {
-        // it should swap the stored order
+        // it should make the stored transfer
         // it should update the last order timestamp
         // it should update the order execution count
         // it should emit an ExecutionTriggered event
         uint48 _executeInterval = 1 seconds;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        bytes memory _executionData =
-            abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        Execution memory _execution =
+            Execution({ target: address(0x1), value: 100, callData: bytes("") });
+        bytes memory _executionData = abi.encode(_execution);
         bytes memory data =
             abi.encodePacked(_executeInterval, _numberOfExecutions, _startDate, _executionData);
 
@@ -392,10 +400,10 @@ contract ScheduledOrdersTest is BaseTest {
         assertGt(value, 0);
     }
 
-    function test_NameShouldReturnScheduledOrders() public {
-        // it should return ScheduledOrders
+    function test_NameShouldReturnScheduledTransfers() public {
+        // it should return ScheduledTransfers
         string memory name = executor.name();
-        assertEq(name, "ScheduledOrders");
+        assertEq(name, "ScheduledTransfers");
     }
 
     function test_VersionShouldReturn100() public {

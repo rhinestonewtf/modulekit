@@ -21,14 +21,20 @@ ScheduledTransfers::isInitialized
 
 
 ScheduledTransfers::addOrder
-├── it should increment the jobCount by 1
-├── it should store the execution config
-└── it should emit an ExecutionAdded event
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should increment the jobCount by 1
+    ├── it should store the execution config
+    └── it should emit an ExecutionAdded event
 
 
 ScheduledTransfers::toggleOrder
-├── it should toggle the order enabled state
-└── it should emit an ExecutionStatusUpdated event
+├── when order does not exist
+│   └── it should revert
+└── when order exists
+    ├── it should toggle the order enabled state
+    └── it should emit an ExecutionStatusUpdated event
 
 
 ScheduledTransfers::executeOrder
