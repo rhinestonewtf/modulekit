@@ -7,11 +7,12 @@ import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { ISafe, ExecOnSafeLib } from "../lib/ExecOnSafeLib.sol";
 import { SimulateTxAccessor } from "../utils/DelegatecallTarget.sol";
 
+import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
 import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
-import { DelegateCallUtil } from "./DCUtil.sol";
+import { Safe7579DCUtil, Safe7579DCUtilSetup } from "./DCUtil.sol";
 import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
 
 import {
@@ -38,7 +39,7 @@ struct ModuleManagerStorage {
  * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
  */
-abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, DelegateCallUtil {
+abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Safe7579DCUtilSetup {
     using ExecOnSafeLib for *;
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
@@ -78,12 +79,12 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         $validators.push({ account: msg.sender, newEntry: validator });
 
         // Initialize Validator Module via Safe
-        ISafe(msg.sender).exec({
-            target: validator,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (data))
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.installModule, (MODULE_TYPE_VALIDATOR, validator, data)
+            )
         });
-        _emitModuleInstall(MODULE_TYPE_VALIDATOR, validator);
     }
 
     /**
@@ -94,12 +95,12 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
 
         // De-Initialize Validator Module via Safe
-        ISafe(msg.sender).exec({
-            target: validator,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_VALIDATOR, validator, disableModuleData)
+            )
         });
-        _emitModuleUninstall(MODULE_TYPE_VALIDATOR, validator);
     }
 
     /**
@@ -149,12 +150,12 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
         $executors.push(executor);
         // Initialize Executor Module via Safe
-        ISafe(msg.sender).exec({
-            target: executor,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (data))
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.installModule, (MODULE_TYPE_EXECUTOR, executor, data)
+            )
         });
-        _emitModuleInstall(MODULE_TYPE_EXECUTOR, executor);
     }
 
     function _uninstallExecutor(address executor, bytes calldata data) internal {
@@ -162,13 +163,13 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
         $executors.pop(prev, executor);
 
-        // De-Initialize Executor Module via Safe
-        ISafe(msg.sender).exec({
-            target: executor,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
+        // De-Initialize Validator Module via Safe
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_EXECUTOR, executor, disableModuleData)
+            )
         });
-        _emitModuleUninstall(MODULE_TYPE_EXECUTOR, executor);
     }
 
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
@@ -214,12 +215,12 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         $fallbacks.calltype = calltype;
         $fallbacks.handler = handler;
 
-        ISafe(msg.sender).exec({
-            target: handler,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (initData))
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.installModule, (MODULE_TYPE_FALLBACK, handler, initData)
+            )
         });
-        _emitModuleInstall(MODULE_TYPE_FALLBACK, handler);
     }
 
     function _isFallbackHandlerInstalled(bytes4 functionSig) internal view virtual returns (bool) {
@@ -233,12 +234,13 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
         ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
         $mms._fallbacks[functionSig].handler = address(0);
         // De-Initialize Fallback Module via Safe
-        ISafe(msg.sender).exec({
-            target: handler,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (initData))
+
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_FALLBACK, handler, initData)
+            )
         });
-        _emitModuleUninstall(MODULE_TYPE_FALLBACK, handler);
     }
 
     function _isFallbackHandlerInstalled(
@@ -274,7 +276,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter, Del
 
         if (calltype == CALLTYPE_STATIC) {
             bytes memory ret = ISafe(msg.sender).execDelegateCallReturn({
-                target: address(DCTARGET),
+                target: UTIL,
                 callData: abi.encodeCall(
                     SimulateTxAccessor.simulate,
                     (handler, 0, abi.encodePacked(callData, _msgSender()), Enum.Operation.Call)

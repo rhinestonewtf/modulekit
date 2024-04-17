@@ -5,11 +5,12 @@ import { ModuleManager } from "./ModuleManager.sol";
 import { IHook, IModule } from "erc7579/interfaces/IERC7579Module.sol";
 import { MODULE_TYPE_HOOK } from "erc7579/interfaces/IERC7579Module.sol";
 import { ISafe, ExecOnSafeLib } from "../lib/ExecOnSafeLib.sol";
-
+import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
 /**
  * @title reference implementation of HookManager
  * @author zeroknots.eth | rhinestone.wtf
  */
+
 abstract contract HookManager is ModuleManager {
     using ExecOnSafeLib for ISafe;
 
@@ -32,23 +33,24 @@ abstract contract HookManager is ModuleManager {
             revert HookAlreadyInstalled(currentHook);
         }
         $hookManager[msg.sender][selector] = hook;
-        ISafe(msg.sender).exec({
-            target: hook,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (initData))
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.installModule, (MODULE_TYPE_HOOK, hook, initData)
+            )
         });
-        _emitModuleInstall(MODULE_TYPE_HOOK, hook);
     }
 
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
         (bytes4 selector, bytes memory initData) = abi.decode(data, (bytes4, bytes));
         delete $hookManager[msg.sender][selector];
-        ISafe(msg.sender).exec({
-            target: hook,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (initData))
+
+        ISafe(msg.sender).execDelegateCall({
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_HOOK, hook, initData)
+            )
         });
-        _emitModuleUninstall(MODULE_TYPE_HOOK, hook);
     }
 
     function _isHookInstalled(

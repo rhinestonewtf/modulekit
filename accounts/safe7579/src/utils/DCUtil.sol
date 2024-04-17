@@ -1,5 +1,7 @@
 import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { IModule as IERC7579Module } from "erc7579/interfaces/IERC7579Module.sol";
+import { SimulateTxAccessor } from
+    "@safe-global/safe-contracts/contracts/accessors/SimulateTxAccessor.sol";
 
 contract ModuleInstallUtil {
     event ModuleInstalled(uint256 moduleTypeId, address module);
@@ -7,23 +9,23 @@ contract ModuleInstallUtil {
 
     function installModule(
         uint256 moduleTypeId,
-        IERC7579Module module,
+        address module,
         bytes calldata initData
     )
         external
     {
-        module.onInstall(initData);
+        IERC7579Module(module).onInstall(initData);
         emit ModuleInstalled(moduleTypeId, address(module));
     }
 
     function unInstallModule(
         uint256 moduleTypeId,
-        IERC7579Module module,
+        address module,
         bytes calldata initData
     )
         external
     {
-        module.onUninstall(initData);
+        IERC7579Module(module).onUninstall(initData);
         emit ModuleUninstalled(moduleTypeId, address(module));
     }
 }
@@ -97,4 +99,4 @@ contract BatchedExecUtil {
     }
 }
 
-contract Safe7579DCUtil is ModuleInstallUtil, BatchedExecUtil { }
+contract Safe7579DCUtil is ModuleInstallUtil, BatchedExecUtil, SimulateTxAccessor { }
