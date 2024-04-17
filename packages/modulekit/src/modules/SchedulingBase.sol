@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ExecutorBase } from "./ERC7579ExecutorBase.sol";
+import "forge-std/console2.sol";
 
 abstract contract SchedulingBase is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -43,12 +44,7 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
             revert AlreadyInitialized(account);
         }
 
-        _createExecution({
-            executeInterval: uint48(bytes6(data[0:6])),
-            numberOfExecutions: uint16(bytes2(data[6:8])),
-            startDate: uint48(bytes6(data[8:14])),
-            executionData: data[14:]
-        });
+        _createExecution({ orderData: data });
     }
 
     function onUninstall(bytes calldata) external {
@@ -67,19 +63,22 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
         return accountJobCount[smartAccount] != 0;
     }
 
-    function addOrder(ExecutionConfig calldata executionConfig) external {
-        _createExecution({
-            executeInterval: executionConfig.executeInterval,
-            numberOfExecutions: executionConfig.numberOfExecutions,
-            startDate: executionConfig.startDate,
-            executionData: executionConfig.executionData
-        });
+    function addOrder(bytes calldata orderData) external {
+        address account = msg.sender;
+        if (!isInitialized(account)) revert NotInitialized(account);
+
+        _createExecution({ orderData: orderData });
     }
 
     function toggleOrder(uint256 jobId) external {
         address account = msg.sender;
 
         ExecutionConfig storage executionConfig = executionLog[account][jobId];
+
+        if (executionConfig.numberOfExecutions == 0) {
+            revert InvalidExecution();
+        }
+
         executionConfig.isEnabled = !executionConfig.isEnabled;
 
         emit ExecutionStatusUpdated(account, jobId);
@@ -96,26 +95,21 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _createExecution(
-        uint48 executeInterval,
-        uint16 numberOfExecutions,
-        uint48 startDate,
-        bytes calldata executionData
-    )
-        internal
-    {
+    function _createExecution(bytes calldata orderData) internal {
         address account = msg.sender;
 
-        uint256 jobId = accountJobCount[account]++;
+        // TODO: optimise this?
+        uint256 jobId = accountJobCount[account] + 1;
+        accountJobCount[account]++;
 
         executionLog[account][jobId] = ExecutionConfig({
             numberOfExecutionsCompleted: 0,
             isEnabled: true,
             lastExecutionTime: 0,
-            executeInterval: executeInterval,
-            numberOfExecutions: numberOfExecutions,
-            startDate: startDate,
-            executionData: executionData
+            executeInterval: uint48(bytes6(orderData[0:6])),
+            numberOfExecutions: uint16(bytes2(orderData[6:8])),
+            startDate: uint48(bytes6(orderData[8:14])),
+            executionData: orderData[14:]
         });
 
         emit ExecutionAdded(account, jobId);
@@ -125,18 +119,26 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
         ExecutionConfig storage executionConfig = executionLog[msg.sender][jobId];
 
         if (!executionConfig.isEnabled) {
+            console2.log("1");
             revert InvalidExecution();
         }
 
-        if (executionConfig.lastExecutionTime + executionConfig.executeInterval < block.timestamp) {
+        if (executionConfig.lastExecutionTime + executionConfig.executeInterval > block.timestamp) {
+            console2.log("2");
             revert InvalidExecution();
         }
+
         if (executionConfig.numberOfExecutionsCompleted >= executionConfig.numberOfExecutions) {
+            console2.log("3");
             revert InvalidExecution();
         }
+
         if (executionConfig.startDate > block.timestamp) {
+            console2.log("4");
             revert InvalidExecution();
         }
+
+        console2.log("5");
     }
 
     modifier canExecute(uint256 jobId) {

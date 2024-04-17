@@ -78,6 +78,7 @@ contract OwnableExecutor is ERC7579ExecutorBase {
             revert UnauthorizedAccess();
         }
 
+        // TODO: should we also allow batch calls?
         IERC7579Account(ownedAccount).executeFromExecutor(ModeLib.encodeSimpleSingle(), callData);
     }
 
