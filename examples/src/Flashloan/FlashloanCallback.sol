@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IFallbackMethod } from "modulekit/src/core/ExtensibleFallbackHandler.sol";
+import { ERC7579ExecutorBase, ERC7579FallbackBase } from "modulekit/src/Modules.sol";
+import { FlashLoanType } from "./interfaces/Flashloan.sol";
 
-import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
-import "./interfaces/Flashloan.sol";
-
-contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
+contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -38,54 +36,25 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
-    function handle(
-        address borrower,
-        address sender,
-        uint256 value,
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
         bytes calldata data
     )
         external
-        override
-        returns (bytes memory result)
+        returns (bytes32)
     {
-        if (data.length < 4) revert();
-
-        bytes4 selector = bytes4(data[0:4]);
-
-        if (selector == IERC3156FlashBorrower.onFlashLoan.selector) {
-            (
-                address lender,
-                address token,
-                uint256 value,
-                uint256 fee,
-                bytes memory tokenGatedAction
-            ) = abi.decode(data[4:], (address, address, uint256, uint256, bytes));
-            _onFlashloan(borrower, lender, token, value, fee, tokenGatedAction);
-            return abi.encode(keccak256("ERC3156FlashBorrower.onFlashLoan"));
-        }
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     INTERNAL
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function _onFlashloan(
-        address borrower,
-        address lender,
-        address token,
-        uint256 value,
-        uint256 fee,
-        bytes memory tokenGatedAction
-    )
-        internal
-    {
+        address borrower = _msgSender();
         (FlashLoanType flashLoanType, bytes memory signature, bytes memory callData) =
-            abi.decode(tokenGatedAction, (FlashLoanType, bytes, bytes));
+            abi.decode(data, (FlashLoanType, bytes, bytes));
         bytes32 hash = getTokengatedTxHash(callData, nonce[borrower]);
         // TODO signature
         (bool success,) = borrower.call(callData);
         if (!success) revert();
         nonce[borrower]++;
+        keccak256("ERC3156FlashBorrower.onFlashLoan");
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -101,6 +70,6 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
     }
 
     function isModuleType(uint256 isType) external pure virtual override returns (bool) {
-        return isType == TYPE_EXECUTOR;
+        return isType == TYPE_EXECUTOR || isType == TYPE_FALLBACK;
     }
 }
