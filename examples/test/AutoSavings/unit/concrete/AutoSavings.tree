@@ -2,7 +2,8 @@ AutoSavings::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
-    └── it should set the configs for each token
+    ├── it should set the configs for each token
+    └── it should add all tokens
 
 
 AutoSavings::onUninstall
@@ -17,19 +18,36 @@ AutoSavings::isInitialized
     └── it should return true
 
 
+AutoSavings::setConfig
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should set the config for the token
+
+
+AutoSavings::setConfig
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should remove the token from the stored tokens
+    └── it should delete the config for the token
+
+
 AutoSavings::calcDepositAmount
 └── it should return the deposit amount
 
 
 AutoSavings::autoSave
-├── when the token provided is not the underlying asset
-│   └── it should execute a swap to the underlying asset
-├── it should deposit the amount to the vault
-└── it shoudl emit an AutoSaveExecuted event
-
-
-AutoSavings::setConfig
-└── it should set the config for the sender and token
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when the token provided is not the underlying asset
+    │   ├── it should execute a swap to the underlying asset
+    │   ├── it should deposit the amount to the vault
+    │   └── it should emit an AutoSaveExecuted event
+    └── when the token provided is the underlying asset
+        ├── it should deposit the amount to the vault
+        └── it should emit an AutoSaveExecuted event
 
 
 AutoSavings::name

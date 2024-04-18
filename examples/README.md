@@ -19,7 +19,7 @@ Modules:
 Tested:
 
 - [ ] AutoSavings
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
 - [ ] ColdStorageHook
   - [ ] Unit

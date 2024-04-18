@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC20Integration, ERC4626Integration } from "modulekit/src/Integrations.sol";
+import {
+    ERC20Integration,
+    ERC4626Integration,
+    UniswapV3Integration
+} from "modulekit/src/Integrations.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
-import { UniswapV3Integration } from "modulekit/src/Integrations.sol";
 import { Execution } from "modulekit/src/Accounts.sol";
 import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
-import { SentinelListLib } from "sentinellist/SentinelList.sol";
+import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
 
 contract AutoSavings is ERC7579ExecutorBase {
     using ERC4626Integration for *;
@@ -16,11 +19,6 @@ contract AutoSavings is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
-
-    struct Params {
-        address token;
-        uint256 amountReceived;
-    }
 
     struct Config {
         uint16 percentage; // percentage to be saved to the vault
@@ -43,7 +41,8 @@ contract AutoSavings is ERC7579ExecutorBase {
         address account = msg.sender;
         if (isInitialized(account)) revert AlreadyInitialized(account);
 
-        (address[] memory _tokens, Config[] memory log) = abi.decode(data, (address[], Config[]));
+        (address[] memory _tokens, Config[] memory _configs) =
+            abi.decode(data, (address[], Config[]));
 
         tokens[account].init();
 
@@ -51,7 +50,7 @@ contract AutoSavings is ERC7579ExecutorBase {
         for (uint256 i; i < tokenLength; i++) {
             address _token = _tokens[i];
 
-            config[account][_token] = log[i];
+            config[account][_token] = _configs[i];
             tokens[account].push(_token);
         }
     }
@@ -65,13 +64,27 @@ contract AutoSavings is ERC7579ExecutorBase {
     }
 
     function setConfig(address token, Config memory _config) public {
-        // TODO check for min / max sqrtPriceLimitX96
         address account = msg.sender;
+        if (!isInitialized(account)) revert NotInitialized(account);
+
+        // TODO check for min / max sqrtPriceLimitX96
 
         config[account][token] = _config;
         if (!tokens[account].contains(token)) {
             tokens[account].push(token);
         }
+    }
+
+    function deleteConfig(address prevToken, address token) public {
+        address account = msg.sender;
+
+        delete config[account][token];
+        tokens[account].pop(prevToken, token);
+    }
+
+    function getTokens(address account) external view returns (address[] memory tokensArray) {
+        // TODO
+        (tokensArray,) = tokens[account].getEntriesPaginated(SENTINEL, 10);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -89,21 +102,27 @@ contract AutoSavings is ERC7579ExecutorBase {
         return (amountReceived * percentage) / 100;
     }
 
-    function autoSave(Params calldata params) external {
+    function autoSave(address token, uint256 amountReceived) external {
         // get vault that was configured for this token
-        Config memory conf = config[msg.sender][params.token];
+        address account = msg.sender;
+
+        Config memory conf = config[account][token];
         IERC4626 vault = IERC4626(conf.vault);
 
+        if (address(vault) == address(0)) {
+            revert NotInitialized(account);
+        }
+
         // calc amount that is subject to be saved
-        uint256 amountIn = calcDepositAmount(params.amountReceived, conf.percentage);
+        uint256 amountIn = calcDepositAmount(amountReceived, conf.percentage);
         IERC20 tokenToSave;
 
         // if underlying asset is not the same as the token, add a swap
         address underlying = vault.asset();
-        if (params.token != underlying) {
+        if (token != underlying) {
             Execution[] memory swap = UniswapV3Integration.approveAndSwap({
-                smartAccount: msg.sender,
-                tokenIn: IERC20(params.token),
+                smartAccount: account,
+                tokenIn: IERC20(token),
                 tokenOut: IERC20(underlying),
                 amountIn: amountIn,
                 sqrtPriceLimitX96: conf.sqrtPriceLimitX96
@@ -117,18 +136,18 @@ contract AutoSavings is ERC7579ExecutorBase {
             // change tokenToSave to underlying
             tokenToSave = IERC20(underlying);
         } else {
-            tokenToSave = IERC20(params.token);
-        } // set tokenToSave to params.token since no swap was needed
+            tokenToSave = IERC20(token);
+        } // set tokenToSave to token since no swap was needed
 
         // approve and deposit to vault
         Execution[] memory approveAndDeposit = new Execution[](2);
         approveAndDeposit[0] = ERC20Integration.approve(tokenToSave, address(vault), amountIn);
-        approveAndDeposit[1] = ERC4626Integration.deposit(vault, amountIn, msg.sender);
+        approveAndDeposit[1] = ERC4626Integration.deposit(vault, amountIn, account);
 
         // execute deposit to vault on account
         _execute(approveAndDeposit);
 
-        emit AutoSaveExecuted(msg.sender, params.token, amountIn);
+        emit AutoSaveExecuted(account, token, amountIn);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
