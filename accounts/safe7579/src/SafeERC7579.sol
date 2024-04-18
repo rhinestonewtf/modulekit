@@ -75,6 +75,8 @@ contract SafeERC7579 is
         external
         payable
         override
+        withGlobalHook
+        withSelectorHook(IERC7579Account.execute.selector)
         onlyEntryPointOrSelf
     {
         CallType callType;
@@ -151,6 +153,8 @@ contract SafeERC7579 is
         override
         onlyExecutorModule
         withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
+        withGlobalHook
+        withSelectorHook(IERC7579Account.execute.selector)
         returns (bytes[] memory returnDatas)
     {
         CallType callType;
@@ -161,29 +165,41 @@ contract SafeERC7579 is
             callType := mode
             execType := shl(8, mode)
         }
+        // using JUMPI to avoid stack too deep
+        return _executeReturn(execType, callType, executionCalldata);
+    }
+
+    function _executeReturn(
+        ExecType execType,
+        CallType callType,
+        bytes calldata executionCalldata
+    )
+        private
+        returns (bytes[] memory returnDatas)
+    {
         /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
         /*                   REVERT ON FAILED EXEC                    */
         /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-        ISafe safe = ISafe(msg.sender);
+
         if (execType == EXECTYPE_DEFAULT) {
             // DEFAULT EXEC & SINGLE CALL
             if (callType == CALLTYPE_BATCH) {
                 Execution[] calldata executions = executionCalldata.decodeBatch();
-                returnDatas = _execReturn(safe, executions);
+                returnDatas = _execReturn(ISafe(msg.sender), executions);
             }
             // DEFAULT EXEC & BATCH CALL
             else if (callType == CALLTYPE_SINGLE) {
                 (address target, uint256 value, bytes calldata callData) =
                     executionCalldata.decodeSingle();
                 returnDatas = new bytes[](1);
-                returnDatas[0] = _execReturn(safe, target, value, callData);
+                returnDatas[0] = _execReturn(ISafe(msg.sender), target, value, callData);
             }
             // DEFAULT EXEC & DELEGATECALL
             else if (callType == CALLTYPE_DELEGATECALL) {
                 address target = address(bytes20(executionCalldata[:20]));
                 bytes calldata callData = executionCalldata[20:];
                 returnDatas = new bytes[](1);
-                returnDatas[0] = _delegatecallReturn(safe, target, callData);
+                returnDatas[0] = _delegatecallReturn(ISafe(msg.sender), target, callData);
             }
             // handle unsupported calltype
             else {
@@ -196,17 +212,17 @@ contract SafeERC7579 is
         else if (execType == EXECTYPE_TRY) {
             if (callType == CALLTYPE_BATCH) {
                 Execution[] calldata executions = executionCalldata.decodeBatch();
-                (, returnDatas) = _tryExecReturn(safe, executions);
+                (, returnDatas) = _tryExecReturn(ISafe(msg.sender), executions);
             } else if (callType == CALLTYPE_SINGLE) {
                 (address target, uint256 value, bytes calldata callData) =
                     executionCalldata.decodeSingle();
                 returnDatas = new bytes[](1);
-                returnDatas[0] = _tryExecReturn(safe, target, value, callData);
+                returnDatas[0] = _tryExecReturn(ISafe(msg.sender), target, value, callData);
             } else if (callType == CALLTYPE_DELEGATECALL) {
                 address target = address(bytes20(executionCalldata[:20]));
                 bytes calldata callData = executionCalldata[20:];
                 returnDatas = new bytes[](1);
-                returnDatas[0] = _tryDelegatecallReturn(safe, target, callData);
+                returnDatas[0] = _tryDelegatecallReturn(ISafe(msg.sender), target, callData);
             } else {
                 revert UnsupportedCallType(callType);
             }
@@ -355,6 +371,8 @@ contract SafeERC7579 is
         external
         payable
         override
+        withGlobalHook
+        withSelectorHook(IERC7579Account.installModule.selector)
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
@@ -375,6 +393,8 @@ contract SafeERC7579 is
         external
         payable
         override
+        withGlobalHook
+        withSelectorHook(IERC7579Account.installModule.selector)
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);

@@ -10,11 +10,15 @@ abstract contract RegistryAdapter is ExecutionHelper {
     mapping(address smartAccount => IERC7484 registry) internal $registry;
 
     modifier withRegistry(address module, uint256 moduleType) {
+        _checkRegistry(module, moduleType);
+        _;
+    }
+
+    function _checkRegistry(address module, uint256 moduleType) internal view {
         IERC7484 registry = $registry[msg.sender];
         if (address(registry) != address(0)) {
             registry.checkForAccount(msg.sender, module, moduleType);
         }
-        _;
     }
 
     function _configureRegistry(

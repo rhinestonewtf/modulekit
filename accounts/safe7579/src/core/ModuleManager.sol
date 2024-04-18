@@ -267,8 +267,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     {
         bytes4 functionSig = abi.decode(additionalContext, (bytes4));
 
-        // TODO: check that no onInstall / onUninstall is called
-
         FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
         return $fallbacks.handler == _handler;
     }
@@ -281,6 +279,16 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         virtual
         override(Receiver)
         receiverFallback
+        withGlobalHook
+        withSelectorHook(msg.sig)
+        returns (bytes memory fallbackRet)
+    {
+        // using JUMPI to avoid stack too deep
+        return _callFallbackHandler(callData);
+    }
+
+    function _callFallbackHandler(bytes calldata callData)
+        private
         returns (bytes memory fallbackRet)
     {
         FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][msg.sig];
@@ -327,7 +335,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
     modifier withSelectorHook(bytes4 hookSig) {
         address hook = $hookManager[msg.sender][hookSig];
-        bool enabled = hook != address(0);
         bytes memory _data;
         // if (enabled) _data = ISafe(msg.sender).preHook({ withHook: hook });
         _;
@@ -336,7 +343,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
     modifier withGlobalHook() {
         address hook = $globalHook[msg.sender];
-        bool enabled = hook != address(0);
         bytes memory _data;
         // if (enabled) _data = ISafe(msg.sender).preHook({ withHook: hook });
         _;
