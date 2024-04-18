@@ -386,8 +386,7 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     //////////////////////////////////////////////////////////////////////////*/
 
     function isModuleType(uint256 typeID) external pure returns (bool) {
-        if (typeID == TYPE_VALIDATOR) return true;
-        if (typeID == TYPE_EXECUTOR) return true;
+        return typeID == TYPE_VALIDATOR || typeID == TYPE_EXECUTOR;
     }
 
     function name() external pure returns (string memory) {

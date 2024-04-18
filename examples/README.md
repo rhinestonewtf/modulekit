@@ -22,7 +22,7 @@ Tested:
   - [x] Unit
   - [ ] Integration
 - [ ] ColdStorageHook
-  - [ ] Unit
+  - [x] Unit
   - [ ] Integration
 - [ ] Flashloan
   - [ ] Unit

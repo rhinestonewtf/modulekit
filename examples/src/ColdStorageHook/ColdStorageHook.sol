@@ -8,15 +8,18 @@ import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableM
 import { ERC7579HookDestruct, Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 
 contract ColdStorageHook is ERC7579HookDestruct {
+    using EnumerableMap for EnumerableMap.Bytes32ToBytes32Map;
+
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error InvalidOwner();
+    error InvalidWaitPeriod();
+    error InvalidTransferReceiver();
     error UnsupportedExecution();
     error UnauthorizedAccess();
     error InvalidExecutionHash(bytes32 executionHash);
-
-    using EnumerableMap for EnumerableMap.Bytes32ToBytes32Map;
 
     bytes32 internal constant PASS = keccak256("pass");
 
@@ -25,8 +28,8 @@ contract ColdStorageHook is ERC7579HookDestruct {
         address owner;
     }
 
-    mapping(address subAccount => VaultConfig) internal vaultConfig;
-    mapping(address subAccount => EnumerableMap.Bytes32ToBytes32Map) internal executions;
+    mapping(address subAccount => VaultConfig) public vaultConfig;
+    mapping(address subAccount => EnumerableMap.Bytes32ToBytes32Map) executions;
 
     event ExecutionRequested(
         address indexed subAccount,
@@ -45,17 +48,38 @@ contract ColdStorageHook is ERC7579HookDestruct {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
-        VaultConfig storage _config = vaultConfig[msg.sender];
-        (_config.waitPeriod, _config.owner) = abi.decode(data, (uint128, address));
+        address account = msg.sender;
+        if (isInitialized(account)) revert AlreadyInitialized(account);
+
+        uint128 waitPeriod = uint128(bytes16(data[0:16]));
+        address owner = address(bytes20(data[16:36]));
+
+        if (waitPeriod == 0) revert InvalidWaitPeriod();
+        if (owner == address(0)) revert InvalidOwner();
+
+        VaultConfig storage _config = vaultConfig[account];
+        _config.waitPeriod = waitPeriod;
+        _config.owner = owner;
     }
 
     function onUninstall(bytes calldata data) external override {
-        delete vaultConfig[msg.sender].waitPeriod;
-        delete vaultConfig[msg.sender].owner;
+        address account = msg.sender;
+
+        delete vaultConfig[account].waitPeriod;
+        delete vaultConfig[account].owner;
     }
 
-    function isInitialized(address smartAccount) external view returns (bool) {
+    function isInitialized(address smartAccount) public view returns (bool) {
         return vaultConfig[smartAccount].owner != address(0);
+    }
+
+    function setWaitPeriod(uint256 waitPeriod) external {
+        address account = msg.sender;
+        if (!isInitialized(account)) revert NotInitialized(account);
+
+        if (waitPeriod == 0) revert InvalidWaitPeriod();
+
+        vaultConfig[account].waitPeriod = uint128(waitPeriod);
     }
 
     function checkHash(
@@ -67,19 +91,21 @@ contract ColdStorageHook is ERC7579HookDestruct {
         returns (bytes32 executionHash, bytes32 entry)
     {
         executionHash = _execDigestMemory(exec.target, exec.value, exec.callData);
+
         bool success;
         (success, entry) = executions[account].tryGet(executionHash);
     }
 
-    function setWaitPeriod(uint256 waitPeriod) external {
-        if (waitPeriod == 0) {
-            revert("Wait period cannot be 0");
-        }
-        vaultConfig[msg.sender].waitPeriod = uint128(waitPeriod);
-    }
-
-    function getLockTime(address subAccount) public view returns (uint256) {
-        return vaultConfig[subAccount].waitPeriod;
+    function getExecution(
+        address account,
+        bytes32 executionHash
+    )
+        external
+        view
+        returns (bytes32 entry)
+    {
+        bool success;
+        (success, entry) = executions[account].tryGet(executionHash);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -105,20 +131,17 @@ contract ColdStorageHook is ERC7579HookDestruct {
             if (tokenReceiver != _config.owner) {
                 // Else check that transaction is to setWaitPeriod
                 if (bytes4(_exec.callData[0:4]) != this.setWaitPeriod.selector) {
-                    revert("Invalid receiver transfer");
+                    revert InvalidTransferReceiver();
                 }
             }
         } else {
-            if (_exec.target != _config.owner) {
-                revert("Invalid receiver transfer");
-            }
+            if (_exec.target != _config.owner) revert InvalidTransferReceiver();
         }
 
         uint256 executeAfter = uint256(block.timestamp + _config.waitPeriod + additionalWait);
-        bytes32 entry = bytes32(executeAfter);
 
         // write executionHash to storage
-        executions[msg.sender].set(executionHash, entry);
+        executions[msg.sender].set(executionHash, bytes32(executeAfter));
 
         emit ExecutionRequested(msg.sender, _exec.target, _exec.value, _exec.callData, executeAfter);
     }
@@ -277,6 +300,19 @@ contract ColdStorageHook is ERC7579HookDestruct {
         uint256 moduleType,
         address module,
         bytes calldata deInitData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory hookData)
+    {
+        revert UnsupportedExecution();
+    }
+
+    function onUnknownFunction(
+        address msgSender,
+        uint256 msgValue,
+        bytes calldata msgData
     )
         internal
         virtual

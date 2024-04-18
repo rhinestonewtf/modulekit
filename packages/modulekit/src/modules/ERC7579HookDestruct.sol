@@ -57,7 +57,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
             return onUninstallModule(msgSender, moduleType, module, initData);
         } else {
-            return "";
+            return onUnknownFunction(msgSender, msgValue, msgData);
         }
     }
 
@@ -106,51 +106,6 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
             return onExecuteBatchFromExecutor(msgSender, execs);
         }
     }
-
-    // if (selector == IERC7579Account.execute.selector) {
-    //     ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
-    //     CallType calltype = ModeLib.getCallType(mode);
-    //     uint256 offset = msgData.offset();
-    //     if (calltype == CALLTYPE_SINGLE) {
-    //         (address to, uint256 value, bytes calldata callData) =
-    //             ExecutionLib.decodeSingle(msgData[36:offset]);
-    //         return onExecute(msgSender, to, value, callData);
-    //     } else if (calltype == CALLTYPE_BATCH) {
-    //         Execution[] calldata execs = ExecutionLib.decodeBatch(msgData[36:offset]);
-    //         return onExecuteBatch(msgSender, execs);
-    //     } else {
-    //         revert HookInvalidSelector();
-    //     }
-    // } else if (selector == IERC7579Account.executeFromExecutor.selector) {
-    //     uint256 offset = msgData.offset();
-    //
-    //     ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
-    //     CallType calltype = ModeLib.getCallType(mode);
-    //     if (calltype == CALLTYPE_SINGLE) {
-    //         (address to, uint256 value, bytes calldata callData) =
-    //             ExecutionLib.decodeSingle(msgData[36:offset]);
-    //         return onExecuteFromExecutor(msgSender, to, value, callData);
-    //     } else if (calltype == CALLTYPE_BATCH) {
-    //         Execution[] calldata execs = ExecutionLib.decodeBatch(msgData[36:offset]);
-    //         return onExecuteBatchFromExecutor(msgSender, execs);
-    //     } else {
-    //         revert HookInvalidSelector();
-    //     }
-    // } else if (selector == IERC7579Account.installModule.selector) {
-    //     uint256 offset = msgData.offset();
-    //     uint256 moduleType = uint256(bytes32(msgData[4:24]));
-    //     address module = address(bytes20(msgData[24:36]));
-    //     bytes calldata initData = msgData[36:offset];
-    //     onInstallModule(msgSender, moduleType, module, initData);
-    // } else if (selector == IERC7579Account.uninstallModule.selector) {
-    //     uint256 offset = msgData.offset();
-    //     uint256 moduleType = uint256(bytes32(msgData[4:24]));
-    //     address module = address(bytes20(msgData[24:36]));
-    //     bytes calldata initData = msgData[36:offset];
-    //     onUninstallModule(msgSender, moduleType, module, initData);
-    // } else {
-    //     revert HookInvalidSelector();
-    // }
 
     function postCheck(
         bytes calldata hookData,
@@ -227,6 +182,20 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         uint256 moduleType,
         address module,
         bytes calldata deInitData
+    )
+        internal
+        virtual
+        returns (bytes memory hookData)
+    { }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                UNKNOWN FUNCTION
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onUnknownFunction(
+        address msgSender,
+        uint256 msgValue,
+        bytes calldata msgData
     )
         internal
         virtual
