@@ -2,11 +2,9 @@
 pragma solidity ^0.8.23;
 
 import { IERC7484 } from "../interfaces/IERC7484.sol";
-import { ISafe, ExecOnSafeLib } from "../lib/ExecOnSafeLib.sol";
+import "./ExecutionHelper.sol";
 
-abstract contract RegistryAdapter {
-    using ExecOnSafeLib for *;
-
+abstract contract RegistryAdapter is ExecutionHelper {
     event ERC7484RegistryConfigured(address indexed smartAccount, address indexed registry);
 
     mapping(address smartAccount => IERC7484 registry) internal $registry;
@@ -27,7 +25,8 @@ abstract contract RegistryAdapter {
         internal
     {
         $registry[msg.sender] = registry;
-        ISafe(msg.sender).exec({
+        _exec({
+            safe: ISafe(msg.sender),
             target: address(registry),
             value: 0,
             callData: abi.encodeCall(IERC7484.trustAttesters, (threshold, attesters))

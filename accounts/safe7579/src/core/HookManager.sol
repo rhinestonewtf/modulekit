@@ -1,23 +1,44 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ModuleManager } from "./ModuleManager.sol";
 import { IHook, IModule } from "erc7579/interfaces/IERC7579Module.sol";
+import { ISafe } from "../interfaces/ISafe.sol";
 import { MODULE_TYPE_HOOK } from "erc7579/interfaces/IERC7579Module.sol";
-import { ISafe, ExecOnSafeLib } from "../lib/ExecOnSafeLib.sol";
 import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
 /**
  * @title reference implementation of HookManager
  * @author zeroknots.eth | rhinestone.wtf
  */
 
-abstract contract HookManager is ModuleManager {
-    using ExecOnSafeLib for ISafe;
-
+abstract contract HookManager {
+    mapping(address smartAccount => address globalHook) internal $globalHook;
     mapping(address smartAccount => mapping(bytes4 => address hook)) internal $hookManager;
 
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
+
+    enum HookType {
+        GLOBAL,
+        SIG
+    }
+
+    modifier withSelectorHook(bytes4 hookSig) {
+        address hook = $hookManager[msg.sender][hookSig];
+        bool enabled = hook != address(0);
+        bytes memory _data;
+        // if (enabled) _data = ISafe(msg.sender).preHook({ withHook: hook });
+        _;
+        // if (enabled) ISafe(msg.sender).postHook({ withHook: hook, hookPreContext: _data });
+    }
+
+    modifier withGlobalHook() {
+        address hook = $globalHook[msg.sender];
+        bool enabled = hook != address(0);
+        bytes memory _data;
+        // if (enabled) _data = ISafe(msg.sender).preHook({ withHook: hook });
+        _;
+        // if (enabled) ISafe(msg.sender).postHook({ withHook: hook, hookPreContext: _data });
+    }
 
     function _installHook(
         address hook,
@@ -33,7 +54,9 @@ abstract contract HookManager is ModuleManager {
             revert HookAlreadyInstalled(currentHook);
         }
         $hookManager[msg.sender][selector] = hook;
-        ISafe(msg.sender).execDelegateCall({
+
+        _delegatecall({
+            safe: ISafe(msg.sender),
             target: UTIL,
             callData: abi.encodeCall(
                 ModuleInstallUtil.installModule, (MODULE_TYPE_HOOK, hook, initData)
@@ -45,7 +68,8 @@ abstract contract HookManager is ModuleManager {
         (bytes4 selector, bytes memory initData) = abi.decode(data, (bytes4, bytes));
         delete $hookManager[msg.sender][selector];
 
-        ISafe(msg.sender).execDelegateCall({
+        _delegatecall({
+            safe: ISafe(msg.sender),
             target: UTIL,
             callData: abi.encodeCall(
                 ModuleInstallUtil.unInstallModule, (MODULE_TYPE_HOOK, hook, initData)

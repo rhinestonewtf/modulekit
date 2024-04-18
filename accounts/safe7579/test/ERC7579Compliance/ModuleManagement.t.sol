@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./Base.t.sol";
 import "erc7579/lib/ModeLib.sol";
-import { EventEmitter } from "src/utils/DelegatecallTarget.sol";
 
 contract ModuleManagementTest is BaseTest {
     bytes _data;

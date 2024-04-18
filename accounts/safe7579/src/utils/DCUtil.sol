@@ -31,24 +31,48 @@ contract ModuleInstallUtil {
 }
 
 contract BatchedExecUtil {
-    function tryExecute(Execution[] calldata executions) external returns (bytes[] memory result) {
+    function tryExecute(Execution[] calldata executions) external returns (bool success) {
         uint256 length = executions.length;
-        result = new bytes[](length);
 
         for (uint256 i; i < length; i++) {
             Execution calldata _exec = executions[i];
-            bool success;
-            (success, result[i]) = _tryExecute(_exec.target, _exec.value, _exec.callData);
+            (success,) = _tryExecute(_exec.target, _exec.value, _exec.callData);
         }
     }
 
-    function execute(Execution[] calldata executions) external returns (bytes[] memory result) {
+    function execute(Execution[] calldata executions) external {
+        uint256 length = executions.length;
+
+        for (uint256 i; i < length; i++) {
+            Execution calldata _exec = executions[i];
+            _execute(_exec.target, _exec.value, _exec.callData);
+        }
+    }
+
+    function executeReturn(Execution[] calldata executions)
+        external
+        returns (bytes[] memory result)
+    {
         uint256 length = executions.length;
         result = new bytes[](length);
 
         for (uint256 i; i < length; i++) {
             Execution calldata _exec = executions[i];
             result[i] = _execute(_exec.target, _exec.value, _exec.callData);
+        }
+    }
+
+    function tryExecuteReturn(Execution[] calldata executions)
+        external
+        returns (bool[] memory success, bytes[] memory result)
+    {
+        uint256 length = executions.length;
+        result = new bytes[](length);
+        success = new bool[](length);
+
+        for (uint256 i; i < length; i++) {
+            Execution calldata _exec = executions[i];
+            (success[i], result[i]) = _tryExecute(_exec.target, _exec.value, _exec.callData);
         }
     }
 

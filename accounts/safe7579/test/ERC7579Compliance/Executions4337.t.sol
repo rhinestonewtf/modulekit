@@ -46,7 +46,7 @@ contract Executions4337Test is BaseTest {
             ModeLib.encode(
                 CALLTYPE_SINGLE, EXECTYPE_TRY, MODE_DEFAULT, ModePayload.wrap(bytes22(0))
             ),
-            ExecutionLib.encodeSingle(address(target), uint256(0), hex"41414141")
+            ExecutionLib.encodeSingle(address(target), uint256(0), hex"41414145")
         );
 
         setValueOnTarget = abi.encodeCall(MockTarget.set, 1338);

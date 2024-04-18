@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
 import { IMSA } from "erc7579/interfaces/IMSA.sol";
-import "./lib/ExecOnSafeLib.sol";
 import {
     CallType,
     ExecType,
@@ -51,11 +50,9 @@ contract SafeERC7579 is
     Initializer,
     IMSA
 {
-    using ExecOnSafeLib for ISafe;
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
-    using HookedExecOnSafeLib for ISafe;
 
     error Unsupported();
 
@@ -67,34 +64,6 @@ contract SafeERC7579 is
         0x60b3cbf8b4a223d68d641b3b6ddf9a298e7f33710cf3d3a9d1146b5a6150fbca;
     // keccak256("safeSignature(bytes32,bytes32,bytes,bytes)");
     bytes4 private constant SAFE_SIGNATURE_MAGIC_VALUE = 0x5fd7e97d;
-
-    function _execute(
-        ModeCode mode,
-        bytes calldata executionCalldata
-    )
-        internal
-        returns (bytes[] memory returnData)
-    {
-        CallType callType;
-        ExecType execType;
-        address hook = getActiveHook(msg.sig);
-
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            callType := mode
-            execType := shl(8, mode)
-        }
-
-        if (execType == EXECTYPE_DEFAULT) {
-            returnData = HookedExecOnSafeLib.hookedExec(executionCalldata, callType, hook);
-        } else if (execType == EXECTYPE_TRY) {
-            returnData = HookedExecOnSafeLib.hookedTryExec(executionCalldata, callType, hook);
-        }
-        // account reverts when using unsupported execution type
-        else {
-            revert UnsupportedExecType(execType);
-        }
-    }
 
     /**
      * @inheritdoc IERC7579Account
@@ -108,7 +77,66 @@ contract SafeERC7579 is
         override
         onlyEntryPointOrSelf
     {
-        _execute(mode, executionCalldata);
+        CallType callType;
+        ExecType execType;
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            callType := mode
+            execType := shl(8, mode)
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                   REVERT ON FAILED EXEC                    */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        ISafe safe = ISafe(msg.sender);
+        if (execType == EXECTYPE_DEFAULT) {
+            // DEFAULT EXEC & SINGLE CALL
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                _exec(safe, executions);
+            }
+            // DEFAULT EXEC & BATCH CALL
+            else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                _exec(safe, target, value, callData);
+            }
+            // DEFAULT EXEC & DELEGATECALL
+            else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                _delegatecall(safe, target, callData);
+            }
+            // handle unsupported calltype
+            else {
+                revert UnsupportedCallType(callType);
+            }
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                           TRY EXEC                         */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        else if (execType == EXECTYPE_TRY) {
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                _tryExec(safe, executions);
+            } else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                _tryExec(safe, target, value, callData);
+            } else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                _tryDelegatecall(safe, target, callData);
+            } else {
+                revert UnsupportedCallType(callType);
+            }
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*               HANDLE UNSUPPORTED EXEC TYPE                 */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        else {
+            revert UnsupportedExecType(execType);
+        }
     }
 
     /**
@@ -123,9 +151,72 @@ contract SafeERC7579 is
         override
         onlyExecutorModule
         withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
-        returns (bytes[] memory returnData)
+        returns (bytes[] memory returnDatas)
     {
-        return _execute(mode, executionCalldata);
+        CallType callType;
+        ExecType execType;
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            callType := mode
+            execType := shl(8, mode)
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                   REVERT ON FAILED EXEC                    */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        ISafe safe = ISafe(msg.sender);
+        if (execType == EXECTYPE_DEFAULT) {
+            // DEFAULT EXEC & SINGLE CALL
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                returnDatas = _execReturn(safe, executions);
+            }
+            // DEFAULT EXEC & BATCH CALL
+            else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                returnDatas = new bytes[](1);
+                returnDatas[0] = _execReturn(safe, target, value, callData);
+            }
+            // DEFAULT EXEC & DELEGATECALL
+            else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                returnDatas = new bytes[](1);
+                returnDatas[0] = _delegatecallReturn(safe, target, callData);
+            }
+            // handle unsupported calltype
+            else {
+                revert UnsupportedCallType(callType);
+            }
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                           TRY EXEC                         */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        else if (execType == EXECTYPE_TRY) {
+            if (callType == CALLTYPE_BATCH) {
+                Execution[] calldata executions = executionCalldata.decodeBatch();
+                (, returnDatas) = _tryExecReturn(safe, executions);
+            } else if (callType == CALLTYPE_SINGLE) {
+                (address target, uint256 value, bytes calldata callData) =
+                    executionCalldata.decodeSingle();
+                returnDatas = new bytes[](1);
+                returnDatas[0] = _tryExecReturn(safe, target, value, callData);
+            } else if (callType == CALLTYPE_DELEGATECALL) {
+                address target = address(bytes20(executionCalldata[:20]));
+                bytes calldata callData = executionCalldata[20:];
+                returnDatas = new bytes[](1);
+                returnDatas[0] = _tryDelegatecallReturn(safe, target, callData);
+            } else {
+                revert UnsupportedCallType(callType);
+            }
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*               HANDLE UNSUPPORTED EXEC TYPE                 */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        else {
+            revert UnsupportedExecType(execType);
+        }
     }
 
     function executeUserOp(
@@ -165,7 +256,8 @@ contract SafeERC7579 is
             return _validateSignatures(userOp);
         } else {
             // bubble up the return value of the validator module
-            bytes memory retData = ISafe(msg.sender).execReturn({
+            bytes memory retData = _execReturn({
+                safe: ISafe(msg.sender),
                 target: validator,
                 value: 0,
                 callData: abi.encodeCall(IValidator.validateUserOp, (userOp, userOpHash))
@@ -175,7 +267,12 @@ contract SafeERC7579 is
 
         // pay prefund
         if (missingAccountFunds != 0) {
-            ISafe(msg.sender).exec({ target: entryPoint(), value: missingAccountFunds, callData: "" });
+            _exec({
+                safe: ISafe(msg.sender),
+                target: entryPoint(),
+                value: missingAccountFunds,
+                callData: ""
+            });
         }
     }
 
@@ -262,14 +359,12 @@ contract SafeERC7579 is
     {
         // address hook = getActiveHook();
         address hook = address(0);
-        bytes memory hookPreContext = ISafe(msg.sender).preHook(hook);
 
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
         else if (moduleType == MODULE_TYPE_EXECUTOR) _installExecutor(module, initData);
         else if (moduleType == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
         else if (moduleType == MODULE_TYPE_HOOK) _installHook(module, initData);
         else revert UnsupportedModuleType(moduleType);
-        ISafe(msg.sender).postHook(hook, hookPreContext, true, "");
     }
 
     /**
