@@ -357,9 +357,6 @@ contract SafeERC7579 is
         override
         onlyEntryPointOrSelf
     {
-        // address hook = getActiveHook();
-        address hook = address(0);
-
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
         else if (moduleType == MODULE_TYPE_EXECUTOR) _installExecutor(module, initData);
         else if (moduleType == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);

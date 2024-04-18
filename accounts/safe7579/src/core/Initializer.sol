@@ -2,8 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
-import { HookManager } from "./HookManager.sol";
-import { ModuleManagerStorage } from "./ModuleManager.sol";
+import { ModuleManager } from "./ModuleManager.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
@@ -11,7 +10,7 @@ import { SentinelListLib } from "sentinellist/SentinelList.sol";
 /**
  * Functions that can be used to initialze Safe7579 for a Safe Account
  */
-abstract contract Initializer is ISafe7579Init, HookManager {
+abstract contract Initializer is ISafe7579Init, ModuleManager {
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -93,9 +92,9 @@ abstract contract Initializer is ISafe7579Init, HookManager {
             revert InvalidInitData(msg.sender);
         }
 
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
+        SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
         // this will revert if already initialized.
-        $mms._executors.init();
+        $executors.init();
 
         length = executors.length;
         for (uint256 i; i < length; i++) {
