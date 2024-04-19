@@ -48,6 +48,11 @@ abstract contract ExecutionHelper is Safe7579DCUtilSetup {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*             EXEC - REVERT ON FAIL & Return Values          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /**
+     * Helper function to facilitate batched executions. Since Safe accounts do not support batched
+     * executions natively, we nudge the safe to delegatecall to ./utils/DCUTIL.sol, which then
+     * makes a multicall. This is to save on gas
+     */
     function _execReturn(
         ISafe safe,
         Execution[] calldata executions
@@ -93,6 +98,11 @@ abstract contract ExecutionHelper is Safe7579DCUtilSetup {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        EXEC - TRY                          */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    /**
+     * Helper function to facilitate batched executions. Since Safe accounts do not support batched
+     * executions natively, we nudge the safe to delegatecall to ./utils/DCUTIL.sol, which then
+     * makes a multicall. This is to save on gas
+     */
     function _tryExec(ISafe safe, Execution[] calldata executions) internal {
         _tryDelegatecall({
             safe: safe,
@@ -115,6 +125,11 @@ abstract contract ExecutionHelper is Safe7579DCUtilSetup {
     /*              EXEC - TRY & Return Values                    */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /**
+     * Helper function to facilitate batched executions. Since Safe accounts do not support batched
+     * executions natively, we nudge the safe to delegatecall to ./utils/DCUTIL.sol, which then
+     * makes a multicall. This is to save on gas
+     */
     function _tryExecReturn(
         ISafe safe,
         Execution[] calldata executions

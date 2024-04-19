@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { IModule, IHook } from "../interfaces/IERC7579Module.sol";
+import { IERC7579Account } from "../interfaces/IERC7579Account.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
 import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
@@ -73,6 +74,10 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
     /**
      * Uninstall and de-initialize validator module
+     * @dev This function does not prevent the user from uninstalling all validator modules.
+     * Since the Safe7579 signature validation can fallback to Safe's checkSignature()
+     * function, it is okay, if all validator modules are removed.
+     * This does not brick the account
      */
     function _uninstallValidator(address validator, bytes calldata data) internal {
         (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
@@ -508,11 +513,22 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         for (uint256 i; i < length; i++) {
             uint256 _type = types[i];
 
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                      INSTALL VALIDATORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             if (_type == MODULE_TYPE_VALIDATOR) {
                 $validators.push({ account: msg.sender, newEntry: module });
-            } else if (_type == MODULE_TYPE_EXECUTOR) {
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL EXECUTORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_EXECUTOR) {
                 $executorStorage[msg.sender].push(module);
-            } else if (_type == MODULE_TYPE_FALLBACK) {
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL FALLBACK                     */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_FALLBACK) {
                 // do nothing
 
                 (bytes4 functionSig, CallType calltype) =
@@ -529,7 +545,11 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
                 FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
                 $fallbacks.calltype = calltype;
                 $fallbacks.handler = module;
-            } else if (_type == MODULE_TYPE_HOOK) {
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*          INSTALL HOOK (global or sig specific)             */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_HOOK) {
                 (HookType hookType, bytes4 selector) = abi.decode(contexts[i], (HookType, bytes4));
                 address currentHook;
 
@@ -553,6 +573,10 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
                 } else {
                     revert InvalidHookType();
                 }
+            }
+            // handle unsupported moduletype
+            else {
+                revert InvalidModule(module);
             }
         }
 

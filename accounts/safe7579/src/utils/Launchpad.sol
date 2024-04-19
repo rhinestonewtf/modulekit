@@ -13,9 +13,8 @@ import { SafeStorage } from "@safe-global/safe-contracts/contracts/libraries/Saf
 
 /**
  * Launchpad to deploy a Safe account and connect the Safe7579 adapter.
- * credits for the idea: nlordell (Safe)
- * this launchpad is based on Safe 4337 Signer Launchpad:
- *     https://github.com/safe-global/safe-modules/pull/184/files
+ * Special thanks to [nlordell (Safe)](https://github.com/nlordell), who came up with [this
+ * technique](https://github.com/safe-global/safe-modules/pull/184)
  * @author rhinestone | zeroknots.eth
  */
 contract Safe7579Launchpad is IAccount, SafeStorage {

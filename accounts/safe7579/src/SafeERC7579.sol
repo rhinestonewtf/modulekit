@@ -47,7 +47,7 @@ import { IERC1271 } from "./interfaces/IERC1271.sol";
  * event emissions to be done via the SafeProxy as msg.sender using Safe's
  * "executeTransactionFromModule" features.
  */
-contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, Initializer {
+contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC7579Account {
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
@@ -159,11 +159,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
         onlyExecutorModule
         withHook(IERC7579Account.executeFromExecutor.selector)
         withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
-        returns (
-            // withGlobalHook
-            // withSelectorHook(IERC7579Account.execute.selector)
-            bytes[] memory returnDatas
-        )
+        returns (bytes[] memory returnDatas)
     {
         CallType callType;
         ExecType execType;
@@ -268,7 +264,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
     )
         external
         payable
-        onlyEntryPointOrSelf
+        onlyEntryPoint
         returns (uint256 validSignature)
     {
         address validator;
@@ -369,6 +365,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
         }
 
         // if a installed validator module was selected, use 7579 validation module
+        // TODO: this is borked
         bytes memory ret = _staticcallReturn({
             safe: ISafe(msg.sender),
             target: validationModule,
