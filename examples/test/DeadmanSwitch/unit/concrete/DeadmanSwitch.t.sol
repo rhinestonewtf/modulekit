@@ -41,7 +41,16 @@ contract DeadmanSwitchTest is BaseTest {
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function test_OnInstallRevertWhen_ModuleIsIntialized() public {
+    function test_OnInstallWhenInitdataProvided() external whenModuleIsIntialized {
+        // it should return
+        uint48 timeout = uint48(1);
+        bytes memory data = abi.encodePacked(_nominee, timeout);
+
+        dms.onInstall(data);
+        dms.onInstall("");
+    }
+
+    function test_OnInstallRevertWhen_InitdataNotProvided() external whenModuleIsIntialized {
         // it should revert
         uint48 timeout = uint48(1);
         bytes memory data = abi.encodePacked(_nominee, timeout);

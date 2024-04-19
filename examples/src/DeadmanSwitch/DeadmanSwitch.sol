@@ -32,7 +32,13 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
 
     function onInstall(bytes calldata data) external {
         address account = msg.sender;
-        if (isInitialized(account)) revert AlreadyInitialized(account);
+        if (isInitialized(account)) {
+            if (data.length == 0) {
+                return;
+            } else {
+                revert AlreadyInitialized(account);
+            }
+        }
 
         address nominee = address(uint160(bytes20(data[0:20])));
         uint48 timeout = uint48(bytes6(data[20:26]));

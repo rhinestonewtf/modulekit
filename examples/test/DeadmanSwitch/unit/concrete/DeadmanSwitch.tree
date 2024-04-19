@@ -1,6 +1,9 @@
 DeadmanSwitch::onInstall
 ├── when module is intialized
-│   └── it should revert
+│   ├── when initdata provided
+│   │   └── it should return
+│   └── when initdata not provided
+│      └── it should revert
 └── when module is not intialized
     ├── it should set the config args to the provided data
     └── it should set the lastAccess to the current block timestamp

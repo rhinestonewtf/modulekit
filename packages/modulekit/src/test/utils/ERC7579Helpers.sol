@@ -319,9 +319,8 @@ library ERC7579Helpers {
         hook = hook; // avoid solhint-no-unused-vars
         to = account;
         value = 0;
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
-        );
+        callData =
+            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -359,7 +358,7 @@ library ERC7579Helpers {
         to = account;
         value = 0;
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
     }
 

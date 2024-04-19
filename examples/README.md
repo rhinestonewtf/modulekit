@@ -18,18 +18,18 @@ Modules:
 
 Tested:
 
-- [ ] AutoSavings
+- [x] AutoSavings
   - [x] Unit
-  - [ ] Integration
-- [ ] ColdStorageHook
+  - [x] Integration
+- [x] ColdStorageHook
   - [x] Unit
-  - [ ] Integration
+  - [x] Integration
 - [ ] Flashloan
   - [ ] Unit
   - [ ] Integration
-- [ ] DeadmanSwitch
+- [x] DeadmanSwitch
   - [x] Unit
-  - [ ] Integration
+  - [x] Integration
 - [ ] HookMultiPlexer
   - [ ] Unit
   - [ ] Integration
@@ -39,9 +39,9 @@ Tested:
 - [x] OwnableExecutor
   - [x] Unit
   - [x] Integration
-- [ ] OwnableValidator
+- [x] OwnableValidator
   - [x] Unit
-  - [ ] Integration
+  - [x] Integration
 - [ ] RegistryHook
   - [x] Unit
   - [ ] Integration
