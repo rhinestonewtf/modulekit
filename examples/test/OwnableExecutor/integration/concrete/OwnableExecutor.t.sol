@@ -73,6 +73,9 @@ contract OwnableExecutorIntegrationTest is BaseIntegrationTest {
             data: ""
         });
 
+        bool isInitialized = executor.isInitialized(address(instance.account));
+        assertFalse(isInitialized);
+
         address[] memory owners = executor.getOwners(address(instance.account));
         assertEq(owners.length, 0);
     }
