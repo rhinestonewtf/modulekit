@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { IERC7579Account, Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { IERC7579Account, Execution } from "./interfaces/IERC7579Account.sol";
+import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
+import { SimulateTxAccessor } from "./utils/DCUtil.sol";
 import { IMSA } from "erc7579/interfaces/IMSA.sol";
 import {
     CallType,
@@ -13,8 +15,8 @@ import {
     CALLTYPE_SINGLE,
     CALLTYPE_BATCH,
     CALLTYPE_DELEGATECALL
-} from "erc7579/lib/ModeLib.sol";
-import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+} from "./lib/ModeLib.sol";
+import { ExecutionLib } from "./lib/ExecutionLib.sol";
 import {
     IValidator,
     MODULE_TYPE_VALIDATOR,
@@ -35,21 +37,20 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title ERC7579 Adapter for Safe accounts.
  * creates full ERC7579 compliance to Safe accounts
  * @author rhinestone | zeroknots.eth, Konrad Kopp (@kopy-kat)
+ * @dev This contract is a Safe account implementation that supports ERC7579 operations.
+ *    In order to facilitate full ERC7579 compliance, the contract implements the IERC7579Account
+ *    interface.
+ * This contract is an implementation of a Safe account supporting ERC7579 operations and complying
+ * with the IERC7579Account interface. It serves as a Safe FallbackHandler and module for Safe
+ * accounts, incorporating complex hacks to ensure ERC7579 compliance and requiring interactions and
+ * event emissions to be done via the SafeProxy as msg.sender using Safe's
+ * "executeTransactionFromModule" features.
  */
-contract SafeERC7579 is
-    ISafeOp,
-    IERC7579Account,
-    ISafe7579Init,
-    AccessControl,
-    Initializer,
-    IMSA
-{
+contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, Initializer {
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
@@ -74,7 +75,6 @@ contract SafeERC7579 is
     )
         external
         payable
-        override
         withGlobalHook
         withSelectorHook(IERC7579Account.execute.selector)
         onlyEntryPointOrSelf
@@ -118,18 +118,25 @@ contract SafeERC7579 is
         /*                           TRY EXEC                         */
         /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
         else if (execType == EXECTYPE_TRY) {
+            // TRY EXEC & BATCH CALL
             if (callType == CALLTYPE_BATCH) {
                 Execution[] calldata executions = executionCalldata.decodeBatch();
                 _tryExec(safe, executions);
-            } else if (callType == CALLTYPE_SINGLE) {
+            }
+            // TRY EXEC & SINGLE CALL
+            else if (callType == CALLTYPE_SINGLE) {
                 (address target, uint256 value, bytes calldata callData) =
                     executionCalldata.decodeSingle();
                 _tryExec(safe, target, value, callData);
-            } else if (callType == CALLTYPE_DELEGATECALL) {
+            }
+            // TRY EXEC & DELEGATECALL
+            else if (callType == CALLTYPE_DELEGATECALL) {
                 address target = address(bytes20(executionCalldata[:20]));
                 bytes calldata callData = executionCalldata[20:];
                 _tryDelegatecall(safe, target, callData);
-            } else {
+            }
+            // handle unsupported calltype
+            else {
                 revert UnsupportedCallType(callType);
             }
         }
@@ -169,6 +176,11 @@ contract SafeERC7579 is
         return _executeReturn(execType, callType, executionCalldata);
     }
 
+    /**
+     * Internal function that will be solely called by executeFromExecutor. Not super uniform code,
+     * but we need need the JUMPI to avoid stack too deep, due to the modifiers in the
+     * executeFromExecutor function
+     */
     function _executeReturn(
         ExecType execType,
         CallType callType,
@@ -210,20 +222,27 @@ contract SafeERC7579 is
         /*                           TRY EXEC                         */
         /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
         else if (execType == EXECTYPE_TRY) {
+            // TRY EXEC & SINGLE CALL
             if (callType == CALLTYPE_BATCH) {
                 Execution[] calldata executions = executionCalldata.decodeBatch();
                 (, returnDatas) = _tryExecReturn(ISafe(msg.sender), executions);
-            } else if (callType == CALLTYPE_SINGLE) {
+            }
+            // TRY EXEC & BATCH CALL
+            else if (callType == CALLTYPE_SINGLE) {
                 (address target, uint256 value, bytes calldata callData) =
                     executionCalldata.decodeSingle();
                 returnDatas = new bytes[](1);
                 returnDatas[0] = _tryExecReturn(ISafe(msg.sender), target, value, callData);
-            } else if (callType == CALLTYPE_DELEGATECALL) {
+            }
+            // TRY EXEC & DELEGATECALL
+            else if (callType == CALLTYPE_DELEGATECALL) {
                 address target = address(bytes20(executionCalldata[:20]));
                 bytes calldata callData = executionCalldata[20:];
                 returnDatas = new bytes[](1);
                 returnDatas[0] = _tryDelegatecallReturn(ISafe(msg.sender), target, callData);
-            } else {
+            }
+            // handle unsupported calltype
+            else {
                 revert UnsupportedCallType(callType);
             }
         }
@@ -235,6 +254,7 @@ contract SafeERC7579 is
         }
     }
 
+    // TODO: delete this. need to update IERC7579Account
     function executeUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
@@ -293,8 +313,8 @@ contract SafeERC7579 is
     }
 
     /**
-     * Function used as fallback, if no valid validation module was selected.
-     * will use safe's ECDSA multisig
+     * Function used as signature check fallback, if no valid validation module was selected.
+     * will use safe's ECDSA multisig. This code was copied of Safe's ERC4337 module
      */
     function _validateSignatures(PackedUserOperation calldata userOp)
         internal
@@ -332,7 +352,6 @@ contract SafeERC7579 is
         bytes calldata data
     )
         external
-        view
         returns (bytes4 magicValue)
     {
         ISafe safe = ISafe(msg.sender);
@@ -344,6 +363,8 @@ contract SafeERC7579 is
         }
         address validationModule = address(bytes20(data[:20]));
 
+        // If validation module with address(0) or no valid validator was provided,
+        // The signature validation mechanism falls back to Safe's checkSignatures() function
         if (validationModule == address(0) || !_isValidatorInstalled(validationModule)) {
             bytes memory messageData = EIP712.encodeMessageData(
                 safe.domainSeparator(), SAFE_MSG_TYPEHASH, abi.encode(keccak256(abi.encode(hash)))
@@ -355,9 +376,15 @@ contract SafeERC7579 is
             return IERC1271.isValidSignature.selector;
         }
 
-        // use 7579 validation module
-        magicValue =
-            IValidator(validationModule).isValidSignatureWithSender(_msgSender(), hash, data[20:]);
+        // if a installed validator module was selected, use 7579 validation module
+        bytes memory ret = _staticcallReturn({
+            safe: ISafe(msg.sender),
+            target: validationModule,
+            callData: abi.encodeCall(
+                IValidator.isValidSignatureWithSender, (_msgSender(), hash, data[20:])
+            )
+        });
+        magicValue = abi.decode(ret, (bytes4));
     }
 
     /**

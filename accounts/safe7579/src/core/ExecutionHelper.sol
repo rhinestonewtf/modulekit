@@ -2,8 +2,10 @@
 pragma solidity ^0.8.23;
 
 import { Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
+import { SimulateTxAccessor } from "../utils/DCUtil.sol";
+import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
 import { BatchedExecUtil } from "../utils/DCUtil.sol";
-import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { Execution } from "../interfaces/IERC7579Account.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
 contract ExecutionHelper is Safe7579DCUtilSetup {
@@ -144,4 +146,38 @@ contract ExecutionHelper is Safe7579DCUtilSetup {
         (success, retData) = safe.execTransactionFromModuleReturnData(target, 0, callData, 1);
         if (!success) emit TryExecutionFailed(safe, 0);
     }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     STATICCALL TRICK                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function _staticcallReturn(
+        ISafe safe,
+        address target,
+        bytes memory callData
+    )
+        internal
+        returns (bytes memory retData)
+    {
+        bytes memory ret = _delegatecallReturn({
+            safe: safe,
+            target: UTIL,
+            callData: abi.encodeCall(
+                SimulateTxAccessor.simulate,
+                (target, 0, abi.encodePacked(callData, _msgSender()), Enum.Operation.Call)
+            )
+        });
+        (,, retData) = abi.decode(ret, (uint256, bool, bytes));
+        return retData;
+    }
+}
+
+function _msgSender() pure returns (address sender) {
+    // The assembly code is more direct than the Solidity version using `abi.decode`.
+    /* solhint-disable no-inline-assembly */
+    /// @solidity memory-safe-assembly
+    assembly {
+        sender := shr(96, calldataload(sub(calldatasize(), 20)))
+    }
+    /* solhint-enable no-inline-assembly */
 }

@@ -21,6 +21,7 @@ contract ERC1271Test is BaseTest {
         returns (bytes4)
     {
         // It should forward the correct msgSender
+        assertEq(msg.sender, address(account));
         assertEq(sender, _sender);
         assertEq(hash, _hash);
         // It should slice the correct signature

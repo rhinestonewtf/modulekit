@@ -14,7 +14,7 @@ import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { Safe7579DCUtil, Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
-import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
+import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "../lib/ModeLib.sol";
 
 import {
     MODULE_TYPE_VALIDATOR,
@@ -297,16 +297,8 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
         if (calltype == CALLTYPE_STATIC) {
-            bytes memory ret = _delegatecallReturn({
-                safe: ISafe(msg.sender),
-                target: UTIL,
-                callData: abi.encodeCall(
-                    SimulateTxAccessor.simulate,
-                    (handler, 0, abi.encodePacked(callData, _msgSender()), Enum.Operation.Call)
-                )
-            });
-            (,, fallbackRet) = abi.decode(ret, (uint256, bool, bytes));
-            return fallbackRet;
+            return
+                _staticcallReturn({ safe: ISafe(msg.sender), target: handler, callData: callData });
         }
         if (calltype == CALLTYPE_SINGLE) {
             return _execReturn({

@@ -1,4 +1,4 @@
-import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
+import { Execution } from "../interfaces/IERC7579Account.sol";
 import { IModule as IERC7579Module } from "erc7579/interfaces/IERC7579Module.sol";
 import { SimulateTxAccessor } from
     "@safe-global/safe-contracts/contracts/accessors/SimulateTxAccessor.sol";
