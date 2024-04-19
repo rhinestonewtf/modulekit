@@ -10,6 +10,17 @@ interface MockFn {
 }
 
 contract HookTest is ModuleManagementTest, MockFn {
+    uint256 preCheckCalled;
+    uint256 postCheckCalled;
+
+    modifier requireHookCalled(uint256 expected) {
+        preCheckCalled = 0;
+        postCheckCalled = 0;
+        _;
+        assertEq(preCheckCalled, expected);
+        assertEq(postCheckCalled, expected);
+    }
+
     function fallbackFn(bytes32 value) external returns (bytes32) {
         return value;
     }
@@ -25,7 +36,16 @@ contract HookTest is ModuleManagementTest, MockFn {
         override
         returns (bytes memory hookData)
     {
+        preCheckCalled++;
+        assertEq(msgSender, address(this));
         console2.log("preCheck");
+
+        return hex"beef";
+    }
+
+    function postCheck(bytes calldata hookData) external virtual override {
+        postCheckCalled++;
+        assertEq(hookData, hex"beef");
     }
 
     function setUp() public virtual override {
@@ -40,11 +60,14 @@ contract HookTest is ModuleManagementTest, MockFn {
         // It should execute hook
     }
 
-    function test_WhenUsingFallbacks() external asEntryPoint {
+    function test_WhenUsingFallbacks() external requireHookCalled(2) {
         // It should execute hook
         _data = hex"4141414141414141";
+        vm.startPrank(address(entrypoint));
         account.installModule(3, SELF, abi.encode(this.fallbackFn.selector, CALLTYPE_SINGLE, _data));
         _installHook(ModuleManager.HookType.SIG, this.fallbackFn.selector, "");
+        _installHook(ModuleManager.HookType.GLOBAL, 0, "");
+        vm.stopPrank();
 
         bytes32 val = bytes32(bytes(hex"414141414141"));
         bytes32 ret = MockFn(address(account)).fallbackFn(val);

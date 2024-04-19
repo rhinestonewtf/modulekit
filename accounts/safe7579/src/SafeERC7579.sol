@@ -255,15 +255,6 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
         }
     }
 
-    // TODO: delete this. need to update IERC7579Account
-    function executeUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
-    )
-        external
-        payable
-    { }
-
     /**
      *  ERC4337 v0.7 validation function
      * @dev expects that a ERC7579 validator module is encoded within the UserOp nonce.
