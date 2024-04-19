@@ -36,9 +36,9 @@ Tested:
 - [ ] MFA
   - [ ] Unit
   - [ ] Integration
-- [ ] OwnableExecutor
+- [x] OwnableExecutor
   - [x] Unit
-  - [ ] Integration
+  - [x] Integration
 - [ ] OwnableValidator
   - [x] Unit
   - [ ] Integration

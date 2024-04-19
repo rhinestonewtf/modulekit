@@ -6,6 +6,8 @@ import { ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
 
+import "forge-std/console2.sol";
+
 contract OwnableExecutor is ERC7579ExecutorBase {
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -36,7 +38,7 @@ contract OwnableExecutor is ERC7579ExecutorBase {
     }
 
     function isInitialized(address smartAccount) public view returns (bool) {
-        return accountOwners[msg.sender].alreadyInitialized();
+        return accountOwners[smartAccount].alreadyInitialized();
     }
 
     function addOwner(address owner) external {
@@ -60,7 +62,7 @@ contract OwnableExecutor is ERC7579ExecutorBase {
 
     function getOwners(address account) external view returns (address[] memory ownersArray) {
         // TODO: return length
-        (ownersArray,) = accountOwners[account].getEntriesPaginated(SENTINEL, 10);
+        (ownersArray,) = accountOwners[account].getEntriesPaginated(SENTINEL, 20);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
