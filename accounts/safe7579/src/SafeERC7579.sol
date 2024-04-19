@@ -72,8 +72,9 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
     )
         external
         payable
-        withGlobalHook
-        withSelectorHook(IERC7579Account.execute.selector)
+        withHook(IERC7579Account.execute.selector)
+        // withGlobalHook
+        // withSelectorHook(IERC7579Account.execute.selector)
         onlyEntryPointOrSelf
     {
         CallType callType;
@@ -156,10 +157,13 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
         payable
         override
         onlyExecutorModule
+        withHook(IERC7579Account.executeFromExecutor.selector)
         withRegistry(msg.sender, MODULE_TYPE_EXECUTOR)
-        withGlobalHook
-        withSelectorHook(IERC7579Account.execute.selector)
-        returns (bytes[] memory returnDatas)
+        returns (
+            // withGlobalHook
+            // withSelectorHook(IERC7579Account.execute.selector)
+            bytes[] memory returnDatas
+        )
     {
         CallType callType;
         ExecType execType;
@@ -395,8 +399,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
         external
         payable
         override
-        withGlobalHook
-        withSelectorHook(IERC7579Account.installModule.selector)
+        withHook(IERC7579Account.installModule.selector)
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
@@ -417,8 +420,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, ISafe7579Init, AccessControl, 
         external
         payable
         override
-        withGlobalHook
-        withSelectorHook(IERC7579Account.installModule.selector)
+        withHook(IERC7579Account.uninstallModule.selector)
         onlyEntryPointOrSelf
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);

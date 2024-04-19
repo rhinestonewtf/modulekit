@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
-import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
+import { IModule, IHook } from "../interfaces/IERC7579Module.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
 import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
@@ -277,8 +277,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         virtual
         override(Receiver)
         receiverFallback
-        withGlobalHook
-        withSelectorHook(msg.sig)
+        withHook(msg.sig)
         returns (bytes memory fallbackRet)
     {
         // using JUMPI to avoid stack too deep
@@ -325,26 +324,59 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
+    error InvalidHookType();
 
     enum HookType {
         GLOBAL,
         SIG
     }
 
-    modifier withSelectorHook(bytes4 hookSig) {
-        address hook = $hookManager[msg.sender][hookSig];
-        bytes memory _data;
-        // if (enabled) _data = ISafe(msg.sender).preHook({ withHook: hook });
-        _;
-        // if (enabled) ISafe(msg.sender).postHook({ withHook: hook, hookPreContext: _data });
+    function _preHooks(bytes4 selector) internal returns (bytes memory global, bytes memory sig) {
+        address globalHook = $globalHook[msg.sender];
+        address sigHook = $hookManager[msg.sender][selector];
+        if (globalHook != address(0)) {
+            global = _execReturn({
+                safe: ISafe(msg.sender),
+                target: globalHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.value, msg.data))
+            });
+        }
+        if (sigHook != address(0)) {
+            sig = _execReturn({
+                safe: ISafe(msg.sender),
+                target: sigHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.value, msg.data))
+            });
+        }
     }
 
-    modifier withGlobalHook() {
-        address hook = $globalHook[msg.sender];
-        bytes memory _data;
-        // if (enabled) _data = ISafe(msg.sender).preHook({ withHook: hook });
+    function _postHooks(bytes4 selector, bytes memory global, bytes memory sig) internal {
+        address globalHook = $globalHook[msg.sender];
+        address sigHook = $hookManager[msg.sender][selector];
+        if (globalHook != address(0)) {
+            _exec({
+                safe: ISafe(msg.sender),
+                target: globalHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.postCheck, (global))
+            });
+        }
+        if (sigHook != address(0)) {
+            _exec({
+                safe: ISafe(msg.sender),
+                target: sigHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.postCheck, (sig))
+            });
+        }
+    }
+
+    modifier withHook(bytes4 selector) {
+        (bytes memory global, bytes memory sig) = _preHooks(selector);
         _;
-        // if (enabled) ISafe(msg.sender).postHook({ withHook: hook, hookPreContext: _data });
+        _postHooks(selector, global, sig);
     }
 
     function _installHook(
@@ -355,12 +387,30 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         virtual
         withRegistry(hook, MODULE_TYPE_HOOK)
     {
-        (bytes4 selector, bytes memory initData) = abi.decode(data, (bytes4, bytes));
-        address currentHook = $hookManager[msg.sender][selector];
-        if (currentHook != address(0)) {
-            revert HookAlreadyInstalled(currentHook);
+        (HookType hookType, bytes4 selector, bytes memory initData) =
+            abi.decode(data, (HookType, bytes4, bytes));
+        address currentHook;
+
+        // handle global hooks
+        if (hookType == HookType.GLOBAL && selector == 0x00000000) {
+            currentHook = $globalHook[msg.sender];
+            // Dont allow hooks to be overwritten. If a hook is currently installed, it must be
+            // uninstalled first
+            if (currentHook != address(0)) {
+                revert HookAlreadyInstalled(currentHook);
+            }
+            $globalHook[msg.sender] = hook;
+        } else if (hookType == HookType.SIG) {
+            // Dont allow hooks to be overwritten. If a hook is currently installed, it must be
+            // uninstalled first
+            if (currentHook != address(0)) {
+                revert HookAlreadyInstalled(currentHook);
+            }
+            currentHook = $hookManager[msg.sender][selector];
+            $hookManager[msg.sender][selector] = hook;
+        } else {
+            revert InvalidHookType();
         }
-        $hookManager[msg.sender][selector] = hook;
 
         // delegatecall neccessary, since event for installModule has to be emitted by SafeProxy
         _delegatecall({
@@ -373,8 +423,15 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     }
 
     function _uninstallHook(address hook, bytes calldata data) internal virtual {
-        (bytes4 selector, bytes memory initData) = abi.decode(data, (bytes4, bytes));
-        delete $hookManager[msg.sender][selector];
+        (HookType hookType, bytes4 selector, bytes memory initData) =
+            abi.decode(data, (HookType, bytes4, bytes));
+        if (hookType == HookType.GLOBAL && selector == 0x0) {
+            delete $globalHook[msg.sender];
+        } else if (hookType == HookType.SIG) {
+            delete $hookManager[msg.sender][selector];
+        } else {
+            revert InvalidHookType();
+        }
 
         // delegatecall neccessary, since event for uninstallModule has to be emitted by SafeProxy
         _delegatecall({
@@ -386,6 +443,23 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         });
     }
 
+    function _getCurrentHook(
+        HookType hookType,
+        bytes4 selector
+    )
+        internal
+        view
+        returns (address hook)
+    {
+        // handle global hooks
+        if (hookType == HookType.GLOBAL && selector == 0x0) {
+            hook = $globalHook[msg.sender];
+        }
+        if (hookType == HookType.SIG) {
+            hook = $hookManager[msg.sender][selector];
+        }
+    }
+
     function _isHookInstalled(
         address module,
         bytes calldata context
@@ -394,11 +468,16 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         view
         returns (bool)
     {
-        bytes4 selector = abi.decode(context, (bytes4));
-        return $hookManager[msg.sender][selector] == module;
+        (HookType hookType, bytes4 selector) = abi.decode(context, (HookType, bytes4));
+        address hook = _getCurrentHook({ hookType: hookType, selector: selector });
+        return hook == module;
     }
 
     function getActiveHook(bytes4 selector) public view returns (address hook) {
         return $hookManager[msg.sender][selector];
+    }
+
+    function getActiveHook() public view returns (address hook) {
+        return $globalHook[msg.sender];
     }
 }
