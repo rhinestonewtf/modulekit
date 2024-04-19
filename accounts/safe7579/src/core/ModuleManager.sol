@@ -4,17 +4,13 @@ pragma solidity ^0.8.23;
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
-import { SimulateTxAccessor } from "../utils/DCUtil.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
 import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
-import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
-import { ExecutionHelper } from "./ExecutionHelper.sol";
-import { Safe7579DCUtil, Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
-import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "../lib/ModeLib.sol";
+import { CallType, CALLTYPE_STATIC, CALLTYPE_SINGLE } from "../lib/ModeLib.sol";
 
 import {
     MODULE_TYPE_VALIDATOR,
@@ -23,23 +19,19 @@ import {
     MODULE_TYPE_HOOK
 } from "erc7579/interfaces/IERC7579Module.sol";
 
-CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
-
-// struct FallbackHandler {
-//     address handler;
-//     CallType calltype;
-// }
-//
-// struct ModuleManagerStorage {
-//     // linked list of executors. List is initialized by initializeAccount()
-//     SentinelListLib.SentinelList _executors;
-//     mapping(bytes4 selector => FallbackHandler fallbackHandler) _fallbacks;
-// }
-
 /**
  * @title ModuleManager
  * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
+ * @dev All Module types  are handled within this
+ * contract. To make it a bit easier to read, the contract is split into different sections:
+ * - Validator Modules
+ * - Executor Modules
+ * - Fallback Modules
+ * - Hook Modules
+ * Note: the Storage mappings for each section, are not listed on the very top, but in the
+ * respective section
+ *
  */
 abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
@@ -47,16 +39,14 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
     error InvalidModule(address module);
     error LinkedListError();
-    error CannotRemoveLastValidator();
     error InitializerError();
     error ValidatorStorageHelperError();
-    error NoFallbackHandler(bytes4 msgSig);
-    error InvalidFallbackHandler(bytes4 msgSig);
-    error FallbackInstalled(bytes4 msgSig);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     VALIDATOR MODULES                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    // No mapping account => list necessary. this sentinellist flavour handles associated storage to
+    // smart account itself to comply with 4337 storage restrictions
     SentinelList4337Lib.SentinelList internal $validators;
 
     /**
@@ -197,6 +187,10 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      FALLBACK MODULES                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    error NoFallbackHandler(bytes4 msgSig);
+    error InvalidFallbackHandler(bytes4 msgSig);
+    error FallbackInstalled(bytes4 msgSig);
+
     struct FallbackHandler {
         address handler;
         CallType calltype;
@@ -271,7 +265,11 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         return $fallbacks.handler == _handler;
     }
 
-    // FALLBACK
+    /**
+     * Fallback implementation supports callTypes:
+     *     - CALLTYPE_STATIC
+     *     - CALLTYPE_SINGLE
+     */
     // solhint-disable-next-line no-complex-fallback
     fallback(bytes calldata callData)
         external
@@ -291,22 +289,30 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         private
         returns (bytes memory fallbackRet)
     {
+        // get handler for specific function selector
         FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][msg.sig];
         address handler = $fallbacks.handler;
         CallType calltype = $fallbacks.calltype;
+        // if no handler is set for the msg.sig, revert
         if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
+        // according to ERC7579, when calling to fallback modules, ERC2771 msg.sender has to be
+        // appended to the calldata, this allows fallback modules to implement
+        // authorization control
         if (calltype == CALLTYPE_STATIC) {
-            return
-                _staticcallReturn({ safe: ISafe(msg.sender), target: handler, callData: callData });
+            return _staticcallReturn({
+                safe: ISafe(msg.sender),
+                target: handler,
+                callData: abi.encodePacked(callData, _msgSender()) // append ERC2771
+             });
         }
         if (calltype == CALLTYPE_SINGLE) {
             return _execReturn({
                 safe: ISafe(msg.sender),
                 target: handler,
                 value: 0,
-                callData: abi.encodePacked(callData, _msgSender())
-            });
+                callData: abi.encodePacked(callData, _msgSender()) // append ERC2771
+             });
         }
     }
 
@@ -356,6 +362,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         }
         $hookManager[msg.sender][selector] = hook;
 
+        // delegatecall neccessary, since event for installModule has to be emitted by SafeProxy
         _delegatecall({
             safe: ISafe(msg.sender),
             target: UTIL,
@@ -369,6 +376,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         (bytes4 selector, bytes memory initData) = abi.decode(data, (bytes4, bytes));
         delete $hookManager[msg.sender][selector];
 
+        // delegatecall neccessary, since event for uninstallModule has to be emitted by SafeProxy
         _delegatecall({
             safe: ISafe(msg.sender),
             target: UTIL,

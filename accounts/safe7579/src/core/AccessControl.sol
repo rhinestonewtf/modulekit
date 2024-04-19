@@ -4,6 +4,11 @@ pragma solidity >=0.8.0 <0.9.0;
 import { HandlerContext } from "@safe-global/safe-contracts/contracts/handler/HandlerContext.sol";
 import { AccountBase } from "erc7579/core/AccountBase.sol";
 
+/**
+ * Implements AccessControl for Safe7579 adapter.
+ * Since Safe7579 Adapter is installed as a fallback handler on the safe account, we are making use
+ * of handlercontext (ERC2771)
+ */
 contract AccessControl is HandlerContext, AccountBase {
     modifier onlyEntryPointOrSelf() virtual override {
         if (!(_msgSender() == entryPoint() || msg.sender == _msgSender())) {

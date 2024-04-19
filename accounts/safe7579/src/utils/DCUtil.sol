@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
 import { Execution } from "../interfaces/IERC7579Account.sol";
 import { IModule as IERC7579Module } from "erc7579/interfaces/IERC7579Module.sol";
 import { SimulateTxAccessor } from
@@ -85,7 +88,7 @@ contract BatchedExecUtil {
         virtual
         returns (bytes memory result)
     {
-        /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
@@ -110,7 +113,7 @@ contract BatchedExecUtil {
         virtual
         returns (bool success, bytes memory result)
     {
-        /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)

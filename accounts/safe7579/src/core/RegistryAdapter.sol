@@ -2,8 +2,14 @@
 pragma solidity ^0.8.23;
 
 import { IERC7484 } from "../interfaces/IERC7484.sol";
-import "./ExecutionHelper.sol";
+import { ExecutionHelper } from "./ExecutionHelper.sol";
+import { ISafe } from "../interfaces/ISafe.sol";
 
+/**
+ * IERC7484 Registry adapter.
+ * this feature is opt-in. The smart account owner can choose to use the registry and which
+ * attesters to trust.
+ */
 abstract contract RegistryAdapter is ExecutionHelper {
     event ERC7484RegistryConfigured(address indexed smartAccount, address indexed registry);
 
@@ -17,6 +23,7 @@ abstract contract RegistryAdapter is ExecutionHelper {
     function _checkRegistry(address module, uint256 moduleType) internal view {
         IERC7484 registry = $registry[msg.sender];
         if (address(registry) != address(0)) {
+            // this will revert if attestations / threshold are not met
             registry.checkForAccount(msg.sender, module, moduleType);
         }
     }

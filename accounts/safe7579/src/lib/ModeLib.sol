@@ -49,7 +49,6 @@ pragma solidity ^0.8.23;
  * ExecutionCallData: n bytes
  * single, delegatecall or batch exec abi.encoded as bytes
  */
-import { Execution } from "../interfaces/IERC7579Account.sol";
 
 // Custom type for improved developer experience
 type ModeCode is bytes32;
@@ -96,6 +95,7 @@ library ModeLib {
             ModePayload _modePayload
         )
     {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             _calltype := mode
             _execType := shl(8, mode)
@@ -130,6 +130,7 @@ library ModeLib {
     }
 
     function getCallType(ModeCode mode) internal pure returns (CallType calltype) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             calltype := mode
         }

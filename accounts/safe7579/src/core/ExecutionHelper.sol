@@ -8,7 +8,17 @@ import { BatchedExecUtil } from "../utils/DCUtil.sol";
 import { Execution } from "../interfaces/IERC7579Account.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
-contract ExecutionHelper is Safe7579DCUtilSetup {
+/**
+ * Abstraction layer for executions.
+ * @dev All interactions with modules must originate from msg.sender == SafeProxy. This entails
+ * avoiding direct calls by the Safe7579 Adapter for actions like onInstall on modules or
+ * validateUserOp on validator modules, and utilizing the Safe's execTransactionFromModule feature
+ * instead.
+ * @dev Since Safe7579 offers features like TryExecute for batched executions, rewriting and
+ * verifying execution success across the codebase can be challenging and error-prone. These
+ * functions serve to interact with modules and external contracts.
+ */
+abstract contract ExecutionHelper is Safe7579DCUtilSetup {
     event TryExecutionFailed(ISafe safe, uint256 numberInBatch);
     event TryExecutionsFailed(ISafe safe, bool[] success);
 
@@ -151,6 +161,17 @@ contract ExecutionHelper is Safe7579DCUtilSetup {
     /*                     STATICCALL TRICK                       */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
+    /**
+     * Safe account does not natively implement Enum.Operation.StaticCall,
+     * to still receive some guarantees, that the target contract of calls, can not do state
+     * changes, we are making use of Safe's SimulateTxAccessor.
+     * @dev This function will nudge the Safe account to make a delegatecall to the DCUTIL contract,
+     * which inherits SimulateTxAccessor and call the simulate() function there.
+     * This ensures, that the target contract can not do state changes
+     * @param safe Safe account to execute the staticcall
+     * @param target Target contract to staticcall
+     * @param callData Data to be passed to the target contract
+     */
     function _staticcallReturn(
         ISafe safe,
         address target,
@@ -161,23 +182,14 @@ contract ExecutionHelper is Safe7579DCUtilSetup {
     {
         bytes memory ret = _delegatecallReturn({
             safe: safe,
-            target: UTIL,
+            target: UTIL, // immutable address for DCUTIL (./utils/DCUTIL.sol)
             callData: abi.encodeCall(
-                SimulateTxAccessor.simulate,
-                (target, 0, abi.encodePacked(callData, _msgSender()), Enum.Operation.Call)
+                SimulateTxAccessor.simulate, (target, 0, callData, Enum.Operation.Call)
             )
         });
-        (,, retData) = abi.decode(ret, (uint256, bool, bytes));
+        bool success;
+        (, success, retData) = abi.decode(ret, (uint256, bool, bytes));
+        if (!success) revert ExecutionFailed();
         return retData;
     }
-}
-
-function _msgSender() pure returns (address sender) {
-    // The assembly code is more direct than the Solidity version using `abi.decode`.
-    /* solhint-disable no-inline-assembly */
-    /// @solidity memory-safe-assembly
-    assembly {
-        sender := shr(96, calldataload(sub(calldatasize(), 20)))
-    }
-    /* solhint-enable no-inline-assembly */
 }

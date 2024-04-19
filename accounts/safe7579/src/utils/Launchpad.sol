@@ -51,8 +51,15 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
     address public immutable SUPPORTED_ENTRYPOINT;
     IERC7484 public immutable REGISTRY;
 
+    error InvalidEntryPoint();
+    error OnlyDelegatecall();
+    error OnlyProxy();
+    error PreValidationSetupFailed();
+    error InvalidUserOperationData();
+    error InvalidInitHash();
+
     constructor(address entryPoint, IERC7484 registry) {
-        require(entryPoint != address(0), "Invalid entry point");
+        if (entryPoint == address(0)) revert InvalidEntryPoint();
 
         SELF = address(this);
         SUPPORTED_ENTRYPOINT = entryPoint;
@@ -60,17 +67,17 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
     }
 
     modifier onlyDelegatecall() {
-        require(msg.sender == address(this), "Only delegatecall");
+        if (msg.sender != address(this)) revert OnlyDelegatecall();
         _;
     }
 
     modifier onlyProxy() {
-        require(singleton == SELF, "Not called from proxy");
+        if (singleton != SELF) revert OnlyProxy();
         _;
     }
 
     modifier onlySupportedEntryPoint() {
-        require(msg.sender == SUPPORTED_ENTRYPOINT, "Unsupported entry point");
+        if (msg.sender != SUPPORTED_ENTRYPOINT) revert InvalidEntryPoint();
         _;
     }
 
@@ -128,7 +135,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         // if a delegatecall target is provided, SafeProxy will execute a delegatecall
         if (to != address(0)) {
             (bool success,) = to.delegatecall(preInit);
-            require(success, "Pre-initialization failed");
+            if (!success) revert PreValidationSetupFailed();
         }
     }
 
@@ -162,13 +169,13 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         onlySupportedEntryPoint
         returns (uint256 validationData)
     {
-        require(
-            this.setupSafe.selector == bytes4(userOp.callData[:4]), "invalid user operation data"
-        );
+        if (this.setupSafe.selector != bytes4(userOp.callData[:4])) {
+            revert InvalidUserOperationData();
+        }
 
         InitData memory initData = abi.decode(userOp.callData[4:], (InitData));
         // read stored initHash from SafeProxy storage. only proceed if the InitData hash matches
-        require(hash(initData) == _initHash(), "invalid init hash");
+        if (hash(initData) != _initHash()) revert InvalidInitHash();
 
         // get validator from nonce encoding
         address validator;

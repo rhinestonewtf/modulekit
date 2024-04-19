@@ -2,9 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { IERC7579Account, Execution } from "./interfaces/IERC7579Account.sol";
-import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
-import { SimulateTxAccessor } from "./utils/DCUtil.sol";
-import { IMSA } from "erc7579/interfaces/IMSA.sol";
 import {
     CallType,
     ExecType,

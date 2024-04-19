@@ -32,6 +32,7 @@ contract ERC4337Test is BaseTest {
         override
         returns (uint256)
     {
+        assertEq(msg.sender, address(account));
         assertEq(userOp.callData, _calldata);
         assertEq(userOpHash, _userOpHash);
         return _ret;
