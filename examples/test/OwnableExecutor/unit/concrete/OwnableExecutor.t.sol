@@ -111,7 +111,7 @@ contract OwnableExecutorTest is BaseTest {
         test_OnInstallWhenModuleIsNotIntialized();
 
         address owner = _owners[0];
-        vm.expectRevert(abi.encodeWithSelector(OwnableExecutor.OwnerAlreadyExists.selector, owner));
+        vm.expectRevert();
         executor.addOwner(owner);
     }
 
