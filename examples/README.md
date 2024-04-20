@@ -42,18 +42,24 @@ Tested:
 - [x] OwnableValidator
   - [x] Unit
   - [x] Integration
-- [ ] RegistryHook
+- [x] RegistryHook
   - [x] Unit
-  - [ ] Integration
-- [ ] ScheduledOrders
+  - [x] Integration
+- [x] ScheduledOrders
   - [x] Unit
-  - [ ] Integration
-- [ ] ScheduledTransactions
+  - [x] Integration
+- [x] ScheduledTransactions
   - [x] Unit
-  - [ ] Integration
-- [ ] SocialRecovery
+  - [x] Integration
+- [x] SocialRecovery
   - [x] Unit
-  - [ ] Integration
+  - [x] Integration
+
+Open questions
+
+- coldstorage blocks flashloan
+- coldstorage blocks module installation
+- if module is installed using execute, then call to account install module then hook destruct does not detect this
 
 ## Usage as part of ModuleKit
 

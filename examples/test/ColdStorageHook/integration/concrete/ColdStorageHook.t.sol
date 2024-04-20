@@ -49,7 +49,7 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         vm.label(address(token), "USDC");
         token.mint(address(instance.account), 1_000_000);
 
-        vm.etch(_owner, hex"60");
+        vm.etch(_owner, hex"00");
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: _owner, data: "" });
 

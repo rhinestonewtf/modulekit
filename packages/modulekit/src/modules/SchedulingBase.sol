@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { ERC7579ExecutorBase } from "./ERC7579ExecutorBase.sol";
-import "forge-std/console2.sol";
 
 abstract contract SchedulingBase is ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -119,26 +118,20 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
         ExecutionConfig storage executionConfig = executionLog[msg.sender][jobId];
 
         if (!executionConfig.isEnabled) {
-            console2.log("1");
             revert InvalidExecution();
         }
 
         if (executionConfig.lastExecutionTime + executionConfig.executeInterval > block.timestamp) {
-            console2.log("2");
             revert InvalidExecution();
         }
 
         if (executionConfig.numberOfExecutionsCompleted >= executionConfig.numberOfExecutions) {
-            console2.log("3");
             revert InvalidExecution();
         }
 
         if (executionConfig.startDate > block.timestamp) {
-            console2.log("4");
             revert InvalidExecution();
         }
-
-        console2.log("5");
     }
 
     modifier canExecute(uint256 jobId) {
