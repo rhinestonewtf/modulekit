@@ -142,7 +142,7 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         instance.getExecOps({
             target: address(executor),
             value: 0,
-            callData: abi.encodeWithSelector(AutoSavings.setConfig.selector, token, config),
+            callData: abi.encodeCall(AutoSavings.setConfig, (token, config)),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
@@ -166,7 +166,7 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         instance.getExecOps({
             target: address(executor),
             value: 0,
-            callData: abi.encodeWithSelector(AutoSavings.deleteConfig.selector, SENTINEL, _tokens[1]),
+            callData: abi.encodeCall(AutoSavings.deleteConfig, (SENTINEL, _tokens[1])),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
@@ -186,7 +186,7 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         instance.getExecOps({
             target: address(executor),
             value: 0,
-            callData: abi.encodeWithSelector(AutoSavings.autoSave.selector, usdc, amountReceived),
+            callData: abi.encodeCall(AutoSavings.autoSave, (address(usdc), amountReceived)),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
@@ -204,7 +204,7 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         instance.getExecOps({
             target: address(executor),
             value: 0,
-            callData: abi.encodeWithSelector(AutoSavings.setConfig.selector, usdc, config),
+            callData: abi.encodeCall(AutoSavings.setConfig, (address(usdc), config)),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
@@ -214,7 +214,7 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         instance.getExecOps({
             target: address(executor),
             value: 0,
-            callData: abi.encodeWithSelector(AutoSavings.autoSave.selector, usdc, amountReceived),
+            callData: abi.encodeCall(AutoSavings.autoSave, (address(usdc), amountReceived)),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 

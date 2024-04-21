@@ -44,7 +44,7 @@ contract ScheduledTransfers is SchedulingBase {
             IERC7579Account(msg.sender).executeFromExecutor(
                 ModeLib.encodeSimpleSingle(),
                 ExecutionLib.encodeSingle(
-                    token, 0, abi.encodeWithSelector(IERC20.transfer.selector, recipient, amount)
+                    token, 0, abi.encodeCall(IERC20.transfer, (recipient, amount))
                 )
             );
         }

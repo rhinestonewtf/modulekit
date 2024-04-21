@@ -97,7 +97,6 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     function _createExecution(bytes calldata orderData) internal {
         address account = msg.sender;
 
-        // TODO: optimise this?
         uint256 jobId = accountJobCount[account] + 1;
         accountJobCount[account]++;
 

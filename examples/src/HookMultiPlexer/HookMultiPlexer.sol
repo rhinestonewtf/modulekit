@@ -51,15 +51,13 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
             executions[i] = Execution({
                 target: _hook,
                 value: 0,
-                callData: abi.encodeWithSelector(this.onInstall.selector, initDatas[i])
+                callData: abi.encodeCall(this.onInstall, (initDatas[i]))
             });
 
             executions[i + 1] = Execution({
                 target: _hook,
                 value: 0,
-                callData: abi.encodeWithSelector(
-                    ERC7579HookBaseNew.setTrustedForwarder.selector, address(this)
-                )
+                callData: abi.encodeCall(ERC7579HookBaseNew.setTrustedForwarder, (address(this)))
             });
         }
 
@@ -102,7 +100,7 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
 
             (bool success, bytes memory _hookReturnData) = hookAddress.call(
                 abi.encodePacked(
-                    abi.encodeWithSelector(this.preCheck.selector, msgSender, msgValue, msgData),
+                    abi.encodeCall(this.preCheck, (msgSender, msgValue, msgData)),
                     address(this),
                     msg.sender
                 )
@@ -136,8 +134,8 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
 
             (bool success, bytes memory hookReturnData) = hookAddress.call(
                 abi.encodePacked(
-                    abi.encodeWithSelector(
-                        this.postCheck.selector, hookData, executionSuccess, executionReturnValue
+                    abi.encodeCall(
+                        this.postCheck, (hookData, executionSuccess, executionReturnValue)
                     ),
                     address(this),
                     msg.sender
