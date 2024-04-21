@@ -1,8 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
-
-import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { IERC721 } from "forge-std/interfaces/IERC721.sol";
+pragma solidity ^0.8.25;
 
 enum FlashLoanType {
     ERC20,
@@ -17,7 +14,7 @@ interface IERC6682 {
 
 /**
  * @dev Interface of the ERC3156 FlashLender, as defined in
- * https://eips.ethereum.org/EIPS/eip-3156[ERC-3156].
+ * https://eips.ethereum.org/EIPS/eip-3156.
  */
 interface IERC3156FlashLender {
     /**
@@ -54,7 +51,7 @@ interface IERC3156FlashLender {
 
 /**
  * @dev Interface of the ERC3156 FlashBorrower, as defined in
- * https://eips.ethereum.org/EIPS/eip-3156[ERC-3156].
+ * https://eips.ethereum.org/EIPS/eip-3156.
  */
 interface IERC3156FlashBorrower {
     /**

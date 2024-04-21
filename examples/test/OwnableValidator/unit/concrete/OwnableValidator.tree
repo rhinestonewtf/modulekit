@@ -91,6 +91,22 @@ OwnableValidator::isValidSignatureWithSender
             └── it should return ERC1271_MAGIC_VALUE
 
 
+OwnableValidator::validateSignatureWithData
+├── when data is invalid
+│   └── it should revert
+└── when data is valid
+    ├── when threshold is not set
+    │   └── it should revert
+    └── when threshold is set
+        ├── when the signatures are not valid
+        │   └── it should return false
+        └── when the signatures are valid
+            ├── when the unique signatures are less than threshold
+            │   └── it should return false
+            └── when the unique signatures are greater than threshold
+                └── it should return true
+
+
 OwnableValidator::name
 └── it should return OwnableValidator
 

@@ -5,6 +5,7 @@ import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import { ERC7579HookDestruct, Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
+import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
 
 /**
  * @title ColdStorageHook
@@ -456,19 +457,39 @@ contract ColdStorageHook is ERC7579HookDestruct {
 
     /**
      * Unknown function was called on the account
-     * @dev this function will revert as the module does not allow unknown function calls (eg
-     * fallback functions)
+     * @dev This function will revert except when used for flashloans
+     *
+     * @param msgSender address of the sender
+     * @param callData data passed to the account
+     *
+     * @return bytes encoded data
      */
     function onUnknownFunction(
-        address,
+        address msgSender,
         uint256,
-        bytes calldata
+        bytes calldata callData
     )
         internal
         virtual
         override
         returns (bytes memory)
     {
+        // get the vault config
+        VaultConfig memory _config = vaultConfig[msg.sender];
+
+        if (callData.length >= 4 && msgSender == _config.owner) {
+            // if the sender is the owner, check if the function is a flashloan function
+            bytes4 functionSig = bytes4(callData[0:4]);
+
+            if (
+                functionSig == IERC3156FlashLender.maxFlashLoan.selector
+                    || functionSig == IERC3156FlashLender.maxFlashLoan.selector
+                    || functionSig == IERC3156FlashLender.maxFlashLoan.selector
+            ) {
+                // return pass
+                return abi.encode(PASS);
+            }
+        }
         revert UnsupportedExecution();
     }
 

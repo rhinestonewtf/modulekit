@@ -56,8 +56,6 @@ contract AutoSavings is ERC7579ExecutorBase {
     function onInstall(bytes calldata data) external override {
         // cache the account address
         address account = msg.sender;
-        // check if the module is already initialized and revert if it is
-        if (isInitialized(account)) revert AlreadyInitialized(account);
 
         // decode the data to get the tokens and their configurations
         (address[] memory _tokens, Config[] memory _configs) =

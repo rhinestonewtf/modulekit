@@ -7,6 +7,7 @@ import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
 
 contract ColdStorageHookTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
@@ -357,7 +358,21 @@ contract ColdStorageHookTest is BaseTest {
         hook.preCheck(address(1), 0, msgData);
     }
 
-    function test_PreCheckRevertWhen_FunctionIsUnknown() public {
+    function test_PreCheckWhenFunctionIsAFlashloanFunction() external whenFunctionIsUnknown {
+        // it should return pass
+        test_RequestTimelockedExecutionWhenTheCallIsToSetWaitPeriod();
+
+        bytes memory msgData =
+            abi.encodeWithSelector(IERC3156FlashLender.maxFlashLoan.selector, makeAddr("token"));
+
+        bytes memory hookData = hook.preCheck(address(_owner), 0, msgData);
+        assertEq(hookData, abi.encode(keccak256("pass")));
+    }
+
+    function test_PreCheckRevertWhen_FunctionIsNotAFlashloanFunction()
+        external
+        whenFunctionIsUnknown
+    {
         // it should revert
         bytes memory msgData = abi.encodeWithSelector(IERC7579Account.supportsModule.selector, 1);
 
@@ -533,6 +548,10 @@ contract ColdStorageHookTest is BaseTest {
     }
 
     modifier whenCalldataLengthIs0() {
+        _;
+    }
+
+    modifier whenFunctionIsUnknown() {
         _;
     }
 

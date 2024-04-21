@@ -57,13 +57,10 @@ Tested:
 
 Open questions
 
-- coldstorage blocks flashloan
 - coldstorage blocks module installation
 - if module is installed using execute, then call to account install module then hook destruct does not detect this
-- stateless validation
-- hook changes
+- hook changes?
 - coldstorage: is it acutally necessary to check anything in postcheck?
-- ownable executor should allow batch calls?
 - get owners/guardians: how to return all?
 
 ## Usage as part of ModuleKit

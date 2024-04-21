@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.25;
 
 import { ERC7579ExecutorBase, ERC7579FallbackBase } from "modulekit/src/Modules.sol";
-import { FlashLoanType } from "./interfaces/Flashloan.sol";
+import { FlashLoanType } from "modulekit/src/interfaces/Flashloan.sol";
 
 contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////

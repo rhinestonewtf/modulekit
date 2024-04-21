@@ -45,9 +45,6 @@ contract SocialRecovery is ERC7579ValidatorBase {
      * @param data encoded data containing the threshold and guardians
      */
     function onInstall(bytes calldata data) external override {
-        // if the module is already initialized, revert
-        if (isInitialized(msg.sender)) revert AlreadyInitialized(msg.sender);
-
         // get the threshold and guardians from the data
         (uint256 _threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
 

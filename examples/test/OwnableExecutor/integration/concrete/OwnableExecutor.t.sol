@@ -8,7 +8,11 @@ import {
     ModuleKitUserOp
 } from "test/BaseIntegration.t.sol";
 import { OwnableExecutor } from "src/OwnableExecutor/OwnableExecutor.sol";
-import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
+import {
+    MODULE_TYPE_EXECUTOR,
+    Execution,
+    ERC7579ExecutionLib
+} from "modulekit/src/external/ERC7579.sol";
 import { SENTINEL } from "sentinellist/SentinelList.sol";
 
 contract OwnableExecutorIntegrationTest is BaseIntegrationTest {
@@ -150,6 +154,41 @@ contract OwnableExecutorIntegrationTest is BaseIntegrationTest {
 
         executor.executeOnOwnedAccount(
             address(instance.account), abi.encodePacked(target, value, bytes(""))
+        );
+    }
+
+    function test_ExecuteBatchOnOwnedAccount() public {
+        // it should execute a transaction on the account
+        address target2 = makeAddr("target2");
+
+        uint256 value = 1 ether;
+
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution({ target: target, value: value, callData: bytes("") });
+        executions[1] = Execution({ target: target2, value: value, callData: bytes("") });
+
+        uint256 prevBalanceTarget1 = target.balance;
+        uint256 prevBalanceTarget2 = target2.balance;
+
+        vm.prank(_owners[0]);
+        executor.executeBatchOnOwnedAccount(
+            address(instance.account), ERC7579ExecutionLib.encodeBatch(executions)
+        );
+
+        assertEq(target.balance, prevBalanceTarget1 + value);
+        assertEq(target2.balance, prevBalanceTarget2 + value);
+    }
+
+    function test_ExecuteBatchOnOwnedAccount_RevertWhen_UnauthorizedOwner() public {
+        // it should execute a transaction on the account
+        Execution[] memory executions = new Execution[](1);
+        executions[0] = Execution({ target: target, value: 1 ether, callData: bytes("") });
+
+        vm.prank(_owners[1]);
+        vm.expectRevert(OwnableExecutor.UnauthorizedAccess.selector);
+
+        executor.executeBatchOnOwnedAccount(
+            address(instance.account), ERC7579ExecutionLib.encodeBatch(executions)
         );
     }
 }

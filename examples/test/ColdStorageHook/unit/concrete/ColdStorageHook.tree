@@ -75,7 +75,10 @@ ColdStorageHook::preCheck
 ├── when function is uninstallModule
 │   └── it should revert
 ├── when function is unknown
-│   └── it should revert
+│   ├── when function is a flashloan function
+│   │   └── it should return pass
+│   └── when function is not a flashloan function
+│       └── it should revert
 └── when function is executeFromExecutor
     ├── when target is this and function is requestTimelockedExecution
     │   └── it should return requestTimelockedExecution

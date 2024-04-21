@@ -75,9 +75,7 @@ contract SocialRecoveryTest is BaseTest {
 
         validator.onInstall(data);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC7579Module.AlreadyInitialized.selector, address(this))
-        );
+        vm.expectRevert();
         validator.onInstall(data);
     }
 

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.25;
 
 import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";

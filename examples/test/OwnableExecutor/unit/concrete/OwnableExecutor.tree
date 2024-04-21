@@ -46,6 +46,13 @@ OwnableExecutor::executeOnOwnedAccount
     └── it should execute the calldata on the owned account
 
 
+OwnableExecutor::executeBatchOnOwnedAccount
+├── when msgSender is not an owner
+│   └── it should revert
+└── when msgSender is an owner
+    └── it should execute the calldata on the owned account
+
+
 OwnableExecutor::name
 └── it should return OwnableExecutor
 

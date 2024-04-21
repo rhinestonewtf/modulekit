@@ -39,8 +39,6 @@ contract OwnableExecutor is ERC7579ExecutorBase {
     function onInstall(bytes calldata data) external override {
         // cache the account address
         address account = msg.sender;
-        // check if the module is already initialized and revert if it is
-        if (isInitialized(account)) revert AlreadyInitialized(account);
 
         // decode the owner
         address owner = address(bytes20(data[0:20]));
@@ -138,9 +136,30 @@ contract OwnableExecutor is ERC7579ExecutorBase {
             revert UnauthorizedAccess();
         }
 
-        // TODO: should we also allow batch calls?
         // execute the transaction on the owned account
         IERC7579Account(ownedAccount).executeFromExecutor(ModeLib.encodeSimpleSingle(), callData);
+    }
+
+    /**
+     * Executes a batch of transactions on the owned account
+     *
+     * @param ownedAccount address of the account to execute the transaction on
+     * @param callData encoded data containing the transactions to execute
+     */
+    function executeBatchOnOwnedAccount(
+        address ownedAccount,
+        bytes calldata callData
+    )
+        external
+        payable
+    {
+        // check if the sender is an owner
+        if (!accountOwners[ownedAccount].contains(msg.sender)) {
+            revert UnauthorizedAccess();
+        }
+
+        // execute the batch of transaction on the owned account
+        IERC7579Account(ownedAccount).executeFromExecutor(ModeLib.encodeSimpleBatch(), callData);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

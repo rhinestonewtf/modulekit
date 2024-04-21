@@ -114,8 +114,8 @@ importers:
         specifier: github:rhinestonewtf/erc4337-validation
         version: github.com/rhinestonewtf/erc4337-validation/abaff656852e3a4b9790e458e17165adf00e3e54
       erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: github.com/erc7579/erc7579-implementation/57edb768653d0c13b03caaca611a79aa3433784c
+        specifier: github:erc7579/erc7579-implementation#5c3363b828b09702a0e348aa69fc479eb0bdac29
+        version: github.com/erc7579/erc7579-implementation/5c3363b828b09702a0e348aa69fc479eb0bdac29
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: github.com/foundry-rs/forge-std/e4aef94c1768803a16fe19f7ce8b65defd027cfd
@@ -4395,6 +4395,14 @@ packages:
 
   github.com/erc7579/erc7579-implementation/57edb768653d0c13b03caaca611a79aa3433784c:
     resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/57edb768653d0c13b03caaca611a79aa3433784c}
+    name: micro-msa
+    version: 0.3.1
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+    dev: true
+
+  github.com/erc7579/erc7579-implementation/5c3363b828b09702a0e348aa69fc479eb0bdac29:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/5c3363b828b09702a0e348aa69fc479eb0bdac29}
     name: micro-msa
     version: 0.3.1
     dependencies:

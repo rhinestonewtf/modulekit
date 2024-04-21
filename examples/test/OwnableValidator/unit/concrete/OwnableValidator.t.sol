@@ -53,9 +53,7 @@ contract OwnableValidatorTest is BaseTest {
 
         validator.onInstall(data);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC7579Module.AlreadyInitialized.selector, address(this))
-        );
+        vm.expectRevert();
         validator.onInstall(data);
     }
 
@@ -418,6 +416,79 @@ contract OwnableValidatorTest is BaseTest {
         assertEq(result, EIP1271_MAGIC_VALUE);
     }
 
+    function test_ValidateSignatureWithDataRevertWhen_DataIsInvalid() external {
+        // it should revert
+        bytes32 hash = bytes32(keccak256("hash"));
+        bytes memory signatures = "";
+        bytes memory data = "";
+
+        vm.expectRevert();
+        validator.validateSignatureWithData(hash, signatures, data);
+    }
+
+    function test_ValidateSignatureWithDataRevertWhen_ThresholdIsNotSet()
+        external
+        whenDataIsValid
+    {
+        // it should revert
+        bytes32 hash = bytes32(keccak256("hash"));
+        bytes memory signatures = "";
+        bytes memory data = abi.encode(0, _owners);
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.ThresholdNotSet.selector));
+        validator.validateSignatureWithData(hash, signatures, data);
+    }
+
+    function test_ValidateSignatureWithDataWhenTheSignaturesAreNotValid()
+        external
+        whenDataIsValid
+        whenThresholdIsSet
+    {
+        // it should return false
+        bytes32 hash = bytes32(keccak256("hash"));
+        bytes memory signature1 = signHash(uint256(1), hash);
+        bytes memory signature2 = signHash(uint256(2), hash);
+        bytes memory signatures = abi.encodePacked(signature1, signature2);
+        bytes memory data = abi.encode(_threshold, _owners);
+
+        bool isValid = validator.validateSignatureWithData(hash, signatures, data);
+        assertFalse(isValid);
+    }
+
+    function test_ValidateSignatureWithDataWhenTheUniqueSignaturesAreLessThanThreshold()
+        external
+        whenDataIsValid
+        whenThresholdIsSet
+        whenTheSignaturesAreValid
+    {
+        // it should return false
+        bytes32 hash = bytes32(keccak256("hash"));
+        bytes memory signature1 = signHash(_ownerPks[0], hash);
+        bytes memory signature2 = signHash(uint256(2), hash);
+        bytes memory signatures = abi.encodePacked(signature1, signature2);
+        bytes memory data = abi.encode(_threshold, _owners);
+
+        bool isValid = validator.validateSignatureWithData(hash, signatures, data);
+        assertFalse(isValid);
+    }
+
+    function test_ValidateSignatureWithDataWhenTheUniqueSignaturesAreGreaterThanThreshold()
+        external
+        whenDataIsValid
+        whenThresholdIsSet
+        whenTheSignaturesAreValid
+    {
+        // it should return true
+        bytes32 hash = bytes32(keccak256("hash"));
+        bytes memory signature1 = signHash(_ownerPks[0], hash);
+        bytes memory signature2 = signHash(_ownerPks[1], hash);
+        bytes memory signatures = abi.encodePacked(signature1, signature2);
+        bytes memory data = abi.encode(_threshold, _owners);
+
+        bool isValid = validator.validateSignatureWithData(hash, signatures, data);
+        assertTrue(isValid);
+    }
+
     function test_Name() public {
         // it should return OwnableValidator
         string memory name = validator.name();
@@ -467,6 +538,10 @@ contract OwnableValidatorTest is BaseTest {
     }
 
     modifier whenTheSignaturesAreValid() {
+        _;
+    }
+
+    modifier whenDataIsValid() {
         _;
     }
 }

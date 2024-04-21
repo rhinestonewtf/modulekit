@@ -49,9 +49,7 @@ contract OwnableExecutorTest is BaseTest {
 
         executor.onInstall(data);
 
-        vm.expectRevert(
-            abi.encodeWithSelector(IERC7579Module.AlreadyInitialized.selector, address(this))
-        );
+        vm.expectRevert();
         executor.onInstall(data);
     }
 
@@ -175,6 +173,37 @@ contract OwnableExecutorTest is BaseTest {
 
         vm.prank(address(owner));
         executor.executeOnOwnedAccount(ownedAccount, abi.encodePacked(_value));
+
+        uint256 value = target.value();
+        assertEq(value, _value);
+    }
+
+    function test_ExecuteBatchOnOwnedAccountRevertWhen_MsgSenderIsNotAnOwner() public {
+        // it should revert
+        test_OnInstallWhenModuleIsNotIntialized();
+
+        vm.expectRevert(OwnableExecutor.UnauthorizedAccess.selector);
+        executor.executeBatchOnOwnedAccount(address(1), "");
+    }
+
+    function test_ExecuteBatchOnOwnedAccountWhenMsgSenderIsAnOwner() public {
+        // it should execute the calldata on the owned account
+        address owner = _owners[0];
+        bytes memory data = abi.encodePacked(owner);
+
+        address ownedAccount = address(target);
+
+        vm.prank(ownedAccount);
+        executor.onInstall(data);
+
+        address[] memory owners = executor.getOwners(ownedAccount);
+        assertEq(owners.length, 1);
+        assertEq(owners[0], owner);
+
+        uint256 _value = 24;
+
+        vm.prank(address(owner));
+        executor.executeBatchOnOwnedAccount(ownedAccount, abi.encodePacked(_value));
 
         uint256 value = target.value();
         assertEq(value, _value);

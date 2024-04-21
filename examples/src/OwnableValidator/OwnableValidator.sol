@@ -46,8 +46,6 @@ contract OwnableValidator is ERC7579ValidatorBase {
     function onInstall(bytes calldata data) external override {
         // cache the account address
         address account = msg.sender;
-        // check if the module is already initialized and revert if it is
-        if (isInitialized(account)) revert AlreadyInitialized(account);
 
         // decode the threshold and owners
         (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
@@ -283,6 +281,63 @@ contract OwnableValidator is ERC7579ValidatorBase {
         }
         // if the threshold is not met, return validation failed
         return EIP1271_FAILED;
+    }
+
+    /**
+     * Validates a signature with the data (stateless validation)
+     *
+     * @param hash bytes32 hash of the data
+     * @param signature bytes data containing the signatures
+     * @param data bytes data containing the data
+     *
+     * @return bool true if the signature is valid, false otherwise
+     */
+    function validateSignatureWithData(
+        bytes32 hash,
+        bytes calldata signature,
+        bytes calldata data
+    )
+        external
+        view
+        returns (bool)
+    {
+        // decode the threshold and owners
+        (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
+
+        // sort and uniquify the owners to make sure an owner is not reused
+        _owners.sort();
+        _owners.uniquifySorted();
+
+        // check that threshold is set
+        if (_threshold == 0) {
+            revert ThresholdNotSet();
+        }
+
+        // recover the signers from the signatures
+        address[] memory signers = CheckSignatures.recoverNSignatures(
+            ECDSA.toEthSignedMessageHash(hash), signature, _threshold
+        );
+
+        // sort and uniquify the signers to make sure a signer is not reused
+        signers.sort();
+        signers.uniquifySorted();
+
+        // check if the signers are owners
+        uint256 validSigners;
+        for (uint256 i = 0; i < signers.length; i++) {
+            (bool found,) = _owners.searchSorted(signers[i]);
+            if (found) {
+                validSigners++;
+            }
+        }
+
+        // check if the threshold is met and return the result
+        if (validSigners >= _threshold) {
+            // if the threshold is met, return true
+            return true;
+        }
+        // if the threshold is not met, false
+        return false;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
