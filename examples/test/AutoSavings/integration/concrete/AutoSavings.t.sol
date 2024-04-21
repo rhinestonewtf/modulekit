@@ -9,9 +9,12 @@ import {
 } from "test/BaseIntegration.t.sol";
 import { AutoSavings } from "src/AutoSavings/AutoSavings.sol";
 import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
-import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
-import { MockERC4626 } from "solmate/test/utils/mocks/MockERC4626.sol";
+import { MockERC4626, ERC20 } from "solmate/test/utils/mocks/MockERC4626.sol";
 import { SENTINEL } from "sentinellist/SentinelList.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+
+address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
 contract AutoSavingsIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -23,8 +26,6 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
 
     AutoSavings internal executor;
 
-    MockERC20 internal token1;
-    MockERC20 internal token2;
     MockERC4626 internal vault1;
     MockERC4626 internal vault2;
 
@@ -34,29 +35,37 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
 
     address[] _tokens;
 
+    IERC20 usdc = IERC20(USDC);
+    IERC20 weth = IERC20(WETH);
+
+    uint256 mainnetFork;
+
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override {
+        string memory mainnetUrl = vm.envString("MAINNET_RPC_URL");
+        mainnetFork = vm.createFork(mainnetUrl);
+        vm.selectFork(mainnetFork);
+        vm.rollFork(19_274_877);
+
         BaseIntegrationTest.setUp();
 
         executor = new AutoSavings();
 
-        token1 = new MockERC20("USDC", "USDC", 18);
-        vm.label(address(token1), "USDC");
-        token1.mint(address(instance.account), 1_000_000);
+        vm.label(address(usdc), "USDC");
+        vm.label(address(weth), "WETH");
 
-        token2 = new MockERC20("wETH", "wETH", 18);
-        vm.label(address(token2), "wETH");
-        token2.mint(address(instance.account), 1_000_000);
+        deal(address(usdc), instance.account, 1_000_000);
+        deal(address(weth), instance.account, 1_000_000);
 
-        vault1 = new MockERC4626(token1, "vUSDC", "vUSDC");
-        vault2 = new MockERC4626(token2, "vwETH", "vwETH");
+        vault1 = new MockERC4626(ERC20(address(usdc)), "vUSDC", "vUSDC");
+        vault2 = new MockERC4626(ERC20(address(weth)), "vwETH", "vwETH");
 
         _tokens = new address[](2);
-        _tokens[0] = address(token1);
-        _tokens[1] = address(token2);
+        _tokens[0] = address(usdc);
+        _tokens[1] = address(weth);
 
         AutoSavings.Config[] memory _configs = getConfigs();
 
@@ -170,23 +179,46 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
 
     function test_AutoSave_WithUnderlyingToken() public {
         // it should deposit the underlying token into the vault
-        uint256 amount = 100;
-        uint256 prevBalance = token1.balanceOf(address(vault1));
+        uint256 amountReceived = 100;
+        uint256 prevBalance = usdc.balanceOf(address(vault1));
+        uint256 assetsBefore = vault1.totalAssets();
 
         instance.getExecOps({
             target: address(executor),
             value: 0,
-            callData: abi.encodeWithSelector(AutoSavings.autoSave.selector, token1, amount),
+            callData: abi.encodeWithSelector(AutoSavings.autoSave.selector, usdc, amountReceived),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
-        assertEq(token1.balanceOf(address(instance.account)), 999_900);
-        assertEq(token1.balanceOf(address(vault1)), prevBalance + amount);
+        assertEq(usdc.balanceOf(address(instance.account)), 999_900);
+        assertEq(usdc.balanceOf(address(vault1)), prevBalance + amountReceived);
+
+        uint256 assetsAfter = vault1.totalAssets();
+        assertGt(assetsAfter, assetsBefore);
     }
 
     function test_AutoSave_WithNonUnderlyingToken() public {
         // it should deposit the underlying token into the vault
-        // TODO
-        assertFalse(true);
+        AutoSavings.Config memory config = AutoSavings.Config(10, address(vault2), 0);
+
+        instance.getExecOps({
+            target: address(executor),
+            value: 0,
+            callData: abi.encodeWithSelector(AutoSavings.setConfig.selector, usdc, config),
+            txValidator: address(instance.defaultValidator)
+        }).execUserOps();
+
+        uint256 amountReceived = 1000;
+        uint256 assetsBefore = vault2.totalAssets();
+
+        instance.getExecOps({
+            target: address(executor),
+            value: 0,
+            callData: abi.encodeWithSelector(AutoSavings.autoSave.selector, usdc, amountReceived),
+            txValidator: address(instance.defaultValidator)
+        }).execUserOps();
+
+        uint256 assetsAfter = vault2.totalAssets();
+        assertGt(assetsAfter, assetsBefore);
     }
 }

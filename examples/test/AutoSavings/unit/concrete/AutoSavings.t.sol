@@ -7,6 +7,8 @@ import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { MockERC4626 } from "solmate/test/utils/mocks/MockERC4626.sol";
 import { MockAccount } from "test/mocks/MockAccount.sol";
+import { MockUniswap } from "modulekit/src/integrations/uniswap/MockUniswap.sol";
+import { SWAPROUTER_ADDRESS } from "modulekit/src/integrations/uniswap/helpers/MainnetAddresses.sol";
 
 contract AutoSavingsTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
@@ -50,6 +52,10 @@ contract AutoSavingsTest is BaseTest {
         _tokens = new address[](2);
         _tokens[0] = address(token1);
         _tokens[1] = address(token2);
+
+        // set up mock uniswap
+        MockUniswap _mockUniswap = new MockUniswap();
+        vm.etch(SWAPROUTER_ADDRESS, address(_mockUniswap).code);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -211,29 +217,30 @@ contract AutoSavingsTest is BaseTest {
         // it should deposit the amount to the vault
         // it should emit an AutoSaveExecuted event
         installFromAccount(address(account));
+        AutoSavings.Config memory config = AutoSavings.Config(10, address(vault2), 0);
 
-        uint256 assetsBefore = vault1.totalAssets();
+        vm.prank(address(account));
+        executor.setConfig(address(token1), config);
 
-        address token = _tokens[0];
+        uint256 assetsBefore = vault2.totalAssets();
+
         uint256 amountReceived = 100;
+        uint256 amountSaved = executor.calcDepositAmount(amountReceived, config.percentage);
 
         vm.expectEmit(true, true, true, true, address(executor));
         emit AutoSavings.AutoSaveExecuted({
             smartAccount: address(account),
-            token: token,
-            amountReceived: amountReceived
+            token: address(token1),
+            amountReceived: amountSaved
         });
 
-        // TODO: test swap
-        assertFalse(true);
-
         vm.prank(address(account));
-        executor.autoSave(token, amountReceived);
+        executor.autoSave(address(token1), amountReceived);
 
-        (uint16 percentage,,) = executor.config(address(account), token);
+        (uint16 percentage,,) = executor.config(address(account), address(token1));
 
-        uint256 assetsAfter = vault1.totalAssets();
-        assertEq(assetsAfter, assetsBefore + (amountReceived * percentage) / 100);
+        uint256 assetsAfter = vault2.totalAssets();
+        assertEq(assetsAfter, amountSaved);
     }
 
     function test_AutoSaveWhenTheTokenProvidedIsTheUnderlyingAsset()

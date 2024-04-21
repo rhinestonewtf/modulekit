@@ -123,8 +123,8 @@ importers:
         specifier: ^2.8.8
         version: 2.8.8
       sentinellist:
-        specifier: github:kopy-kat/sentinellist
-        version: github.com/kopy-kat/sentinellist/75f26b54c86f454d2d746476abb7f62f2f1e645c
+        specifier: github:zeroknots/sentinellist
+        version: github.com/zeroknots/sentinellist/f3f84d6cb97051a9726ba9b3a16ce877698af2ad
       solady:
         specifier: github:vectorized/solady
         version: github.com/vectorized/solady/524eb284b5fadec2d62f265f8ee82f8373801ca4
@@ -4533,12 +4533,6 @@ packages:
       - utf-8-validate
     dev: true
 
-  github.com/kopy-kat/sentinellist/75f26b54c86f454d2d746476abb7f62f2f1e645c:
-    resolution: {tarball: https://codeload.github.com/kopy-kat/sentinellist/tar.gz/75f26b54c86f454d2d746476abb7f62f2f1e645c}
-    name: sentinellist
-    version: 1.0.1
-    dev: true
-
   github.com/rhinestonewtf/erc4337-validation/abaff656852e3a4b9790e458e17165adf00e3e54:
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/abaff656852e3a4b9790e458e17165adf00e3e54}
     name: '@rhinestone/erc4337-validation'
@@ -4574,6 +4568,12 @@ packages:
 
   github.com/zeroknots/sentinellist/05e0cf2a22279cf66a62cdc8a006df830348aa0e:
     resolution: {tarball: https://codeload.github.com/zeroknots/sentinellist/tar.gz/05e0cf2a22279cf66a62cdc8a006df830348aa0e}
+    name: sentinellist
+    version: 1.0.1
+    dev: true
+
+  github.com/zeroknots/sentinellist/f3f84d6cb97051a9726ba9b3a16ce877698af2ad:
+    resolution: {tarball: https://codeload.github.com/zeroknots/sentinellist/tar.gz/f3f84d6cb97051a9726ba9b3a16ce877698af2ad}
     name: sentinellist
     version: 1.0.1
     dev: true

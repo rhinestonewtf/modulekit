@@ -9,6 +9,10 @@ import {
 } from "test/BaseIntegration.t.sol";
 import { ScheduledOrders, SchedulingBase } from "src/ScheduledOrders/ScheduledOrders.sol";
 import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+
+address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
 contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -27,21 +31,36 @@ contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
 
     bytes _executionData;
 
+    IERC20 usdc = IERC20(USDC);
+    IERC20 weth = IERC20(WETH);
+
+    uint256 mainnetFork;
+
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override {
+        string memory mainnetUrl = vm.envString("MAINNET_RPC_URL");
+        mainnetFork = vm.createFork(mainnetUrl);
+        vm.selectFork(mainnetFork);
+        vm.rollFork(19_274_877);
+
         BaseIntegrationTest.setUp();
 
-        executor = new ScheduledOrders();
+        vm.label(address(usdc), "USDC");
+        vm.label(address(weth), "WETH");
 
-        vm.warp(1_713_357_071);
+        deal(address(usdc), instance.account, 1_000_000);
+        deal(address(weth), instance.account, 1_000_000);
+
+        executor = new ScheduledOrders();
 
         uint48 _executeInterval = 1 days;
         uint16 _numberOfExecutions = 10;
         uint48 _startDate = uint48(block.timestamp);
-        _executionData = abi.encode(address(0x1), address(0x2), uint256(100), uint160(100));
+        _executionData =
+            abi.encode(address(address(usdc)), address(address(weth)), uint256(100), uint160(0));
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_EXECUTOR,
@@ -125,7 +144,7 @@ contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
         uint16 _numberOfExecutions = 5;
         uint48 _startDate = uint48(block.timestamp);
         bytes memory _newExecutionData =
-            abi.encode(address(0x3), address(0x4), uint256(200), uint160(200));
+            abi.encode(address(address(weth)), address(address(usdc)), uint256(100), uint160(0));
 
         instance.getExecOps({
             target: address(executor),
@@ -166,6 +185,9 @@ contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
         // it should execute the order
         uint256 jobId = 1;
 
+        uint256 usdcBalanceBefore = usdc.balanceOf(instance.account);
+        uint256 wethBalanceBefore = weth.balanceOf(instance.account);
+
         instance.getExecOps({
             target: address(executor),
             value: 0,
@@ -178,7 +200,10 @@ contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
         assertEq(lastExecutionTime, block.timestamp);
         assertEq(numberOfExecutionsCompleted, 1);
 
-        // TODO: uni integration
-        assertTrue(false);
+        uint256 usdcBalanceAfter = usdc.balanceOf(instance.account);
+        uint256 wethBalanceAfter = weth.balanceOf(instance.account);
+
+        assertGt(wethBalanceAfter, wethBalanceBefore);
+        assertLt(usdcBalanceAfter, usdcBalanceBefore);
     }
 }
