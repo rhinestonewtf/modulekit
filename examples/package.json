@@ -2,9 +2,9 @@
   "name": "@rhinestone/modulekit-examples",
   "description": "ModuleKit Examples",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": {
-    "name": "zeroknots.eth",
+    "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
@@ -25,7 +25,7 @@
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",
-    "sentinellist": "github:zeroknots/sentinellist",
+    "sentinellist": "github:kopy-kat/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
     "solhint": "^4.5.2",

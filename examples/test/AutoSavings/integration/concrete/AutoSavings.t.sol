@@ -111,7 +111,7 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         });
 
         bool isInitialized = executor.isInitialized(address(instance.account));
-        assertTrue(isInitialized);
+        assertFalse(isInitialized);
 
         for (uint256 i; i < _tokens.length; i++) {
             (uint16 _percentage, address _vault, uint128 _sqrtPriceLimitX96) =

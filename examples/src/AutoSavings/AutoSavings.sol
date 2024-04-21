@@ -81,7 +81,17 @@ contract AutoSavings is ERC7579ExecutorBase {
      * @dev the data parameter is not used
      */
     function onUninstall(bytes calldata) external override {
-        // TODO
+        // cache the account address
+        address account = msg.sender;
+
+        // clear the configurations
+        (address[] memory tokensArray,) = tokens[account].getEntriesPaginated(SENTINEL, 10);
+        for (uint256 i; i < tokensArray.length; i++) {
+            delete config[account][tokensArray[i]];
+        }
+
+        // clear the tokens
+        tokens[account].popAll();
     }
 
     /**

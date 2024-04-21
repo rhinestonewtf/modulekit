@@ -90,8 +90,14 @@ contract SocialRecovery is ERC7579ValidatorBase {
      * @dev the data parameter is not used
      */
     function onUninstall(bytes calldata) external override {
-        // TODO
-        threshold[msg.sender] = 0;
+        // cache the account address
+        address account = msg.sender;
+
+        // clear the guardians
+        guardians.popAll(account);
+
+        // delete the threshold
+        threshold[account] = 0;
     }
 
     /**

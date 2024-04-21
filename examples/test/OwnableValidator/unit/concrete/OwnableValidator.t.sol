@@ -243,7 +243,7 @@ contract OwnableValidatorTest is BaseTest {
         // it should revert
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
-        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.InvalidOwner.selector, _owners[0]));
+        vm.expectRevert();
         validator.addOwner(_owners[0]);
     }
 

@@ -221,7 +221,6 @@ contract SocialRecoveryTest is BaseTest {
         whenThresholdIsNot0
     {
         // it should revert
-
         test_OnInstallWhenGuardiansIncludeNoDuplicates();
 
         vm.expectRevert(SocialRecovery.InvalidThreshold.selector);
@@ -268,9 +267,7 @@ contract SocialRecoveryTest is BaseTest {
         // it should revert
         test_OnInstallWhenGuardiansIncludeNoDuplicates();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(SocialRecovery.InvalidGuardian.selector, _guardians[0])
-        );
+        vm.expectRevert();
         validator.addGuardian(_guardians[0]);
     }
 

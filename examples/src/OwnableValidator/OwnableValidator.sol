@@ -90,7 +90,10 @@ contract OwnableValidator is ERC7579ValidatorBase {
     function onUninstall(bytes calldata) external override {
         // cache the account address
         address account = msg.sender;
-        // TODO
+
+        // clear the owners
+        owners.popAll(account);
+
         // remove the threshold
         threshold[account] = 0;
     }

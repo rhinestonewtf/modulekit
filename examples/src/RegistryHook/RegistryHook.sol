@@ -42,8 +42,6 @@ contract RegistryHook is ERC7579HookDestruct {
         registry[account] = registryAddress;
         // emit the RegistrySet event
         emit RegistrySet({ smartAccount: account, registry: registryAddress });
-
-        // TODO add attesters?
     }
 
     /**

@@ -55,7 +55,8 @@ contract OwnableExecutor is ERC7579ExecutorBase {
      * @dev the data parameter is not used
      */
     function onUninstall(bytes calldata) external override {
-        //TODO
+        // clear the owners
+        accountOwners[msg.sender].popAll();
     }
 
     /**
