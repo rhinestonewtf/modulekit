@@ -18,6 +18,7 @@ import {
     MODULE_TYPE_HOOK
 } from "erc7579/interfaces/IERC7579Module.sol";
 
+import "forge-std/console2.sol";
 /**
  * @title ModuleManager
  * Contract that implements ERC7579 Module compatibility for Safe accounts
@@ -32,6 +33,7 @@ import {
  * respective section
  *
  */
+
 abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
@@ -58,17 +60,10 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     )
         internal
         withRegistry(validator, MODULE_TYPE_VALIDATOR)
+        returns (bytes memory moduleInitData)
     {
         $validators.push({ account: msg.sender, newEntry: validator });
-
-        // Initialize Validator Module via Safe
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.installModule, (MODULE_TYPE_VALIDATOR, validator, data)
-            )
-        });
+        return data;
     }
 
     /**
@@ -78,18 +73,16 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
      * function, it is okay, if all validator modules are removed.
      * This does not brick the account
      */
-    function _uninstallValidator(address validator, bytes calldata data) internal {
-        (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
+    function _uninstallValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        returns (bytes memory moduleInitData)
+    {
+        address prev;
+        (prev, moduleInitData) = abi.decode(data, (address, bytes));
         $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
-
-        // De-Initialize Validator Module via Safe
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_VALIDATOR, validator, disableModuleData)
-            )
-        });
     }
 
     /**
@@ -142,32 +135,25 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     )
         internal
         withRegistry(executor, MODULE_TYPE_EXECUTOR)
+        returns (bytes memory moduleInitData)
     {
         SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
         $executors.push(executor);
         // Initialize Executor Module via Safe
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.installModule, (MODULE_TYPE_EXECUTOR, executor, data)
-            )
-        });
+        return data;
     }
 
-    function _uninstallExecutor(address executor, bytes calldata data) internal {
+    function _uninstallExecutor(
+        address executor,
+        bytes calldata data
+    )
+        internal
+        returns (bytes memory moduleDeInitData)
+    {
         SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
-        (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
+        address prev;
+        (prev, moduleDeInitData) = abi.decode(data, (address, bytes));
         $executors.pop(prev, executor);
-
-        // De-Initialize Validator Module via Safe
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_EXECUTOR, executor, disableModuleData)
-            )
-        });
     }
 
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
@@ -210,6 +196,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         internal
         virtual
         withRegistry(handler, MODULE_TYPE_FALLBACK)
+        returns (bytes memory moduleInitData)
     {
         (bytes4 functionSig, CallType calltype, bytes memory initData) =
             abi.decode(params, (bytes4, CallType, bytes));
@@ -225,13 +212,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         $fallbacks.calltype = calltype;
         $fallbacks.handler = handler;
 
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.installModule, (MODULE_TYPE_FALLBACK, handler, initData)
-            )
-        });
+        return initData;
     }
 
     function _isFallbackHandlerInstalled(bytes4 functionSig) internal view virtual returns (bool) {
@@ -239,19 +220,19 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         return $fallbacks.handler != address(0);
     }
 
-    function _uninstallFallbackHandler(address handler, bytes calldata context) internal virtual {
-        (bytes4 functionSig, bytes memory initData) = abi.decode(context, (bytes4, bytes));
+    function _uninstallFallbackHandler(
+        address handler,
+        bytes calldata context
+    )
+        internal
+        virtual
+        returns (bytes memory moduleDeInitData)
+    {
+        bytes4 functionSig;
+        (functionSig, moduleDeInitData) = abi.decode(context, (bytes4, bytes));
 
         FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
-        $fallbacks.handler = address(0);
-        // De-Initialize Fallback Module via Safe
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_FALLBACK, handler, initData)
-            )
-        });
+        delete $fallbacks.handler;
     }
 
     function _isFallbackHandlerInstalled(
@@ -403,6 +384,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         internal
         virtual
         withRegistry(hook, MODULE_TYPE_HOOK)
+        returns (bytes memory moduleInitData)
     {
         (HookType hookType, bytes4 selector, bytes memory initData) =
             abi.decode(data, (HookType, bytes4, bytes));
@@ -429,19 +411,20 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
             revert InvalidHookType();
         }
 
-        // delegatecall neccessary, since event for installModule has to be emitted by SafeProxy
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.installModule, (MODULE_TYPE_HOOK, hook, initData)
-            )
-        });
+        return initData;
     }
 
-    function _uninstallHook(address hook, bytes calldata data) internal virtual {
-        (HookType hookType, bytes4 selector, bytes memory initData) =
-            abi.decode(data, (HookType, bytes4, bytes));
+    function _uninstallHook(
+        address hook,
+        bytes calldata data
+    )
+        internal
+        virtual
+        returns (bytes memory moduleDeInitData)
+    {
+        HookType hookType;
+        bytes4 selector;
+        (hookType, selector, moduleDeInitData) = abi.decode(data, (HookType, bytes4, bytes));
         if (hookType == HookType.GLOBAL && selector == 0x0) {
             delete $globalHook[msg.sender];
         } else if (hookType == HookType.SIG) {
@@ -449,15 +432,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         } else {
             revert InvalidHookType();
         }
-
-        // delegatecall neccessary, since event for uninstallModule has to be emitted by SafeProxy
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.unInstallModule, (MODULE_TYPE_HOOK, hook, initData)
-            )
-        });
     }
 
     function _getCurrentHook(
@@ -501,12 +475,36 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     // solhint-disable-next-line code-complexity
     function _multiTypeInstall(
         address module,
-        uint256[] calldata types,
-        bytes[] calldata contexts,
-        bytes calldata onInstallData
+        bytes calldata initData
     )
         internal
+        returns (bytes memory _moduleInitData)
     {
+        uint256[] calldata types;
+        bytes[] calldata contexts;
+        bytes calldata moduleInitData;
+
+        // equivalent of (types, contexs, moduleInitData) =
+        // abi.decode(initData,(uint[],bytes[],bytes)
+        assembly ("memory-safe") {
+            let offset := initData.offset
+            let baseOffset := offset
+            let dataPointer := add(baseOffset, calldataload(offset))
+
+            types.offset := add(dataPointer, 32)
+            types.length := calldataload(dataPointer)
+            offset := add(offset, 32)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            contexts.offset := add(dataPointer, 32)
+            contexts.length := calldataload(dataPointer)
+            offset := add(offset, 32)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            moduleInitData.offset := add(dataPointer, 32)
+            moduleInitData.length := calldataload(dataPointer)
+        }
+
         uint256 length = types.length;
         if (contexts.length != length) revert InvalidInput();
 
@@ -517,76 +515,27 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
             /*                      INSTALL VALIDATORS                    */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             if (_type == MODULE_TYPE_VALIDATOR) {
-                $validators.push({ account: msg.sender, newEntry: module });
+                _installValidator(module, contexts[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL EXECUTORS                    */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             else if (_type == MODULE_TYPE_EXECUTOR) {
-                $executorStorage[msg.sender].push(module);
+                _installExecutor(module, contexts[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*                       INSTALL FALLBACK                     */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             else if (_type == MODULE_TYPE_FALLBACK) {
-                // do nothing
-
-                (bytes4 functionSig, CallType calltype) =
-                    abi.decode(contexts[i], (bytes4, CallType));
-
-                // disallow calls to onInstall or onUninstall.
-                // this could create a security issue
-                if (
-                    functionSig == IModule.onInstall.selector
-                        || functionSig == IModule.onUninstall.selector
-                ) revert InvalidFallbackHandler(functionSig);
-                if (_isFallbackHandlerInstalled(functionSig)) revert FallbackInstalled(functionSig);
-
-                FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
-                $fallbacks.calltype = calltype;
-                $fallbacks.handler = module;
+                _installFallbackHandler(module, contexts[i]);
             }
             /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
             /*          INSTALL HOOK (global or sig specific)             */
             /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
             else if (_type == MODULE_TYPE_HOOK) {
-                (HookType hookType, bytes4 selector) = abi.decode(contexts[i], (HookType, bytes4));
-                address currentHook;
-
-                // handle global hooks
-                if (hookType == HookType.GLOBAL && selector == 0x0) {
-                    currentHook = $globalHook[msg.sender];
-                    // Dont allow hooks to be overwritten. If a hook is currently installed, it must
-                    // be uninstalled first
-                    if (currentHook != address(0)) {
-                        revert HookAlreadyInstalled(currentHook);
-                    }
-                    $globalHook[msg.sender] = module;
-                } else if (hookType == HookType.SIG) {
-                    // Dont allow hooks to be overwritten. If a hook is currently installed, it must
-                    // be uninstalled first
-                    if (currentHook != address(0)) {
-                        revert HookAlreadyInstalled(currentHook);
-                    }
-                    currentHook = $hookManager[msg.sender][selector];
-                    $hookManager[msg.sender][selector] = module;
-                } else {
-                    revert InvalidHookType();
-                }
-            }
-            // handle unsupported moduletype
-            else {
-                revert InvalidModule(module);
+                _installHook(module, contexts[i]);
             }
         }
-
-        // delegatecall neccessary, since event for installModule has to be emitted by SafeProxy
-        _delegatecall({
-            safe: ISafe(msg.sender),
-            target: UTIL,
-            callData: abi.encodeCall(
-                ModuleInstallUtil.installModule, (MODULE_TYPE_HOOK, module, onInstallData)
-            )
-        });
+        _moduleInitData = moduleInitData;
     }
 }

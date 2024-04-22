@@ -21,6 +21,7 @@ import {
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK
 } from "erc7579/interfaces/IERC7579Module.sol";
+import { ModuleInstallUtil } from "./utils/DCUtil.sol";
 import { AccessControl } from "./core/AccessControl.sol";
 import { Initializer } from "./core/Initializer.sol";
 import { ISafeOp, SAFE_OP_TYPEHASH } from "./interfaces/ISafeOp.sol";
@@ -33,6 +34,8 @@ import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
+
+uint256 constant MULTITYPE_MODULE = 0;
 
 /**
  * @title ERC7579 Adapter for Safe accounts.
@@ -340,6 +343,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         bytes calldata data
     )
         external
+        view
         returns (bytes4 magicValue)
     {
         ISafe safe = ISafe(msg.sender);
@@ -365,7 +369,6 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         }
 
         // if a installed validator module was selected, use 7579 validation module
-        // TODO: this is borked
         bytes memory ret = _staticcallReturn({
             safe: ISafe(msg.sender),
             target: validationModule,
@@ -390,11 +393,29 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         withHook(IERC7579Account.installModule.selector)
         onlyEntryPointOrSelf
     {
-        if (moduleType == MODULE_TYPE_VALIDATOR) _installValidator(module, initData);
-        else if (moduleType == MODULE_TYPE_EXECUTOR) _installExecutor(module, initData);
-        else if (moduleType == MODULE_TYPE_FALLBACK) _installFallbackHandler(module, initData);
-        else if (moduleType == MODULE_TYPE_HOOK) _installHook(module, initData);
-        else revert UnsupportedModuleType(moduleType);
+        bytes memory moduleInitData;
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            moduleInitData = _installValidator(module, initData);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            moduleInitData = _installExecutor(module, initData);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            moduleInitData = _installFallbackHandler(module, initData);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            moduleInitData = _installHook(module, initData);
+        } else if (moduleType == MULTITYPE_MODULE) {
+            moduleInitData = _multiTypeInstall(module, initData);
+        } else {
+            revert UnsupportedModuleType(moduleType);
+        }
+
+        // Initialize Module via Safe
+        _delegatecall({
+            safe: ISafe(msg.sender),
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.installModule, (moduleType, module, moduleInitData)
+            )
+        });
     }
 
     /**
@@ -411,11 +432,27 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         withHook(IERC7579Account.uninstallModule.selector)
         onlyEntryPointOrSelf
     {
-        if (moduleType == MODULE_TYPE_VALIDATOR) _uninstallValidator(module, deInitData);
-        else if (moduleType == MODULE_TYPE_EXECUTOR) _uninstallExecutor(module, deInitData);
-        else if (moduleType == MODULE_TYPE_FALLBACK) _uninstallFallbackHandler(module, deInitData);
-        else if (moduleType == MODULE_TYPE_HOOK) _uninstallHook(module, deInitData);
-        else revert UnsupportedModuleType(moduleType);
+        bytes memory moduleDeInitData;
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            moduleDeInitData = _uninstallValidator(module, deInitData);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            moduleDeInitData = _uninstallExecutor(module, deInitData);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            moduleDeInitData = _uninstallFallbackHandler(module, deInitData);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            moduleDeInitData = _uninstallHook(module, deInitData);
+        } else {
+            revert UnsupportedModuleType(moduleType);
+        }
+
+        // Deinitialize Module via Safe
+        _delegatecall({
+            safe: ISafe(msg.sender),
+            target: UTIL,
+            callData: abi.encodeCall(
+                ModuleInstallUtil.unInstallModule, (moduleType, module, moduleDeInitData)
+            )
+        });
     }
 
     /**

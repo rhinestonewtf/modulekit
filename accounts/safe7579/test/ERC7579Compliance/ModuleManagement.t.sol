@@ -95,4 +95,17 @@ contract ModuleManagementTest is BaseTest {
 
         account.uninstallModule(4, SELF, data);
     }
+
+    function test_multiTypeInstall() public asEntryPoint {
+        uint256[] memory types = Solarray.uint256s(1, 2);
+        bytes[] memory contexts = Solarray.bytess(hex"41", hex"41");
+        _data = hex"4141414141414141";
+        bytes memory moduleInitData = _data;
+
+        bytes memory initData = abi.encode(types, contexts, moduleInitData);
+        account.installModule(0, SELF, initData);
+
+        assertTrue(account.isModuleInstalled(1, SELF, ""));
+        assertTrue(account.isModuleInstalled(2, SELF, ""));
+    }
 }
