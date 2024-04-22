@@ -67,7 +67,21 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     bytes4 private constant SAFE_SIGNATURE_MAGIC_VALUE = 0x5fd7e97d;
 
     /**
-     * @inheritdoc IERC7579Account
+     * @dev Executes a transaction on behalf of the Safe account.
+     *         This function is intended to be called by ERC-4337 EntryPoint.sol
+     * @dev If a global hook and/or selector hook is set, it will be called
+     * @dev AccessControl: only Self of Entrypoint can install modules
+     * SafeERC7579 supports the following feature set:
+     *    CallTypes:
+     *             - CALLTYPE_SINGLE
+     *             - CALLTYPE_BATCH
+     *             - CALLTYPE_DELEGATECALL
+     *    ExecTypes:
+     *             - EXECTYPE_DEFAULT (revert if not successful)
+     *             - EXECTYPE_TRY
+     *    If a different mode is selected, this function will revert
+     * @param mode The encoded execution mode of the transaction. See ModeLib.sol for details
+     * @param executionCalldata The encoded execution call data
      */
     function execute(
         ModeCode mode,
@@ -76,8 +90,6 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         external
         payable
         withHook(IERC7579Account.execute.selector)
-        // withGlobalHook
-        // withSelectorHook(IERC7579Account.execute.selector)
         onlyEntryPointOrSelf
     {
         CallType callType;
@@ -150,7 +162,21 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * @dev Executes a transaction on behalf of the Safe account.
+     *         This function is intended to be called by executor modules
+     * @dev If a global hook and/or selector hook is set, it will be called
+     * @dev AccessControl: only enabled executor modules
+     * SafeERC7579 supports the following feature set:
+     *    CallTypes:
+     *             - CALLTYPE_SINGLE
+     *             - CALLTYPE_BATCH
+     *             - CALLTYPE_DELEGATECALL
+     *    ExecTypes:
+     *             - EXECTYPE_DEFAULT (revert if not successful)
+     *             - EXECTYPE_TRY
+     *    If a different mode is selected, this function will revert
+     * @param mode The encoded execution mode of the transaction. See ModeLib.sol for details
+     * @param executionCalldata The encoded execution call data
      */
     function executeFromExecutor(
         ModeCode mode,
@@ -255,7 +281,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     *  ERC4337 v0.7 validation function
+     * ERC4337 v0.7 validation function
      * @dev expects that a ERC7579 validator module is encoded within the UserOp nonce.
      *         if no validator module is provided, it will fallback to validate the transaction with
      *         Safe's signers
@@ -380,7 +406,19 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * Installs a 7579 Module of a certain type on the smart account
+     * @dev The module has to be initialized from msg.sender == SafeProxy, we thus use a
+     *    delegatecall to DCUtil, which calls the onInstall/onUninstall function on the ERC7579
+     *    module and emits the ModuleInstall/ModuleUnintall events
+     * @dev AccessControl: only Self of Entrypoint can install modules
+     * @dev If the safe set a registry, ERC7484 registry will be queried before installing
+     * @dev If a global hook and/or selector hook is set, it will be called
+     * @param moduleType the module type ID according the ERC-7579 spec
+     *                   Note: MULTITYPE_MODULE (uint(0)) is a special type to install a module with
+     *                         multiple types
+     * @param module the module address
+     * @param initData arbitrary data that may be required on the module during `onInstall`
+     * initialization.
      */
     function installModule(
         uint256 moduleType,
@@ -393,6 +431,8 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         withHook(IERC7579Account.installModule.selector)
         onlyEntryPointOrSelf
     {
+        // internal install functions will decode the initData param, and return sanitzied
+        // moduleInitData. This is the initData that will be passed to Module.onInstall()
         bytes memory moduleInitData;
         if (moduleType == MODULE_TYPE_VALIDATOR) {
             moduleInitData = _installValidator(module, initData);
@@ -419,7 +459,16 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * Uninstalls a Module of a certain type on the smart account.
+     * @dev The module has to be initialized from msg.sender == SafeProxy, we thus use a
+     *    delegatecall to DCUtil, which calls the onInstall/onUninstall function on the ERC7579
+     *    module and emits the ModuleInstall/ModuleUnintall events
+     * @dev AccessControl: only Self of Entrypoint can install modules
+     * @dev If a global hook and/or selector hook is set, it will be called
+     * @param moduleType the module type ID according the ERC-7579 spec
+     * @param module the module address
+     * @param deInitData arbitrary data that may be required on the module during `onUninstall`
+     * de-initialization.
      */
     function uninstallModule(
         uint256 moduleType,
@@ -432,6 +481,8 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         withHook(IERC7579Account.uninstallModule.selector)
         onlyEntryPointOrSelf
     {
+        // internal uninstall functions will decode the deInitData param, and return sanitzied
+        // moduleDeInitData. This is the initData that will be passed to Module.onUninstall()
         bytes memory moduleDeInitData;
         if (moduleType == MODULE_TYPE_VALIDATOR) {
             moduleDeInitData = _uninstallValidator(module, deInitData);
@@ -445,8 +496,10 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
             revert UnsupportedModuleType(moduleType);
         }
 
-        // Deinitialize Module via Safe
-        _delegatecall({
+        // Deinitialize Module via Safe.
+        // We are using "try" here, to avoid DoS. A module could revert in 'onUninstall' and prevent
+        // the account from removing the module
+        _tryDelegatecall({
             safe: ISafe(msg.sender),
             target: UTIL,
             callData: abi.encodeCall(
@@ -456,18 +509,41 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * SafeERC7579 supports the following feature set:
+     *    CallTypes:
+     *             - CALLTYPE_SINGLE
+     *             - CALLTYPE_BATCH
+     *             - CALLTYPE_DELEGATECALL
+     *    ExecTypes:
+     *             - EXECTYPE_DEFAULT (revert if not successful)
+     *             - EXECTYPE_TRY
      */
-    function supportsExecutionMode(ModeCode encodedMode) external pure override returns (bool) {
-        CallType callType = encodedMode.getCallType();
-        if (callType == CALLTYPE_BATCH) return true;
-        else if (callType == CALLTYPE_SINGLE) return true;
-        else if (callType == CALLTYPE_DELEGATECALL) return true;
+    function supportsExecutionMode(ModeCode encodedMode)
+        external
+        pure
+        override
+        returns (bool supported)
+    {
+        CallType callType;
+        ExecType execType;
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            callType := encodedMode
+            execType := shl(8, encodedMode)
+        }
+        if (callType == CALLTYPE_BATCH) supported = true;
+        else if (callType == CALLTYPE_SINGLE) supported = true;
+        else if (callType == CALLTYPE_DELEGATECALL) supported = true;
+        else return false;
+
+        if (supported && execType == EXECTYPE_DEFAULT) return supported;
+        else if (supported && execType == EXECTYPE_TRY) return supported;
         else return false;
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * Function to check if the account supports installation of a certain module type Id
+     * @param moduleTypeId the module type ID according the ERC-7579 spec
      */
     function supportsModule(uint256 moduleTypeId) external pure override returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
@@ -478,7 +554,15 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * Function to check if the account has a certain module installed
+     * @param moduleType the module type ID according the ERC-7579 spec
+     *      Note: keep in mind that some contracts can be multiple module types at the same time. It
+     *            thus may be necessary to query multiple module types
+     * @param module the module address
+     * @param additionalContext additional context data that the smart account may interpret to
+     *                          identifiy conditions under which the module is installed.
+     *                          usually this is not necessary, but for some special hooks that
+     *                          are stored in mappings, this param might be needed
      */
     function isModuleInstalled(
         uint256 moduleType,
@@ -504,7 +588,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @inheritdoc IERC7579Account
+     * @dev Returns the 7579 account id of the smart account
      */
     function accountId() external view override returns (string memory accountImplementationId) {
         string memory safeVersion = ISafe(msg.sender).VERSION();
@@ -605,8 +689,6 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
         uint192 key = uint192(bytes24(bytes20(address(validator))));
         nonce = IEntryPoint(entryPoint()).getNonce(safe, key);
     }
-
-    function initializeAccount(bytes calldata callData) external payable { }
 }
 
 library EIP712 {
