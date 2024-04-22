@@ -114,7 +114,7 @@ importers:
         specifier: github:rhinestonewtf/erc4337-validation
         version: github.com/rhinestonewtf/erc4337-validation/abaff656852e3a4b9790e458e17165adf00e3e54
       erc7579:
-        specifier: github:erc7579/erc7579-implementation#5c3363b828b09702a0e348aa69fc479eb0bdac29
+        specifier: github:erc7579/erc7579-implementation
         version: github.com/erc7579/erc7579-implementation/5c3363b828b09702a0e348aa69fc479eb0bdac29
       forge-std:
         specifier: github:foundry-rs/forge-std

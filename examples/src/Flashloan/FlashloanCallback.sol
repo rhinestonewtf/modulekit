@@ -3,8 +3,15 @@ pragma solidity ^0.8.25;
 
 import { ERC7579ExecutorBase, ERC7579FallbackBase } from "modulekit/src/Modules.sol";
 import { FlashLoanType } from "modulekit/src/interfaces/Flashloan.sol";
+import { Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
+
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 
 contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
+    using SignatureCheckerLib for address;
+
+    error TokenGatedTxFailed();
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -22,39 +29,44 @@ contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
     function isInitialized(address smartAccount) external view returns (bool) { }
 
     function getTokengatedTxHash(
-        bytes memory transaction,
+        FlashLoanType flashLoanType,
+        Execution[] memory executions,
         uint256 _nonce
     )
         public
-        view
+        pure
         returns (bytes32)
     {
-        return keccak256(abi.encodePacked(transaction, _nonce));
+        return keccak256(abi.encode(flashLoanType, executions, _nonce));
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * token / amount / fee is not necessary here.
+     * token will get paid back in batched exec
+     */
     function onFlashLoan(
-        address initiator,
-        address token,
-        uint256 amount,
-        uint256 fee,
+        address borrower,
+        address, /*token*/
+        uint256, /*amount*/
+        uint256, /*fee*/
         bytes calldata data
     )
         external
         returns (bytes32)
     {
-        address borrower = _msgSender();
-        (FlashLoanType flashLoanType, bytes memory signature, bytes memory callData) =
-            abi.decode(data, (FlashLoanType, bytes, bytes));
-        bytes32 hash = getTokengatedTxHash(callData, nonce[borrower]);
-        // TODO signature
-        (bool success,) = borrower.call(callData);
-        if (!success) revert();
+        (FlashLoanType flashLoanType, bytes memory signature, Execution[] memory executions) =
+            abi.decode(data, (FlashLoanType, bytes, Execution[]));
+        bytes32 hash = getTokengatedTxHash(flashLoanType, executions, nonce[borrower]);
         nonce[borrower]++;
-        keccak256("ERC3156FlashBorrower.onFlashLoan");
+        hash = ECDSA.toEthSignedMessageHash(hash);
+        bool validSig = address(msg.sender).isValidSignatureNow(hash, signature);
+        if (!validSig) revert TokenGatedTxFailed();
+        _execute(executions);
+        return keccak256("ERC3156FlashBorrower.onFlashLoan");
     }
 
     /*//////////////////////////////////////////////////////////////////////////

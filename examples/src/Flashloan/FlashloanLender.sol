@@ -7,32 +7,32 @@ import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import { ERC7579ExecutorBase, ERC7579FallbackBase } from "modulekit/src/Modules.sol";
 import { FlashLoanType, IERC3156FlashBorrower } from "modulekit/src/interfaces/Flashloan.sol";
 
-contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
+abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
+    error UnsupportedTokenType();
+    error TokenNotRepaid();
+    error FlashloanCallbackFailed();
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    mapping(address account => uint256) public nonce;
+    mapping(address account => uint256 value) public nonce;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external virtual;
 
-    function onUninstall(bytes calldata data) external override { }
-    function isInitialized(address smartAccount) external view returns (bool) { }
+    function onUninstall(bytes calldata data) external virtual;
+    function isInitialized(address smartAccount) external view virtual returns (bool);
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
-    function flashFeeToken() external view returns (address) { }
+    function flashFeeToken() external view virtual returns (address);
 
-    function flashFee(address token, uint256 tokenId) external view returns (uint256) {
-        // uint256 tokenOwnerFee = _feePerToken[account][token][tokenId];
-        // total = tokenOwnerFee + calcDevFee(tokenOwnerFee, FEE_PERCENTAGE);
-    }
+    function flashFee(address token, uint256 tokenId) external view virtual returns (uint256);
 
     function availableForFlashLoan(
         address token,
@@ -52,7 +52,7 @@ contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
     function flashLoan(
         IERC3156FlashBorrower receiver,
         address token,
-        uint256 amount,
+        uint256 value,
         bytes calldata data
     )
         external
@@ -60,27 +60,37 @@ contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
     {
         (FlashLoanType flashLoanType,,) = abi.decode(data, (FlashLoanType, bytes, bytes));
 
-        IERC3156FlashBorrower borrower = IERC3156FlashBorrower(_msgSender());
         address account = msg.sender;
 
+        // ERC20 and ERC721 share the same token type.
+        // Technically, the condition is not necessary,
+        // but should be kept for clarity.
         if (flashLoanType == FlashLoanType.ERC721) {
             _execute(
                 msg.sender,
                 address(token),
                 0,
-                abi.encodeCall(IERC721.transferFrom, (address(account), address(borrower), amount))
+                abi.encodeCall(IERC721.transferFrom, (address(account), address(receiver), value))
             );
+        } else if (flashLoanType == flashLoanType.ERC20) {
+            _execute(
+                msg.sender,
+                address(token),
+                0,
+                abi.encodeCall(IERC20.transferFrom, (address(account), address(receiver), value))
+            );
+        } else {
+            revert UnsupportedTokenType();
         }
-        // TODO impl ERC20
 
         // trigger callback on borrrower
         bool success = borrower.onFlashLoan(account, token, amount, 0, data)
             == keccak256("ERC3156FlashBorrower.onFlashLoan");
-        if (!success) revert();
+        if (!success) revert FlashloanCallbackFailed();
 
         // check that token was sent back
         if (!availableForFlashLoan({ token: token, tokenId: amount })) {
-            revert();
+            revert TokenNotRepaid();
         }
         return true;
     }
