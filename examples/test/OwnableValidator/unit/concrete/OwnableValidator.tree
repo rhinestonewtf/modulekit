@@ -9,17 +9,22 @@ OwnableValidator::onInstall
         ├── when owners length is less than threshold
         │   └── it should revert
         └── when owners length is not less than threshold
-            ├── when owners include 0 address
+            ├── when owners length is more than max
             │   └── it should revert
-            ├── when owners include duplicates
-            │   └── it should set only unique owners
-            └── when owners include no duplicates
-                └── it should set all owners
+            └── when owners length is not more than max
+                ├── it should set owner count
+                ├── when owners include 0 address
+                │   └── it should revert
+                ├── when owners include duplicates
+                │   └── it should set only unique owners
+                └── when owners include no duplicates
+                    └── it should set all owners
      
 
 OwnableValidator::onUninstall
 ├── it should remove all owners
-└── it should set threshold to 0
+├── it should set threshold to 0
+└── it should set owner count to 0
 
 
 OwnableValidator::isInitialized
@@ -48,16 +53,22 @@ OwnableValidator::addOwner
 └── when module is intialized
     ├── when owner is 0 address
     │   └── it should revert
-    ├── when owner is already added
-    │   └── it should revert
-    └── when owner is not added
-        └── it should add the owner
+    └── when owner is not 0 address
+        ├── when owner count is more than max
+        │   └── it should revert
+        └── when owner count is not more than max
+            ├── when owner is already added
+            │   └── it should revert
+            └── when owner is not added
+                ├── it should increment owner count
+                └── it should add the owner
 
 
 OwnableValidator::removeOwner
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
+    ├── it should decrement owner count
     └── it should remove the owner
 
 
@@ -80,7 +91,7 @@ OwnableValidator::validateUserOp
 
 OwnableValidator::isValidSignatureWithSender
 ├── when threshold is not set
-│   └── it should revert
+│   └── it should return EIP1271_FAILED
 └── when threshold is set
     ├── when the signatures are not valid
     │   └── it should return EIP1271_FAILED

@@ -65,16 +65,19 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     function test_OnInstallSetOwnersAndThreshold() public {
-        // it should set the owners and threshold
+        // it should set the owners, threshold and ownercount
         uint256 threshold = validator.threshold(address(instance.account));
         assertEq(threshold, _threshold);
 
         address[] memory owners = validator.getOwners(address(instance.account));
         assertEq(owners.length, _owners.length);
+
+        uint256 ownerCount = validator.ownerCount(address(instance.account));
+        assertEq(ownerCount, _owners.length);
     }
 
     function test_OnUninstallRemovesOwnersAndThreshold() public {
-        // it should remove the owners and threshold
+        // it should remove the owners, threshold and ownercount
         instance.uninstallModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
@@ -86,11 +89,14 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
 
         address[] memory owners = validator.getOwners(address(instance.account));
         assertEq(owners.length, 0);
+
+        uint256 ownerCount = validator.ownerCount(address(instance.account));
+        assertEq(ownerCount, 0);
     }
 
     function test_SetThreshold() public {
         // it should set the threshold
-        uint256 newThreshold = 3;
+        uint256 newThreshold = 1;
 
         instance.getExecOps({
             target: address(validator),
@@ -103,8 +109,22 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
         assertEq(threshold, newThreshold);
     }
 
+    function test_SetThreshold_RevertWhen_ThresholdTooHigh() public {
+        // it should set the threshold
+        uint256 newThreshold = 3;
+
+        instance.expect4337Revert();
+        instance.getExecOps({
+            target: address(validator),
+            value: 0,
+            callData: abi.encodeWithSelector(OwnableValidator.setThreshold.selector, newThreshold),
+            txValidator: address(instance.defaultValidator)
+        }).execUserOps();
+    }
+
     function test_AddOwner() public {
         // it should add an owner
+        // it should increment the owner count
         (address _owner, uint256 _ownerPk) = makeAddrAndKey("owner3");
 
         instance.getExecOps({
@@ -116,10 +136,14 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
 
         address[] memory owners = validator.getOwners(address(instance.account));
         assertEq(owners.length, _owners.length + 1);
+
+        uint256 ownerCount = validator.ownerCount(address(instance.account));
+        assertEq(ownerCount, _owners.length + 1);
     }
 
     function test_RemoveOwner() public {
         // it should remove an owner
+        // it should decrement the owner count
         instance.getExecOps({
             target: address(validator),
             value: 0,
@@ -131,6 +155,9 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
 
         address[] memory owners = validator.getOwners(address(instance.account));
         assertEq(owners.length, _owners.length - 1);
+
+        uint256 ownerCount = validator.ownerCount(address(instance.account));
+        assertEq(ownerCount, _owners.length - 1);
     }
 
     function test_ValidateUserOp() public {

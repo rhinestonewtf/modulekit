@@ -57,11 +57,19 @@ Tested:
 
 Open questions
 
-- coldstorage blocks module installation
+- coldstorage blocks module installation - allow
 - if module is installed using execute, then call to account install module then hook destruct does not detect this
-- hook changes?
-- coldstorage: is it acutally necessary to check anything in postcheck?
-- get owners/guardians: how to return all?
+- hook changes? - rm execution from post
+- coldstorage: is it acutally necessary to check anything in postcheck? - rm
+- get owners/guardians: how to return all? -
+- refactor ownable validator into internal funcs
+- check all multi type modules - oninstall
+
+todo:
+
+- check out todos
+- check out flashloan
+- check out hookmultiplexer
 
 ## Usage as part of ModuleKit
 

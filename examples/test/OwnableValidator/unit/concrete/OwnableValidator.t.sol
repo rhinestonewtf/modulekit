@@ -91,11 +91,45 @@ contract OwnableValidatorTest is BaseTest {
         validator.onInstall(data);
     }
 
+    function test_OnInstallRevertWhen_OwnersLengthIsMoreThanMax()
+        external
+        whenModuleIsNotIntialized
+        whenThresholdIsNot0
+        whenOwnersLengthIsNotLessThanThreshold
+    {
+        // it should revert
+        address[] memory _newOwners = new address[](33);
+        for (uint256 i = 0; i < 33; i++) {
+            _newOwners[i] = makeAddr(vm.toString(i));
+        }
+        bytes memory data = abi.encode(_threshold, _newOwners);
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.MaxOwnersReached.selector));
+        validator.onInstall(data);
+    }
+
+    function test_OnInstallWhenOwnersLengthIsNotMoreThanMax()
+        external
+        whenModuleIsNotIntialized
+        whenThresholdIsNot0
+        whenOwnersLengthIsNotLessThanThreshold
+        whenOwnersLengthIsNotMoreThanMax
+    {
+        // it should set owner count
+        bytes memory data = abi.encode(_threshold, _owners);
+
+        validator.onInstall(data);
+
+        uint256 ownerCount = validator.ownerCount(address(this));
+        assertEq(ownerCount, _owners.length);
+    }
+
     function test_OnInstallRevertWhen_OwnersInclude0Address()
         public
         whenModuleIsNotIntialized
         whenThresholdIsNot0
         whenOwnersLengthIsNotLessThanThreshold
+        whenOwnersLengthIsNotMoreThanMax
     {
         // it should revert
         address[] memory _newOwners = new address[](2);
@@ -112,6 +146,7 @@ contract OwnableValidatorTest is BaseTest {
         whenModuleIsNotIntialized
         whenThresholdIsNot0
         whenOwnersLengthIsNotLessThanThreshold
+        whenOwnersLengthIsNotMoreThanMax
     {
         // it should set only unique owners
         address[] memory _newOwners = new address[](3);
@@ -131,6 +166,7 @@ contract OwnableValidatorTest is BaseTest {
         whenModuleIsNotIntialized
         whenThresholdIsNot0
         whenOwnersLengthIsNotLessThanThreshold
+        whenOwnersLengthIsNotMoreThanMax
     {
         // it should set all owners
         bytes memory data = abi.encode(_threshold, _owners);
@@ -159,6 +195,12 @@ contract OwnableValidatorTest is BaseTest {
 
         uint256 threshold = validator.threshold(address(this));
         assertEq(threshold, 0);
+    }
+
+    function test_OnUninstallShouldSetOwnerCountTo0() external {
+        // it should set owner count to 0
+        uint256 ownerCount = validator.ownerCount(address(this));
+        assertEq(ownerCount, 0);
     }
 
     function test_IsInitializedWhenModuleIsNotIntialized() public {
@@ -237,7 +279,30 @@ contract OwnableValidatorTest is BaseTest {
         validator.addOwner(newOwner);
     }
 
-    function test_AddOwnerRevertWhen_OwnerIsAlreadyAdded() external whenModuleIsIntialized {
+    function test_AddOwnerRevertWhen_OwnerCountIsMoreThanMax()
+        external
+        whenModuleIsIntialized
+        whenOwnerIsNot0Address
+    {
+        // it should revert
+        address[] memory _newOwners = new address[](32);
+        for (uint256 i = 0; i < 32; i++) {
+            _newOwners[i] = makeAddr(vm.toString(i));
+        }
+        bytes memory data = abi.encode(_threshold, _newOwners);
+
+        validator.onInstall(data);
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.MaxOwnersReached.selector));
+        validator.addOwner(makeAddr("finalOwner"));
+    }
+
+    function test_AddOwnerRevertWhen_OwnerIsAlreadyAdded()
+        external
+        whenModuleIsIntialized
+        whenOwnerIsNot0Address
+        whenOwnerCountIsNotMoreThanMax
+    {
         // it should revert
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
@@ -245,8 +310,14 @@ contract OwnableValidatorTest is BaseTest {
         validator.addOwner(_owners[0]);
     }
 
-    function test_AddOwnerWhenOwnerIsNotAdded() external whenModuleIsIntialized {
-        // it should add the owner
+    function test_AddOwnerWhenOwnerIsNotAdded()
+        external
+        whenModuleIsIntialized
+        whenOwnerIsNot0Address
+        whenOwnerCountIsNotMoreThanMax
+    {
+        // it should increment owner count
+        // it should add the owners
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
         address newOwner = address(2);
@@ -255,6 +326,9 @@ contract OwnableValidatorTest is BaseTest {
         address[] memory owners = validator.getOwners(address(this));
         assertEq(owners.length, 3);
         assertEq(owners[0], newOwner);
+
+        uint256 ownerCount = validator.ownerCount(address(this));
+        assertEq(ownerCount, 3);
     }
 
     function test_RemoveOwnerRevertWhen_ModuleIsNotIntialized() external {
@@ -264,10 +338,14 @@ contract OwnableValidatorTest is BaseTest {
     }
 
     function test_RemoveOwnerWhenModuleIsIntialized() external {
+        // it should decrement owner count
         // it should remove the owner
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
         validator.removeOwner(_owners[0], _owners[1]);
+
+        uint256 ownerCount = validator.ownerCount(address(this));
+        assertEq(ownerCount, 1);
     }
 
     function test_GetOwnersShouldGetAllOwners() external {
@@ -351,13 +429,13 @@ contract OwnableValidatorTest is BaseTest {
     }
 
     function test_IsValidSignatureWithSenderWhenThresholdIsNotSet() public {
-        // it should revert
+        // it should return EIP1271_FAILED
         address sender = address(1);
         bytes32 hash = bytes32(keccak256("hash"));
         bytes memory data = "";
 
-        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.ThresholdNotSet.selector));
-        validator.isValidSignatureWithSender(sender, hash, data);
+        bytes4 result = validator.isValidSignatureWithSender(sender, hash, data);
+        assertNotEq(result, EIP1271_MAGIC_VALUE);
     }
 
     function test_IsValidSignatureWithSenderWhenTheSignaturesAreNotValid()
@@ -530,6 +608,18 @@ contract OwnableValidatorTest is BaseTest {
     }
 
     modifier whenOwnersLengthIsNotLessThanThreshold() {
+        _;
+    }
+
+    modifier whenOwnersLengthIsNotMoreThanMax() {
+        _;
+    }
+
+    modifier whenOwnerIsNot0Address() {
+        _;
+    }
+
+    modifier whenOwnerCountIsNotMoreThanMax() {
         _;
     }
 
