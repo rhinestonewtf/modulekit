@@ -11,7 +11,7 @@ import { ISafe } from "../interfaces/ISafe.sol";
  * attesters to trust.
  */
 abstract contract RegistryAdapter is ExecutionHelper {
-    event ERC7484RegistryConfigured(address indexed smartAccount, address indexed registry);
+    event ERC7484RegistryConfigured(address indexed smartAccount, IERC7484 indexed registry);
 
     mapping(address smartAccount => IERC7484 registry) internal $registry;
 
@@ -20,6 +20,10 @@ abstract contract RegistryAdapter is ExecutionHelper {
         _;
     }
 
+    /**
+     * Check on ERC7484 Registry, if suffcient attestations were made
+     * This will revert, if not succicient valid attestations are on the registry
+     */
     function _checkRegistry(address module, uint256 moduleType) internal view {
         IERC7484 registry = $registry[msg.sender];
         if (address(registry) != address(0)) {
@@ -28,6 +32,9 @@ abstract contract RegistryAdapter is ExecutionHelper {
         }
     }
 
+    /**
+     * Configure ERC7484 Registry for Safe
+     */
     function _configureRegistry(
         IERC7484 registry,
         address[] calldata attesters,
@@ -42,5 +49,6 @@ abstract contract RegistryAdapter is ExecutionHelper {
             value: 0,
             callData: abi.encodeCall(IERC7484.trustAttesters, (threshold, attesters))
         });
+        emit ERC7484RegistryConfigured(msg.sender, registry);
     }
 }
