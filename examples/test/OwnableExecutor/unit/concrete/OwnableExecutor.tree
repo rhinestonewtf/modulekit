@@ -2,10 +2,12 @@ OwnableExecutor::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
+    ├── it should set the owner count
     └── it should set the owner of the subaccount
      
 
 OwnableExecutor::onUninstall
+├── it should remove the owner count
 └── it should remove all owners
 
 
@@ -25,6 +27,7 @@ OwnableExecutor::addOwner
     ├── when owner is already added
     │   └── it should revert
     └── when owner is not added
+        ├── it should increment the owner count
         └── it should add the owner
 
 
@@ -32,6 +35,7 @@ OwnableExecutor::removeOwner
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
+    ├── it should decrement the owner count
     └── it should remove the owner
 
 

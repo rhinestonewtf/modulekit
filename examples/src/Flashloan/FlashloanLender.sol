@@ -72,7 +72,7 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
                 0,
                 abi.encodeCall(IERC721.transferFrom, (address(account), address(receiver), value))
             );
-        } else if (flashLoanType == flashLoanType.ERC20) {
+        } else if (flashLoanType == FlashLoanType.ERC20) {
             _execute(
                 msg.sender,
                 address(token),
@@ -84,12 +84,12 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
         }
 
         // trigger callback on borrrower
-        bool success = borrower.onFlashLoan(account, token, amount, 0, data)
+        bool success = receiver.onFlashLoan(account, token, value, 0, data)
             == keccak256("ERC3156FlashBorrower.onFlashLoan");
         if (!success) revert FlashloanCallbackFailed();
 
         // check that token was sent back
-        if (!availableForFlashLoan({ token: token, tokenId: amount })) {
+        if (!availableForFlashLoan({ token: token, tokenId: value })) {
             revert TokenNotRepaid();
         }
         return true;

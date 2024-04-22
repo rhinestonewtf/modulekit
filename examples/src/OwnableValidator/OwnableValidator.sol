@@ -305,7 +305,8 @@ contract OwnableValidator is ERC7579ValidatorBase {
 
         // check if the signers are owners
         uint256 validSigners;
-        for (uint256 i = 0; i < signers.length; i++) {
+        uint256 signersLength = signers.length;
+        for (uint256 i = 0; i < signersLength; i++) {
             (bool found,) = _owners.searchSorted(signers[i]);
             if (found) {
                 validSigners++;

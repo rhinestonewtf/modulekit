@@ -102,7 +102,24 @@ contract AutoSavingsTest is BaseTest {
         executor.onInstall(data);
     }
 
-    function test_OnInstallWhenModuleIsNotIntialized() public {
+    function test_OnInstallRevertWhen_TokensIsGreaterThanMax() public whenModuleIsNotIntialized {
+        // it should revert
+        uint256 maxTokens = 100;
+
+        address[] memory tokens = new address[](maxTokens + 1);
+        AutoSavings.Config[] memory configs = new AutoSavings.Config[](maxTokens + 1);
+        for (uint256 i = 0; i < maxTokens; i++) {
+            tokens[i] = makeAddr(vm.toString(i));
+            configs[i] = AutoSavings.Config(100, address(0), 0);
+        }
+
+        bytes memory data = abi.encode(tokens, configs);
+
+        vm.expectRevert(abi.encodeWithSelector(AutoSavings.TooManyTokens.selector));
+        executor.onInstall(data);
+    }
+
+    function test_OnInstallWhenTokensIsNotGreaterThanMax() public whenModuleIsNotIntialized {
         // it should set the configs for each token
         // it should add all tokens
         AutoSavings.Config[] memory _configs = getConfigs();
@@ -125,7 +142,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_OnUninstallShouldRemoveAllTheConfigs() public {
         // it should remove all the configs
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenTokensIsNotGreaterThanMax();
 
         executor.onUninstall("");
 
@@ -140,7 +157,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_OnUninstallShouldRemoveAllStoredTokens() public {
         // it should remove all stored tokens
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenTokensIsNotGreaterThanMax();
 
         executor.onUninstall("");
 
@@ -156,7 +173,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_IsInitializedWhenModuleIsIntialized() public {
         // it should return true
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenTokensIsNotGreaterThanMax();
 
         bool isInitialized = executor.isInitialized(address(this));
         assertTrue(isInitialized);
@@ -172,7 +189,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_SetConfigWhenModuleIsIntialized() public {
         // it should set the config for the token
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenTokensIsNotGreaterThanMax();
 
         address token = address(2);
         AutoSavings.Config memory config = AutoSavings.Config(10, address(1), 100);
@@ -297,6 +314,10 @@ contract AutoSavingsTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
                                     MODIFIERS
     //////////////////////////////////////////////////////////////////////////*/
+
+    modifier whenModuleIsNotIntialized() {
+        _;
+    }
 
     modifier whenModuleIsIntialized() {
         _;

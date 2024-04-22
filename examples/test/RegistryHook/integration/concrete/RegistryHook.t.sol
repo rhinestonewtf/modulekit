@@ -10,7 +10,12 @@ import {
 import { RegistryHook } from "src/RegistryHook/RegistryHook.sol";
 import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { MockRegistry } from "test/mocks/MockRegistry.sol";
-import { MODULE_TYPE_HOOK, MODULE_TYPE_VALIDATOR } from "modulekit/src/external/ERC7579.sol";
+import {
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR
+} from "modulekit/src/external/ERC7579.sol";
+import { ModeCode } from "erc7579/lib/ModeLib.sol";
 
 contract RegistryHookIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -105,5 +110,39 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
             module: address(mockModuleRevoked),
             data: ""
         });
+    }
+
+    function testExecuteFromExecutor() public {
+        // it should query the registry
+        address module = makeAddr("module");
+        vm.etch(module, hex"00");
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
+
+        vm.prank(module);
+        IERC7579Account(address(instance.account)).executeFromExecutor(
+            ModeCode.wrap(bytes32(0)), abi.encodePacked(address(1), uint256(0), "")
+        );
+    }
+
+    function testExecuteFromExecutor_RevertWhen_RegistryReverts() public {
+        // it should query the registry
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
+
+        address module = address(0x420);
+        vm.etch(module, hex"00");
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_HOOK,
+            module: address(hook),
+            data: abi.encodePacked(address(_registry))
+        });
+
+        vm.prank(module);
+        vm.expectRevert();
+        IERC7579Account(address(instance.account)).executeFromExecutor(
+            ModeCode.wrap(bytes32(0)), abi.encodePacked(address(1), uint256(0), "")
+        );
     }
 }

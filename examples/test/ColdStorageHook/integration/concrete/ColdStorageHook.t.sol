@@ -8,7 +8,7 @@ import {
     ModuleKitUserOp
 } from "test/BaseIntegration.t.sol";
 import { ColdStorageHook, Execution } from "src/ColdStorageHook/ColdStorageHook.sol";
-import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
@@ -80,6 +80,35 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         vm.warp(block.timestamp + _waitPeriod + additionalWait);
     }
 
+    function _cueAndWaitForModuleConfig(
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data,
+        bool isInstall,
+        uint256 additionalWait
+    )
+        internal
+    {
+        vm.prank(_owner);
+        IERC7579Account(instance.account).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(),
+            ExecutionLib.encodeSingle(
+                address(hook),
+                0,
+                abi.encodeWithSelector(
+                    ColdStorageHook.requestTimelockedModuleConfig.selector,
+                    moduleTypeId,
+                    module,
+                    data,
+                    isInstall,
+                    additionalWait
+                )
+            )
+        );
+
+        vm.warp(block.timestamp + _waitPeriod + additionalWait);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
@@ -96,21 +125,9 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
 
     function test_OnUninstallRemovesOwnerAndWaitPeriod() public {
         // it should remove the owner and waitperiod
-        Execution memory exec = Execution({
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeWithSelector(
-                IERC7579Account.uninstallModule.selector, MODULE_TYPE_HOOK, address(hook), ""
-            )
-        });
+        _cueAndWaitForModuleConfig(MODULE_TYPE_HOOK, address(hook), "", false, 0);
 
-        _cueAndWaitForExecution(exec, 0);
-
-        vm.prank(_owner);
-        IERC7579Account(instance.account).executeFromExecutor(
-            ModeLib.encodeSimpleSingle(),
-            ExecutionLib.encodeSingle(exec.target, exec.value, exec.callData)
-        );
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
         bool isInitialized = hook.isInitialized(address(instance.account));
         assertFalse(isInitialized);
@@ -180,5 +197,38 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
 
         uint256 newBalance = token.balanceOf(_owner);
         assertEq(newBalance, prevBalance + amount);
+    }
+
+    function test_InstallModule() public {
+        address module = makeAddr("module");
+        vm.etch(module, hex"00");
+
+        _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, "", true, 0);
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
+
+        bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            additionalContext: ""
+        });
+        assertTrue(isInstalled);
+    }
+
+    function test_UninstallModule() public {
+        test_InstallModule();
+
+        address module = makeAddr("module");
+
+        _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, "", false, 0);
+
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
+
+        bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            additionalContext: ""
+        });
+        assertFalse(isInstalled);
     }
 }

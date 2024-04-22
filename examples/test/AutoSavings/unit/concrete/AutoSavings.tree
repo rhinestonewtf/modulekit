@@ -2,8 +2,11 @@ AutoSavings::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
-    ├── it should set the configs for each token
-    └── it should add all tokens
+    ├── when tokens is greater than max
+    │   └── it should revert
+    └── when tokens is not greater than max
+        ├── it should set the configs for each token
+        └── it should add all tokens
 
 
 AutoSavings::onUninstall

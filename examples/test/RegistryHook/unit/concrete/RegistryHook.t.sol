@@ -103,7 +103,7 @@ contract RegistryHookTest is BaseTest {
         assertEq(registry, newRegistry);
     }
 
-    function test_PreCheckWhenFunctionIsNotInstallModule() public {
+    function test_PreCheckWhenFunctionIsNotInstallModuleOrExecuteFromExecutor() public {
         // it should return
         bytes memory msgData = abi.encodeWithSelector(
             IERC7579Account.execute.selector,
@@ -112,6 +112,36 @@ contract RegistryHookTest is BaseTest {
         );
 
         hook.preCheck(address(0), 0, msgData);
+    }
+
+    function test_PreCheckRevertWhen_ExecutorIsNotAttested()
+        external
+        whenFunctionIsExecuteFromExecutor
+    {
+        // it should revert
+        test_OnInstallWhenModuleIsNotIntialized();
+
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.executeFromExecutor.selector,
+            bytes32(0),
+            abi.encodePacked(address(1), uint256(0), "")
+        );
+
+        vm.expectRevert();
+        hook.preCheck(address(0x420), 0, msgData);
+    }
+
+    function test_PreCheckWhenExecutorIsAttested() external whenFunctionIsExecuteFromExecutor {
+        // it should return
+        test_OnInstallWhenModuleIsNotIntialized();
+
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.executeFromExecutor.selector,
+            bytes32(0),
+            abi.encodePacked(address(1), uint256(0), "")
+        );
+
+        hook.preCheck(address(1), 0, msgData);
     }
 
     function test_PreCheckRevertWhen_ModuleIsNotAttested() public whenFunctionIsInstallModule {
@@ -169,6 +199,10 @@ contract RegistryHookTest is BaseTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     modifier whenFunctionIsInstallModule() {
+        _;
+    }
+
+    modifier whenFunctionIsExecuteFromExecutor() {
         _;
     }
 }

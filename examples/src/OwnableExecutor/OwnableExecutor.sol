@@ -25,6 +25,8 @@ contract OwnableExecutor is ERC7579ExecutorBase {
 
     // account => owners
     mapping(address subAccount => SentinelListLib.SentinelList) accountOwners;
+    // account => ownerCount
+    mapping(address => uint256) public ownerCount;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -46,6 +48,9 @@ contract OwnableExecutor is ERC7579ExecutorBase {
         accountOwners[account].init();
         // add the owner to the linked list
         accountOwners[account].push(owner);
+
+        // set the owner count
+        ownerCount[account] = 1;
     }
 
     /**
@@ -55,6 +60,9 @@ contract OwnableExecutor is ERC7579ExecutorBase {
     function onUninstall(bytes calldata) external override {
         // clear the owners
         accountOwners[msg.sender].popAll();
+
+        // clear the owner count
+        ownerCount[msg.sender] = 0;
     }
 
     /**
@@ -87,6 +95,9 @@ contract OwnableExecutor is ERC7579ExecutorBase {
 
         // add the owner to the linked list
         accountOwners[account].push(owner);
+
+        // increment the owner count
+        ownerCount[account]++;
     }
 
     /**
@@ -99,6 +110,9 @@ contract OwnableExecutor is ERC7579ExecutorBase {
     function removeOwner(address prevOwner, address owner) external {
         // remove the owner
         accountOwners[msg.sender].pop(prevOwner, owner);
+
+        // decrement the owner count
+        ownerCount[msg.sender]--;
     }
 
     /**
@@ -109,9 +123,8 @@ contract OwnableExecutor is ERC7579ExecutorBase {
      * @return ownersArray array of owners
      */
     function getOwners(address account) external view returns (address[] memory ownersArray) {
-        // TODO: return length
         // gets the owners from the linked list
-        (ownersArray,) = accountOwners[account].getEntriesPaginated(SENTINEL, 20);
+        (ownersArray,) = accountOwners[account].getEntriesPaginated(SENTINEL, ownerCount[account]);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

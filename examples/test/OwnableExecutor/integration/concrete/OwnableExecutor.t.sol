@@ -81,8 +81,8 @@ contract OwnableExecutorIntegrationTest is BaseIntegrationTest {
         bool isInitialized = executor.isInitialized(address(instance.account));
         assertFalse(isInitialized);
 
-        address[] memory owners = executor.getOwners(address(instance.account));
-        assertEq(owners.length, 0);
+        uint256 ownerCount = executor.ownerCount(address(instance.account));
+        assertEq(ownerCount, 0);
     }
 
     function test_AddOwner() public {
@@ -127,8 +127,8 @@ contract OwnableExecutorIntegrationTest is BaseIntegrationTest {
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
-        owners = executor.getOwners(address(instance.account));
-        assertEq(owners.length, 0);
+        uint256 ownerCount = executor.ownerCount(address(instance.account));
+        assertEq(ownerCount, 0);
     }
 
     function test_ExecuteOnOwnedAccount() public {

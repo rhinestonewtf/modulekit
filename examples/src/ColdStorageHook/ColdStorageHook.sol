@@ -6,6 +6,7 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import { ERC7579HookDestruct, Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 
 /**
  * @title ColdStorageHook
@@ -39,17 +40,9 @@ contract ColdStorageHook is ERC7579HookDestruct {
     // account => executionHash => executeAfter
     mapping(address subAccount => EnumerableMap.Bytes32ToBytes32Map) executions;
 
-    event ExecutionRequested(
-        address indexed subAccount,
-        address target,
-        uint256 value,
-        bytes callData,
-        uint256 executeAfter
-    );
+    event TimelockRequested(address indexed subAccount, bytes32 hash, uint256 executeAfter);
 
-    event ExecutionExecuted(
-        address indexed subAccount, address target, uint256 value, bytes callData
-    );
+    event TimelockExecuted(address indexed subAccount, bytes32 hash);
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -126,45 +119,18 @@ contract ColdStorageHook is ERC7579HookDestruct {
     }
 
     /**
-     * Gets the execution hash and executeAfter timestamp for a given execution
-     * @dev if the executionHash is not found, the function will not revert but executeAfter will be
+     * Gets the executeAfter timestamp for a given execution hash
+     * @dev if the hash is not found, the function will not revert but executeAfter will be
      * 0
      *
      * @param account address of the subaccount
-     * @param exec Execution struct containing the target, value, and callData
+     * @param hash bytes32 hash of the execution
      *
-     * @return executionHash bytes32 hash of the execution
      * @return executeAfter bytes32 timestamp after which the execution can be executed
      */
     function checkHash(
         address account,
-        Execution calldata exec
-    )
-        external
-        view
-        returns (bytes32 executionHash, bytes32 executeAfter)
-    {
-        // get the executionHash
-        executionHash = _execDigestMemory(exec.target, exec.value, exec.callData);
-
-        // get the executeAfter timestamp
-        bool success;
-        (success, executeAfter) = executions[account].tryGet(executionHash);
-    }
-
-    /**
-     * Gets the executeAfter timestamp for a given execution hash
-     * @dev if the executionHash is not found, the function will not revert but executeAfter will be
-     * 0
-     *
-     * @param account address of the subaccount
-     * @param executionHash bytes32 hash of the execution
-     *
-     * @return executeAfter bytes32 timestamp after which the execution can be executed
-     */
-    function getExecution(
-        address account,
-        bytes32 executionHash
+        bytes32 hash
     )
         external
         view
@@ -172,7 +138,7 @@ contract ColdStorageHook is ERC7579HookDestruct {
     {
         // get the executeAfter timestamp
         bool success;
-        (success, executeAfter) = executions[account].tryGet(executionHash);
+        (success, executeAfter) = executions[account].tryGet(hash);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -196,8 +162,9 @@ contract ColdStorageHook is ERC7579HookDestruct {
     {
         // get the vault config
         VaultConfig memory _config = vaultConfig[msg.sender];
+        bytes memory callData = _exec.callData;
         // get the execution hash
-        bytes32 executionHash = _execDigest(_exec.target, _exec.value, _exec.callData);
+        bytes32 executionHash = _execDigest(_exec.target, _exec.value, callData);
 
         if (_exec.callData.length != 0) {
             // check that transaction is only a token transfer
@@ -219,11 +186,57 @@ contract ColdStorageHook is ERC7579HookDestruct {
         // calculate the time after which the transaction can be executed
         uint256 executeAfter = uint256(block.timestamp + _config.waitPeriod + additionalWait);
 
+        // revert if executeAfter is not in the future
+        if (executeAfter == block.timestamp) {
+            revert InvalidWaitPeriod();
+        }
+
         // write executionHash to storage
         executions[msg.sender].set(executionHash, bytes32(executeAfter));
 
-        // emit the ExecutionRequested event
-        emit ExecutionRequested(msg.sender, _exec.target, _exec.value, _exec.callData, executeAfter);
+        // emit the TimelockRequested event
+        emit TimelockRequested(msg.sender, executionHash, executeAfter);
+    }
+
+    /**
+     * Requests the execution of a transaction after a certain time period
+     * @dev the function will revert if the transaction is not a transfer to the owner or a call to
+     * setWaitPeriod
+     *
+     * @param moduleTypeId type of the module
+     * @param module address of the module
+     * @param data data to be passed to the module
+     * @param isInstall true if the module is being installed, false if it is being uninstalled
+     * @param additionalWait additional time to wait before executing the transaction, on top of the
+     */
+    function requestTimelockedModuleConfig(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata data,
+        bool isInstall,
+        uint256 additionalWait
+    )
+        external
+    {
+        // get the vault config
+        VaultConfig memory _config = vaultConfig[msg.sender];
+
+        // get the execution hash
+        bytes32 executionHash = _moduleDigest(moduleTypeId, module, data, isInstall);
+
+        // calculate the time after which the transaction can be executed
+        uint256 executeAfter = uint256(block.timestamp + _config.waitPeriod + additionalWait);
+
+        // revert if executeAfter is not in the future
+        if (executeAfter == block.timestamp) {
+            revert InvalidWaitPeriod();
+        }
+
+        // write executionHash to storage
+        executions[msg.sender].set(executionHash, bytes32(executeAfter));
+
+        // emit the TimelockRequested event
+        emit TimelockRequested(msg.sender, executionHash, executeAfter);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -242,30 +255,6 @@ contract ColdStorageHook is ERC7579HookDestruct {
     function _execDigest(
         address to,
         uint256 value,
-        bytes calldata callData
-    )
-        internal
-        pure
-        returns (bytes32)
-    {
-        // load the calldata into memory
-        bytes memory _callData = callData;
-        // get the digest hash
-        return _execDigestMemory(to, value, _callData);
-    }
-
-    /**
-     * Gets the digest hash of the target, value, and callData
-     *
-     * @param to address of the target
-     * @param value value to be sent
-     * @param callData data to be sent
-     *
-     * @return digest bytes32 hash of the target, value, and callData
-     */
-    function _execDigestMemory(
-        address to,
-        uint256 value,
         bytes memory callData
     )
         internal
@@ -274,6 +263,39 @@ contract ColdStorageHook is ERC7579HookDestruct {
     {
         // hash the arguments
         digest = keccak256(abi.encodePacked(to, value, callData));
+    }
+
+    /**
+     * Gets the digest hash for a module configuration
+     *
+     * @param moduleTypeId type of the module
+     * @param module address of the module
+     * @param data data to be passed to the module
+     * @param isInstall true if the module is being installed, false if it is being uninstalled
+     *
+     * @return digest bytes32 hash
+     */
+    function _moduleDigest(
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata data,
+        bool isInstall
+    )
+        internal
+        pure
+        returns (bytes32 digest)
+    {
+        // get the relevant function selector
+        // the function selector is used here so that the hash is unique to installing a module
+        bytes4 selector;
+        if (isInstall == true) {
+            selector = IERC7579Account.installModule.selector;
+        } else {
+            selector = IERC7579Account.uninstallModule.selector;
+        }
+
+        // hash the arguments
+        digest = keccak256(abi.encodePacked(selector, moduleTypeId, module, data));
     }
 
     /**
@@ -307,17 +329,21 @@ contract ColdStorageHook is ERC7579HookDestruct {
     }
 
     /**
-     * Post check hook function to determine if the execution should be allowed
+     * Checks if the transaction can be executed
+     * @dev the function will revert if the transaction is not allowed to be executed
      *
-     * @param hookData data passed from the hook to the account during pre-check
+     * @param executionHash bytes32 hash of the execution
      */
-    function onPostCheck(bytes calldata hookData, bool, bytes calldata) internal virtual override {
-        if (
-            keccak256(hookData) != keccak256(abi.encode(this.requestTimelockedExecution.selector))
-                && keccak256(hookData) != keccak256(abi.encode(PASS))
-        ) {
-            revert UnauthorizedAccess();
-        }
+    function _checkTimelockedExecution(bytes32 executionHash) internal {
+        // get the executeAfter timestamp
+        (bool success, bytes32 executeAfter) = executions[msg.sender].tryGet(executionHash);
+
+        // if the executionHash is not found, revert
+        if (!success) revert InvalidExecutionHash(executionHash);
+
+        // determine if the transaction can be executed and revert if not
+        uint256 requestTimeStamp = uint256(executeAfter);
+        if (requestTimeStamp > block.timestamp) revert UnauthorizedAccess();
     }
 
     /**
@@ -379,28 +405,30 @@ contract ColdStorageHook is ERC7579HookDestruct {
             functionSig = bytes4(callData[0:4]);
         }
 
-        if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
-            // if the function is requestTimelockedExecution, return the function selector
-            return abi.encode(this.requestTimelockedExecution.selector);
+        if (
+            target == address(this)
+                && (
+                    functionSig == this.requestTimelockedExecution.selector
+                        || functionSig == this.requestTimelockedModuleConfig.selector
+                )
+        ) {
+            // allow requestTimelockedExecution and requestTimelockedModuleConfig
+            return "";
         } else {
             // get the execution hash
-            bytes32 executionHash = _execDigestMemory(target, value, callData);
-            // get the executeAfter timestamp
-            (bool success, bytes32 executeAfter) = executions[msg.sender].tryGet(executionHash);
+            bytes32 executionHash = _execDigest(target, value, callData);
 
-            // if the executionHash is not found, revert
-            if (!success) revert InvalidExecutionHash(executionHash);
+            // check the timelocked execution
+            _checkTimelockedExecution(executionHash);
 
-            // determine if the transaction can be executed and revert if not
-            uint256 requestTimeStamp = uint256(executeAfter);
-            if (requestTimeStamp > block.timestamp) revert UnauthorizedAccess();
+            // emit the TimelockExecuted event
+            emit TimelockExecuted(msg.sender, executionHash);
 
-            // emit the ExecutionExecuted event
-            emit ExecutionExecuted(msg.sender, target, value, callData);
-
-            // return pass
-            return abi.encode(PASS);
+            return "";
         }
+
+        // otherwise revert
+        revert UnsupportedExecution();
     }
 
     /**
@@ -421,38 +449,60 @@ contract ColdStorageHook is ERC7579HookDestruct {
 
     /**
      * InstallModule function was called on the account
-     * @dev this function will revert as the module does not allow module installation
+     * @dev install module calls need to be timelocked
+     *
+     * @param moduleTypeId type of the module
+     * @param module address of the module
+     * @param initData data to be passed to the module
      */
     function onInstallModule(
         address,
-        uint256,
-        address,
-        bytes calldata
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata initData
     )
         internal
         virtual
         override
         returns (bytes memory)
     {
-        revert UnsupportedExecution();
+        // get the execution hash
+        bytes32 executionHash = _moduleDigest(moduleTypeId, module, initData, true);
+
+        // check the timelocked execution
+        _checkTimelockedExecution(executionHash);
+
+        // emit the TimelockExecuted event
+        emit TimelockExecuted(msg.sender, executionHash);
     }
 
     /**
      * UninstallModule function was called on the account
-     * @dev this function will revert as the module does not allow module uninstallation
+     * @dev install module calls need to be timelocked
+     *
+     * @param moduleTypeId type of the module
+     * @param module address of the module
+     * @param deInitData data to be passed to the module
      */
     function onUninstallModule(
         address,
-        uint256,
-        address,
-        bytes calldata
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData
     )
         internal
         virtual
         override
         returns (bytes memory)
     {
-        revert UnsupportedExecution();
+        // get the execution hash
+        bytes32 executionHash = _moduleDigest(moduleTypeId, module, deInitData, false);
+
+        // check the timelocked execution
+        _checkTimelockedExecution(executionHash);
+
+        // emit the TimelockExecuted event
+        emit TimelockExecuted(msg.sender, executionHash);
     }
 
     /**
@@ -483,13 +533,15 @@ contract ColdStorageHook is ERC7579HookDestruct {
 
             if (
                 functionSig == IERC3156FlashLender.maxFlashLoan.selector
-                    || functionSig == IERC3156FlashLender.maxFlashLoan.selector
-                    || functionSig == IERC3156FlashLender.maxFlashLoan.selector
+                    || functionSig == IERC3156FlashLender.flashFee.selector
+                    || functionSig == IERC3156FlashLender.flashLoan.selector
             ) {
-                // return pass
-                return abi.encode(PASS);
+                // return
+                return "";
             }
         }
+
+        // otherwise revert
         revert UnsupportedExecution();
     }
 

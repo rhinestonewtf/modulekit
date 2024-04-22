@@ -26,6 +26,10 @@ contract AutoSavings is ERC7579ExecutorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error TooManyTokens();
+
+    uint256 internal constant MAX_TOKENS = 100;
+
     struct Config {
         uint16 percentage; // percentage to be saved to the vault
         address vault; // address of the vault
@@ -49,7 +53,8 @@ contract AutoSavings is ERC7579ExecutorBase {
     /**
      * Initializes the module with the tokens and their configurations
      * @dev data is encoded as follows: abi.encode([tokens], [configs])
-     * @dev if the tokens and configs are not the same length, the function will revert
+     * @dev if there are more tokens than configs, the function will revert
+     * @dev if there are more configs than tokens, the function will ignore the extra configs
      *
      * @param data encoded data containing the tokens and their configurations
      */
@@ -64,8 +69,13 @@ contract AutoSavings is ERC7579ExecutorBase {
         // initialize the sentinel list
         tokens[account].init();
 
-        // loop through the tokens, add them to the list and set their configurations
+        // get the length of the tokens
         uint256 tokenLength = _tokens.length;
+
+        // check that the length of tokens is less than max
+        if (tokenLength > MAX_TOKENS) revert TooManyTokens();
+
+        // loop through the tokens, add them to the list and set their configurations
         for (uint256 i; i < tokenLength; i++) {
             address _token = _tokens[i];
 
@@ -83,8 +93,9 @@ contract AutoSavings is ERC7579ExecutorBase {
         address account = msg.sender;
 
         // clear the configurations
-        (address[] memory tokensArray,) = tokens[account].getEntriesPaginated(SENTINEL, 10);
-        for (uint256 i; i < tokensArray.length; i++) {
+        (address[] memory tokensArray,) = tokens[account].getEntriesPaginated(SENTINEL, MAX_TOKENS);
+        uint256 tokenLength = tokensArray.length;
+        for (uint256 i; i < tokenLength; i++) {
             delete config[account][tokensArray[i]];
         }
 
@@ -153,8 +164,8 @@ contract AutoSavings is ERC7579ExecutorBase {
      * @param account address of the account
      */
     function getTokens(address account) external view returns (address[] memory tokensArray) {
-        // TODO
-        (tokensArray,) = tokens[account].getEntriesPaginated(SENTINEL, 10);
+        // return the tokens from the list
+        (tokensArray,) = tokens[account].getEntriesPaginated(SENTINEL, MAX_TOKENS);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

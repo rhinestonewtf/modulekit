@@ -149,14 +149,13 @@ contract ColdStorageHookTest is BaseTest {
             value: 0,
             callData: abi.encodeWithSelector(ColdStorageHook.setWaitPeriod.selector, 10)
         });
-
-        (bytes32 executionHash, bytes32 entry) = hook.checkHash(address(this), exec);
-        assertEq(entry, bytes32(0));
-        assertEq(executionHash, keccak256(abi.encodePacked(exec.target, exec.value, exec.callData)));
+        bytes32 executeAfter = hook.checkHash(
+            address(this), keccak256(abi.encodePacked(exec.target, exec.value, exec.callData))
+        );
+        assertEq(executeAfter, bytes32(0));
     }
 
     function test_CheckHashWhenTheHashIsValid() public {
-        // it should return the execution hash
         // it should return the entry
         test_RequestTimelockedExecutionWhenTheCallIsToSetWaitPeriod();
 
@@ -166,9 +165,10 @@ contract ColdStorageHookTest is BaseTest {
             callData: abi.encodeWithSelector(ColdStorageHook.setWaitPeriod.selector, 10)
         });
 
-        (bytes32 executionHash, bytes32 entry) = hook.checkHash(address(this), exec);
-        assertNotEq(entry, bytes32(0));
-        assertEq(executionHash, keccak256(abi.encodePacked(exec.target, exec.value, exec.callData)));
+        bytes32 executeAfter = hook.checkHash(
+            address(this), keccak256(abi.encodePacked(exec.target, exec.value, exec.callData))
+        );
+        assertNotEq(executeAfter, bytes32(0));
     }
 
     function test_RequestTimelockedExecutionRevertWhen_TheCallIsNotToSetWaitPeriod()
@@ -196,7 +196,7 @@ contract ColdStorageHookTest is BaseTest {
     {
         // it should store the execution
         // it should store the executeAfter time
-        // it should emit an ExecutionRequested event
+        // it should emit an TimelockRequested event
         test_OnInstallWhenTheWaitPeriodIsNot0();
 
         Execution memory exec = Execution({
@@ -208,15 +208,14 @@ contract ColdStorageHookTest is BaseTest {
 
         uint256 executeAfter = uint256(block.timestamp + _waitPeriod + additionalWait);
 
+        bytes32 executionHash = keccak256(abi.encodePacked(exec.target, exec.value, exec.callData));
+
         vm.expectEmit(true, true, true, true, address(hook));
-        emit ColdStorageHook.ExecutionRequested(
-            address(this), exec.target, exec.value, exec.callData, executeAfter
-        );
+        emit ColdStorageHook.TimelockRequested(address(this), executionHash, executeAfter);
 
         hook.requestTimelockedExecution(exec, additionalWait);
 
-        bytes32 executionHash = keccak256(abi.encodePacked(exec.target, exec.value, exec.callData));
-        bytes32 _executeAfter = hook.getExecution(address(this), executionHash);
+        bytes32 _executeAfter = hook.checkHash(address(this), executionHash);
         assertEq(_executeAfter, bytes32(executeAfter));
     }
 
@@ -226,7 +225,7 @@ contract ColdStorageHookTest is BaseTest {
     {
         // it should store the execution
         // it should store the executeAfter time
-        // it should emit an ExecutionRequested event
+        // it should emit an TimelockRequested event
         test_OnInstallWhenTheWaitPeriodIsNot0();
 
         Execution memory exec = Execution({
@@ -237,16 +236,14 @@ contract ColdStorageHookTest is BaseTest {
         uint256 additionalWait = 0;
 
         uint256 executeAfter = uint256(block.timestamp + _waitPeriod + additionalWait);
+        bytes32 executionHash = keccak256(abi.encodePacked(exec.target, exec.value, exec.callData));
 
         vm.expectEmit(true, true, true, true, address(hook));
-        emit ColdStorageHook.ExecutionRequested(
-            address(this), exec.target, exec.value, exec.callData, executeAfter
-        );
+        emit ColdStorageHook.TimelockRequested(address(this), executionHash, executeAfter);
 
         hook.requestTimelockedExecution(exec, additionalWait);
 
-        bytes32 executionHash = keccak256(abi.encodePacked(exec.target, exec.value, exec.callData));
-        bytes32 _executeAfter = hook.getExecution(address(this), executionHash);
+        bytes32 _executeAfter = hook.checkHash(address(this), executionHash);
         assertEq(_executeAfter, bytes32(executeAfter));
     }
 
@@ -270,24 +267,106 @@ contract ColdStorageHookTest is BaseTest {
     {
         // it should store the execution
         // it should store the executeAfter time
-        // it should emit an ExecutionRequested event
+        // it should emit an TimelockRequested event
         test_OnInstallWhenTheWaitPeriodIsNot0();
 
         Execution memory exec = Execution({ target: _owner, value: 0, callData: "" });
         uint256 additionalWait = 0;
 
         uint256 executeAfter = uint256(block.timestamp + _waitPeriod + additionalWait);
+        bytes32 executionHash = keccak256(abi.encodePacked(exec.target, exec.value, exec.callData));
 
         vm.expectEmit(true, true, true, true, address(hook));
-        emit ColdStorageHook.ExecutionRequested(
-            address(this), exec.target, exec.value, exec.callData, executeAfter
-        );
+        emit ColdStorageHook.TimelockRequested(address(this), executionHash, executeAfter);
 
         hook.requestTimelockedExecution(exec, additionalWait);
 
-        bytes32 executionHash = keccak256(abi.encodePacked(exec.target, exec.value, exec.callData));
-        bytes32 _executeAfter = hook.getExecution(address(this), executionHash);
+        bytes32 _executeAfter = hook.checkHash(address(this), executionHash);
         assertEq(_executeAfter, bytes32(executeAfter));
+    }
+
+    function test_RequestTimelockedModuleConfigShouldStoreTheExecution() public {
+        // it should store the execution
+        test_OnInstallWhenTheWaitPeriodIsNot0();
+
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bool isInstall = true;
+        uint256 additionalWait = 0;
+
+        bytes4 selector;
+        if (isInstall == true) {
+            selector = IERC7579Account.installModule.selector;
+        } else {
+            selector = IERC7579Account.installModule.selector;
+        }
+
+        uint256 executeAfter = uint256(block.timestamp + _waitPeriod + additionalWait);
+        bytes32 executionHash =
+            keccak256(abi.encodePacked(selector, moduleTypeId, module, initData));
+
+        hook.requestTimelockedModuleConfig(
+            moduleTypeId, module, initData, isInstall, additionalWait
+        );
+
+        bytes32 _executeAfter = hook.checkHash(address(this), executionHash);
+        assertEq(_executeAfter, bytes32(executeAfter));
+    }
+
+    function test_RequestTimelockedModuleConfigShouldStoreTheExecuteAfterTime() public {
+        // it should store the executeAfter time
+        test_OnInstallWhenTheWaitPeriodIsNot0();
+
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bool isInstall = true;
+        uint256 additionalWait = 0;
+
+        bytes4 selector;
+        if (isInstall == true) {
+            selector = IERC7579Account.installModule.selector;
+        } else {
+            selector = IERC7579Account.installModule.selector;
+        }
+
+        uint256 executeAfter = uint256(block.timestamp + _waitPeriod + additionalWait);
+        bytes32 executionHash =
+            keccak256(abi.encodePacked(selector, moduleTypeId, module, initData));
+
+        hook.requestTimelockedModuleConfig(
+            moduleTypeId, module, initData, isInstall, additionalWait
+        );
+
+        bytes32 _executeAfter = hook.checkHash(address(this), executionHash);
+        assertEq(_executeAfter, bytes32(executeAfter));
+    }
+
+    function test_RequestTimelockedModuleConfigShouldEmitAnTimelockRequestedEvent() public {
+        // it should emit an TimelockRequested event
+        test_OnInstallWhenTheWaitPeriodIsNot0();
+
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bool isInstall = true;
+        uint256 additionalWait = 0;
+
+        bytes4 selector = isInstall
+            ? IERC7579Account.installModule.selector
+            : IERC7579Account.uninstallModule.selector;
+
+        uint256 executeAfter = uint256(block.timestamp + _waitPeriod + additionalWait);
+        bytes32 executionHash =
+            keccak256(abi.encodePacked(selector, moduleTypeId, module, initData));
+
+        vm.expectEmit(true, true, true, true, address(hook));
+        emit ColdStorageHook.TimelockRequested(address(this), executionHash, executeAfter);
+
+        hook.requestTimelockedModuleConfig(
+            moduleTypeId, module, initData, isInstall, additionalWait
+        );
     }
 
     function test_PreCheckRevertWhen_FunctionIsExecute() public {
@@ -340,33 +419,113 @@ contract ColdStorageHookTest is BaseTest {
         hook.preCheck(address(1), 0, msgData);
     }
 
-    function test_PreCheckRevertWhen_FunctionIsInstallModule() public {
+    function test_PreCheckRevertWhen_InstallTimelockIsNotUp() public whenFunctionIsInstallModule {
         // it should revert
-        bytes memory msgData =
-            abi.encodeWithSelector(IERC7579Account.installModule.selector, 1, address(1), "");
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.installModule.selector, moduleTypeId, module, initData
+        );
 
-        vm.expectRevert(ColdStorageHook.UnsupportedExecution.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ColdStorageHook.InvalidExecutionHash.selector,
+                keccak256(
+                    abi.encodePacked(
+                        IERC7579Account.installModule.selector, moduleTypeId, module, initData
+                    )
+                )
+            )
+        );
         hook.preCheck(address(1), 0, msgData);
     }
 
-    function test_PreCheckRevertWhen_FunctionIsUninstallModule() public {
-        // it should revert
-        bytes memory msgData =
-            abi.encodeWithSelector(IERC7579Account.uninstallModule.selector, 1, address(1), "");
+    function test_PreCheckWhenInstallTimelockIsUp() public whenFunctionIsInstallModule {
+        // it should emit TimelockExecuted
+        // it should return
+        test_RequestTimelockedModuleConfigShouldEmitAnTimelockRequestedEvent();
 
-        vm.expectRevert(ColdStorageHook.UnsupportedExecution.selector);
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.installModule.selector, moduleTypeId, module, initData
+        );
+
+        bytes32 executionHash = keccak256(
+            abi.encodePacked(IERC7579Account.installModule.selector, moduleTypeId, module, initData)
+        );
+
+        vm.warp(block.timestamp + _waitPeriod + 1);
+
+        vm.expectEmit(true, true, true, true, address(hook));
+        emit ColdStorageHook.TimelockExecuted(address(this), executionHash);
+
+        hook.preCheck(address(1), 0, msgData);
+    }
+
+    function test_PreCheckRevertWhen_UninstallTimelockIsNotUp()
+        public
+        whenFunctionIsUninstallModule
+    {
+        // it should revert
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.uninstallModule.selector, moduleTypeId, module, initData
+        );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ColdStorageHook.InvalidExecutionHash.selector,
+                keccak256(
+                    abi.encodePacked(
+                        IERC7579Account.uninstallModule.selector, moduleTypeId, module, initData
+                    )
+                )
+            )
+        );
+        hook.preCheck(address(1), 0, msgData);
+    }
+
+    function test_PreCheckWhenUninstallTimelockIsUp() public whenFunctionIsUninstallModule {
+        // it should emit TimelockExecuted
+        // it should return
+        test_OnInstallWhenTheWaitPeriodIsNot0();
+
+        uint256 moduleTypeId = 1;
+        address module = address(1);
+        bytes memory initData = "";
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.uninstallModule.selector, moduleTypeId, module, initData
+        );
+
+        hook.requestTimelockedModuleConfig(moduleTypeId, module, initData, false, 0);
+
+        bytes32 executionHash = keccak256(
+            abi.encodePacked(
+                IERC7579Account.uninstallModule.selector, moduleTypeId, module, initData
+            )
+        );
+
+        vm.warp(block.timestamp + _waitPeriod + 1);
+
+        vm.expectEmit(true, true, true, true, address(hook));
+        emit ColdStorageHook.TimelockExecuted(address(this), executionHash);
+
         hook.preCheck(address(1), 0, msgData);
     }
 
     function test_PreCheckWhenFunctionIsAFlashloanFunction() external whenFunctionIsUnknown {
-        // it should return pass
+        // it should return
         test_RequestTimelockedExecutionWhenTheCallIsToSetWaitPeriod();
 
         bytes memory msgData =
             abi.encodeWithSelector(IERC3156FlashLender.maxFlashLoan.selector, makeAddr("token"));
 
-        bytes memory hookData = hook.preCheck(address(_owner), 0, msgData);
-        assertEq(hookData, abi.encode(keccak256("pass")));
+        hook.preCheck(address(_owner), 0, msgData);
     }
 
     function test_PreCheckRevertWhen_FunctionIsNotAFlashloanFunction()
@@ -384,7 +543,7 @@ contract ColdStorageHookTest is BaseTest {
         public
         whenFunctionIsExecuteFromExecutor
     {
-        // it should return requestTimelockedExecution
+        // it should return
         Execution memory exec = Execution({
             target: address(hook),
             value: 0,
@@ -404,8 +563,7 @@ contract ColdStorageHookTest is BaseTest {
             )
         );
 
-        bytes memory hookData = hook.preCheck(address(1), 0, msgData);
-        assertEq(hookData, abi.encode(ColdStorageHook.requestTimelockedExecution.selector));
+        hook.preCheck(address(1), 0, msgData);
     }
 
     function test_PreCheckRevertWhen_AnExecutionDoesNotExist()
@@ -460,8 +618,8 @@ contract ColdStorageHookTest is BaseTest {
         whenTargetIsNotThisOrFunctionIsNotRequestTimelockedExecution
         whenAnExecutionExists
     {
-        // it should emit ExecutionExecuted
-        // it should return pass
+        // it should emit TimelockExecuted
+        // it should return
         test_RequestTimelockedExecutionWhenTheCallIsToSetWaitPeriod();
 
         address target = address(hook);
@@ -474,29 +632,19 @@ contract ColdStorageHookTest is BaseTest {
             ExecutionLib.encodeSingle(target, value, callData)
         );
 
+        bytes32 executionHash = keccak256(abi.encodePacked(target, value, callData));
+
         vm.warp(block.timestamp + _waitPeriod + 1);
 
         vm.expectEmit(true, true, true, true, address(hook));
-        emit ColdStorageHook.ExecutionExecuted(address(this), target, value, callData);
+        emit ColdStorageHook.TimelockExecuted(address(this), executionHash);
 
-        bytes memory hookData = hook.preCheck(address(1), 0, msgData);
-        assertEq(hookData, abi.encode(keccak256("pass")));
+        hook.preCheck(address(1), 0, msgData);
     }
 
-    function test_PostCheckRevertWhen_HookDataIsNotRequestTimelockedExecutionOrPass() public {
-        // it should revert
-        vm.expectRevert(ColdStorageHook.UnauthorizedAccess.selector);
-        hook.postCheck("0x", false, "0x");
-    }
-
-    function test_PostCheckWhenHookDataIsRequestTimelockedExecution() public {
+    function test_PostCheckShouldReturn() public {
         // it should return
-        hook.postCheck(abi.encode(ColdStorageHook.requestTimelockedExecution.selector), false, "0x");
-    }
-
-    function test_PostCheckWhenHookDataIsPass() public {
-        // it should return
-        hook.postCheck(abi.encode(keccak256("pass")), false, "0x");
+        hook.postCheck("", true, "");
     }
 
     function test_NameShouldReturnColdStorageHook() public {
@@ -564,6 +712,14 @@ contract ColdStorageHookTest is BaseTest {
     }
 
     modifier whenAnExecutionExists() {
+        _;
+    }
+
+    modifier whenFunctionIsUninstallModule() {
+        _;
+    }
+
+    modifier whenFunctionIsInstallModule() {
         _;
     }
 }
