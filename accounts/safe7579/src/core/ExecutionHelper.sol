@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
+import { Safe7579DCUtil, Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
 import { SimulateTxAccessor } from "../utils/DCUtil.sol";
 import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
 import { BatchedExecUtil } from "../utils/DCUtil.sol";
@@ -178,11 +178,7 @@ abstract contract ExecutionHelper is Safe7579DCUtilSetup {
 
     /**
      * Safe account does not natively implement Enum.Operation.StaticCall,
-     * to still receive some guarantees, that the target contract of calls, can not do state
-     * changes, we are making use of Safe's SimulateTxAccessor.
-     * @dev This function will nudge the Safe account to make a delegatecall to the DCUTIL contract,
-     * which inherits SimulateTxAccessor and call the simulate() function there.
-     * This ensures, that the target contract can not do state changes
+     * using a trick with simulateAndRevert to execute a staticcall.
      * @param safe Safe account to execute the staticcall
      * @param target Target contract to staticcall
      * @param callData Data to be passed to the target contract
@@ -193,18 +189,32 @@ abstract contract ExecutionHelper is Safe7579DCUtilSetup {
         bytes memory callData
     )
         internal
-        returns (bytes memory retData)
+        view
+        returns (bytes memory result)
     {
-        bytes memory ret = _delegatecallReturn({
-            safe: safe,
-            target: UTIL, // immutable address for DCUTIL (./utils/DCUTIL.sol)
-            callData: abi.encodeCall(
-                SimulateTxAccessor.simulate, (target, 0, callData, Enum.Operation.Call)
+        bytes memory staticCallData = abi.encodeCall(Safe7579DCUtil.staticCall, (target, callData));
+        bytes memory simulationCallData =
+            abi.encodeCall(ISafe.simulateAndRevert, (address(UTIL), staticCallData));
+
+        // solhint-disable-next-line no-inline-assembly
+        assembly ("memory-safe") {
+            pop(
+                staticcall(
+                    gas(),
+                    safe,
+                    add(simulationCallData, 0x20),
+                    mload(simulationCallData),
+                    0x00,
+                    0x20
+                )
             )
-        });
-        bool success;
-        (, success, retData) = abi.decode(ret, (uint256, bool, bytes));
-        if (!success) revert ExecutionFailed();
-        return retData;
+
+            let responseSize := sub(returndatasize(), 0x20)
+            result := mload(0x40)
+            mstore(0x40, add(result, responseSize))
+            returndatacopy(result, 0x20, responseSize)
+
+            if iszero(mload(0x00)) { revert(add(result, 0x20), mload(result)) }
+        }
     }
 }

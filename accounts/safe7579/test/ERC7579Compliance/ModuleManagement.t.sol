@@ -90,7 +90,9 @@ contract ModuleManagementTest is BaseTest {
         bytes4 selector = 0x00000000;
         _data = hex"4141414141414141";
 
-        _installHook(hookType, selector, _data);
-        _uninstallHook(hookType, selector, _data);
+        bytes memory data = abi.encode(hookType, selector, _data);
+        account.installModule(4, SELF, data);
+
+        account.uninstallModule(4, SELF, data);
     }
 }

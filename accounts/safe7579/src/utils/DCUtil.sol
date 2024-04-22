@@ -126,4 +126,14 @@ contract BatchedExecUtil {
     }
 }
 
-contract Safe7579DCUtil is ModuleInstallUtil, BatchedExecUtil, SimulateTxAccessor { }
+contract Safe7579DCUtil is ModuleInstallUtil, BatchedExecUtil, SimulateTxAccessor {
+    function staticCall(address target, bytes memory data) external view {
+        assembly ("memory-safe") {
+            let ptr := mload(0x40)
+            let success := staticcall(gas(), target, add(data, 0x20), mload(data), 0x00, 0x00)
+            returndatacopy(ptr, 0x00, returndatasize())
+            if success { return(ptr, returndatasize()) }
+            revert(ptr, returndatasize())
+        }
+    }
+}
