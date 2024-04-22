@@ -18,7 +18,6 @@ import {
     MODULE_TYPE_HOOK
 } from "erc7579/interfaces/IERC7579Module.sol";
 
-import "forge-std/console2.sol";
 /**
  * @title ModuleManager
  * Contract that implements ERC7579 Module compatibility for Safe accounts
@@ -31,9 +30,7 @@ import "forge-std/console2.sol";
  * - Hook Modules
  * Note: the Storage mappings for each section, are not listed on the very top, but in the
  * respective section
- *
  */
-
 abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
@@ -67,7 +64,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     }
 
     /**
-     * Uninstall and de-initialize validator module
+     * Uninstall validator module
      * @dev This function does not prevent the user from uninstalling all validator modules.
      * Since the Safe7579 signature validation can fallback to Safe's checkSignature()
      * function, it is okay, if all validator modules are removed.
@@ -139,7 +136,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     {
         SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
         $executors.push(executor);
-        // Initialize Executor Module via Safe
         return data;
     }
 
@@ -251,9 +247,12 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     }
 
     /**
-     * Fallback implementation supports callTypes:
-     *     - CALLTYPE_STATIC
-     *     - CALLTYPE_SINGLE
+     * @dev AccessControl: any external contract / EOA may call this function
+     * SafeERC7579 Fallback supports the following feature set:
+     *    CallTypes:
+     *             - CALLTYPE_SINGLE
+     *             - CALLTYPE_BATCH
+     * @dev If a global hook and/or selector hook is set, it will be called
      */
     // solhint-disable-next-line no-complex-fallback
     fallback(bytes calldata callData)
@@ -484,8 +483,9 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         bytes[] calldata contexts;
         bytes calldata moduleInitData;
 
-        // equivalent of (types, contexs, moduleInitData) =
-        // abi.decode(initData,(uint[],bytes[],bytes)
+        // equivalent of:
+        // (types, contexs, moduleInitData) = abi.decode(initData,(uint[],bytes[],bytes)
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             let offset := initData.offset
             let baseOffset := offset
