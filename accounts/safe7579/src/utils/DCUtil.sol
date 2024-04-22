@@ -3,8 +3,6 @@ pragma solidity ^0.8.22;
 
 import { Execution } from "../interfaces/IERC7579Account.sol";
 import { IModule as IERC7579Module } from "erc7579/interfaces/IERC7579Module.sol";
-import { SimulateTxAccessor } from
-    "@safe-global/safe-contracts/contracts/accessors/SimulateTxAccessor.sol";
 
 contract ModuleInstallUtil {
     event ModuleInstalled(uint256 moduleTypeId, address module);
@@ -126,8 +124,9 @@ contract BatchedExecUtil {
     }
 }
 
-contract Safe7579DCUtil is ModuleInstallUtil, BatchedExecUtil, SimulateTxAccessor {
+contract Safe7579DCUtil is ModuleInstallUtil, BatchedExecUtil {
     function staticCall(address target, bytes memory data) external view {
+        // solhint-disable-next-line no-inline-assembly
         assembly ("memory-safe") {
             let ptr := mload(0x40)
             let success := staticcall(gas(), target, add(data, 0x20), mload(data), 0x00, 0x00)

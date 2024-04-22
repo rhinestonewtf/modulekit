@@ -62,14 +62,13 @@ contract HookTest is BaseTest, MockFn {
         super.setUp();
     }
 
-    function test_WhenExecutingVia4337() external requireHookCalled(1){
+    function test_WhenExecutingVia4337() external requireHookCalled(1) {
         _data = hex"4141414141414141";
         _caller = address(entrypoint);
         vm.startPrank(address(entrypoint));
 
         bytes memory data = abi.encode(ModuleManager.HookType.GLOBAL, 0x0, _data);
         account.installModule(4, SELF, data);
-
 
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1337);
         account.execute(

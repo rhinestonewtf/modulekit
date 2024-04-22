@@ -4,10 +4,9 @@ pragma solidity ^0.8.23;
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { IModule, IHook } from "../interfaces/IERC7579Module.sol";
-import { IERC7579Account } from "../interfaces/IERC7579Account.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
 
-import { Safe7579DCUtil, ModuleInstallUtil } from "../utils/DCUtil.sol";
+import { ModuleInstallUtil } from "../utils/DCUtil.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
@@ -499,6 +498,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         return $globalHook[msg.sender];
     }
 
+    // solhint-disable-next-line code-complexity
     function _multiTypeInstall(
         address module,
         uint256[] calldata types,

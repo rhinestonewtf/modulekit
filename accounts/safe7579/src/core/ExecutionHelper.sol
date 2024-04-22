@@ -2,8 +2,6 @@
 pragma solidity ^0.8.23;
 
 import { Safe7579DCUtil, Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
-import { SimulateTxAccessor } from "../utils/DCUtil.sol";
-import { Enum } from "@safe-global/safe-contracts/contracts/common/Enum.sol";
 import { BatchedExecUtil } from "../utils/DCUtil.sol";
 import { Execution } from "../interfaces/IERC7579Account.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
