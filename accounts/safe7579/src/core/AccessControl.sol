@@ -18,6 +18,7 @@ contract AccessControl is HandlerContext, AccountBase {
     }
 
     modifier onlyEntryPoint() virtual override {
+
         if (_msgSender() != entryPoint()) {
             revert AccountAccessUnauthorized();
         }

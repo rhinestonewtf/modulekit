@@ -99,4 +99,5 @@ contract Safe7579Test is LaunchpadBase {
         assertEq(ret.length, 2);
         assertEq(abi.decode(ret[0], (uint256)), 1338);
     }
+
 }

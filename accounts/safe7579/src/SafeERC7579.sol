@@ -306,7 +306,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
 
         // check if validator is enabled. If not, use Safe's checkSignatures()
         if (validator == address(0) || !_isValidatorInstalled(validator)) {
-            return _validateSignatures(userOp);
+            validSignature = _validateSignatures(userOp);
         } else {
             // bubble up the return value of the validator module
             bytes memory retData = _execReturn({
@@ -344,7 +344,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
             uint48 validUntil,
             bytes calldata signatures
         ) = _getSafeOp(userOp);
-        try ISafe(payable(userOp.getSender())).checkSignatures(
+        try ISafe(payable(msg.sender)).checkSignatures(
             keccak256(operationData), operationData, signatures
         ) {
             // The timestamps are validated by the entry point,
@@ -642,7 +642,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
             // result of `abi.encode`-ing the individual fields.
             EncodedSafeOpStruct memory encodedSafeOp = EncodedSafeOpStruct({
                 typeHash: SAFE_OP_TYPEHASH,
-                safe: userOp.sender,
+                safe: msg.sender,
                 nonce: userOp.nonce,
                 initCodeHash: keccak256(userOp.initCode),
                 callDataHash: keccak256(userOp.callData),

@@ -229,6 +229,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
         FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
         delete $fallbacks.handler;
+
     }
 
     function _isFallbackHandlerInstalled(
