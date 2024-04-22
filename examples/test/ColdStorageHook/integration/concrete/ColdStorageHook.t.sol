@@ -14,6 +14,7 @@ import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { MODULE_TYPE_HOOK, MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { IAccountModulesPaginated } from "modulekit/src/test/utils/ERC7579Helpers.sol";
 
 contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -215,14 +216,55 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         assertTrue(isInstalled);
     }
 
+    function test_InstallModule_WithData() public {
+        address module = makeAddr("module");
+        vm.etch(module, hex"00");
+
+        bytes memory data = abi.encodePacked(keccak256("hi"), keccak256("hello"));
+
+        _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, data, true, 0);
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: data });
+
+        bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            additionalContext: ""
+        });
+        assertTrue(isInstalled);
+    }
+
     function test_UninstallModule() public {
         test_InstallModule();
 
         address module = makeAddr("module");
 
-        _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, "", false, 0);
+        (address[] memory array,) = IAccountModulesPaginated(address(instance.account))
+            .getExecutorsPaginated(address(0x1), 100);
 
-        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
+        address previous;
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == module) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == module) previous = array[i - 1];
+            }
+        }
+
+        bytes memory initData = "";
+
+        _cueAndWaitForModuleConfig(
+            MODULE_TYPE_EXECUTOR, module, abi.encode(previous, initData), false, 0
+        );
+
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            data: initData
+        });
 
         bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
             moduleTypeId: MODULE_TYPE_EXECUTOR,

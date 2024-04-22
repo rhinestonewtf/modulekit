@@ -85,8 +85,6 @@ contract ColdStorageHook is ERC7579HookDestruct {
 
         // clear the vaultConfig
         delete vaultConfig[account];
-
-        // TODO: clear the executions
     }
 
     /**
@@ -334,7 +332,7 @@ contract ColdStorageHook is ERC7579HookDestruct {
      *
      * @param executionHash bytes32 hash of the execution
      */
-    function _checkTimelockedExecution(bytes32 executionHash) internal {
+    function _checkTimelockedExecution(bytes32 executionHash) internal view {
         // get the executeAfter timestamp
         (bool success, bytes32 executeAfter) = executions[msg.sender].tryGet(executionHash);
 
@@ -426,9 +424,6 @@ contract ColdStorageHook is ERC7579HookDestruct {
 
             return "";
         }
-
-        // otherwise revert
-        revert UnsupportedExecution();
     }
 
     /**
