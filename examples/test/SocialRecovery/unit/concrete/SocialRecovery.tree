@@ -9,17 +9,22 @@ SocialRecovery::onInstall
         ├── when guardians length is less than threshold
         │   └── it should revert
         └── when guardians length is not less than threshold
-            ├── when guardians include 0 address
+            ├── when guardians length is more than max
             │   └── it should revert
-            ├── when guardians include duplicates
-            │   └── it should set only unique guardians
-            └── when guardians include no duplicates
-                └── it should set all guardians
+            └── when guardians length is not more than max
+                ├── it should set guardian count
+                ├── when guardians include 0 address
+                │   └── it should revert
+                ├── when guardians include duplicates
+                │   └── it should set only unique guardians
+                └── when guardians include no duplicates
+                    └── it should set all guardians
 
 
 SocialRecovery::onUninstall
 ├── it should remove the threshold
-└── it should remove the guardians
+├── it should remove the guardians
+└── it should set guardian count to 0
 
 
 SocialRecovery::isInitialized
@@ -48,16 +53,22 @@ SocialRecovery::addGuardian
 └── when module is intialized
     ├── when guardian is 0 address
     │   └── it should revert
-    ├── when guardian is already added
-    │   └── it should revert
-    └── when guardian is not added
-        └── it should add the guardian
+    └── when guardian is not 0 address
+        ├── when guardian count is more than max
+        │   └── it should revert
+        └── when guardian count is not more than max
+            ├── when guardian is already added
+            │   └── it should revert
+            └── when guardian is not added
+                ├── it should increment guardian count
+                └── it should add the guardian
 
 
 SocialRecovery::removeGuardian
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
+    ├── it should decrement guardian count
     └── it should remove the guardian
 
 

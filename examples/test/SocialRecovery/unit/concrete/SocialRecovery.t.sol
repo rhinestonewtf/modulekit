@@ -113,11 +113,45 @@ contract SocialRecoveryTest is BaseTest {
         validator.onInstall(data);
     }
 
+    function test_OnInstallRevertWhen_GuardiansLengthIsMoreThanMax()
+        external
+        whenModuleIsNotIntialized
+        whenThresholdIsNot0
+        whenGuardiansLengthIsNotLessThanThreshold
+    {
+        // it should revert
+        address[] memory _newGuardians = new address[](33);
+        for (uint256 i = 0; i < 33; i++) {
+            _newGuardians[i] = makeAddr(vm.toString(i));
+        }
+        bytes memory data = abi.encode(_threshold, _newGuardians);
+
+        vm.expectRevert(abi.encodeWithSelector(SocialRecovery.MaxGuardiansReached.selector));
+        validator.onInstall(data);
+    }
+
+    function test_OnInstallWhenGuardiansLengthIsNotMoreThanMax()
+        external
+        whenModuleIsNotIntialized
+        whenThresholdIsNot0
+        whenGuardiansLengthIsNotLessThanThreshold
+        whenGuardiansLengthIsNotMoreThanMax
+    {
+        // it should set guardian count
+        bytes memory data = abi.encode(_threshold, _guardians);
+
+        validator.onInstall(data);
+
+        uint256 guardianCount = validator.guardianCount(address(this));
+        assertEq(guardianCount, _guardians.length);
+    }
+
     function test_OnInstallRevertWhen_GuardiansInclude0Address()
         public
         whenModuleIsNotIntialized
         whenThresholdIsNot0
         whenGuardiansLengthIsNotLessThanThreshold
+        whenGuardiansLengthIsNotMoreThanMax
     {
         // it should revert
         address[] memory _newGuardians = new address[](2);
@@ -134,6 +168,7 @@ contract SocialRecoveryTest is BaseTest {
         whenModuleIsNotIntialized
         whenThresholdIsNot0
         whenGuardiansLengthIsNotLessThanThreshold
+        whenGuardiansLengthIsNotMoreThanMax
     {
         // it should set only unique guardians
         address[] memory _newGuardians = new address[](3);
@@ -153,6 +188,7 @@ contract SocialRecoveryTest is BaseTest {
         whenModuleIsNotIntialized
         whenThresholdIsNot0
         whenGuardiansLengthIsNotLessThanThreshold
+        whenGuardiansLengthIsNotMoreThanMax
     {
         // it should set all guardians
         bytes memory data = abi.encode(_threshold, _guardians);
@@ -181,6 +217,16 @@ contract SocialRecoveryTest is BaseTest {
 
         address[] memory guardians = validator.getGuardians(address(this));
         assertEq(guardians.length, 0);
+    }
+
+    function test_OnUninstallShouldSetGuardianCountTo0() external {
+        // it should set guardian count to 0
+        test_OnInstallWhenGuardiansIncludeNoDuplicates();
+
+        validator.onUninstall("");
+
+        uint256 guardianCount = validator.guardianCount(address(this));
+        assertEq(guardianCount, 0);
     }
 
     function test_IsInitializedWhenModuleIsNotIntialized() public {
@@ -261,7 +307,30 @@ contract SocialRecoveryTest is BaseTest {
         validator.addGuardian(newGuardian);
     }
 
-    function test_AddGuardianRevertWhen_GuardianIsAlreadyAdded() public whenModuleIsIntialized {
+    function test_AddGuardianRevertWhen_GuardianCountIsMoreThanMax()
+        external
+        whenModuleIsIntialized
+        whenGuardianIsNot0Address
+    {
+        // it should revert
+        address[] memory _newGuardians = new address[](32);
+        for (uint256 i = 0; i < 32; i++) {
+            _newGuardians[i] = makeAddr(vm.toString(i));
+        }
+        bytes memory data = abi.encode(_threshold, _newGuardians);
+
+        validator.onInstall(data);
+
+        vm.expectRevert(abi.encodeWithSelector(SocialRecovery.MaxGuardiansReached.selector));
+        validator.addGuardian(makeAddr("finalGuardian"));
+    }
+
+    function test_AddGuardianRevertWhen_GuardianIsAlreadyAdded()
+        public
+        whenModuleIsIntialized
+        whenGuardianIsNot0Address
+        whenGuardianCountIsNotMoreThanMax
+    {
         // it should revert
         test_OnInstallWhenGuardiansIncludeNoDuplicates();
 
@@ -269,7 +338,13 @@ contract SocialRecoveryTest is BaseTest {
         validator.addGuardian(_guardians[0]);
     }
 
-    function test_AddGuardianWhenGuardianIsNotAdded() public whenModuleIsIntialized {
+    function test_AddGuardianWhenGuardianIsNotAdded()
+        public
+        whenModuleIsIntialized
+        whenGuardianIsNot0Address
+        whenGuardianCountIsNotMoreThanMax
+    {
+        // it should increment guardian count
         // it should add the guardian
         test_OnInstallWhenGuardiansIncludeNoDuplicates();
 
@@ -279,6 +354,9 @@ contract SocialRecoveryTest is BaseTest {
         address[] memory guardians = validator.getGuardians(address(this));
         assertEq(guardians.length, 3);
         assertEq(guardians[0], newGuardian);
+
+        uint256 guardianCount = validator.guardianCount(address(this));
+        assertEq(guardianCount, 3);
     }
 
     function test_RemoveGuardianRevertWhen_ModuleIsNotIntialized() public {
@@ -288,10 +366,17 @@ contract SocialRecoveryTest is BaseTest {
     }
 
     function test_RemoveGuardianWhenModuleIsIntialized() public {
+        // it should decrement guardian count
         // it should remove the guardian
         test_OnInstallWhenGuardiansIncludeNoDuplicates();
 
         validator.removeGuardian(_guardians[1], _guardians[0]);
+
+        address[] memory guardians = validator.getGuardians(address(this));
+        assertEq(guardians.length, 1);
+
+        uint256 guardianCount = validator.guardianCount(address(this));
+        assertEq(guardianCount, 1);
     }
 
     function test_GetGuardiansShouldGetAllGuardians() external {
@@ -492,6 +577,18 @@ contract SocialRecoveryTest is BaseTest {
     }
 
     modifier whenThresholdIsNot0() {
+        _;
+    }
+
+    modifier whenGuardiansLengthIsNotMoreThanMax() {
+        _;
+    }
+
+    modifier whenGuardianCountIsNotMoreThanMax() {
+        _;
+    }
+
+    modifier whenGuardianIsNot0Address() {
         _;
     }
 

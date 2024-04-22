@@ -26,13 +26,19 @@ contract SocialRecovery is ERC7579ValidatorBase {
 
     error UnsopportedOperation();
     error InvalidGuardian(address guardian);
+    error MaxGuardiansReached();
     error ThresholdNotSet();
     error InvalidThreshold();
+
+    // maximum number of owners per account
+    uint256 constant MAX_GUARDIANS = 32;
 
     // account => guardians
     SentinelList4337Lib.SentinelList guardians;
     // account => threshold
     mapping(address account => uint256) public threshold;
+    // account => guardianCount
+    mapping(address => uint256) public guardianCount;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -63,11 +69,19 @@ contract SocialRecovery is ERC7579ValidatorBase {
             revert InvalidThreshold();
         }
 
-        // set threshold
-        threshold[msg.sender] = _threshold;
-
-        // get the account
+        // cache the account address
         address account = msg.sender;
+
+        // check if max owners is reached
+        if (guardiansLength > MAX_GUARDIANS) {
+            revert MaxGuardiansReached();
+        }
+
+        // set guardian count
+        guardianCount[account] = guardiansLength;
+
+        // set threshold
+        threshold[account] = _threshold;
 
         // initialize the guardian list
         guardians.init(account);
@@ -95,6 +109,9 @@ contract SocialRecovery is ERC7579ValidatorBase {
 
         // delete the threshold
         threshold[account] = 0;
+
+        // delete the guardian count
+        guardianCount[account] = 0;
     }
 
     /**
@@ -124,7 +141,9 @@ contract SocialRecovery is ERC7579ValidatorBase {
             revert InvalidThreshold();
         }
 
-        // TODO check if the threshold is less than the number of guardians
+        if (guardianCount[account] < _threshold) {
+            revert InvalidThreshold();
+        }
 
         // set the threshold
         threshold[account] = _threshold;
@@ -147,6 +166,14 @@ contract SocialRecovery is ERC7579ValidatorBase {
             revert InvalidGuardian(guardian);
         }
 
+        // check if max guardians is reached
+        if (guardianCount[account] >= MAX_GUARDIANS) {
+            revert MaxGuardiansReached();
+        }
+
+        // increment the guardian count
+        guardianCount[account]++;
+
         // add the guardian to the list
         guardians.push(account, guardian);
     }
@@ -161,6 +188,9 @@ contract SocialRecovery is ERC7579ValidatorBase {
     function removeGuardian(address prevGuardian, address guardian) external {
         // remove the guardian from the list
         guardians.pop(msg.sender, prevGuardian, guardian);
+
+        // decrement the guardian count
+        guardianCount[msg.sender]--;
     }
 
     /**
@@ -175,9 +205,8 @@ contract SocialRecovery is ERC7579ValidatorBase {
         view
         returns (address[] memory guardiansArray)
     {
-        // TODO: return length
         // get the guardians from the list
-        (guardiansArray,) = guardians.getEntriesPaginated(account, SENTINEL, 10);
+        (guardiansArray,) = guardians.getEntriesPaginated(account, SENTINEL, MAX_GUARDIANS);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

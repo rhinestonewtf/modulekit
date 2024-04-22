@@ -50,9 +50,6 @@ contract OwnableValidator is ERC7579ValidatorBase {
      * @param data encoded data containing the threshold and owners
      */
     function onInstall(bytes calldata data) external override {
-        // cache the account address
-        address account = msg.sender;
-
         // decode the threshold and owners
         (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
 
@@ -70,6 +67,9 @@ contract OwnableValidator is ERC7579ValidatorBase {
         if (ownersLength < _threshold) {
             revert InvalidThreshold();
         }
+
+        // cache the account address
+        address account = msg.sender;
 
         // set threshold
         threshold[account] = _threshold;

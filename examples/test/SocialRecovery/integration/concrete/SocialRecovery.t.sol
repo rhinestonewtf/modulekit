@@ -74,6 +74,9 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, _guardians.length);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, _guardians.length);
     }
 
     function test_OnUninstallRemoveThresholdAndGuardians() public {
@@ -89,11 +92,14 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, 0);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, 0);
     }
 
     function test_SetThreshold() public {
         // it should set the threshold
-        uint256 newThreshold = 3;
+        uint256 newThreshold = 1;
 
         instance.getExecOps({
             target: address(validator),
@@ -119,6 +125,9 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, _guardians.length + 1);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, _guardians.length + 1);
     }
 
     function test_RemoveGuardian() public {
@@ -134,6 +143,9 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, _guardians.length - 1);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, _guardians.length - 1);
     }
 
     function test_ValidateUserOp() public {
