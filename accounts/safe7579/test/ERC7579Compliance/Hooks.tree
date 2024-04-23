@@ -1,0 +1,9 @@
+HookTest
+├── When executing via 4337 // test all execution types
+│   └── It should execute hook
+├── When executing via module // test all execution types
+│   └── It should execute hook
+├── When installing module
+│   └── It should execute hook
+└── When hook reverts
+    └── It should revert execution

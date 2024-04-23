@@ -200,7 +200,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
                 ColdStorageExecutor.executeOnSubAccount.selector,
                 address(coldStorage.account),
                 subAccountCallData
-                ),
+            ),
             txValidator: address(ownableValidator)
         });
 
@@ -223,7 +223,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
                 ColdStorageExecutor.executeOnSubAccount.selector,
                 address(coldStorage.account),
                 subAccountCallData
-                ),
+            ),
             txValidator: address(ownableValidator)
         });
         bytes memory signature = signHash(owner.key, userOpData.userOpHash);
@@ -242,7 +242,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
             value: 0,
             callData: abi.encodeWithSelector(
                 MockERC20.transfer.selector, address(mainAccount.account), amountToWithdraw
-                )
+            )
         });
 
         _requestWithdraw(action, 0);
@@ -279,7 +279,7 @@ contract ColdStorageTest is RhinestoneModuleKit, Test {
             value: 0,
             callData: abi.encodeWithSelector(
                 MockERC20.transfer.selector, address(mainAccount.account), 100
-                )
+            )
         });
 
         _requestWithdraw(newAction, 0);

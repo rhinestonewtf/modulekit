@@ -98,4 +98,6 @@ interface ISafe {
     function enableModule(address module) external;
 
     function VERSION() external view returns (string memory);
+
+    function simulateAndRevert(address targetContract, bytes memory calldataPayload) external;
 }

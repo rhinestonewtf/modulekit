@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-interface ISafe7579Init {
-    struct ModuleInit {
-        address module;
-        bytes initData;
-    }
+import { IERC7484 } from "./IERC7484.sol";
+import "./DataTypes.sol";
 
+interface ISafe7579 {
     function initializeAccount(
         ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
         ModuleInit[] calldata fallbacks,
-        ModuleInit[] calldata hooks
+        ModuleInit[] calldata hooks,
+        RegistryInit calldata registryInit
     )
         external
         payable;
+
+    function launchpadValidators(ModuleInit[] calldata validators) external payable;
 }

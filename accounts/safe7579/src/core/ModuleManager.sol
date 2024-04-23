@@ -3,95 +3,79 @@ pragma solidity ^0.8.23;
 
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
-import { IModule } from "erc7579/interfaces/IERC7579Module.sol";
-import { ExecutionHelper } from "./ExecutionHelper.sol";
+import { IModule, IHook } from "../interfaces/IERC7579Module.sol";
+import { ISafe } from "../interfaces/ISafe.sol";
+import { ISafe7579 } from "../ISafe7579.sol";
+import "../DataTypes.sol";
+
+import { ModuleInstallUtil } from "../utils/DCUtil.sol";
+import { RegistryAdapter } from "./RegistryAdapter.sol";
 import { Receiver } from "erc7579/core/Receiver.sol";
 import { AccessControl } from "./AccessControl.sol";
-import { CallType, CALLTYPE_SINGLE, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
-
-CallType constant CALLTYPE_STATIC = CallType.wrap(0xFE);
-
-struct FallbackHandler {
-    address handler;
-    CallType calltype;
-}
-
-struct ModuleManagerStorage {
-    // linked list of executors. List is initialized by initializeAccount()
-    SentinelListLib.SentinelList _executors;
-    mapping(bytes4 selector => FallbackHandler fallbackHandler) _fallbacks;
-}
+import { CallType, CALLTYPE_STATIC, CALLTYPE_SINGLE } from "../lib/ModeLib.sol";
+import {
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_HOOK
+} from "erc7579/interfaces/IERC7579Module.sol";
 
 /**
  * @title ModuleManager
  * Contract that implements ERC7579 Module compatibility for Safe accounts
  * @author zeroknots.eth | rhinestone.wtf
+ * @dev All Module types  are handled within this
+ * contract. To make it a bit easier to read, the contract is split into different sections:
+ * - Validator Modules
+ * - Executor Modules
+ * - Fallback Modules
+ * - Hook Modules
+ * Note: the Storage mappings for each section, are not listed on the very top, but in the
+ * respective section
  */
-abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
+abstract contract ModuleManager is ISafe7579, AccessControl, Receiver, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
 
-    error InvalidModule(address module);
-    error LinkedListError();
-    error CannotRemoveLastValidator();
-    error InitializerError();
-    error ValidatorStorageHelperError();
-    error NoFallbackHandler(bytes4 msgSig);
-    error InvalidFallbackHandler(bytes4 msgSig);
-    error FallbackInstalled(bytes4 msgSig);
-
-    mapping(address smartAccount => ModuleManagerStorage moduleManagerStorage) internal
-        $moduleManager;
-
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                     VALIDATOR MODULES                       */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    // No mapping account => list necessary. this sentinellist flavour handles associated storage to
+    // smart account itself to comply with 4337 storage restrictions
     SentinelList4337Lib.SentinelList internal $validators;
 
-    modifier onlyExecutorModule() {
-        if (!_isExecutorInstalled(_msgSender())) revert InvalidModule(_msgSender());
-        _;
-    }
-
-    /**
-     * Initializes linked list that handles installed Validator and Executor
-     */
-    function _initModuleManager() internal {
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        // this will revert if list is already initialized
-        $validators.init({ account: msg.sender });
-        $mms._executors.init();
-    }
-
-    /////////////////////////////////////////////////////
-    //  Manage Validators
-    ////////////////////////////////////////////////////
     /**
      * install and initialize validator module
      */
-    function _installValidator(address validator, bytes calldata data) internal virtual {
+    function _installValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        withRegistry(validator, MODULE_TYPE_VALIDATOR)
+        returns (bytes memory moduleInitData)
+    {
         $validators.push({ account: msg.sender, newEntry: validator });
-
-        // Initialize Validator Module via Safe
-        _execute({
-            safe: msg.sender,
-            target: validator,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (data))
-        });
+        return data;
     }
 
     /**
-     * Uninstall and de-initialize validator module
+     * Uninstall validator module
+     * @dev This function does not prevent the user from uninstalling all validator modules.
+     * Since the Safe7579 signature validation can fallback to Safe's checkSignature()
+     * function, it is okay, if all validator modules are removed.
+     * This does not brick the account
      */
-    function _uninstallValidator(address validator, bytes calldata data) internal {
-        (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
+    function _uninstallValidator(
+        address validator,
+        bytes calldata data
+    )
+        internal
+        returns (bytes memory moduleInitData)
+    {
+        address prev;
+        (prev, moduleInitData) = abi.decode(data, (address, bytes));
         $validators.pop({ account: msg.sender, prevEntry: prev, popEntry: validator });
-
-        // De-Initialize Validator Module via Safe
-        _execute({
-            safe: msg.sender,
-            target: validator,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
-        });
     }
 
     /**
@@ -127,38 +111,45 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         });
     }
 
-    /////////////////////////////////////////////////////
-    //  Manage Executors
-    ////////////////////////////////////////////////////
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      EXECUTOR MODULES                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    mapping(address smartAccount => SentinelListLib.SentinelList _executors) internal
+        $executorStorage;
 
-    function _installExecutor(address executor, bytes calldata data) internal {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
-        $executors.push(executor);
-        // Initialize Executor Module via Safe
-        _execute({
-            safe: msg.sender,
-            target: executor,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (data))
-        });
+    modifier onlyExecutorModule() {
+        if (!_isExecutorInstalled(_msgSender())) revert InvalidModule(_msgSender());
+        _;
     }
 
-    function _uninstallExecutor(address executor, bytes calldata data) internal {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
-        (address prev, bytes memory disableModuleData) = abi.decode(data, (address, bytes));
-        $executors.pop(prev, executor);
+    function _installExecutor(
+        address executor,
+        bytes calldata data
+    )
+        internal
+        withRegistry(executor, MODULE_TYPE_EXECUTOR)
+        returns (bytes memory moduleInitData)
+    {
+        SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
+        $executors.push(executor);
+        return data;
+    }
 
-        // De-Initialize Executor Module via Safe
-        _execute({
-            safe: msg.sender,
-            target: executor,
-            value: 0,
-            callData: abi.encodeCall(IModule.onUninstall, (disableModuleData))
-        });
+    function _uninstallExecutor(
+        address executor,
+        bytes calldata data
+    )
+        internal
+        returns (bytes memory moduleDeInitData)
+    {
+        SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
+        address prev;
+        (prev, moduleDeInitData) = abi.decode(data, (address, bytes));
+        $executors.pop(prev, executor);
     }
 
     function _isExecutorInstalled(address executor) internal view virtual returns (bool) {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
+        SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
         return $executors.contains(executor);
     }
 
@@ -171,14 +162,26 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         virtual
         returns (address[] memory array, address next)
     {
-        SentinelListLib.SentinelList storage $executors = $moduleManager[msg.sender]._executors;
+        SentinelListLib.SentinelList storage $executors = $executorStorage[msg.sender];
         return $executors.getEntriesPaginated(cursor, size);
     }
 
-    /////////////////////////////////////////////////////
-    //  Manage Fallback
-    ////////////////////////////////////////////////////
-    function _installFallbackHandler(address handler, bytes calldata params) internal virtual {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                      FALLBACK MODULES                      */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    mapping(address smartAccount => mapping(bytes4 selector => FallbackHandler handlerConfig))
+        internal $fallbackStorage;
+
+    function _installFallbackHandler(
+        address handler,
+        bytes calldata params
+    )
+        internal
+        virtual
+        withRegistry(handler, MODULE_TYPE_FALLBACK)
+        returns (bytes memory moduleInitData)
+    {
         (bytes4 functionSig, CallType calltype, bytes memory initData) =
             abi.decode(params, (bytes4, CallType, bytes));
 
@@ -189,41 +192,31 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
         ) revert InvalidFallbackHandler(functionSig);
         if (_isFallbackHandlerInstalled(functionSig)) revert FallbackInstalled(functionSig);
 
-        FallbackHandler storage $fallbacks = $moduleManager[msg.sender]._fallbacks[functionSig];
+        FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
         $fallbacks.calltype = calltype;
         $fallbacks.handler = handler;
 
-        _execute({
-            safe: msg.sender,
-            target: handler,
-            value: 0,
-            callData: abi.encodeCall(IModule.onInstall, (initData))
-        });
+        return initData;
     }
 
     function _isFallbackHandlerInstalled(bytes4 functionSig) internal view virtual returns (bool) {
-        FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
-        return $fallback.handler != address(0);
+        FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
+        return $fallbacks.handler != address(0);
     }
 
     function _uninstallFallbackHandler(
         address handler,
-        bytes calldata deInitData
+        bytes calldata context
     )
         internal
         virtual
+        returns (bytes memory moduleDeInitData)
     {
-        bytes4 functionSig = bytes4(deInitData[0:4]);
+        bytes4 functionSig;
+        (functionSig, moduleDeInitData) = abi.decode(context, (bytes4, bytes));
 
-        ModuleManagerStorage storage $mms = $moduleManager[msg.sender];
-        $mms._fallbacks[functionSig].handler = address(0);
-        // De-Initialize Fallback Module via Safe
-        _execute({
-            safe: msg.sender,
-            target: handler,
-            value: 0,
-            callData: abi.encodeWithSelector(IModule.onUninstall.selector, (deInitData[4:]))
-        });
+        FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
+        delete $fallbacks.handler;
     }
 
     function _isFallbackHandlerInstalled(
@@ -237,36 +230,298 @@ abstract contract ModuleManager is AccessControl, Receiver, ExecutionHelper {
     {
         bytes4 functionSig = abi.decode(additionalContext, (bytes4));
 
-        FallbackHandler storage $fallback = $moduleManager[msg.sender]._fallbacks[functionSig];
-        return $fallback.handler == _handler;
+        FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
+        return $fallbacks.handler == _handler;
     }
 
-    // FALLBACK
+    /**
+     * @dev AccessControl: any external contract / EOA may call this function
+     * Safe7579 Fallback supports the following feature set:
+     *    CallTypes:
+     *             - CALLTYPE_SINGLE
+     *             - CALLTYPE_BATCH
+     * @dev If a global hook and/or selector hook is set, it will be called
+     */
     // solhint-disable-next-line no-complex-fallback
     fallback(bytes calldata callData)
         external
         payable
+        virtual
         override(Receiver)
         receiverFallback
+        withHook(msg.sig)
         returns (bytes memory fallbackRet)
     {
-        FallbackHandler storage $fallbackHandler = $moduleManager[msg.sender]._fallbacks[msg.sig];
-        address handler = $fallbackHandler.handler;
-        CallType calltype = $fallbackHandler.calltype;
+        // using JUMPI to avoid stack too deep
+        return _callFallbackHandler(callData);
+    }
+
+    function _callFallbackHandler(bytes calldata callData)
+        private
+        returns (bytes memory fallbackRet)
+    {
+        // get handler for specific function selector
+        FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][msg.sig];
+        address handler = $fallbacks.handler;
+        CallType calltype = $fallbacks.calltype;
+        // if no handler is set for the msg.sig, revert
         if (handler == address(0)) revert NoFallbackHandler(msg.sig);
 
+        // according to ERC7579, when calling to fallback modules, ERC2771 msg.sender has to be
+        // appended to the calldata, this allows fallback modules to implement
+        // authorization control
         if (calltype == CALLTYPE_STATIC) {
-            return _executeStaticReturnData(
-                msg.sender, handler, 0, abi.encodePacked(callData, _msgSender())
-            );
+            return _staticcallReturn({
+                safe: ISafe(msg.sender),
+                target: handler,
+                callData: abi.encodePacked(callData, _msgSender()) // append ERC2771
+             });
         }
         if (calltype == CALLTYPE_SINGLE) {
-            return
-                _executeReturnData(msg.sender, handler, 0, abi.encodePacked(callData, _msgSender()));
+            return _execReturn({
+                safe: ISafe(msg.sender),
+                target: handler,
+                value: 0,
+                callData: abi.encodePacked(callData, _msgSender()) // append ERC2771
+             });
         }
-        // TODO: do we actually want this? security questionable...
-        if (calltype == CALLTYPE_DELEGATECALL) {
-            return _executeDelegateCallReturnData(msg.sender, handler, callData);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                        HOOK MODULES                        */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    mapping(address smartAccount => address globalHook) internal $globalHook;
+    mapping(address smartAccount => mapping(bytes4 => address hook)) internal $hookManager;
+
+    /**
+     * Run precheck hook for global and function selector specific
+     */
+    function _preHooks(
+        address globalHook,
+        address sigHook
+    )
+        internal
+        returns (bytes memory global, bytes memory sig)
+    {
+        if (globalHook != address(0)) {
+            global = _execReturn({
+                safe: ISafe(msg.sender),
+                target: globalHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.value, msg.data))
+            });
+            global = abi.decode(global, (bytes));
         }
+        if (sigHook != address(0)) {
+            sig = _execReturn({
+                safe: ISafe(msg.sender),
+                target: sigHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.value, msg.data))
+            });
+            sig = abi.decode(sig, (bytes));
+        }
+    }
+
+    // Run post hooks (global and function sig)
+    function _postHooks(
+        address globalHook,
+        address sigHook,
+        bytes memory global,
+        bytes memory sig
+    )
+        internal
+    {
+        if (globalHook != address(0)) {
+            _exec({
+                safe: ISafe(msg.sender),
+                target: globalHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.postCheck, (global))
+            });
+        }
+        if (sigHook != address(0)) {
+            _exec({
+                safe: ISafe(msg.sender),
+                target: sigHook,
+                value: 0,
+                callData: abi.encodeCall(IHook.postCheck, (sig))
+            });
+        }
+    }
+
+    /**
+     * modifier that executes global hook, and function signature specific hook if enabled
+     */
+    modifier withHook(bytes4 selector) {
+        address globalHook = $globalHook[msg.sender];
+        address sigHook = $hookManager[msg.sender][selector];
+        (bytes memory global, bytes memory sig) = _preHooks(globalHook, sigHook);
+        _;
+        _postHooks(globalHook, sigHook, global, sig);
+    }
+
+    function _installHook(
+        address hook,
+        bytes calldata data
+    )
+        internal
+        virtual
+        withRegistry(hook, MODULE_TYPE_HOOK)
+        returns (bytes memory moduleInitData)
+    {
+        (HookType hookType, bytes4 selector, bytes memory initData) =
+            abi.decode(data, (HookType, bytes4, bytes));
+        address currentHook;
+
+        // handle global hooks
+        if (hookType == HookType.GLOBAL && selector == 0x0) {
+            currentHook = $globalHook[msg.sender];
+            // Dont allow hooks to be overwritten. If a hook is currently installed, it must be
+            // uninstalled first
+            if (currentHook != address(0)) {
+                revert HookAlreadyInstalled(currentHook);
+            }
+            $globalHook[msg.sender] = hook;
+        } else if (hookType == HookType.SIG) {
+            // Dont allow hooks to be overwritten. If a hook is currently installed, it must be
+            // uninstalled first
+            if (currentHook != address(0)) {
+                revert HookAlreadyInstalled(currentHook);
+            }
+            currentHook = $hookManager[msg.sender][selector];
+            $hookManager[msg.sender][selector] = hook;
+        } else {
+            revert InvalidHookType();
+        }
+
+        return initData;
+    }
+
+    function _uninstallHook(
+        address hook,
+        bytes calldata data
+    )
+        internal
+        virtual
+        returns (bytes memory moduleDeInitData)
+    {
+        HookType hookType;
+        bytes4 selector;
+        (hookType, selector, moduleDeInitData) = abi.decode(data, (HookType, bytes4, bytes));
+        if (hookType == HookType.GLOBAL && selector == 0x0) {
+            delete $globalHook[msg.sender];
+        } else if (hookType == HookType.SIG) {
+            delete $hookManager[msg.sender][selector];
+        } else {
+            revert InvalidHookType();
+        }
+    }
+
+    function _getCurrentHook(
+        HookType hookType,
+        bytes4 selector
+    )
+        internal
+        view
+        returns (address hook)
+    {
+        // handle global hooks
+        if (hookType == HookType.GLOBAL && selector == 0x0) {
+            hook = $globalHook[msg.sender];
+        }
+        if (hookType == HookType.SIG) {
+            hook = $hookManager[msg.sender][selector];
+        }
+    }
+
+    function _isHookInstalled(
+        address module,
+        bytes calldata context
+    )
+        internal
+        view
+        returns (bool)
+    {
+        (HookType hookType, bytes4 selector) = abi.decode(context, (HookType, bytes4));
+        address hook = _getCurrentHook({ hookType: hookType, selector: selector });
+        return hook == module;
+    }
+
+    function getActiveHook(bytes4 selector) public view returns (address hook) {
+        return $hookManager[msg.sender][selector];
+    }
+
+    function getActiveHook() public view returns (address hook) {
+        return $globalHook[msg.sender];
+    }
+
+    // solhint-disable-next-line code-complexity
+    function _multiTypeInstall(
+        address module,
+        bytes calldata initData
+    )
+        internal
+        returns (bytes memory _moduleInitData)
+    {
+        uint256[] calldata types;
+        bytes[] calldata contexts;
+        bytes calldata moduleInitData;
+
+        // equivalent of:
+        // (types, contexs, moduleInitData) = abi.decode(initData,(uint[],bytes[],bytes)
+        // solhint-disable-next-line no-inline-assembly
+        assembly ("memory-safe") {
+            let offset := initData.offset
+            let baseOffset := offset
+            let dataPointer := add(baseOffset, calldataload(offset))
+
+            types.offset := add(dataPointer, 32)
+            types.length := calldataload(dataPointer)
+            offset := add(offset, 32)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            contexts.offset := add(dataPointer, 32)
+            contexts.length := calldataload(dataPointer)
+            offset := add(offset, 32)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            moduleInitData.offset := add(dataPointer, 32)
+            moduleInitData.length := calldataload(dataPointer)
+        }
+
+        uint256 length = types.length;
+        if (contexts.length != length) revert InvalidInput();
+
+        for (uint256 i; i < length; i++) {
+            uint256 _type = types[i];
+
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                      INSTALL VALIDATORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            if (_type == MODULE_TYPE_VALIDATOR) {
+                _installValidator(module, contexts[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL EXECUTORS                    */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_EXECUTOR) {
+                _installExecutor(module, contexts[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*                       INSTALL FALLBACK                     */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_FALLBACK) {
+                _installFallbackHandler(module, contexts[i]);
+            }
+            /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+            /*          INSTALL HOOK (global or sig specific)             */
+            /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+            else if (_type == MODULE_TYPE_HOOK) {
+                _installHook(module, contexts[i]);
+            }
+        }
+        _moduleInitData = moduleInitData;
     }
 }

@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.23;
 
 import { HandlerContext } from "@safe-global/safe-contracts/contracts/handler/HandlerContext.sol";
 import { AccountBase } from "erc7579/core/AccountBase.sol";
 
-contract AccessControl is HandlerContext, AccountBase {
+/**
+ * Implements AccessControl for Safe7579 adapter.
+ * Since Safe7579 Adapter is installed as a fallback handler on the safe account, we are making use
+ * of handlercontext (ERC2771)
+ * @author zeroknots.eth | rhinestone.wtf
+ */
+abstract contract AccessControl is HandlerContext, AccountBase {
     modifier onlyEntryPointOrSelf() virtual override {
         if (!(_msgSender() == entryPoint() || msg.sender == _msgSender())) {
             revert AccountAccessUnauthorized();
@@ -12,7 +18,7 @@ contract AccessControl is HandlerContext, AccountBase {
         _;
     }
 
-    modifier onlyEntryPoint() virtual {
+    modifier onlyEntryPoint() virtual override {
         if (_msgSender() != entryPoint()) {
             revert AccountAccessUnauthorized();
         }
