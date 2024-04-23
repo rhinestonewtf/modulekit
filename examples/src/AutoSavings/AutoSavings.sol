@@ -27,6 +27,7 @@ contract AutoSavings is ERC7579ExecutorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     error TooManyTokens();
+    error InvalidSqrtPriceLimitX96();
 
     uint256 internal constant MAX_TOKENS = 100;
 
@@ -79,6 +80,12 @@ contract AutoSavings is ERC7579ExecutorBase {
         for (uint256 i; i < tokenLength; i++) {
             address _token = _tokens[i];
 
+            // check that sqrtPriceLimitX96 > 0
+            // sqrtPriceLimitX96 = 0 means unlimitted slippage
+            if (_configs[i].sqrtPriceLimitX96 == 0) {
+                revert InvalidSqrtPriceLimitX96();
+            }
+
             config[account][_token] = _configs[i];
             tokens[account].push(_token);
         }
@@ -128,7 +135,11 @@ contract AutoSavings is ERC7579ExecutorBase {
         // check if the module is not initialized and revert if it is not
         if (!isInitialized(account)) revert NotInitialized(account);
 
-        // TODO check for min / max sqrtPriceLimitX96
+        // check that sqrtPriceLimitX96 > 0
+        // sqrtPriceLimitX96 = 0 means unlimitted slippage
+        if (_config.sqrtPriceLimitX96 == 0) {
+            revert InvalidSqrtPriceLimitX96();
+        }
 
         // set the configuration for the token
         config[account][token] = _config;
