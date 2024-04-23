@@ -2,10 +2,11 @@
 pragma solidity ^0.8.22;
 
 import { IAccount, PackedUserOperation } from "account-abstraction/interfaces/IAccount.sol";
-import { ISafe } from "../interfaces/ISafe.sol";
-import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
-import { IERC7484 } from "../interfaces/IERC7484.sol";
-import { SafeERC7579 } from "../SafeERC7579.sol";
+import { ISafe } from "./interfaces/ISafe.sol";
+import { ISafe7579 } from "./ISafe7579.sol";
+import { IERC7484 } from "./interfaces/IERC7484.sol";
+import "./DataTypes.sol";
+import { Safe7579 } from "./Safe7579.sol";
 
 import { IValidator } from "erc7579/interfaces/IERC7579Module.sol";
 
@@ -13,6 +14,7 @@ import { SafeStorage } from "@safe-global/safe-contracts/contracts/libraries/Saf
 
 /**
  * Launchpad to deploy a Safe account and connect the Safe7579 adapter.
+ * Check Readme.md for more information.
  * Special thanks to [nlordell (Safe)](https://github.com/nlordell), who came up with [this
  * technique](https://github.com/safe-global/safe-modules/pull/184)
  * @author rhinestone | zeroknots.eth
@@ -36,14 +38,14 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         uint256 threshold;
         address setupTo;
         bytes setupData;
-        address safe7579;
-        ISafe7579Init.ModuleInit[] validators;
+        ISafe7579 safe7579;
+        ModuleInit[] validators;
         bytes callData;
     }
 
     // solhint-disable max-line-length
     bytes32 private constant SAFE_INIT_TYPEHASH = keccak256(
-        "InitData(address singleton,address[] owners,uint256 threshold,address setupTo,bytes setupData,address safe7579,ISafe7579Init.ModuleInit[] validators,bytes callData)"
+        "InitData(address singleton,address[] owners,uint256 threshold,address setupTo,bytes setupData,address safe7579,ModuleInit[] validators,bytes callData)"
     );
 
     address private immutable SELF;
@@ -89,9 +91,9 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
      */
     function initSafe7579(
         address safe7579,
-        ISafe7579Init.ModuleInit[] calldata executors,
-        ISafe7579Init.ModuleInit[] calldata fallbacks,
-        ISafe7579Init.ModuleInit[] calldata hooks,
+        ModuleInit[] calldata executors,
+        ModuleInit[] calldata fallbacks,
+        ModuleInit[] calldata hooks,
         address[] calldata attesters,
         uint8 threshold
     )
@@ -99,16 +101,12 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         onlyDelegatecall
     {
         ISafe(address(this)).enableModule(safe7579);
-        SafeERC7579(payable(safe7579)).initializeAccount({
-            validators: new ISafe7579Init.ModuleInit[](0),
+        ISafe7579(payable(safe7579)).initializeAccount({
+            validators: new ModuleInit[](0),
             executors: executors,
             fallbacks: fallbacks,
             hooks: hooks,
-            registryInit: ISafe7579Init.RegistryInit({
-                registry: REGISTRY,
-                attesters: attesters,
-                threshold: threshold
-            })
+            registryInit: RegistryInit({ registry: REGISTRY, attesters: attesters, threshold: threshold })
         });
     }
 
@@ -185,7 +183,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
         }
 
         // initialize validator on behalf of the safe account
-        ISafe7579Init(initData.safe7579).launchpadValidators(initData.validators);
+        ISafe7579(initData.safe7579).launchpadValidators(initData.validators);
 
         // Call onInstall on each validator module to set up the validators.
         // Since this function is delegatecalled by the SafeProxy, the Validator Module is called
@@ -239,7 +237,7 @@ contract Safe7579Launchpad is IAccount, SafeStorage {
             _threshold: initData.threshold,
             to: initData.setupTo,
             data: initData.setupData,
-            fallbackHandler: initData.safe7579,
+            fallbackHandler: address(initData.safe7579),
             paymentToken: address(0),
             payment: 0,
             paymentReceiver: payable(address(0))

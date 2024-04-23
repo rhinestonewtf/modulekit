@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./Base.t.sol";
 // import "src/lib/ModeLib.sol";
-import { CALLTYPE_SINGLE, ModuleManager } from "src/core/ModuleManager.sol";
+import { ModuleManager } from "src/core/ModuleManager.sol";
+
+import { CALLTYPE_SINGLE, CALLTYPE_BATCH, CALLTYPE_DELEGATECALL } from "erc7579/lib/ModeLib.sol";
 
 contract ModuleManagementTest is BaseTest {
     bytes _data;
@@ -52,32 +54,20 @@ contract ModuleManagementTest is BaseTest {
         assertFalse(account.isModuleInstalled(3, SELF, abi.encode(selector)));
     }
 
-    function _installHook(
-        ModuleManager.HookType hookType,
-        bytes4 selector,
-        bytes memory initData
-    )
-        public
-    {
+    function _installHook(HookType hookType, bytes4 selector, bytes memory initData) public {
         bytes memory data = abi.encode(hookType, selector, initData);
         account.installModule(4, SELF, data);
         assertTrue(account.isModuleInstalled(4, SELF, abi.encode(hookType, selector)));
     }
 
-    function _uninstallHook(
-        ModuleManager.HookType hookType,
-        bytes4 selector,
-        bytes memory initData
-    )
-        public
-    {
+    function _uninstallHook(HookType hookType, bytes4 selector, bytes memory initData) public {
         bytes memory data = abi.encode(hookType, selector, initData);
         account.uninstallModule(4, SELF, data);
         assertFalse(account.isModuleInstalled(4, SELF, abi.encode(hookType, selector)));
     }
 
     function test_WhenInstallingHooks_SIG() external asEntryPoint {
-        ModuleManager.HookType hookType = ModuleManager.HookType.SIG;
+        HookType hookType = HookType.SIG;
         bytes4 selector = MockTarget.set.selector;
         _data = hex"4141414141414141";
 
@@ -86,7 +76,7 @@ contract ModuleManagementTest is BaseTest {
     }
 
     function test_WhenInstallingHooks_GLOBAL() external asEntryPoint {
-        ModuleManager.HookType hookType = ModuleManager.HookType.GLOBAL;
+        HookType hookType = HookType.GLOBAL;
         bytes4 selector = 0x00000000;
         _data = hex"4141414141414141";
 

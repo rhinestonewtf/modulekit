@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ISafe7579Init } from "../interfaces/ISafe7579Init.sol";
+import { ISafe7579 } from "../ISafe7579.sol";
+import "../DataTypes.sol";
 import { ModuleManager } from "./ModuleManager.sol";
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
@@ -9,8 +10,9 @@ import { SentinelListLib } from "sentinellist/SentinelList.sol";
 
 /**
  * Functions that can be used to initialze Safe7579 for a Safe Account
+ * @author zeroknots.eth | rhinestone.wtf
  */
-abstract contract Initializer is ISafe7579Init, ModuleManager {
+abstract contract Initializer is ISafe7579, ModuleManager {
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
     using SentinelListLib for SentinelListLib.SentinelList;
 
@@ -19,12 +21,7 @@ abstract contract Initializer is ISafe7579Init, ModuleManager {
     error InvalidInitData(address safe);
 
     /**
-     * This function is intended to be called by Launchpad.validateUserOp()
-     * @dev it will initialize the SentinelList4337 list for validators, and sstore all
-     * validators
-     * @dev Since this function has to be 4337 compliant (storage access), only validator storage is  acccess
-     * @dev Note: this function DOES NOT call onInstall() on the validator modules or emit
-     * ModuleInstalled events. this has to be done by the launchpad
+     * @inheritdoc ISafe7579
      */
     function launchpadValidators(ModuleInit[] calldata validators) external payable override {
         // this will revert if already initialized
@@ -40,18 +37,7 @@ abstract contract Initializer is ISafe7579Init, ModuleManager {
     }
 
     /**
-     * This function can be called by the Launchpad.initSafe7579() or by already existing Safes that
-     * want to use Safe7579
-     * if this is called by the Launchpad, it is expected that launchpadValidators() was called
-     * previously, and the param validators is empty
-     * @param validators validator modules and initData
-     * @param executors executor modules and initData
-     * @param executors executor modules and initData
-     * @param fallbacks fallback modules and initData
-     * @param hooks hook module and initData
-     * @param registryInit (OPTIONAL) registry, attesters and threshold for IERC7484 Registry
-     *                    If not provided, the registry will be set to the zero address, and no
-     *                    registry checks will be performed
+     * @inheritdoc ISafe7579
      */
     function initializeAccount(
         ModuleInit[] calldata validators,
@@ -68,6 +54,10 @@ abstract contract Initializer is ISafe7579Init, ModuleManager {
         _initModules(validators, executors, fallbacks, hooks);
     }
 
+    /**
+     * _initModules may be used via launchpad deploymet or directly by already deployed Safe
+     * accounts
+     */
     function _initModules(
         ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,
@@ -77,7 +67,6 @@ abstract contract Initializer is ISafe7579Init, ModuleManager {
         internal
     {
         uint256 length = validators.length;
-        // _initModules may be used via launchpad or directly by already deployed Safe accounts
         // if this function is called by the launchpad, validators will be initialized via
         // launchpadValidators()
         // to avoid double initialization, we check if the validators are already initialized
@@ -120,6 +109,9 @@ abstract contract Initializer is ISafe7579Init, ModuleManager {
         emit Safe7579Initialized(msg.sender);
     }
 
+    /**
+     * @inheritdoc ISafe7579
+     */
     function setRegistry(
         IERC7484 registry,
         address[] calldata attesters,

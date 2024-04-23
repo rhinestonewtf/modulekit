@@ -3,7 +3,10 @@ pragma solidity ^0.8.25;
 
 import { Safe7579DCUtil } from "../utils/DCUtil.sol";
 
-contract Safe7579DCUtilSetup {
+/**
+ * Deployes Safe7579DCUtil
+ */
+abstract contract Safe7579DCUtilSetup {
     address internal UTIL;
 
     constructor() {

@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import "../Launchpad.t.sol";
-import "erc7579/interfaces/IERC7579Account.sol";
+import { IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
+import { ModeLib } from "erc7579/lib/ModeLib.sol";
 
 contract MockModule is IModule {
     bool initialized;

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.25;
 
 import { IERC7579Account, Execution } from "./interfaces/IERC7579Account.sol";
 import {
@@ -26,13 +26,13 @@ import { AccessControl } from "./core/AccessControl.sol";
 import { Initializer } from "./core/Initializer.sol";
 import { ISafeOp, SAFE_OP_TYPEHASH } from "./interfaces/ISafeOp.sol";
 import { ISafe } from "./interfaces/ISafe.sol";
+import { ISafe7579 } from "./ISafe7579.sol";
 import {
     PackedUserOperation,
     UserOperationLib
 } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { _packValidationData } from "@ERC4337/account-abstraction/contracts/core/Helpers.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { ISafe7579Init } from "./interfaces/ISafe7579Init.sol";
 import { IERC1271 } from "./interfaces/IERC1271.sol";
 
 uint256 constant MULTITYPE_MODULE = 0;
@@ -50,12 +50,10 @@ uint256 constant MULTITYPE_MODULE = 0;
  * event emissions to be done via the SafeProxy as msg.sender using Safe's
  * "executeTransactionFromModule" features.
  */
-contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC7579Account {
+contract Safe7579 is ISafe7579, ISafeOp, AccessControl, Initializer {
     using UserOperationLib for PackedUserOperation;
     using ModeLib for ModeCode;
     using ExecutionLib for bytes;
-
-    error Unsupported();
 
     bytes32 private constant DOMAIN_SEPARATOR_TYPEHASH =
         0x47e79534a245952e8b16893a336b85a3d9ea9fa8c573f3d803afb92a79469218;
@@ -67,21 +65,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     bytes4 private constant SAFE_SIGNATURE_MAGIC_VALUE = 0x5fd7e97d;
 
     /**
-     * @dev Executes a transaction on behalf of the Safe account.
-     *         This function is intended to be called by ERC-4337 EntryPoint.sol
-     * @dev If a global hook and/or selector hook is set, it will be called
-     * @dev AccessControl: only Self of Entrypoint can install modules
-     * SafeERC7579 supports the following feature set:
-     *    CallTypes:
-     *             - CALLTYPE_SINGLE
-     *             - CALLTYPE_BATCH
-     *             - CALLTYPE_DELEGATECALL
-     *    ExecTypes:
-     *             - EXECTYPE_DEFAULT (revert if not successful)
-     *             - EXECTYPE_TRY
-     *    If a different mode is selected, this function will revert
-     * @param mode The encoded execution mode of the transaction. See ModeLib.sol for details
-     * @param executionCalldata The encoded execution call data
+     * @inheritdoc ISafe7579
      */
     function execute(
         ModeCode mode,
@@ -162,21 +146,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @dev Executes a transaction on behalf of the Safe account.
-     *         This function is intended to be called by executor modules
-     * @dev If a global hook and/or selector hook is set, it will be called
-     * @dev AccessControl: only enabled executor modules
-     * SafeERC7579 supports the following feature set:
-     *    CallTypes:
-     *             - CALLTYPE_SINGLE
-     *             - CALLTYPE_BATCH
-     *             - CALLTYPE_DELEGATECALL
-     *    ExecTypes:
-     *             - EXECTYPE_DEFAULT (revert if not successful)
-     *             - EXECTYPE_TRY
-     *    If a different mode is selected, this function will revert
-     * @param mode The encoded execution mode of the transaction. See ModeLib.sol for details
-     * @param executionCalldata The encoded execution call data
+     * @inheritdoc ISafe7579
      */
     function executeFromExecutor(
         ModeCode mode,
@@ -281,10 +251,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * ERC4337 v0.7 validation function
-     * @dev expects that a ERC7579 validator module is encoded within the UserOp nonce.
-     *         if no validator module is provided, it will fallback to validate the transaction with
-     *         Safe's signers
+     * @inheritdoc ISafe7579
      */
     function validateUserOp(
         PackedUserOperation calldata userOp,
@@ -356,13 +323,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * Will use Safe's signed messages or checkSignatures features or ERC7579 validation modules
-     * if no signature is provided, it makes use of Safe's signedMessages
-     * if address(0) or a non-installed validator module is provided, it will use Safe's
-     * checkSignatures
-     * if a valid validator module is provided, it will use the module's validateUserOp function
-     *    @param hash message hash of ERC1271 request
-     *    @param data abi.encodePacked(address validationModule, bytes signatures)
+     * @inheritdoc ISafe7579
      */
     function isValidSignature(
         bytes32 hash,
@@ -406,19 +367,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * Installs a 7579 Module of a certain type on the smart account
-     * @dev The module has to be initialized from msg.sender == SafeProxy, we thus use a
-     *    delegatecall to DCUtil, which calls the onInstall/onUninstall function on the ERC7579
-     *    module and emits the ModuleInstall/ModuleUnintall events
-     * @dev AccessControl: only Self of Entrypoint can install modules
-     * @dev If the safe set a registry, ERC7484 registry will be queried before installing
-     * @dev If a global hook and/or selector hook is set, it will be called
-     * @param moduleType the module type ID according the ERC-7579 spec
-     *                   Note: MULTITYPE_MODULE (uint(0)) is a special type to install a module with
-     *                         multiple types
-     * @param module the module address
-     * @param initData arbitrary data that may be required on the module during `onInstall`
-     * initialization.
+     * @inheritdoc ISafe7579
      */
     function installModule(
         uint256 moduleType,
@@ -459,16 +408,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * Uninstalls a Module of a certain type on the smart account.
-     * @dev The module has to be initialized from msg.sender == SafeProxy, we thus use a
-     *    delegatecall to DCUtil, which calls the onInstall/onUninstall function on the ERC7579
-     *    module and emits the ModuleInstall/ModuleUnintall events
-     * @dev AccessControl: only Self of Entrypoint can install modules
-     * @dev If a global hook and/or selector hook is set, it will be called
-     * @param moduleType the module type ID according the ERC-7579 spec
-     * @param module the module address
-     * @param deInitData arbitrary data that may be required on the module during `onUninstall`
-     * de-initialization.
+     * @inheritdoc ISafe7579
      */
     function uninstallModule(
         uint256 moduleType,
@@ -509,14 +449,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * SafeERC7579 supports the following feature set:
-     *    CallTypes:
-     *             - CALLTYPE_SINGLE
-     *             - CALLTYPE_BATCH
-     *             - CALLTYPE_DELEGATECALL
-     *    ExecTypes:
-     *             - EXECTYPE_DEFAULT (revert if not successful)
-     *             - EXECTYPE_TRY
+     * @inheritdoc ISafe7579
      */
     function supportsExecutionMode(ModeCode encodedMode)
         external
@@ -542,8 +475,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * Function to check if the account supports installation of a certain module type Id
-     * @param moduleTypeId the module type ID according the ERC-7579 spec
+     * @inheritdoc ISafe7579
      */
     function supportsModule(uint256 moduleTypeId) external pure override returns (bool) {
         if (moduleTypeId == MODULE_TYPE_VALIDATOR) return true;
@@ -554,15 +486,7 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * Function to check if the account has a certain module installed
-     * @param moduleType the module type ID according the ERC-7579 spec
-     *      Note: keep in mind that some contracts can be multiple module types at the same time. It
-     *            thus may be necessary to query multiple module types
-     * @param module the module address
-     * @param additionalContext additional context data that the smart account may interpret to
-     *                          identifiy conditions under which the module is installed.
-     *                          usually this is not necessary, but for some special hooks that
-     *                          are stored in mappings, this param might be needed
+     * @inheritdoc ISafe7579
      */
     function isModuleInstalled(
         uint256 moduleType,
@@ -571,7 +495,6 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     )
         external
         view
-        override
         returns (bool)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -588,9 +511,9 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * @dev Returns the 7579 account id of the smart account
+     * @inheritdoc ISafe7579
      */
-    function accountId() external view override returns (string memory accountImplementationId) {
+    function accountId() external view returns (string memory accountImplementationId) {
         string memory safeVersion = ISafe(msg.sender).VERSION();
         return string(abi.encodePacked("safe-", safeVersion, ".erc7579.v0.0.1"));
     }
@@ -674,16 +597,14 @@ contract SafeERC7579 is ISafeOp, ISafe7579Init, AccessControl, Initializer, IERC
     }
 
     /**
-     * Domain Separator for EIP-712.
+     * @inheritdoc ISafe7579
      */
     function domainSeparator() public view returns (bytes32) {
         return keccak256(abi.encode(DOMAIN_SEPARATOR_TYPEHASH, block.chainid, this));
     }
 
     /**
-     * Safe7579 is using validator selection encoding in the userop nonce.
-     * to make it easier for SDKs / devs to integrate, this function can be
-     * called to get the next nonce for a specific validator
+     * @inheritdoc ISafe7579
      */
     function getNonce(address safe, address validator) external view returns (uint256 nonce) {
         uint192 key = uint192(bytes24(bytes20(address(validator))));

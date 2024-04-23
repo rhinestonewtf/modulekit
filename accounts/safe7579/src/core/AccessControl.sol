@@ -8,8 +8,9 @@ import { AccountBase } from "erc7579/core/AccountBase.sol";
  * Implements AccessControl for Safe7579 adapter.
  * Since Safe7579 Adapter is installed as a fallback handler on the safe account, we are making use
  * of handlercontext (ERC2771)
+ * @author zeroknots.eth | rhinestone.wtf
  */
-contract AccessControl is HandlerContext, AccountBase {
+abstract contract AccessControl is HandlerContext, AccountBase {
     modifier onlyEntryPointOrSelf() virtual override {
         if (!(_msgSender() == entryPoint() || msg.sender == _msgSender())) {
             revert AccountAccessUnauthorized();
@@ -18,7 +19,6 @@ contract AccessControl is HandlerContext, AccountBase {
     }
 
     modifier onlyEntryPoint() virtual override {
-
         if (_msgSender() != entryPoint()) {
             revert AccountAccessUnauthorized();
         }

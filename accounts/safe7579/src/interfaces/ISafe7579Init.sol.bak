@@ -2,19 +2,9 @@
 pragma solidity ^0.8.23;
 
 import { IERC7484 } from "./IERC7484.sol";
+import "./DataTypes.sol";
 
-interface ISafe7579Init {
-    struct ModuleInit {
-        address module;
-        bytes initData;
-    }
-
-    struct RegistryInit {
-        IERC7484 registry;
-        address[] attesters;
-        uint8 threshold;
-    }
-
+interface ISafe7579 {
     function initializeAccount(
         ModuleInit[] calldata validators,
         ModuleInit[] calldata executors,

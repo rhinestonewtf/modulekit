@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ModuleManagement.t.sol";
-// import "src/lib/ModeLib.sol";
+import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import "forge-std/console2.sol";
 
 interface MockFn {
@@ -67,7 +67,7 @@ contract HookTest is BaseTest, MockFn {
         _caller = address(entrypoint);
         vm.startPrank(address(entrypoint));
 
-        bytes memory data = abi.encode(ModuleManager.HookType.GLOBAL, 0x0, _data);
+        bytes memory data = abi.encode(HookType.GLOBAL, 0x0, _data);
         account.installModule(4, SELF, data);
 
         bytes memory setValueOnTarget = abi.encodeCall(MockTarget.set, 1337);
@@ -85,7 +85,7 @@ contract HookTest is BaseTest, MockFn {
         // installing this test as an executor
         account.installModule(2, SELF, _data);
 
-        bytes memory data = abi.encode(ModuleManager.HookType.GLOBAL, 0x0, _data);
+        bytes memory data = abi.encode(HookType.GLOBAL, 0x0, _data);
         account.installModule(4, SELF, data);
 
         vm.stopPrank();
@@ -105,9 +105,9 @@ contract HookTest is BaseTest, MockFn {
         // installing fallback
         account.installModule(3, SELF, abi.encode(this.fallbackFn.selector, CALLTYPE_SINGLE, _data));
 
-        bytes memory data = abi.encode(ModuleManager.HookType.SIG, this.fallbackFn.selector, _data);
+        bytes memory data = abi.encode(HookType.SIG, this.fallbackFn.selector, _data);
         account.installModule(4, SELF, data);
-        data = abi.encode(ModuleManager.HookType.GLOBAL, 0x0, _data);
+        data = abi.encode(HookType.GLOBAL, 0x0, _data);
         account.installModule(4, SELF, data);
         vm.stopPrank();
 
@@ -123,10 +123,9 @@ contract HookTest is BaseTest, MockFn {
         _caller = address(entrypoint);
         vm.startPrank(address(entrypoint));
 
-        bytes memory data =
-            abi.encode(ModuleManager.HookType.SIG, IERC7579Account.installModule.selector, _data);
+        bytes memory data = abi.encode(HookType.SIG, IERC7579Account.installModule.selector, _data);
         account.installModule(4, SELF, data);
-        data = abi.encode(ModuleManager.HookType.GLOBAL, 0x0, _data);
+        data = abi.encode(HookType.GLOBAL, 0x0, _data);
         account.installModule(4, SELF, data);
 
         // installing fallback

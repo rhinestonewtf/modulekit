@@ -4,15 +4,15 @@ pragma solidity ^0.8.23;
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
+import { ISafe7579 } from "../ISafe7579.sol";
 
 /**
  * IERC7484 Registry adapter.
  * this feature is opt-in. The smart account owner can choose to use the registry and which
  * attesters to trust.
+ * @author zeroknots.eth | rhinestone.wtf
  */
-abstract contract RegistryAdapter is ExecutionHelper {
-    event ERC7484RegistryConfigured(address indexed smartAccount, IERC7484 indexed registry);
-
+abstract contract RegistryAdapter is ISafe7579, ExecutionHelper {
     mapping(address smartAccount => IERC7484 registry) internal $registry;
 
     modifier withRegistry(address module, uint256 moduleType) {

@@ -2,7 +2,10 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
-import { SafeERC7579 } from "src/SafeERC7579.sol";
+import { Safe7579 } from "src/Safe7579.sol";
+import { ISafe7579 } from "src/ISafe7579.sol";
+import { IERC7484 } from "src/interfaces/IERC7484.sol";
+import "src/DataTypes.sol";
 import { ModuleManager } from "src/core/ModuleManager.sol";
 import { MockValidator } from "./mocks/MockValidator.sol";
 import { MockRegistry } from "./mocks/MockRegistry.sol";
@@ -19,14 +22,13 @@ import {
     SafeProxyFactory
 } from "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 import { LibClone } from "solady/utils/LibClone.sol";
-import "src/utils/Launchpad.sol";
-import "src/interfaces/ISafe7579Init.sol";
+import { Safe7579Launchpad } from "src/Safe7579Launchpad.sol";
 
 import { Solarray } from "solarray/Solarray.sol";
 import "./dependencies/EntryPoint.sol";
 
 contract LaunchpadBase is Test {
-    SafeERC7579 safe7579;
+    Safe7579 safe7579;
     Safe singleton;
     Safe safe;
     SafeProxyFactory safeProxyFactory;
@@ -58,7 +60,7 @@ contract LaunchpadBase is Test {
         singleton = new Safe();
         safeProxyFactory = new SafeProxyFactory();
         registry = new MockRegistry();
-        safe7579 = new SafeERC7579();
+        safe7579 = new Safe7579();
         launchpad = new Safe7579Launchpad(address(entrypoint), registry);
 
         // Set up Modules
@@ -68,14 +70,12 @@ contract LaunchpadBase is Test {
 
         bytes32 salt;
 
-        ISafe7579Init.ModuleInit[] memory validators = new ISafe7579Init.ModuleInit[](1);
-        validators[0] =
-            ISafe7579Init.ModuleInit({ module: address(defaultValidator), initData: bytes("") });
-        ISafe7579Init.ModuleInit[] memory executors = new ISafe7579Init.ModuleInit[](1);
-        executors[0] =
-            ISafe7579Init.ModuleInit({ module: address(defaultExecutor), initData: bytes("") });
-        ISafe7579Init.ModuleInit[] memory fallbacks = new ISafe7579Init.ModuleInit[](0);
-        ISafe7579Init.ModuleInit[] memory hooks = new ISafe7579Init.ModuleInit[](0);
+        ModuleInit[] memory validators = new ModuleInit[](1);
+        validators[0] = ModuleInit({ module: address(defaultValidator), initData: bytes("") });
+        ModuleInit[] memory executors = new ModuleInit[](1);
+        executors[0] = ModuleInit({ module: address(defaultExecutor), initData: bytes("") });
+        ModuleInit[] memory fallbacks = new ModuleInit[](0);
+        ModuleInit[] memory hooks = new ModuleInit[](0);
 
         Safe7579Launchpad.InitData memory initData = Safe7579Launchpad.InitData({
             singleton: address(singleton),
@@ -93,7 +93,7 @@ contract LaunchpadBase is Test {
                     2
                 )
             ),
-            safe7579: address(safe7579),
+            safe7579: ISafe7579(safe7579),
             validators: validators,
             callData: abi.encodeCall(
                 IERC7579Account.execute,

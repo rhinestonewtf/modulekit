@@ -2,7 +2,18 @@
 pragma solidity ^0.8.0;
 
 import "./Base.t.sol";
-import "erc7579/lib/ModeLib.sol";
+import {
+    ExecType,
+    ModeCode,
+    ModeLib,
+    ModePayload,
+    MODE_DEFAULT,
+    EXECTYPE_DEFAULT,
+    EXECTYPE_TRY,
+    CALLTYPE_SINGLE,
+    CALLTYPE_BATCH,
+    CALLTYPE_DELEGATECALL
+} from "erc7579/lib/ModeLib.sol";
 
 contract Executions4337Test is BaseTest {
     function setUp() public virtual override {

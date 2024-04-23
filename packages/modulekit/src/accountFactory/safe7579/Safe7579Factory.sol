@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Base.sol";
-import { SafeERC7579 } from "@rhinestone/safe7579/src/SafeERC7579.sol";
+import { Safe7579 } from "@rhinestone/safe7579/src/Safe7579.sol";
 import "@safe-global/safe-contracts/contracts/Safe.sol";
 import { LibClone } from "solady/src/utils/LibClone.sol";
 
@@ -11,14 +11,14 @@ import { BootstrapSafe } from "./BootstrapSafe.sol";
 abstract contract Safe7579Factory is TestBase {
     // singletons
 
-    SafeERC7579 internal erc7579Mod;
+    Safe7579 internal erc7579Mod;
     Safe internal safeImpl;
 
     BootstrapSafe internal bootstrapSafe;
 
     constructor() {
         // Set up MSA and Factory
-        erc7579Mod = new SafeERC7579();
+        erc7579Mod = new Safe7579();
         safeImpl = new Safe();
         bootstrapSafe = new BootstrapSafe();
     }

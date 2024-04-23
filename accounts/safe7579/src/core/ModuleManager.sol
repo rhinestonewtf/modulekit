@@ -5,6 +5,8 @@ import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
 import { IModule, IHook } from "../interfaces/IERC7579Module.sol";
 import { ISafe } from "../interfaces/ISafe.sol";
+import { ISafe7579 } from "../ISafe7579.sol";
+import "../DataTypes.sol";
 
 import { ModuleInstallUtil } from "../utils/DCUtil.sol";
 import { RegistryAdapter } from "./RegistryAdapter.sol";
@@ -31,15 +33,9 @@ import {
  * Note: the Storage mappings for each section, are not listed on the very top, but in the
  * respective section
  */
-abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
+abstract contract ModuleManager is ISafe7579, AccessControl, Receiver, RegistryAdapter {
     using SentinelListLib for SentinelListLib.SentinelList;
     using SentinelList4337Lib for SentinelList4337Lib.SentinelList;
-
-    error InvalidModule(address module);
-    error LinkedListError();
-    error InitializerError();
-    error ValidatorStorageHelperError();
-    error InvalidInput();
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                     VALIDATOR MODULES                       */
@@ -173,14 +169,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                      FALLBACK MODULES                      */
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-    error NoFallbackHandler(bytes4 msgSig);
-    error InvalidFallbackHandler(bytes4 msgSig);
-    error FallbackInstalled(bytes4 msgSig);
-
-    struct FallbackHandler {
-        address handler;
-        CallType calltype;
-    }
 
     mapping(address smartAccount => mapping(bytes4 selector => FallbackHandler handlerConfig))
         internal $fallbackStorage;
@@ -229,7 +217,6 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
         FallbackHandler storage $fallbacks = $fallbackStorage[msg.sender][functionSig];
         delete $fallbacks.handler;
-
     }
 
     function _isFallbackHandlerInstalled(
@@ -249,7 +236,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
 
     /**
      * @dev AccessControl: any external contract / EOA may call this function
-     * SafeERC7579 Fallback supports the following feature set:
+     * Safe7579 Fallback supports the following feature set:
      *    CallTypes:
      *             - CALLTYPE_SINGLE
      *             - CALLTYPE_BATCH
@@ -307,15 +294,9 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
     mapping(address smartAccount => address globalHook) internal $globalHook;
     mapping(address smartAccount => mapping(bytes4 => address hook)) internal $hookManager;
 
-    error HookPostCheckFailed();
-    error HookAlreadyInstalled(address currentHook);
-    error InvalidHookType();
-
-    enum HookType {
-        GLOBAL,
-        SIG
-    }
-
+    /**
+     * Run precheck hook for global and function selector specific
+     */
     function _preHooks(
         address globalHook,
         address sigHook
@@ -343,6 +324,7 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         }
     }
 
+    // Run post hooks (global and function sig)
     function _postHooks(
         address globalHook,
         address sigHook,
@@ -369,6 +351,9 @@ abstract contract ModuleManager is AccessControl, Receiver, RegistryAdapter {
         }
     }
 
+    /**
+     * modifier that executes global hook, and function signature specific hook if enabled
+     */
     modifier withHook(bytes4 selector) {
         address globalHook = $globalHook[msg.sender];
         address sigHook = $hookManager[msg.sender][selector];
