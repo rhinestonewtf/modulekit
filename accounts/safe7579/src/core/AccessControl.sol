@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import { HandlerContext } from "@safe-global/safe-contracts/contracts/handler/HandlerContext.sol";
 import { AccountBase } from "erc7579/core/AccountBase.sol";

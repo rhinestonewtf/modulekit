@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import { Safe7579DCUtil, Safe7579DCUtilSetup } from "./SetupDCUtil.sol";
 import { BatchedExecUtil } from "../utils/DCUtil.sol";

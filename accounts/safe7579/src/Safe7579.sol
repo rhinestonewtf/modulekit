@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.20;
 
 import { IERC7579Account, Execution } from "./interfaces/IERC7579Account.sol";
 import {

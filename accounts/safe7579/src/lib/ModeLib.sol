@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 /**
  * @title ModeLib
+ * @author rhinestone | zeroknots.eth, Konrad Kopp (@kopy-kat)
  * To allow smart accounts to be very simple, but allow for more complex execution, A custom mode
  * encoding is used.
  *    Function Signature of execute function:

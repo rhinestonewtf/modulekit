@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.25;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
 import "./DataTypes.sol";
 import { IERC7579Account } from "./interfaces//IERC7579Account.sol";

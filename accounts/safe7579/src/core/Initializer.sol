@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import { ISafe7579 } from "../ISafe7579.sol";
 import "../DataTypes.sol";

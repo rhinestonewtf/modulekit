@@ -1,12 +1,11 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.22;
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.20;
 
 import { IAccount, PackedUserOperation } from "account-abstraction/interfaces/IAccount.sol";
 import { ISafe } from "./interfaces/ISafe.sol";
 import { ISafe7579 } from "./ISafe7579.sol";
 import { IERC7484 } from "./interfaces/IERC7484.sol";
 import "./DataTypes.sol";
-import { Safe7579 } from "./Safe7579.sol";
 
 import { IValidator } from "erc7579/interfaces/IERC7579Module.sol";
 

@@ -6,6 +6,7 @@ import { Execution } from "../interfaces/IERC7579Account.sol";
 /**
  * Helper Library for decoding Execution calldata
  * malloc for memory allocation is bad for gas. use this assembly instead
+ * @author rhinestone | zeroknots.eth, Konrad Kopp (@kopy-kat)
  */
 library ExecutionLib {
     function decodeBatch(bytes calldata callData)

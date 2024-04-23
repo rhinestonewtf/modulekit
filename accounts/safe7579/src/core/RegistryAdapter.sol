@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import { IERC7484 } from "../interfaces/IERC7484.sol";
 import { ExecutionHelper } from "./ExecutionHelper.sol";

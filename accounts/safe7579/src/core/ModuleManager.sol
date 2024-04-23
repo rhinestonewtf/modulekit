@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity ^0.8.20;
 
 import { SentinelListLib } from "sentinellist/SentinelList.sol";
 import { SentinelList4337Lib } from "sentinellist/SentinelList4337.sol";
@@ -205,7 +205,7 @@ abstract contract ModuleManager is ISafe7579, AccessControl, Receiver, RegistryA
     }
 
     function _uninstallFallbackHandler(
-        address handler,
+        address, /*handler*/
         bytes calldata context
     )
         internal
@@ -400,7 +400,7 @@ abstract contract ModuleManager is ISafe7579, AccessControl, Receiver, RegistryA
     }
 
     function _uninstallHook(
-        address hook,
+        address, /*hook*/
         bytes calldata data
     )
         internal
