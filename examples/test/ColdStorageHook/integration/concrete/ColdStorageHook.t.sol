@@ -181,4 +181,26 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         uint256 newBalance = token.balanceOf(_owner);
         assertEq(newBalance, prevBalance + amount);
     }
+
+    function test_FlashloanERC20Tokens() public {
+        // install flashloan on owner
+
+        // owner calls into account to flashloan
+
+        // owner calls onFlashLoan on owner
+
+        // Execution memory exec = Execution({
+        //     target: address(token),
+        //     value: 0,
+        //     callData: abi.encodeWithSelector(IERC20.transfer.selector, _owner, amount)
+        // });
+        // vm.prank(_owner);
+        // IERC7579Account(instance.account).executeFromExecutor(
+        //     ModeLib.encodeSimpleSingle(),
+        //     ExecutionLib.encodeSingle(exec.target, exec.value, exec.callData)
+        // );
+        //
+        // uint256 newBalance = token.balanceOf(_owner);
+        // assertEq(newBalance, prevBalance + amount);
+    }
 }

@@ -7,8 +7,9 @@ import { Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
+import "forge-std/console2.sol";
 
-contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
+abstract contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
     using SignatureCheckerLib for address;
 
     error TokenGatedTxFailed();
@@ -16,17 +17,17 @@ contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    mapping(address account => uint256) public nonce;
+    mapping(address account => uint256 nonces) public nonce;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external virtual;
 
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external virtual;
 
-    function isInitialized(address smartAccount) external view returns (bool) { }
+    function isInitialized(address smartAccount) external view virtual returns (bool);
 
     function getTokengatedTxHash(
         FlashLoanType flashLoanType,
@@ -58,6 +59,7 @@ contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase {
         external
         returns (bytes32)
     {
+        console2.log("onFlashLoan called");
         (FlashLoanType flashLoanType, bytes memory signature, Execution[] memory executions) =
             abi.decode(data, (FlashLoanType, bytes, Execution[]));
         bytes32 hash = getTokengatedTxHash(flashLoanType, executions, nonce[borrower]);

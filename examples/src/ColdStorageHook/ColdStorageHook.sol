@@ -6,6 +6,16 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import { ERC7579HookDestruct, Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
+import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
+import "forge-std/console2.sol";
+
+import {
+    FlashLoanType,
+    IERC3156FlashBorrower,
+    IERC3156FlashLender
+} from "modulekit/src/interfaces/Flashloan.sol";
+
+import { FlashloanLender } from "../Flashloan/FlashloanLender.sol";
 
 /**
  * @title ColdStorageHook
@@ -13,7 +23,7 @@ import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
  * after a certain time period has passed
  * @author Rhinestone
  */
-contract ColdStorageHook is ERC7579HookDestruct {
+contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
     using EnumerableMap for EnumerableMap.Bytes32ToBytes32Map;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -65,8 +75,11 @@ contract ColdStorageHook is ERC7579HookDestruct {
     function onInstall(bytes calldata data) external override {
         // cache the account address
         address account = msg.sender;
+
+        // bool isInitialized = isInitialized(account);
         // check if the module is already initialized and revert if it is
-        if (isInitialized(account)) revert AlreadyInitialized(account);
+        // TODO: fix
+        if (isInitialized(account) && data.length == 0) return;
 
         // decode the data to get the waitPeriod and owner
         uint128 waitPeriod = uint128(bytes16(data[0:16]));
@@ -363,7 +376,7 @@ contract ColdStorageHook is ERC7579HookDestruct {
      * @param callData data to be sent by account
      */
     function onExecuteFromExecutor(
-        address,
+        address msgSender,
         address target,
         uint256 value,
         bytes calldata callData
@@ -379,6 +392,8 @@ contract ColdStorageHook is ERC7579HookDestruct {
             functionSig = bytes4(callData[0:4]);
         }
 
+        // TODO: scope this more
+        if (msgSender == address(this)) return bytes(abi.encode(PASS));
         if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
             // if the function is requestTimelockedExecution, return the function selector
             return abi.encode(this.requestTimelockedExecution.selector);
@@ -503,8 +518,10 @@ contract ColdStorageHook is ERC7579HookDestruct {
      *
      * @return true if the type is a module type, false otherwise
      */
-    function isModuleType(uint256 typeID) external pure virtual override returns (bool) {
-        return typeID == TYPE_HOOK;
+    function isModuleType(uint256 typeID) external pure virtual returns (bool) {
+        if (typeID == TYPE_HOOK || typeID == TYPE_FALLBACK) {
+            return true;
+        }
     }
 
     /**
@@ -524,4 +541,10 @@ contract ColdStorageHook is ERC7579HookDestruct {
     function version() external pure virtual returns (string memory) {
         return "1.0.0";
     }
+
+    function maxFlashLoan(address token) external view override returns (uint256) { }
+
+    function flashFee(address token, uint256 amount) external view override returns (uint256) { }
+
+    function flashFeeToken() external view virtual override returns (address) { }
 }

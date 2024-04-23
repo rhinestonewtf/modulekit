@@ -5,9 +5,19 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 
 import { ERC7579ExecutorBase, ERC7579FallbackBase } from "modulekit/src/Modules.sol";
-import { FlashLoanType, IERC3156FlashBorrower } from "modulekit/src/interfaces/Flashloan.sol";
+import {
+    FlashLoanType,
+    IERC3156FlashBorrower,
+    IERC3156FlashLender
+} from "modulekit/src/interfaces/Flashloan.sol";
 
-abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
+import "forge-std/console2.sol";
+
+abstract contract FlashloanLender is
+    ERC7579FallbackBase,
+    ERC7579ExecutorBase,
+    IERC3156FlashLender
+{
     error UnsupportedTokenType();
     error TokenNotRepaid();
     error FlashloanCallbackFailed();
@@ -20,11 +30,6 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
-
-    function onInstall(bytes calldata data) external virtual;
-
-    function onUninstall(bytes calldata data) external virtual;
-    function isInitialized(address smartAccount) external view virtual returns (bool);
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
@@ -49,6 +54,12 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
         }
     }
 
+    // struct FlashloanParam {
+    //     FlashLoanType flashLoanType;
+    //     bytes signature;
+    //     Execution[] tokenGatedExecutions;
+    // }
+
     function flashLoan(
         IERC3156FlashBorrower receiver,
         address token,
@@ -58,9 +69,11 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
         external
         returns (bool)
     {
+        console2.log("flashloan");
         (FlashLoanType flashLoanType,,) = abi.decode(data, (FlashLoanType, bytes, bytes));
 
         address account = msg.sender;
+        uint256 balanceBefore;
 
         // ERC20 and ERC721 share the same token type.
         // Technically, the condition is not necessary,
@@ -72,25 +85,32 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
                 0,
                 abi.encodeCall(IERC721.transferFrom, (address(account), address(receiver), value))
             );
-        } else if (flashLoanType == flashLoanType.ERC20) {
+        } else if (flashLoanType == FlashLoanType.ERC20) {
+            balanceBefore = IERC20(token).balanceOf(msg.sender);
             _execute(
                 msg.sender,
                 address(token),
                 0,
-                abi.encodeCall(IERC20.transferFrom, (address(account), address(receiver), value))
+                abi.encodeCall(IERC20.transfer, (address(receiver), value))
             );
         } else {
             revert UnsupportedTokenType();
         }
 
         // trigger callback on borrrower
-        bool success = borrower.onFlashLoan(account, token, amount, 0, data)
+        bool success = receiver.onFlashLoan(account, token, value, 0, data)
             == keccak256("ERC3156FlashBorrower.onFlashLoan");
         if (!success) revert FlashloanCallbackFailed();
 
         // check that token was sent back
-        if (!availableForFlashLoan({ token: token, tokenId: amount })) {
-            revert TokenNotRepaid();
+        if (flashLoanType == FlashLoanType.ERC721) {
+            if (!availableForFlashLoan({ token: token, tokenId: value })) {
+                revert TokenNotRepaid();
+            }
+        } else if (flashLoanType == FlashLoanType.ERC20) {
+            if (IERC20(token).balanceOf(msg.sender) < balanceBefore) {
+                revert TokenNotRepaid();
+            }
         }
         return true;
     }
@@ -98,16 +118,4 @@ abstract contract FlashloanLender is ERC7579FallbackBase, ERC7579ExecutorBase {
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
-
-    function version() external pure virtual returns (string memory) {
-        return "1.0.0";
-    }
-
-    function name() external pure virtual returns (string memory) {
-        return "FlashloanLender";
-    }
-
-    function isModuleType(uint256 isType) external pure virtual override returns (bool) {
-        return isType == TYPE_EXECUTOR || isType == TYPE_FALLBACK;
-    }
 }
