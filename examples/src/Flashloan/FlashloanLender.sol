@@ -54,12 +54,6 @@ abstract contract FlashloanLender is
         }
     }
 
-    // struct FlashloanParam {
-    //     FlashLoanType flashLoanType;
-    //     bytes signature;
-    //     Execution[] tokenGatedExecutions;
-    // }
-
     function flashLoan(
         IERC3156FlashBorrower receiver,
         address token,
@@ -67,20 +61,17 @@ abstract contract FlashloanLender is
         bytes calldata data
     )
         external
+        virtual
+        onlyAllowedBorrower(address(receiver))
         returns (bool)
     {
-        console2.log("flashloan");
         (FlashLoanType flashLoanType,,) = abi.decode(data, (FlashLoanType, bytes, bytes));
 
         address account = msg.sender;
         uint256 balanceBefore;
 
-        // ERC20 and ERC721 share the same token type.
-        // Technically, the condition is not necessary,
-        // but should be kept for clarity.
         if (flashLoanType == FlashLoanType.ERC721) {
             balanceBefore = availableForFlashLoan({ token: token, tokenId: value }) ? 1 : 0;
-            console2.log("before", balanceBefore);
             _execute(
                 msg.sender,
                 address(token),
@@ -116,6 +107,13 @@ abstract contract FlashloanLender is
         }
         return true;
     }
+
+    modifier onlyAllowedBorrower(address borrower) {
+        require(_isAllowedBorrower(borrower), "FlashloanLender: not allowed borrower");
+        _;
+    }
+
+    function _isAllowedBorrower(address account) internal view virtual returns (bool);
 
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA

@@ -547,4 +547,9 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
     function flashFee(address token, uint256 amount) external view override returns (uint256) { }
 
     function flashFeeToken() external view virtual override returns (address) { }
+
+    function _isAllowedBorrower(address account) internal view virtual override returns (bool) {
+        console2.log(msg.sender, account, vaultConfig[msg.sender].owner);
+        return account == vaultConfig[msg.sender].owner;
+    }
 }
