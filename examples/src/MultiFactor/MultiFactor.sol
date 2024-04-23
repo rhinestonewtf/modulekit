@@ -2,22 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
-import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
-import { IERC7579Account, Execution } from "modulekit/src/Accounts.sol";
 import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
-import { LibSort } from "solady/utils/LibSort.sol";
-import { ECDSAFactor } from "./ECDSAFactor.sol";
-import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { ModeLib } from "erc7579/lib/ModeLib.sol";
+import { IStatelessValidator } from "modulekit/src/interfaces/IStatelessValidator.sol";
 
-struct ConfigData {
-    address subValidator;
-    bytes initData;
-}
-
-contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
-    using LibSort for *;
-
+contract MultiFactor is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -27,14 +15,40 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     error InvalidParams();
     error InvalidParamsLength();
 
-    uint256 constant MIN_THRESHOLD = 2;
+    event ValidatorAdded(
+        address indexed smartAccount, address indexed validator, uint256 id, uint8 iteration
+    );
+    event ValidatorRemoved(
+        address indexed smartAccount, address indexed validator, uint256 id, uint8 iteration
+    );
+    event IterationIncreased(address indexed smartAccount, uint8 iteration);
 
-    struct MultiFactorConfig {
+    struct Config {
+        uint32 iteration;
         uint8 threshold;
-        address[] subValidators;
     }
 
-    mapping(address smartAccount => MultiFactorConfig configuration) internal multiFactorConfig;
+    struct Validator {
+        address validatorAddress;
+        uint96 id;
+        bytes validatorData;
+    }
+
+    struct ValidatorToUse {
+        address validatorAddress;
+        uint96 id;
+        bytes signature;
+    }
+
+    // account => threshold
+    mapping(address account => Config) public config;
+    // validator => account => validatorData
+    mapping(
+        uint32 iteration
+            => mapping(
+                address validatorAddress => mapping(uint96 id => mapping(address account => bytes))
+            )
+    ) public validatorData;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -44,50 +58,34 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         address account = msg.sender;
         if (isInitialized(account)) revert AlreadyInitialized(account);
 
-        // TODO: slice this with packed / calldata
-        (
-            address[] memory subValidators,
-            bytes[] memory deInitDatas,
-            bytes[] memory initDatas,
-            uint8 threshold
-        ) = abi.decode(data, (address[], bytes[], bytes[], uint8));
+        (Validator[] memory validators, uint8 threshold) = abi.decode(data, (Validator[], uint8));
 
-        _setConfig(subValidators, deInitDatas, initDatas, threshold);
-    }
+        uint32 iteration = config[account].iteration;
+        uint256 length = validators.length;
 
-    function onUninstall(bytes calldata deInit) external {
-        // TODO: slice this with packed / calldata
-        bytes[] memory deInitDatas;
-        if (deInit.length != 0) {
-            (deInitDatas) = abi.decode(deInit, (bytes[]));
+        if (length < threshold) revert InvalidThreshold(length, threshold);
+
+        for (uint256 i; i < length; i++) {
+            // TODO: check registry
+
+            Validator memory validator = validators[i];
+            validatorData[iteration][validator.validatorAddress][validator.id][account] =
+                validator.validatorData;
         }
-        MultiFactorConfig storage config = multiFactorConfig[msg.sender];
-        _deinitSubValidator(msg.sender, config.subValidators, deInitDatas);
-        config.subValidators = new address[](0);
-        config.threshold = 0;
+
+        config[account].threshold = threshold;
     }
 
-    function isInitialized(address smartAccount) public view returns (bool) {
-        return multiFactorConfig[smartAccount].threshold != 0;
+    function onUninstall(bytes calldata) external {
+        // TODO
+        address account = msg.sender;
+
+        config[account].threshold = 0;
+        config[account].iteration++;
     }
 
-    function setConfig(
-        address[] memory subValidators,
-        bytes[] memory deInitDatas,
-        bytes[] memory initDatas,
-        uint8 threshold
-    )
-        external
-    {
-        _setConfig(subValidators, deInitDatas, initDatas, threshold);
-    }
-
-    function getMultiFactorConfig(address smartAccount)
-        external
-        view
-        returns (MultiFactorConfig memory)
-    {
-        return multiFactorConfig[smartAccount];
+    function isInitialized(address account) public view returns (bool) {
+        return config[account].threshold != 0;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -103,72 +101,14 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         override
         returns (ValidationData)
     {
-        // todo: slice index into sigs to save calldata
-        // decode the selection data from userOp signature
-        (uint256[] memory validatorIndextoUse, bytes[] memory signatures) =
-            abi.decode(userOp.signature, (uint256[], bytes[]));
+        (ValidatorToUse[] memory validatorsToUse) = abi.decode(userOp.signature, (ValidatorToUse[]));
 
-        MultiFactorConfig storage config = multiFactorConfig[userOp.sender];
+        bool isValid = _validateSignatureWithConfig(validatorsToUse, userOpHash);
 
-        // a uniquified list of validators must be created for this. so that the frontend / user can
-        // not select the same validator multiple times
-        // not that this assumes that the subvalidators in storage are unique
-        uint256 validatorToUseCount = validatorIndextoUse.length;
-
-        uint256[] memory _validatorToUseCount = new uint256[](validatorToUseCount);
-        for (uint256 i; i < validatorToUseCount; i++) {
-            for (uint256 j; j < _validatorToUseCount.length; j++) {
-                if (validatorIndextoUse[i] + 1 == _validatorToUseCount[j]) {
-                    revert("index already used");
-                }
-            }
-            _validatorToUseCount[i] = validatorIndextoUse[i] + 1;
+        if (isValid) {
+            return VALIDATION_SUCCESS;
         }
-        // check that the number of signatures matches the number of validators
-        // check validatorIndextoUse length is higher or equal to threshold.
-        // should a smaller value be provided, the security assumption that a multifactor validator
-        // is void
-        if (validatorToUseCount < config.threshold || validatorToUseCount != signatures.length) {
-            return VALIDATION_FAILED;
-        }
-
-        // initialize the min values
-        uint256 validUntil;
-        uint256 validAfter;
-        bool sigFailed;
-        // Iterate over the selected validators and validate the userOp.
-        for (uint256 i; i < validatorToUseCount; i++) {
-            ERC7579ValidatorBase _validator =
-                ERC7579ValidatorBase(config.subValidators[validatorIndextoUse[i]]);
-
-            // Since userOp.signature had the validatorIndexToUse encoded, we need to clean up the
-            // signature field, before passing it to the validator
-            ValidationData _validationData;
-            // if the validator is this contract, we can use the local ECDAFactor implementation
-            if (address(_validator) == address(this)) {
-                _validationData = _checkSignature(userOpHash, signatures[i]);
-            } else {
-                userOp.signature = signatures[i];
-                _validationData = _validator.validateUserOp(userOp, userOpHash);
-            }
-
-            // destructuring the individual return values from the subvalidator
-            // using uint256 to avoid padding gas
-            (bool _sigFailed, uint256 _validUntil, uint256 _validAfter) =
-                _unpackValidationData(_validationData);
-
-            // update the min values
-            if (_validUntil < validUntil) validUntil = _validUntil;
-            if (_validAfter > validAfter) validAfter = _validAfter;
-
-            if (_sigFailed) sigFailed = true;
-        }
-
-        return _packValidationData({
-            sigFailed: sigFailed,
-            validUntil: uint48(validUntil),
-            validAfter: uint48(validAfter)
-        });
+        return VALIDATION_FAILED;
     }
 
     function isValidSignatureWithSender(
@@ -182,203 +122,54 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
         override
         returns (bytes4)
     {
-        // destructure data into validatorIndexToUse and signature
-        // TODO: slice this with packed / calldata
-        (uint256[] memory validatorIndextoUse, bytes[] memory signatures) =
-            abi.decode(data, (uint256[], bytes[]));
-        MultiFactorConfig storage config = multiFactorConfig[msg.sender];
+        (ValidatorToUse[] memory validatorsToUse) = abi.decode(data, (ValidatorToUse[]));
 
-        // a uniquified list of validators MUST be crated for this. so that the frontend / user can
-        // not select the same validator multiple times
-        uint256 validatorToUseCount = validatorIndextoUse.length;
+        bool isValid = _validateSignatureWithConfig(validatorsToUse, hash);
 
-        uint256[] memory _validatorToUseCount = new uint256[](validatorToUseCount);
-        for (uint256 i; i < validatorToUseCount; i++) {
-            for (uint256 j; j < _validatorToUseCount.length; j++) {
-                if (validatorIndextoUse[i] + 1 == _validatorToUseCount[j]) {
-                    revert("index already used");
-                }
-            }
-            _validatorToUseCount[i] = validatorIndextoUse[i] + 1;
+        if (isValid) {
+            return EIP1271_SUCCESS;
         }
-        // check that the number of signatures matches the number of validators
-        // check validatorIndextoUse length is higher or equal to threshold.
-        // should a smaller value be provided, the security assumption that a multifactor validator
-        // is void
-        if (validatorToUseCount < config.threshold || validatorToUseCount != signatures.length) {
-            return EIP1271_FAILED;
-        }
-
-        // iterate over subValidators[]
-        for (uint256 i; i < validatorToUseCount; i++) {
-            ERC7579ValidatorBase _validator =
-                ERC7579ValidatorBase(config.subValidators[validatorIndextoUse[i]]);
-
-            // check if local ECSDSA should be used
-            if (useLocalECDSAFactor(address(_validator))) {
-                // return EIP1271_FAILED if the signature is invalid
-                if (!_isValidSignature(hash, signatures[i])) return EIP1271_FAILED;
-            } else {
-                // get ERC1271 return value from subvalidator
-                bytes4 subValidatorERC1271 =
-                    _validator.isValidSignatureWithSender(sender, hash, signatures[i]);
-                // check if return value is ERC1271 magic value. if not, return fail
-                if (subValidatorERC1271 != EIP1271_SUCCESS) return EIP1271_FAILED;
-            }
-        }
-
-        // if we got to this stage, all subvalidators were able to correctly validate their
-        // signatures
-        return EIP1271_SUCCESS;
+        return EIP1271_FAILED;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    /**
-     * Helper function that will call `onInstall` on selected subvalidators
-     * @dev If a subvalidator is already used by the smart account, this function will revert, as
-     * configuring the validator in a new setting could brick the account
-     * @param _smartAccount smartaccount address for which the MFA is used
-     * @param subValidators list of subvalidators to be configured on the account
-     * @param datas init datas for the subvalidators
-     */
-    function _initSubValidator(
-        address _smartAccount,
-        address[] memory subValidators,
-        bytes[] memory datas
+    function _validateSignatureWithConfig(
+        ValidatorToUse[] memory validatorsToUse,
+        bytes32 hash
     )
         internal
+        view
+        returns (bool)
     {
-        IERC7579Account smartAccount = IERC7579Account(_smartAccount);
-        uint256 length = subValidators.length;
+        uint256 validatorsLength = validatorsToUse.length;
+        if (validatorsLength == 0) revert InvalidParamsLength();
 
-        bool noInitData = datas.length == 0;
-        if (length != datas.length && noInitData) revert InvalidParams();
-        Execution[] memory subValidatorInits = new Execution[](length);
-        // iterate over subValidators[]
-        for (uint256 i; i < length; i++) {
-            address subValidator = subValidators[i];
+        address account = msg.sender;
+        uint32 iteration = config[account].iteration;
 
-            // should the selected subvalidator be address(this), the user is intending to use the
-            // ECDSA recover feature
-            // available in ECDSAFactor.
-            if (subValidator == address(this)) {
-                subValidatorInits[i] = Execution({
-                    target: address(this),
-                    value: 0,
-                    callData: abi.encodeCall(
-                        ECDSAFactor.setECDSAFactor, (abi.decode(datas[i], (FactorConfig)))
-                    )
-                });
-            }
-            // only allow the installation of subvalidators, if the validator module is not
-            // already installed on the account
-            else if (!smartAccount.isModuleInstalled(TYPE_VALIDATOR, subValidator, "")) {
-                if (datas[i].length != 0) {
-                    // this is NOT installing the module on the account, but rather initing it
-                    subValidatorInits[i] = Execution({
-                        target: subValidator,
-                        value: 0,
-                        callData: abi.encodeCall(IERC7579Module.onInstall, (datas[i]))
-                    });
-                }
+        uint256 validCount;
+
+        for (uint256 i; i < validatorsLength; i++) {
+            ValidatorToUse memory validatorToUse = validatorsToUse[i];
+
+            bytes memory _validatorData = validatorData[iteration][validatorToUse.validatorAddress][validatorToUse
+                .id][account];
+
+            bool isValid = IStatelessValidator(validatorToUse.validatorAddress)
+                .validateSignatureWithData(hash, validatorToUse.signature, _validatorData);
+
+            if (isValid) {
+                validCount++;
             }
         }
 
-        // execute batched transaction that will initialize the subValidators
-        smartAccount.executeFromExecutor(
-            ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(subValidatorInits)
-        );
-    }
-
-    function _deinitSubValidator(
-        address _smartAccount,
-        address[] memory subValidators,
-        bytes[] memory deInitDatas
-    )
-        internal
-    {
-        uint256 length = deInitDatas.length;
-
-        // Ensure that the deinit data length matches with the number of currently configured
-        // subvalidators.
-        // Every subvalidator MUST be de-initialized to prevert weird states
-        Execution[] memory subValidatorInits = new Execution[](length);
-
-        // Iterate over all currently configured subvalidators and prepare a batched exec to de-init
-        // them
-        for (uint256 i; i < length; i++) {
-            address subValidator = subValidators[i];
-            // should the selected subvalidator be address(this), the user is intending to remove
-            // the ECDSA recover feature available in ECDSAFactor.
-            if (subValidator == address(this)) {
-                // null out all values
-                FactorConfig memory ecdsaConfig =
-                    FactorConfig({ signer: address(0), validAfter: 0, validBefore: 0 });
-                subValidatorInits[i] = Execution({
-                    target: address(this),
-                    value: 0,
-                    callData: abi.encodeCall(ECDSAFactor.setECDSAFactor, (ecdsaConfig))
-                });
-            } else {
-                if (deInitDatas[i].length != 0) {
-                    // this is NOT uninstalling the module on the account, but rather
-                    // de-initializeing
-                    subValidatorInits[i] = Execution({
-                        target: subValidator,
-                        value: 0,
-                        callData: abi.encodeCall(IERC7579Module.onUninstall, (deInitDatas[i]))
-                    });
-                }
-            }
+        if (validCount >= config[account].threshold) {
+            return true;
         }
-
-        // execute batched transaction that will de-initialize the subValidators
-        IERC7579Account(_smartAccount).executeFromExecutor(
-            ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(subValidatorInits)
-        );
-    }
-
-    // TODO: 1 add registry check for subValidators.
-    //          This should also make sure that the subValidator is actually a validator
-    function _setConfig(
-        address[] memory subValidators,
-        bytes[] memory deInitDatas,
-        bytes[] memory initDatas,
-        uint8 threshold
-    )
-        internal
-    {
-        uint256 length = subValidators.length;
-        // sort and uniquify the subValidators
-        // Should a user provide the same validators multiple times, the security assumption that a
-        // multifactor validator brings can be bypassed
-        address[] memory _subValidators = new address[](length);
-        for (uint256 i; i < length; i++) {
-            for (uint256 j; j < _subValidators.length; j++) {
-                if (subValidators[i] == _subValidators[j]) {
-                    revert("validator already used");
-                }
-            }
-            _subValidators[i] = subValidators[i];
-        }
-        if (length < threshold && threshold >= MIN_THRESHOLD) {
-            revert InvalidThreshold(length, threshold);
-        }
-        if (length != initDatas.length) revert InvalidParamsLength();
-        if (length != deInitDatas.length) revert InvalidParamsLength();
-        _deinitSubValidator(msg.sender, subValidators, deInitDatas);
-        _initSubValidator(msg.sender, subValidators, initDatas);
-
-        MultiFactorConfig storage config = multiFactorConfig[msg.sender];
-        config.subValidators = subValidators;
-        config.threshold = threshold;
-    }
-
-    function useLocalECDSAFactor(address validator) internal view returns (bool) {
-        return validator == address(this);
+        return false;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -386,7 +177,7 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
     //////////////////////////////////////////////////////////////////////////*/
 
     function isModuleType(uint256 typeID) external pure returns (bool) {
-        return typeID == TYPE_VALIDATOR || typeID == TYPE_EXECUTOR;
+        return typeID == TYPE_VALIDATOR;
     }
 
     function name() external pure returns (string memory) {
