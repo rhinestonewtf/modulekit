@@ -79,14 +79,16 @@ abstract contract FlashloanLender is
         // Technically, the condition is not necessary,
         // but should be kept for clarity.
         if (flashLoanType == FlashLoanType.ERC721) {
+            balanceBefore = availableForFlashLoan({ token: token, tokenId: value }) ? 1 : 0;
+            console2.log("before", balanceBefore);
             _execute(
                 msg.sender,
                 address(token),
                 0,
-                abi.encodeCall(IERC721.transferFrom, (address(account), address(receiver), value))
+                abi.encodeCall(IERC721.transferFrom, (account, address(receiver), value))
             );
         } else if (flashLoanType == FlashLoanType.ERC20) {
-            balanceBefore = IERC20(token).balanceOf(msg.sender);
+            balanceBefore = IERC20(token).balanceOf(account);
             _execute(
                 msg.sender,
                 address(token),

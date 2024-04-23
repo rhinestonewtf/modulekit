@@ -27,9 +27,11 @@ import {
     MODULE_TYPE_FALLBACK
 } from "modulekit/src/external/ERC7579.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { MockERC721 } from "solmate/test/utils/mocks/MockERC721.sol";
 import { MockTarget } from "../../../mocks/MockTarget.sol";
 
 import "forge-std/interfaces/IERC20.sol";
+import "forge-std/interfaces/IERC721.sol";
 
 contract FlashloanTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -44,6 +46,7 @@ contract FlashloanTest is BaseIntegrationTest {
     ColdStorageFlashloan internal flashloanCallback;
     OwnableExecutor internal executor;
     MockERC20 internal token;
+    MockERC721 internal token721;
     MockTarget internal target;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -60,6 +63,7 @@ contract FlashloanTest is BaseIntegrationTest {
     function setUp() public virtual override {
         BaseIntegrationTest.setUp();
         target = new MockTarget();
+        token721 = new MockERC721("ERC721", "ERC721");
         hook = new ColdStorageHook();
         flashloanCallback = new ColdStorageFlashloan();
         executor = new OwnableExecutor();
@@ -70,6 +74,7 @@ contract FlashloanTest is BaseIntegrationTest {
         token = new MockERC20("USDC", "USDC", 18);
         vm.label(address(token), "USDC");
         token.mint(address(instance.account), 1_000_000);
+        token721.mint(address(instance.account), 10);
 
         _waitPeriod = 100;
         bytes memory init = abi.encodePacked(
@@ -136,6 +141,31 @@ contract FlashloanTest is BaseIntegrationTest {
             receiver: IERC3156FlashBorrower(address(owner.account)),
             token: address(token),
             amount: 100,
+            data: abi.encode(flashLoanType, signature, executions)
+        });
+    }
+
+    function test_flashloanERC721() public {
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution({
+            target: address(target),
+            value: 0,
+            callData: abi.encodeCall(MockTarget.setValue, (1337))
+        });
+        executions[1] = Execution({
+            target: address(token721),
+            value: 0,
+            callData: abi.encodeCall(IERC721.transferFrom, (owner.account, instance.account, 10))
+        });
+
+        FlashLoanType flashLoanType = FlashLoanType.ERC721;
+        bytes memory signature = abi.encodePacked(instance.defaultValidator, "test");
+
+        vm.startPrank(address(executor));
+        IERC3156FlashLender(address(instance.account)).flashLoan({
+            receiver: IERC3156FlashBorrower(address(owner.account)),
+            token: address(token721),
+            amount: 10,
             data: abi.encode(flashLoanType, signature, executions)
         });
     }
