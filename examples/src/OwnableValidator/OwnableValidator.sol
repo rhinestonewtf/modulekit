@@ -26,6 +26,7 @@ contract OwnableValidator is ERC7579ValidatorBase {
 
     error ThresholdNotSet();
     error InvalidThreshold();
+    error NotSortedAndUnique();
     error MaxOwnersReached();
     error InvalidOwner(address owner);
 
@@ -53,9 +54,10 @@ contract OwnableValidator is ERC7579ValidatorBase {
         // decode the threshold and owners
         (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
 
-        // sort and uniquify the owners to make sure an owner is not reused
-        _owners.sort();
-        _owners.uniquifySorted();
+        // check that owners are sorted and uniquified
+        if (!_owners.isSortedAndUniquified()) {
+            revert NotSortedAndUnique();
+        }
 
         // make sure the threshold is set
         if (_threshold == 0) {
@@ -285,13 +287,14 @@ contract OwnableValidator is ERC7579ValidatorBase {
         // decode the threshold and owners
         (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
 
-        // sort and uniquify the owners to make sure an owner is not reused
-        _owners.sort();
-        _owners.uniquifySorted();
+        // check that owners are sorted and uniquified
+        if (!_owners.isSortedAndUniquified()) {
+            return false;
+        }
 
         // check that threshold is set
         if (_threshold == 0) {
-            revert ThresholdNotSet();
+            return false;
         }
 
         // recover the signers from the signatures

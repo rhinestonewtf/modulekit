@@ -16,7 +16,7 @@ SocialRecovery::onInstall
                 ├── when guardians include 0 address
                 │   └── it should revert
                 ├── when guardians include duplicates
-                │   └── it should set only unique guardians
+                │   └── it should revert
                 └── when guardians include no duplicates
                     └── it should set all guardians
 
