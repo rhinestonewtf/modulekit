@@ -230,8 +230,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         uint256 validatorsLength = validators.length;
         if (validatorsLength == 0) revert InvalidParamsLength();
 
-        address account = msg.sender;
-        MFAConfig storage $config = accountConfig[account];
+        MFAConfig storage $config = accountConfig[msg.sender];
         uint256 iteration = $config.iteration;
         uint256 requiredThreshold = $config.threshold;
 
@@ -244,7 +243,7 @@ contract MultiFactor is ERC7579ValidatorBase {
                 MultiFactorLib.unpack(validator.packedValidatorAndId);
 
             SubValidatorConfig storage $validator = $subValidatorData({
-                account: account,
+                account: msg.sender,
                 iteration: iteration,
                 subValidator: validatorAddress,
                 id: id
@@ -252,7 +251,7 @@ contract MultiFactor is ERC7579ValidatorBase {
 
             bytes memory validatorStorageData = $validator.data;
             if (validatorStorageData.length == 0) {
-                revert InvalidValidator(account, validatorAddress, id);
+                revert InvalidValidator(msg.sender, validatorAddress, id);
             }
 
             bool isValid = IStatelessValidator(validatorAddress).validateSignatureWithData({
