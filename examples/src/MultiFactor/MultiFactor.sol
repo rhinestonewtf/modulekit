@@ -23,34 +23,57 @@ contract MultiFactor is ERC7579ValidatorBase {
     );
     event IterationIncreased(address indexed smartAccount, uint256 iteration);
 
-    struct Config {
-        uint32 iteration;
-        uint8 threshold;
-    }
-
     struct Validator {
-        bytes32 validatorAndId; // abi.encodePacked(uint92(id), address(validator))
+        bytes32 packedValidatorAndId; // abi.encodePacked(uint92(id), address(validator))
         bytes data;
     }
 
-    // account => Config
-    mapping(address account => Config) public config;
-    // iteration => validatorAddress => id => account => data
-    mapping(
-        uint256 iteration
-            => mapping(
-                address validatorAddress => mapping(uint256 id => mapping(address account => bytes))
-            )
-    ) public validatorData;
+    struct SubValidatorData {
+        mapping(uint256 id => mapping(address account => bytes data)) validatorData;
+    }
+
+    struct MFAConfig {
+        uint8 threshold;
+        uint128 iteration;
+    }
+
+    mapping(address account => MFAConfig config) public accountConfig;
+    mapping(uint256 iteration => mapping(address subValidator => SubValidatorData data)) internal
+        validatorData;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
-    IERC7484 public immutable registry;
+    IERC7484 public immutable REGISTRY;
 
     constructor(IERC7484 _registry) {
-        registry = _registry;
+        REGISTRY = _registry;
+    }
+
+    // function _validatorData(
+    //     address subValidator,
+    //     uint256 id,
+    //     address account
+    // )
+    //     internal
+    //     view
+    //     returns (bytes memory)
+    // {
+    //     SubValidators storage subValidators = validatorData[subValidator];
+    //     return subValidators.validatorData[subValidators.iteration][id][account];
+    // }
+
+    function $subValidatorData(
+        address account,
+        uint256 iteration,
+        address subValidator,
+        uint96 id
+    )
+        internal
+        returns (bytes storage $validatorData)
+    {
+        return validatorData[iteration][subValidator].validatorData[iteration][account];
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -62,71 +85,92 @@ contract MultiFactor is ERC7579ValidatorBase {
         if (isInitialized(account)) revert AlreadyInitialized(account);
 
         (Validator[] memory validators, uint8 threshold) = abi.decode(data, (Validator[], uint8));
-
-        uint256 iteration = config[account].iteration;
         uint256 length = validators.length;
-
         if (length < threshold) revert InvalidThreshold(length, threshold);
+        MFAConfig storage $config = accountConfig[account];
+        uint256 iteration = $config.iteration;
+        $config.threshold = threshold;
 
         for (uint256 i; i < length; i++) {
-            Validator memory validator = validators[i];
-            (address validatorAddress, uint96 id) = _decodeValidatorAndId(validator.validatorAndId);
+            Validator memory _validator = validators[i];
+            (address validatorAddress, uint96 id) =
+                _decodeValidatorAndId(_validator.packedValidatorAndId);
+            // get storage reference to validator data slot
+            bytes storage $validatorData = $subValidatorData({
+                account: account,
+                iteration: iteration,
+                subValidator: validatorAddress,
+                id: id
+            });
 
-            registry.checkForAccount({
-                smartAccount: msg.sender,
+            REGISTRY.checkForAccount({
+                smartAccount: account,
                 module: validatorAddress,
                 moduleType: MODULE_TYPE_VALIDATOR
             });
-
-            validatorData[iteration][validatorAddress][id][account] = validator.data;
+            $validatorData = _validator.data;
 
             emit ValidatorAdded(account, validatorAddress, id, iteration);
         }
-
-        config[account].threshold = threshold;
     }
 
     function onUninstall(bytes calldata) external {
         address account = msg.sender;
+        MFAConfig storage $config = accountConfig[account];
+        uint256 _newIteration = $config.iteration + 1;
+        delete $config.threshold;
+        $config.iteration = _newIteration;
 
-        config[account].threshold = 0;
-        config[account].iteration++;
-
-        emit IterationIncreased(account, config[account].iteration);
+        emit IterationIncreased(account, _newIteration);
     }
 
     function isInitialized(address account) public view returns (bool) {
-        return config[account].threshold != 0;
+        MFAConfig storage $config = accountConfig[account];
+        return $config.threshold != 0;
     }
 
     function addValidator(
-        address _validatorAddress,
-        uint96 _id,
-        bytes calldata _validatorData
+        address validatorAddress,
+        uint96 id,
+        bytes calldata newValidatorData
     )
         external
     {
         address account = msg.sender;
-        uint256 iteration = config[account].iteration;
+        MFAConfig storage $config = accountConfig[account];
+        uint256 iteration = $config.iteration;
 
-        registry.checkForAccount({
+        REGISTRY.checkForAccount({
             smartAccount: msg.sender,
-            module: _validatorAddress,
+            module: validatorAddress,
             moduleType: MODULE_TYPE_VALIDATOR
         });
 
-        validatorData[iteration][_validatorAddress][_id][account] = _validatorData;
+        bytes storage $validatorData = $subValidatorData({
+            account: account,
+            iteration: iteration,
+            subValidator: validatorAddress,
+            id: id
+        });
+        $validatorData = newValidatorData;
 
-        emit ValidatorAdded(account, _validatorAddress, _id, iteration);
+        emit ValidatorAdded(account, validatorAddress, id, iteration);
     }
 
-    function removeValidator(address _validatorAddress, uint96 _id) external {
+    function removeValidator(address validatorAddress, uint96 id) external {
         address account = msg.sender;
-        uint256 iteration = config[account].iteration;
+        MFAConfig storage $config = accountConfig[account];
+        uint256 iteration = $config.iteration;
+        bytes storage $validatorData = $subValidatorData({
+            account: account,
+            iteration: iteration,
+            subValidator: validatorAddress,
+            id: id
+        });
 
-        delete validatorData[iteration][_validatorAddress][_id][account];
+        delete $validatorData;
 
-        emit ValidatorRemoved(account, _validatorAddress, _id, iteration);
+        emit ValidatorRemoved(account, validatorAddress, id, iteration);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -189,21 +233,27 @@ contract MultiFactor is ERC7579ValidatorBase {
         if (validatorsLength == 0) revert InvalidParamsLength();
 
         address account = msg.sender;
-        uint256 iteration = config[account].iteration;
 
         uint256 validCount;
 
         for (uint256 i; i < validatorsLength; i++) {
             Validator memory validator = validators[i];
 
-            (address validatorAddress, uint96 id) = _decodeValidatorAndId(validator.validatorAndId);
+            (address validatorAddress, uint96 id) =
+                _decodeValidatorAndId(validator.packedValidatorAndId);
 
-            bytes memory _validatorData = validatorData[iteration][validatorAddress][id][account];
+            bytes storage $validatorData = $subValidatorData({
+                account: account,
+                iteration: iteration,
+                subValidator: validatorAddress,
+                id: id
+            });
 
-            bool isValid = IStatelessValidator(validatorAddress).validateSignatureWithData(
-                hash, validator.data, _validatorData
-            );
-
+            bool isValid = IStatelessValidator(validatorAddress).validateSignatureWithData({
+                hash: hash,
+                signature: validator.data,
+                data: $
+            });
             if (isValid) {
                 validCount++;
             }
