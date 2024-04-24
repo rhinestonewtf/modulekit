@@ -6,6 +6,9 @@ import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
 import { IStatelessValidator } from "modulekit/src/interfaces/IStatelessValidator.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/src/external/ERC7579.sol";
+import "./DataTypes.sol";
+import { MultiFactorLib } from "./MultiFactorLib.sol";
+import "forge-std/console2.sol";
 
 contract MultiFactor is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -16,34 +19,17 @@ contract MultiFactor is ERC7579ValidatorBase {
     error InvalidParamsLength();
 
     event ValidatorAdded(
-        address indexed smartAccount, address indexed validator, uint256 id, uint256 iteration
+        address indexed smartAccount, address indexed validator, validatorId id, uint256 iteration
     );
     event ValidatorRemoved(
-        address indexed smartAccount, address indexed validator, uint256 id, uint256 iteration
+        address indexed smartAccount, address indexed validator, validatorId id, uint256 iteration
     );
     event IterationIncreased(address indexed smartAccount, uint256 iteration);
 
-    struct Validator {
-        bytes32 packedValidatorAndId; // abi.encodePacked(uint92(id), address(validator))
-        bytes data;
-    }
-
-    struct SubValidatorData {
-        mapping(uint256 id => mapping(address account => bytes data)) validatorData;
-    }
-
-    struct MFAConfig {
-        uint8 threshold;
-        uint128 iteration;
-    }
-
     mapping(address account => MFAConfig config) public accountConfig;
-    mapping(uint256 iteration => mapping(address subValidator => SubValidatorData data)) internal
-        validatorData;
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                    CONSTRUCTOR
-    //////////////////////////////////////////////////////////////////////////*/
+    mapping(
+        uint256 iteration => mapping(address subValidator => IterativeSubvalidatorRecord record)
+    ) internal iterationToSubValidator;
 
     IERC7484 public immutable REGISTRY;
 
@@ -51,29 +37,17 @@ contract MultiFactor is ERC7579ValidatorBase {
         REGISTRY = _registry;
     }
 
-    // function _validatorData(
-    //     address subValidator,
-    //     uint256 id,
-    //     address account
-    // )
-    //     internal
-    //     view
-    //     returns (bytes memory)
-    // {
-    //     SubValidators storage subValidators = validatorData[subValidator];
-    //     return subValidators.validatorData[subValidators.iteration][id][account];
-    // }
-
     function $subValidatorData(
         address account,
         uint256 iteration,
         address subValidator,
-        uint96 id
+        validatorId id
     )
         internal
-        returns (bytes storage $validatorData)
+        view
+        returns (SubValidatorConfig storage $validatorData)
     {
-        return validatorData[iteration][subValidator].validatorData[iteration][account];
+        return iterationToSubValidator[iteration][subValidator].subValidators[id][account];
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -83,8 +57,9 @@ contract MultiFactor is ERC7579ValidatorBase {
     function onInstall(bytes calldata data) external {
         address account = msg.sender;
         if (isInitialized(account)) revert AlreadyInitialized(account);
-
-        (Validator[] memory validators, uint8 threshold) = abi.decode(data, (Validator[], uint8));
+        // abi.encodePacked(uint8 threshold, abi.encode(Validator[]))
+        uint8 threshold = uint8(bytes1(data[:1]));
+        Validator[] calldata validators = MultiFactorLib.decode(data[1:]);
         uint256 length = validators.length;
         if (length < threshold) revert InvalidThreshold(length, threshold);
         MFAConfig storage $config = accountConfig[account];
@@ -92,11 +67,12 @@ contract MultiFactor is ERC7579ValidatorBase {
         $config.threshold = threshold;
 
         for (uint256 i; i < length; i++) {
-            Validator memory _validator = validators[i];
-            (address validatorAddress, uint96 id) =
-                _decodeValidatorAndId(_validator.packedValidatorAndId);
-            // get storage reference to validator data slot
-            bytes storage $validatorData = $subValidatorData({
+            Validator calldata _validator = validators[i];
+
+            (address validatorAddress, validatorId id) =
+                MultiFactorLib.unpack(_validator.packedValidatorAndId);
+            // get storage reference to sub validator config
+            SubValidatorConfig storage $validator = $subValidatorData({
                 account: account,
                 iteration: iteration,
                 subValidator: validatorAddress,
@@ -108,7 +84,8 @@ contract MultiFactor is ERC7579ValidatorBase {
                 module: validatorAddress,
                 moduleType: MODULE_TYPE_VALIDATOR
             });
-            $validatorData = _validator.data;
+            // SSTORE new validator data
+            $validator.data = _validator.data;
 
             emit ValidatorAdded(account, validatorAddress, id, iteration);
         }
@@ -119,7 +96,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         MFAConfig storage $config = accountConfig[account];
         uint256 _newIteration = $config.iteration + 1;
         delete $config.threshold;
-        $config.iteration = _newIteration;
+        $config.iteration = uint128(_newIteration);
 
         emit IterationIncreased(account, _newIteration);
     }
@@ -129,9 +106,29 @@ contract MultiFactor is ERC7579ValidatorBase {
         return $config.threshold != 0;
     }
 
+    function isSubValidator(
+        address account,
+        address subValidator,
+        validatorId id
+    )
+        external
+        view
+        returns (bool)
+    {
+        MFAConfig storage $config = accountConfig[account];
+
+        SubValidatorConfig storage $validator = $subValidatorData({
+            account: account,
+            iteration: $config.iteration,
+            subValidator: subValidator,
+            id: id
+        });
+        return $validator.data.length != 0;
+    }
+
     function addValidator(
         address validatorAddress,
-        uint96 id,
+        validatorId id,
         bytes calldata newValidatorData
     )
         external
@@ -146,29 +143,29 @@ contract MultiFactor is ERC7579ValidatorBase {
             moduleType: MODULE_TYPE_VALIDATOR
         });
 
-        bytes storage $validatorData = $subValidatorData({
+        SubValidatorConfig storage $validator = $subValidatorData({
             account: account,
             iteration: iteration,
             subValidator: validatorAddress,
             id: id
         });
-        $validatorData = newValidatorData;
+        $validator.data = newValidatorData;
 
         emit ValidatorAdded(account, validatorAddress, id, iteration);
     }
 
-    function removeValidator(address validatorAddress, uint96 id) external {
+    function removeValidator(address validatorAddress, validatorId id) external {
         address account = msg.sender;
         MFAConfig storage $config = accountConfig[account];
         uint256 iteration = $config.iteration;
-        bytes storage $validatorData = $subValidatorData({
+        SubValidatorConfig storage $validator = $subValidatorData({
             account: account,
             iteration: iteration,
             subValidator: validatorAddress,
             id: id
         });
 
-        delete $validatorData;
+        delete $validator.data;
 
         emit ValidatorRemoved(account, validatorAddress, id, iteration);
     }
@@ -178,7 +175,7 @@ contract MultiFactor is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function validateUserOp(
-        PackedUserOperation memory userOp,
+        PackedUserOperation calldata userOp,
         bytes32 userOpHash
     )
         external
@@ -186,7 +183,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        (Validator[] memory validators) = abi.decode(userOp.signature, (Validator[]));
+        Validator[] calldata validators = MultiFactorLib.decode(userOp.signature);
 
         bool isValid = _validateSignatureWithConfig(validators, userOpHash);
 
@@ -207,7 +204,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         override
         returns (bytes4)
     {
-        (Validator[] memory validators) = abi.decode(data, (Validator[]));
+        Validator[] calldata validators = MultiFactorLib.decode(data);
 
         bool isValid = _validateSignatureWithConfig(validators, hash);
 
@@ -222,7 +219,7 @@ contract MultiFactor is ERC7579ValidatorBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function _validateSignatureWithConfig(
-        Validator[] memory validators,
+        Validator[] calldata validators,
         bytes32 hash
     )
         internal
@@ -233,16 +230,20 @@ contract MultiFactor is ERC7579ValidatorBase {
         if (validatorsLength == 0) revert InvalidParamsLength();
 
         address account = msg.sender;
+        MFAConfig storage $config = accountConfig[account];
+        uint256 iteration = $config.iteration;
+        uint256 requiredThreshold = $config.threshold;
 
         uint256 validCount;
 
         for (uint256 i; i < validatorsLength; i++) {
             Validator memory validator = validators[i];
 
-            (address validatorAddress, uint96 id) =
-                _decodeValidatorAndId(validator.packedValidatorAndId);
+            (address validatorAddress, validatorId id) =
+                MultiFactorLib.unpack(validator.packedValidatorAndId);
+            // _decodeValidatorAndId(validator.packedValidatorAndId);
 
-            bytes storage $validatorData = $subValidatorData({
+            SubValidatorConfig storage $validator = $subValidatorData({
                 account: account,
                 iteration: iteration,
                 subValidator: validatorAddress,
@@ -252,17 +253,14 @@ contract MultiFactor is ERC7579ValidatorBase {
             bool isValid = IStatelessValidator(validatorAddress).validateSignatureWithData({
                 hash: hash,
                 signature: validator.data,
-                data: $
+                data: $validator.data
             });
             if (isValid) {
                 validCount++;
             }
         }
-
-        if (validCount >= config[account].threshold) {
-            return true;
-        }
-        return false;
+        if (validCount < requiredThreshold) return false;
+        else return false;
     }
 
     function _decodeValidatorAndId(bytes32 validatorAndId)
