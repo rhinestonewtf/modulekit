@@ -7,6 +7,7 @@ import { SENTINEL, SentinelListLib } from "sentinellist/SentinelList.sol";
 import { IERC7579Account, Execution } from "modulekit/src/Accounts.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 
 contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
     using SentinelListLib for SentinelListLib.SentinelList;
@@ -19,59 +20,40 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
     error HookReverted(address hookAddress, bytes hookData);
     error InvalidHookInitDataLength();
 
-    mapping(address account => SentinelListLib.SentinelList) hooks;
+    struct Config {
+        address[] globalHooks;
+        mapping(bytes4 => address[]) sigHooks;
+        mapping(bytes4 => address[]) targetSigHooks;
+        address[] valueHooks;
+    }
+
+    mapping(address account => Config) config;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    CONSTRUCTOR
+    //////////////////////////////////////////////////////////////////////////*/
+
+    IERC7484 public immutable REGISTRY;
+
+    constructor(IERC7484 _registry) {
+        REGISTRY = _registry;
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external {
-        address account = msg.sender;
-        if (isInitialized(account)) {
-            revert AlreadyInitialized(account);
-        }
-
-        (address[] memory hookAddresses, bytes[] memory initDatas) =
-            abi.decode(data, (address[], bytes[]));
-
-        if (hookAddresses.length != initDatas.length) {
-            revert InvalidHookInitDataLength();
-        }
-
-        hooks[account].init();
-
-        uint256 hooksLength = hookAddresses.length * 2;
-
-        Execution[] memory executions = new Execution[](hooksLength);
-
-        for (uint256 i = 0; i < hooksLength; i += 2) {
-            address _hook = hookAddresses[i];
-            // TODO: add registry check?
-            hooks[account].push(_hook);
-            executions[i] = Execution({
-                target: _hook,
-                value: 0,
-                callData: abi.encodeCall(this.onInstall, (initDatas[i]))
-            });
-
-            executions[i + 1] = Execution({
-                target: _hook,
-                value: 0,
-                callData: abi.encodeCall(ERC7579HookBaseNew.setTrustedForwarder, (address(this)))
-            });
-        }
-
-        IERC7579Account(account).executeFromExecutor(
-            ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions)
-        );
+        // TODO
     }
 
     function onUninstall(bytes calldata) external override {
-        // TODO: Implement onUninstall
+        // TODO
     }
 
     function isInitialized(address smartAccount) public view returns (bool) {
-        return hooks[smartAccount].alreadyInitialized();
+        // TODO: this is a temporary solution
+        return config[smartAccount].globalHooks.length != 0;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -86,17 +68,14 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
         external
         returns (bytes memory hookReturnData)
     {
-        (address[] memory selectedHooks,) = hooks[msg.sender].getEntriesPaginated(SENTINEL, 10);
-        uint256 hooksLength = selectedHooks.length;
+        address[] memory hooks =
+            _getHooks(msg.sender, bytes4(msgData[0:4]), _getTargetSig(msgData), msgValue > 0);
+        uint256 hooksLength = hooks.length;
 
         bytes[] memory hookReturnDataArray = new bytes[](hooksLength);
 
         for (uint256 i = 0; i < hooksLength; i++) {
-            address hookAddress = selectedHooks[i];
-
-            if (hookAddress == address(0)) {
-                revert NoHookRegistered(msg.sender);
-            }
+            address hookAddress = hooks[i];
 
             (bool success, bytes memory _hookReturnData) = hookAddress.call(
                 abi.encodePacked(
@@ -113,7 +92,12 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
             hookReturnDataArray[i] = _hookReturnData;
         }
 
-        hookReturnData = abi.encode(hookReturnDataArray);
+        hookReturnData = abi.encodePacked(
+            bytes4(msgData[0:4]),
+            _getTargetSig(msgData),
+            msgValue > 0,
+            abi.encode(hookReturnDataArray)
+        );
     }
 
     function postCheck(
@@ -123,19 +107,20 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
     )
         external
     {
-        (address[] memory selectedHooks,) = hooks[msg.sender].getEntriesPaginated(SENTINEL, 10);
-        uint256 hooksLength = selectedHooks.length;
+        (bytes4 sig, bytes4 targetSig, bool hasValue, bytes[] memory hookReturnDataArray) =
+            abi.decode(hookData, (bytes4, bytes4, bool, bytes[]));
+
+        address[] memory hooks = _getHooks(msg.sender, sig, targetSig, hasValue);
+        uint256 hooksLength = hooks.length;
 
         for (uint256 i = 0; i < hooksLength; i++) {
-            address hookAddress = selectedHooks[i];
-            if (hookAddress == address(0)) {
-                revert NoHookRegistered(msg.sender);
-            }
+            address hookAddress = hooks[i];
 
-            (bool success, bytes memory hookReturnData) = hookAddress.call(
+            (bool success,) = hookAddress.call(
                 abi.encodePacked(
                     abi.encodeCall(
-                        this.postCheck, (hookData, executionSuccess, executionReturnValue)
+                        this.postCheck,
+                        (hookReturnDataArray[i], executionSuccess, executionReturnValue)
                     ),
                     address(this),
                     msg.sender
@@ -143,9 +128,61 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
             );
 
             if (!success) {
-                revert HookReverted(hookAddress, hookReturnData);
+                revert HookReverted(hookAddress, bytes(""));
             }
         }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _getTargetSig(bytes calldata msgData) internal pure returns (bytes4) {
+        return bytes4(msgData[0:4]);
+    }
+
+    function _getHooks(
+        address account,
+        bytes4 sig,
+        bytes4 targetSig,
+        bool hasValue
+    )
+        internal
+        returns (address[] memory)
+    {
+        address[] memory globals = config[account].globalHooks;
+        address[] memory sigHooks = config[account].sigHooks[sig];
+        address[] memory targetSigHooks = config[account].targetSigHooks[targetSig];
+
+        address[] memory valueHooks;
+        if (hasValue) {
+            valueHooks = config[account].valueHooks;
+        }
+
+        uint256 hooksLength =
+            globals.length + sigHooks.length + targetSigHooks.length + valueHooks.length;
+
+        address[] memory hooks = new address[](hooksLength);
+
+        // this needs to be optimized
+        uint256 index = 0;
+        for (uint256 i = 0; i < globals.length; i++) {
+            hooks[index++] = globals[i];
+        }
+
+        for (uint256 i = 0; i < sigHooks.length; i++) {
+            hooks[index++] = sigHooks[i];
+        }
+
+        for (uint256 i = 0; i < targetSigHooks.length; i++) {
+            hooks[index++] = targetSigHooks[i];
+        }
+
+        for (uint256 i = 0; i < valueHooks.length; i++) {
+            hooks[index++] = valueHooks[i];
+        }
+
+        return hooks;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
