@@ -19,7 +19,7 @@
     "@rhinestone/safe7579": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
     "@safe-global/safe-contracts": "^1.4.1",
-    "checknsignatures": "github:kopy-kat/checknsignatures",
+    "checknsignatures": "github:zeroknots/checknsignatures",
     "ds-test": "github:dapphub/ds-test",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "erc7579": "github:erc7579/erc7579-implementation",

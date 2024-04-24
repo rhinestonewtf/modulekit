@@ -12,7 +12,7 @@ import { ERC7579ValidatorBase } from "modulekit/src/modules/ERC7579ValidatorBase
 import { PackedUserOperation, UserOperationLib } from "modulekit/src/external/ERC4337.sol";
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
 import { SessionData, SessionKeyManagerLib } from "./SessionKeyManagerLib.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { Execution } from "erc7579/interfaces/IERC7579Account.sol";
 
 contract SessionKeyManager is ERC7579ValidatorBase {

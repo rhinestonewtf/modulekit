@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { UD60x18, ud, intoUint256 } from "@prb/math/src/UD60x18.sol";
 import { PRBMathCastingUint256 } from "@prb/math/src/casting/Uint256.sol";
-import { LibZip } from "solady/src/utils/LibZip.sol";
+import { LibZip } from "solady/utils/LibZip.sol";
 import { parseJson, toString } from "./Vm.sol";
 
 /// @title GasCalculations
@@ -105,7 +105,10 @@ function formatGasValue(
         formattedValue = string.concat(formatGas(int256(newValue)), " gas");
     } else {
         formattedValue = string.concat(
-            formatGas(int256(newValue)), " gas (diff: ", formatGas(int256(newValue) - int256(prevValue)), ")"
+            formatGas(int256(newValue)),
+            " gas (diff: ",
+            formatGas(int256(newValue) - int256(prevValue)),
+            ")"
         );
     }
 }
@@ -121,7 +124,7 @@ function formatGas(int256 value) pure returns (string memory) {
     uint256 j = result.length;
     for (uint256 i = 0; i < bStr.length; i++) {
         if (i > 0 && i % 3 == 0) {
-            result[--j] = '_';
+            result[--j] = "_";
         }
         result[--j] = bStr[bStr.length - i - 1];
     }

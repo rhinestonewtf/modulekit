@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { ISessionValidationModule } from "./ISessionValidationModule.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 struct SessionData {
     uint48 validUntil;

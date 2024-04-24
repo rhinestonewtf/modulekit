@@ -3,8 +3,8 @@ pragma solidity ^0.8.21;
 
 import { ERC7579ValidatorBase, ERC7579HookBase } from "modulekit/src/Modules.sol";
 import { PackedUserOperation } from "modulekit/src/ModuleKit.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 
 contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
     using SignatureCheckerLib for address;
@@ -53,14 +53,12 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
-    function preCheck(address, bytes calldata) external returns (bytes memory) {
+    function preCheck(address, uint256, bytes calldata) external returns (bytes memory hookData) {
         DeadmanSwitchStorage storage config = _lastAccess[msg.sender];
         config.lastAccess = uint48(block.timestamp);
     }
 
-    function postCheck(bytes calldata) external pure returns (bool success) {
-        success = true;
-    }
+    function postCheck(bytes calldata, bool, bytes calldata) external { }
 
     function validateUserOp(
         PackedUserOperation calldata userOp,

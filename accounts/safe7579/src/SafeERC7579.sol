@@ -96,22 +96,18 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
         }
     }
 
-    /**
-     * @inheritdoc IERC7579Account
-     */
-    function executeUserOp(PackedUserOperation calldata userOp)
+    function executeUserOp(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    )
         external
         payable
-        override
         onlyEntryPointOrSelf
     {
         (bool success,) = address(this).delegatecall(userOp.callData[4:]);
         if (!success) revert ExecutionFailed();
     }
 
-    /**
-     * @inheritdoc IERC7579Account
-     */
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash,
@@ -119,7 +115,6 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
     )
         external
         payable
-        override
         returns (uint256 validSignature)
     {
         address validator;

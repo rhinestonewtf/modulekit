@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import "forge-std/Base.sol";
 import { SafeERC7579 } from "@rhinestone/safe7579/src/SafeERC7579.sol";
 import "@safe-global/safe-contracts/contracts/Safe.sol";
-import { LibClone } from "solady/src/utils/LibClone.sol";
+import { LibClone } from "solady/utils/LibClone.sol";
 
 import { BootstrapSafe } from "./BootstrapSafe.sol";
 

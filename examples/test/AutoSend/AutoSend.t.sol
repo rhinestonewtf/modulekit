@@ -6,7 +6,7 @@ import "modulekit/src/ModuleKit.sol";
 import "modulekit/src/Modules.sol";
 import "modulekit/src/Mocks.sol";
 import { AutoSendSessionKey } from "src/AutoSend/AutoSend.sol";
-import { SignatureCheckerLib } from "solady/src/utils/SignatureCheckerLib.sol";
+import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 
