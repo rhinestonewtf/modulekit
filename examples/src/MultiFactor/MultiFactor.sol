@@ -241,7 +241,6 @@ contract MultiFactor is ERC7579ValidatorBase {
 
             (address validatorAddress, validatorId id) =
                 MultiFactorLib.unpack(validator.packedValidatorAndId);
-            // _decodeValidatorAndId(validator.packedValidatorAndId);
 
             SubValidatorConfig storage $validator = $subValidatorData({
                 account: account,
@@ -260,16 +259,7 @@ contract MultiFactor is ERC7579ValidatorBase {
             }
         }
         if (validCount < requiredThreshold) return false;
-        else return false;
-    }
-
-    function _decodeValidatorAndId(bytes32 validatorAndId)
-        internal
-        pure
-        returns (address, uint96)
-    {
-        // validatorAndId = abi.encodePacked(uint96(id), address(validator))
-        return (address(bytes20(validatorAndId)), uint96(uint256(validatorAndId)));
+        else return true;
     }
 
     /*//////////////////////////////////////////////////////////////////////////

@@ -75,13 +75,8 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
         validator = address(0x41424343);
         id = bytes12(uint96(type(uint96).max));
         bytes32 packed = MultiFactorLib.pack(validator, validatorId.wrap(id));
-        console2.log(validator);
-        console2.logBytes32(packed);
 
         (address _validator, validatorId _id) = MultiFactorLib.unpack(packed);
-
-        // console2.log(_validator);
-        // console2.logBytes12(validatorId.unwrap(_id));
         assertEq(validator, _validator);
         assertEq(id, validatorId.unwrap(_id));
     }
@@ -97,25 +92,30 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
         assertTrue(mfa.isSubValidator(instance.account, address(validator1), id));
     }
 
-    // function test_Transaction() public  {
-    //     // prepare signature
-    //     uint256[] memory validatorIds = Solarray.uint256s(0, 1);
-    //     bytes[] memory signatures = Solarray.bytess("", "");
-    //
-    //     bytes memory signature = abi.encode(validatorIds, signatures);
-    //
-    //     // prepare userOp
-    //     UserOpData memory userOpData = instance.getExecOps({
-    //         target: address(token),
-    //         value: 0,
-    //         callData: abi.encodeWithSelector(MockERC20.transfer.selector, recipient, 10 ether),
-    //         txValidator: address(mfa)
-    //     });
-    //
-    //     userOpData.userOp.signature = signature;
-    //
-    //     userOpData.execUserOps();
-    //
-    //     assertEq(token.balanceOf(recipient), 10 ether);
-    // }
+    function test_Transaction() public {
+        Validator[] memory validators = new Validator[](2);
+        validators[0] = Validator({
+            packedValidatorAndId: bytes32(abi.encodePacked(uint96(1), address(validator1))),
+            data: hex"41414141"
+        });
+
+        validators[1] = Validator({
+            packedValidatorAndId: bytes32(abi.encodePacked(uint96(1), address(validator2))),
+            data: hex"41414141"
+        });
+
+        // prepare userOp
+        UserOpData memory userOpData = instance.getExecOps({
+            target: address(token),
+            value: 0,
+            callData: abi.encodeWithSelector(MockERC20.transfer.selector, recipient, 10 ether),
+            txValidator: address(mfa)
+        });
+
+        userOpData.userOp.signature = abi.encode(validators);
+
+        userOpData.execUserOps();
+
+        assertEq(token.balanceOf(recipient), 10 ether);
+    }
 }
