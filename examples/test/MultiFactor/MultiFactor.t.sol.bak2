@@ -75,14 +75,14 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
     function test_packing(address validator, bytes12 id) public pure {
         validator = address(0x41424343);
         id = bytes12(uint96(type(uint96).max));
-        bytes32 packed = MultiFactorLib.pack(validator, validatorId.wrap(id));
+        bytes32 packed = MultiFactorLib.pack(validator, ValidatorId.wrap(id));
 
-        (address _validator, validatorId _id) = MultiFactorLib.unpack(packed);
+        (address _validator, ValidatorId _id) = MultiFactorLib.unpack(packed);
         assertEq(validator, _validator);
-        assertEq(id, validatorId.unwrap(_id));
+        assertEq(id, ValidatorId.unwrap(_id));
     }
 
-    function test_addValidator(validatorId id) public {
+    function test_addValidator(ValidatorId id) public {
         vm.startPrank(instance.account);
 
         bytes memory data = hex"434343434343";
@@ -92,10 +92,10 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
         assertTrue(mfa.isSubValidator(instance.account, address(validator1), id));
     }
 
-    function test_rmValidator(validatorId id) public {
+    function test_removeValidator(ValidatorId id) public {
         test_addValidator(id);
         vm.prank(instance.account);
-        mfa.rmValidator(address(validator1), id);
+        mfa.removeValidator(address(validator1), id);
         assertFalse(mfa.isSubValidator(instance.account, address(validator1), id));
     }
 

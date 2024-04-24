@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { Validator, validatorId } from "./DataTypes.sol";
+import { Validator, ValidatorId } from "./DataTypes.sol";
 
 /**
  * @title MultiFactorLib
@@ -39,9 +39,9 @@ library MultiFactorLib {
      *
      * @return _packed Packed data
      */
-    function pack(address subValidator, validatorId id) internal pure returns (bytes32 _packed) {
+    function pack(address subValidator, ValidatorId id) internal pure returns (bytes32 _packed) {
         // pack the validator and id
-        _packed = bytes32(abi.encodePacked(validatorId.unwrap(id), subValidator));
+        _packed = bytes32(abi.encodePacked(ValidatorId.unwrap(id), subValidator));
     }
 
     /**
@@ -52,7 +52,7 @@ library MultiFactorLib {
      * @return subValidator SubValidator address
      * @return id Validator ID
      */
-    function unpack(bytes32 packed) internal pure returns (address subValidator, validatorId id) {
+    function unpack(bytes32 packed) internal pure returns (address subValidator, ValidatorId id) {
         // packed = abi.encodePacked(id, subValidator)
         assembly {
             // unpack the validator

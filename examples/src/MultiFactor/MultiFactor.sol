@@ -7,7 +7,11 @@ import { IStatelessValidator } from "modulekit/src/interfaces/IStatelessValidato
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/src/external/ERC7579.sol";
 import {
-    Validator, SubValidatorConfig, MFAConfig, IterativeSubvalidatorRecord
+    Validator,
+    SubValidatorConfig,
+    MFAConfig,
+    IterativeSubvalidatorRecord,
+    ValidatorId
 } from "./DataTypes.sol";
 import { MultiFactorLib } from "./MultiFactorLib.sol";
 
@@ -21,9 +25,8 @@ contract MultiFactor is ERC7579ValidatorBase {
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error ZeroThreshold();
     error InvalidThreshold(uint256 length, uint256 threshold);
-    error InvalidParamsLength();
-    error InvalidValidator(address account, address subValidator, ValidatorId id);
 
     event ValidatorAdded(
         address indexed smartAccount, address indexed validator, ValidatorId id, uint256 iteration
@@ -85,6 +88,8 @@ contract MultiFactor is ERC7579ValidatorBase {
 
         // cache the validator length
         uint256 length = validators.length;
+        // check if threshold is 0 and revert if it is
+        if (threshold == 0) revert ZeroThreshold();
         // check if the length is less than the threshold and revert if it is
         if (length < threshold) revert InvalidThreshold(length, threshold);
 
@@ -163,6 +168,28 @@ contract MultiFactor is ERC7579ValidatorBase {
     }
 
     /**
+     * Sets the threshold for the account
+     * @dev this function does not check that the threshold is less than the number of validators
+     * since this is infeasbile given the available data
+     *
+     * @param threshold the threshold to set
+     */
+    function setThreshold(uint8 threshold) external {
+        // cache the account
+        address account = msg.sender;
+        // check if the module is initialized and revert if it is not
+        if (!isInitialized(account)) revert NotInitialized(account);
+
+        // get storage reference to account config
+        MFAConfig storage $config = accountConfig[account];
+
+        // check if threshold is 0 and revert if it is
+        if (threshold == 0) revert ZeroThreshold();
+        // set the threshold
+        $config.threshold = threshold;
+    }
+
+    /**
      * Sets the data for a validator
      * @dev this function can be used to add a new validator or change the data for an existing one
      *
@@ -179,6 +206,9 @@ contract MultiFactor is ERC7579ValidatorBase {
     {
         // cache the account
         address account = msg.sender;
+        // check if the module is initialized and revert if it is not
+        if (!isInitialized(account)) revert NotInitialized(account);
+
         // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
         // cache the current iteration
@@ -214,6 +244,9 @@ contract MultiFactor is ERC7579ValidatorBase {
     function removeValidator(address validatorAddress, ValidatorId id) external {
         // cache the account
         address account = msg.sender;
+        // check if the module is initialized and revert if it is not
+        if (!isInitialized(account)) revert NotInitialized(account);
+
         // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
         // cache the current iteration
@@ -290,7 +323,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         Validator[] calldata validators = MultiFactorLib.decode(userOp.signature);
 
         // validate the signature
-        bool isValid = _validateSignatureWithConfig(validators, userOpHash);
+        bool isValid = _validateSignatureWithConfig(userOp.sender, validators, userOpHash);
 
         if (isValid) {
             // return validation success if the signatures are valid
@@ -303,7 +336,6 @@ contract MultiFactor is ERC7579ValidatorBase {
     /**
      * Validates an ERC-1271 signature
      *
-     * @param sender the sender to the account
      * @param hash the hash to validate
      * @param data the data to validate
      *
@@ -324,7 +356,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         Validator[] calldata validators = MultiFactorLib.decode(data);
 
         // validate the signature
-        bool isValid = _validateSignatureWithConfig(validators, hash);
+        bool isValid = _validateSignatureWithConfig(msg.sender, validators, hash);
 
         if (isValid) {
             // return EIP1271_SUCCESS if the signatures are valid
@@ -341,12 +373,14 @@ contract MultiFactor is ERC7579ValidatorBase {
     /**
      * Validates a signature with the current configuration
      *
+     * @param account the account to validate the signature for
      * @param validators the validators to validate
      * @param hash the hash to validate
      *
      * @return true if the signature is valid, false otherwise
      */
     function _validateSignatureWithConfig(
+        address account,
         Validator[] calldata validators,
         bytes32 hash
     )
@@ -356,11 +390,11 @@ contract MultiFactor is ERC7579ValidatorBase {
     {
         // cache the validators length
         uint256 validatorsLength = validators.length;
-        // check if the validators length is 0 and revert if it is
-        if (validatorsLength == 0) revert InvalidParamsLength();
+        // check if the validators length is 0 and return false if it is
+        if (validatorsLength == 0) return false;
 
         // get storage reference to account config
-        MFAConfig storage $config = accountConfig[msg.sender];
+        MFAConfig storage $config = accountConfig[account];
         // cache the current iteration
         uint256 iteration = $config.iteration;
 
@@ -378,16 +412,16 @@ contract MultiFactor is ERC7579ValidatorBase {
 
             // get storage reference to subValidator config
             SubValidatorConfig storage $validator = $subValidatorData({
-                account: msg.sender,
+                account: account,
                 iteration: iteration,
                 subValidator: validatorAddress,
                 id: id
             });
 
-            // check if the subValidator data is empty and revert if it is
+            // check if the subValidator data is empty and return false if it is
             bytes memory validatorStorageData = $validator.data;
             if (validatorStorageData.length == 0) {
-                revert InvalidValidator(msg.sender, validatorAddress, id);
+                return false;
             }
 
             // validate the signature
@@ -416,7 +450,7 @@ contract MultiFactor is ERC7579ValidatorBase {
      * @param subValidator the subValidator to get the config for
      * @param id the id of the subValidator
      *
-     * @return validatorData the storage reference to the subValidator config
+     * @return $validatorData the storage reference to the subValidator config
      */
     function $subValidatorData(
         address account,
