@@ -17,6 +17,7 @@ contract MultiFactor is ERC7579ValidatorBase {
 
     error InvalidThreshold(uint256 length, uint256 threshold);
     error InvalidParamsLength();
+    error InvalidValidator(address account, address subValidator, validatorId id);
 
     event ValidatorAdded(
         address indexed smartAccount, address indexed validator, validatorId id, uint256 iteration
@@ -249,10 +250,15 @@ contract MultiFactor is ERC7579ValidatorBase {
                 id: id
             });
 
+            bytes memory validatorStorageData = $validator.data;
+            if (validatorStorageData.length == 0) {
+                revert InvalidValidator(account, validatorAddress, id);
+            }
+
             bool isValid = IStatelessValidator(validatorAddress).validateSignatureWithData({
                 hash: hash,
                 signature: validator.data,
-                data: $validator.data
+                data: validatorStorageData
             });
             if (isValid) {
                 validCount++;
