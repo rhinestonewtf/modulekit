@@ -126,7 +126,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         return $validator.data.length != 0;
     }
 
-    function addValidator(
+    function setValidator(
         address validatorAddress,
         validatorId id,
         bytes calldata newValidatorData
@@ -154,7 +154,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         emit ValidatorAdded(account, validatorAddress, id, iteration);
     }
 
-    function removeValidator(address validatorAddress, validatorId id) external {
+    function rmValidator(address validatorAddress, validatorId id) external {
         address account = msg.sender;
         MFAConfig storage $config = accountConfig[account];
         uint256 iteration = $config.iteration;
@@ -237,7 +237,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         uint256 validCount;
 
         for (uint256 i; i < validatorsLength; i++) {
-            Validator memory validator = validators[i];
+            Validator calldata validator = validators[i];
 
             (address validatorAddress, validatorId id) =
                 MultiFactorLib.unpack(validator.packedValidatorAndId);

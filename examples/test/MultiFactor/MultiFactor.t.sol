@@ -82,15 +82,21 @@ contract MultiFactorTest is RhinestoneModuleKit, Test {
         assertEq(id, validatorId.unwrap(_id));
     }
 
-    function test_addValidator() public {
+    function test_addValidator(validatorId id) public {
         vm.startPrank(instance.account);
 
-        validatorId id = validatorId.wrap(bytes12(uint96(1)));
-
         bytes memory data = hex"434343434343";
-        mfa.addValidator(address(validator1), id, data);
+        mfa.setValidator(address(validator1), id, data);
+        vm.stopPrank();
 
         assertTrue(mfa.isSubValidator(instance.account, address(validator1), id));
+    }
+
+    function test_rmValidator(validatorId id) public {
+        test_addValidator(id);
+        vm.prank(instance.account);
+        mfa.rmValidator(address(validator1), id);
+        assertFalse(mfa.isSubValidator(instance.account, address(validator1), id));
     }
 
     function test_Transaction() public {
