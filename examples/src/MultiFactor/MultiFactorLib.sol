@@ -2,7 +2,6 @@
 pragma solidity ^0.8.25;
 
 import { Validator, validatorId } from "./DataTypes.sol";
-import "forge-std/console2.sol";
 
 library MultiFactorLib {
     function decode(bytes calldata data) internal pure returns (Validator[] calldata validators) {

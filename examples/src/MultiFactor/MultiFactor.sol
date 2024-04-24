@@ -6,9 +6,10 @@ import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
 import { IStatelessValidator } from "modulekit/src/interfaces/IStatelessValidator.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/src/external/ERC7579.sol";
-import "./DataTypes.sol";
+import {
+    Validator, SubValidatorConfig, MFAConfig, IterativeSubvalidatorRecord
+} from "./DataTypes.sol";
 import { MultiFactorLib } from "./MultiFactorLib.sol";
-import "forge-std/console2.sol";
 
 contract MultiFactor is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -32,23 +33,14 @@ contract MultiFactor is ERC7579ValidatorBase {
         uint256 iteration => mapping(address subValidator => IterativeSubvalidatorRecord record)
     ) internal iterationToSubValidator;
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                CONSTRUCTOR
+    //////////////////////////////////////////////////////////////////////////*/
+
     IERC7484 public immutable REGISTRY;
 
     constructor(IERC7484 _registry) {
         REGISTRY = _registry;
-    }
-
-    function $subValidatorData(
-        address account,
-        uint256 iteration,
-        address subValidator,
-        validatorId id
-    )
-        internal
-        view
-        returns (SubValidatorConfig storage $validatorData)
-    {
-        return iterationToSubValidator[iteration][subValidator].subValidators[id][account];
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -155,7 +147,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         emit ValidatorAdded(account, validatorAddress, id, iteration);
     }
 
-    function rmValidator(address validatorAddress, validatorId id) external {
+    function removeValidator(address validatorAddress, validatorId id) external {
         address account = msg.sender;
         MFAConfig storage $config = accountConfig[account];
         uint256 iteration = $config.iteration;
@@ -265,6 +257,19 @@ contract MultiFactor is ERC7579ValidatorBase {
         }
         if (validCount < requiredThreshold) return false;
         else return true;
+    }
+
+    function $subValidatorData(
+        address account,
+        uint256 iteration,
+        address subValidator,
+        validatorId id
+    )
+        internal
+        view
+        returns (SubValidatorConfig storage $validatorData)
+    {
+        return iterationToSubValidator[iteration][subValidator].subValidators[id][account];
     }
 
     /*//////////////////////////////////////////////////////////////////////////

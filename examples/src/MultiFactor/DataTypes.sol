@@ -7,7 +7,7 @@ type validatorId is bytes12;
 // This struct is used when configuring a subValidator on MFA, as well as when validating
 // signatures.
 struct Validator {
-    bytes32 packedValidatorAndId; // abi.encodePacked(uint92(id), address(validator))
+    bytes32 packedValidatorAndId; // abi.encodePacked(bytes12(id), address(validator))
     bytes data;
 }
 
