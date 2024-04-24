@@ -11,6 +11,11 @@ import {
 } from "./DataTypes.sol";
 import { MultiFactorLib } from "./MultiFactorLib.sol";
 
+/**
+ * @title MultiFactor
+ * @dev A validator that multiplexes multiple other validators
+ * @author Rhinestone
+ */
 contract MultiFactor is ERC7579ValidatorBase {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
@@ -18,17 +23,22 @@ contract MultiFactor is ERC7579ValidatorBase {
 
     error InvalidThreshold(uint256 length, uint256 threshold);
     error InvalidParamsLength();
-    error InvalidValidator(address account, address subValidator, validatorId id);
+    error InvalidValidator(address account, address subValidator, ValidatorId id);
 
     event ValidatorAdded(
-        address indexed smartAccount, address indexed validator, validatorId id, uint256 iteration
+        address indexed smartAccount, address indexed validator, ValidatorId id, uint256 iteration
     );
     event ValidatorRemoved(
-        address indexed smartAccount, address indexed validator, validatorId id, uint256 iteration
+        address indexed smartAccount, address indexed validator, ValidatorId id, uint256 iteration
     );
     event IterationIncreased(address indexed smartAccount, uint256 iteration);
 
+    // account => MFAConfig
     mapping(address account => MFAConfig config) public accountConfig;
+
+    // iteration => subValidator => IterativeSubvalidatorRecord
+    // this mapping is keyed on the iteration number so that it is easy and cheap to uninstall all
+    // subvalidators by incrementing the iteration number
     mapping(
         uint256 iteration => mapping(address subValidator => IterativeSubvalidatorRecord record)
     ) internal iterationToSubValidator;
@@ -37,9 +47,17 @@ contract MultiFactor is ERC7579ValidatorBase {
                                 CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
+    // registry queried to check that a subValidator is an attested validator
     IERC7484 public immutable REGISTRY;
 
+    /**
+     * Contract constructor
+     * @dev sets the registry as an immutable
+     *
+     * @param _registry The registry contract to check for subValidator attestation
+     */
     constructor(IERC7484 _registry) {
+        // set the registry
         REGISTRY = _registry;
     }
 
@@ -47,24 +65,47 @@ contract MultiFactor is ERC7579ValidatorBase {
                                      CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * Initializes the module with a threshold and a list of validators
+     * @dev this function will revert if the module is already installed
+     *
+     * @param data the data to initialize the module with, formatted as abi.encodePacked(uint8
+     * threshold, abi.encode(Validator[]))
+     */
     function onInstall(bytes calldata data) external {
+        // cache the account
         address account = msg.sender;
+        // check if the module is already initialized and revert if it is
         if (isInitialized(account)) revert AlreadyInitialized(account);
-        // abi.encodePacked(uint8 threshold, abi.encode(Validator[]))
+
+        // unpack the threshold
         uint8 threshold = uint8(bytes1(data[:1]));
+        // unpack the validators
         Validator[] calldata validators = MultiFactorLib.decode(data[1:]);
+
+        // cache the validator length
         uint256 length = validators.length;
+        // check if the length is less than the threshold and revert if it is
         if (length < threshold) revert InvalidThreshold(length, threshold);
+
+        // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
+        // cache the current iteration
         uint256 iteration = $config.iteration;
+        // set the threshold
         $config.threshold = threshold;
 
+        // iterate over the validators
         for (uint256 i; i < length; i++) {
+            // cache the validator
             Validator calldata _validator = validators[i];
 
-            (address validatorAddress, validatorId id) =
+            // unpack the validator address and id
+            // this data is packed to save calldata gas
+            (address validatorAddress, ValidatorId id) =
                 MultiFactorLib.unpack(_validator.packedValidatorAndId);
-            // get storage reference to sub validator config
+
+            // get storage reference to subValidator config
             SubValidatorConfig storage $validator = $subValidatorData({
                 account: account,
                 iteration: iteration,
@@ -72,101 +113,170 @@ contract MultiFactor is ERC7579ValidatorBase {
                 id: id
             });
 
+            // check if the subValidator is an attested validator and revert if it is not
             REGISTRY.checkForAccount({
                 smartAccount: account,
                 module: validatorAddress,
                 moduleType: MODULE_TYPE_VALIDATOR
             });
-            // SSTORE new validator data
+            // set the subValidator data
             $validator.data = _validator.data;
 
+            // emit the ValidatorAdded event
             emit ValidatorAdded(account, validatorAddress, id, iteration);
         }
     }
 
+    /**
+     * Removes all subValidators when module is uninstalled
+     * @dev this function will not revert if the module is not installed
+     */
     function onUninstall(bytes calldata) external {
+        // cache the account
         address account = msg.sender;
+        // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
+
+        // increment the iteration number
         uint256 _newIteration = $config.iteration + 1;
-        delete $config.threshold;
         $config.iteration = uint128(_newIteration);
 
+        // delete the threshold
+        delete $config.threshold;
+
+        // emit the IterationIncreased event
         emit IterationIncreased(account, _newIteration);
     }
 
+    /**
+     * Checks if the module is initialized
+     *
+     * @param account the account to check
+     *
+     * @return true if the module is initialized, false otherwise
+     */
     function isInitialized(address account) public view returns (bool) {
+        // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
+        // check if the threshold is not 0
         return $config.threshold != 0;
     }
 
-    function isSubValidator(
-        address account,
-        address subValidator,
-        validatorId id
-    )
-        external
-        view
-        returns (bool)
-    {
-        MFAConfig storage $config = accountConfig[account];
-
-        SubValidatorConfig storage $validator = $subValidatorData({
-            account: account,
-            iteration: $config.iteration,
-            subValidator: subValidator,
-            id: id
-        });
-        return $validator.data.length != 0;
-    }
-
+    /**
+     * Sets the data for a validator
+     * @dev this function can be used to add a new validator or change the data for an existing one
+     *
+     * @param validatorAddress the address of the validator
+     * @param id the id of the validator
+     * @param newValidatorData the data to set for the validator
+     */
     function setValidator(
         address validatorAddress,
-        validatorId id,
+        ValidatorId id,
         bytes calldata newValidatorData
     )
         external
     {
+        // cache the account
         address account = msg.sender;
+        // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
+        // cache the current iteration
         uint256 iteration = $config.iteration;
 
+        // check that the subValidator is an attested validator and revert if it is not
         REGISTRY.checkForAccount({
             smartAccount: msg.sender,
             module: validatorAddress,
             moduleType: MODULE_TYPE_VALIDATOR
         });
 
+        // get storage reference to subValidator config
         SubValidatorConfig storage $validator = $subValidatorData({
             account: account,
             iteration: iteration,
             subValidator: validatorAddress,
             id: id
         });
+        // set the subValidator data
         $validator.data = newValidatorData;
 
+        // emit the ValidatorAdded event
         emit ValidatorAdded(account, validatorAddress, id, iteration);
     }
 
-    function removeValidator(address validatorAddress, validatorId id) external {
+    /**
+     * Removes a validator
+     *
+     * @param validatorAddress the address of the validator
+     * @param id the id of the validator
+     */
+    function removeValidator(address validatorAddress, ValidatorId id) external {
+        // cache the account
         address account = msg.sender;
+        // get storage reference to account config
         MFAConfig storage $config = accountConfig[account];
+        // cache the current iteration
         uint256 iteration = $config.iteration;
+
+        // get storage reference to subValidator config
         SubValidatorConfig storage $validator = $subValidatorData({
             account: account,
             iteration: iteration,
             subValidator: validatorAddress,
             id: id
         });
-
+        // delete the subValidator data
         delete $validator.data;
 
+        // emit the ValidatorRemoved event
         emit ValidatorRemoved(account, validatorAddress, id, iteration);
+    }
+
+    /**
+     * Checks if a subValidator is configured for an account
+     *
+     * @param account the account to check
+     * @param subValidator the subValidator to check
+     * @param id the id of the subValidator
+     *
+     * @return true if the subValidator is configured, false otherwise
+     */
+    function isSubValidator(
+        address account,
+        address subValidator,
+        ValidatorId id
+    )
+        external
+        view
+        returns (bool)
+    {
+        // get storage reference to account config
+        MFAConfig storage $config = accountConfig[account];
+
+        // get storage reference to subValidator config
+        SubValidatorConfig storage $validator = $subValidatorData({
+            account: account,
+            iteration: $config.iteration,
+            subValidator: subValidator,
+            id: id
+        });
+        // check if the subValidator data is not empty
+        return $validator.data.length != 0;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * Validates a user operation
+     *
+     * @param userOp the user operation to validate
+     * @param userOpHash the hash of the user operation
+     *
+     * @return ValidationData the validation data
+     */
     function validateUserOp(
         PackedUserOperation calldata userOp,
         bytes32 userOpHash
@@ -176,16 +286,29 @@ contract MultiFactor is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
+        // decode the validators
         Validator[] calldata validators = MultiFactorLib.decode(userOp.signature);
 
+        // validate the signature
         bool isValid = _validateSignatureWithConfig(validators, userOpHash);
 
         if (isValid) {
+            // return validation success if the signatures are valid
             return VALIDATION_SUCCESS;
         }
+        // return validation failed otherwise
         return VALIDATION_FAILED;
     }
 
+    /**
+     * Validates an ERC-1271 signature
+     *
+     * @param sender the sender to the account
+     * @param hash the hash to validate
+     * @param data the data to validate
+     *
+     * @return EIP1271_SUCCESS if the signature is valid, EIP1271_FAILED otherwise
+     */
     function isValidSignatureWithSender(
         address,
         bytes32 hash,
@@ -197,13 +320,17 @@ contract MultiFactor is ERC7579ValidatorBase {
         override
         returns (bytes4)
     {
+        // decode the validators
         Validator[] calldata validators = MultiFactorLib.decode(data);
 
+        // validate the signature
         bool isValid = _validateSignatureWithConfig(validators, hash);
 
         if (isValid) {
+            // return EIP1271_SUCCESS if the signatures are valid
             return EIP1271_SUCCESS;
         }
+        // return EIP1271_FAILED otherwise
         return EIP1271_FAILED;
     }
 
@@ -211,6 +338,14 @@ contract MultiFactor is ERC7579ValidatorBase {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * Validates a signature with the current configuration
+     *
+     * @param validators the validators to validate
+     * @param hash the hash to validate
+     *
+     * @return true if the signature is valid, false otherwise
+     */
     function _validateSignatureWithConfig(
         Validator[] calldata validators,
         bytes32 hash
@@ -219,21 +354,29 @@ contract MultiFactor is ERC7579ValidatorBase {
         view
         returns (bool)
     {
+        // cache the validators length
         uint256 validatorsLength = validators.length;
+        // check if the validators length is 0 and revert if it is
         if (validatorsLength == 0) revert InvalidParamsLength();
 
+        // get storage reference to account config
         MFAConfig storage $config = accountConfig[msg.sender];
+        // cache the current iteration
         uint256 iteration = $config.iteration;
-        uint256 requiredThreshold = $config.threshold;
 
+        // count the number of valid signatures
         uint256 validCount;
 
+        // iterate over the validators
         for (uint256 i; i < validatorsLength; i++) {
+            // cache the validator
             Validator calldata validator = validators[i];
 
-            (address validatorAddress, validatorId id) =
+            // unpack the validator address and id
+            (address validatorAddress, ValidatorId id) =
                 MultiFactorLib.unpack(validator.packedValidatorAndId);
 
+            // get storage reference to subValidator config
             SubValidatorConfig storage $validator = $subValidatorData({
                 account: msg.sender,
                 iteration: iteration,
@@ -241,34 +384,51 @@ contract MultiFactor is ERC7579ValidatorBase {
                 id: id
             });
 
+            // check if the subValidator data is empty and revert if it is
             bytes memory validatorStorageData = $validator.data;
             if (validatorStorageData.length == 0) {
                 revert InvalidValidator(msg.sender, validatorAddress, id);
             }
 
+            // validate the signature
             bool isValid = IStatelessValidator(validatorAddress).validateSignatureWithData({
                 hash: hash,
                 signature: validator.data,
                 data: validatorStorageData
             });
+
             if (isValid) {
+                // increment the valid count if the signature is valid
                 validCount++;
             }
         }
-        if (validCount < requiredThreshold) return false;
-        else return true;
+
+        // check if the valid count is greater than or equal to the threshold and return true if it
+        // is
+        if (validCount >= $config.threshold) return true;
     }
 
+    /**
+     * Gets the storage reference to a subValidator config
+     *
+     * @param account the account to get the config for
+     * @param iteration the iteration to get the config for
+     * @param subValidator the subValidator to get the config for
+     * @param id the id of the subValidator
+     *
+     * @return validatorData the storage reference to the subValidator config
+     */
     function $subValidatorData(
         address account,
         uint256 iteration,
         address subValidator,
-        validatorId id
+        ValidatorId id
     )
         internal
         view
         returns (SubValidatorConfig storage $validatorData)
     {
+        // get storage reference to subValidator config
         return iterationToSubValidator[iteration][subValidator].subValidators[id][account];
     }
 
@@ -276,14 +436,31 @@ contract MultiFactor is ERC7579ValidatorBase {
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * Returns the type of the module
+     *
+     * @param typeID type of the module
+     *
+     * @return true if the type is a module type, false otherwise
+     */
     function isModuleType(uint256 typeID) external pure returns (bool) {
         return typeID == TYPE_VALIDATOR;
     }
 
+    /**
+     * Returns the name of the module
+     *
+     * @return name of the module
+     */
     function name() external pure returns (string memory) {
         return "MultiFactor";
     }
 
+    /**
+     * Returns the version of the module
+     *
+     * @return version of the module
+     */
     function version() external pure returns (string memory) {
         return "1.0.0";
     }

@@ -1,25 +1,30 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.25;
 
-type validatorId is bytes12;
+// Validator ID
+type ValidatorId is bytes12;
 
 // Validator Data
-// This struct is used when configuring a subValidator on MFA, as well as when validating
-// signatures.
+// This struct is used when configuring a subValidator and when validating signatures
 struct Validator {
     bytes32 packedValidatorAndId; // abi.encodePacked(bytes12(id), address(validator))
-    bytes data;
+    bytes data; // either subValidator config data or signature
 }
 
+// The data to be sent to stateless validator
 struct SubValidatorConfig {
     bytes data;
 }
 
+// MFA Configuration
 struct MFAConfig {
-    uint8 threshold;
-    uint128 iteration;
+    uint8 threshold; // number of validators required to validate a signature
+    uint128 iteration; // iteration number
 }
 
+// Iterative SubValidator Record
+// a ValidatorId is used so that validators can be used multiple times
+// ValidatorId => account => SubValidatorConfig
 struct IterativeSubvalidatorRecord {
-    mapping(validatorId id => mapping(address account => SubValidatorConfig config)) subValidators;
+    mapping(ValidatorId id => mapping(address account => SubValidatorConfig config)) subValidators;
 }

@@ -3,7 +3,19 @@ pragma solidity ^0.8.25;
 
 import { Validator, validatorId } from "./DataTypes.sol";
 
+/**
+ * @title MultiFactorLib
+ * @dev Library for encoding and decoding data for MultiFactor
+ * @author zeroknots.eth | rhinestone.wtf
+ */
 library MultiFactorLib {
+    /**
+     * Decodes a bytes array into a list of validators
+     *
+     * @param data Encoded data
+     *
+     * @return validators List of validators
+     */
     function decode(bytes calldata data) internal pure returns (Validator[] calldata validators) {
         // (Validator[]) = abi.decode(data,(Validator[])
         assembly ("memory-safe") {
@@ -19,13 +31,33 @@ library MultiFactorLib {
         }
     }
 
+    /**
+     * Packs a validator and an id into a bytes32
+     *
+     * @param subValidator SubValidator address
+     * @param id Validator ID
+     *
+     * @return _packed Packed data
+     */
     function pack(address subValidator, validatorId id) internal pure returns (bytes32 _packed) {
+        // pack the validator and id
         _packed = bytes32(abi.encodePacked(validatorId.unwrap(id), subValidator));
     }
 
+    /**
+     * Unpacks a bytes32 into a validator and an id
+     *
+     * @param packed Packed data
+     *
+     * @return subValidator SubValidator address
+     * @return id Validator ID
+     */
     function unpack(bytes32 packed) internal pure returns (address subValidator, validatorId id) {
+        // packed = abi.encodePacked(id, subValidator)
         assembly {
+            // unpack the validator
             subValidator := packed
+            // unpack the id
             id := shl(0, packed)
         }
     }
