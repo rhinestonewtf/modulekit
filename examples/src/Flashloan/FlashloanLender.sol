@@ -91,8 +91,13 @@ abstract contract FlashloanLender is
         }
 
         // trigger callback on borrrower
-        bool success = receiver.onFlashLoan(account, token, value, 0, data)
-            == keccak256("ERC3156FlashBorrower.onFlashLoan");
+        bytes memory ret = _execute(
+            address(receiver),
+            0,
+            abi.encodeCall(IERC3156FlashBorrower.onFlashLoan, (account, token, value, 0, data))
+        );
+        bytes32 _ret = abi.decode(ret, (bytes32));
+        bool success = _ret == keccak256("ERC3156FlashBorrower.onFlashLoan");
         if (!success) revert FlashloanCallbackFailed();
 
         // check that token was sent back

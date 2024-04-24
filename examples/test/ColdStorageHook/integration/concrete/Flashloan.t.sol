@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import { Solarray } from "solarray/Solarray.sol";
 import {
     BaseIntegrationTest,
     ModuleKitHelpers,
@@ -101,7 +102,10 @@ contract FlashloanTest is BaseIntegrationTest {
         });
         instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
-        init = abi.encodePacked(IERC3156FlashBorrower.onFlashLoan.selector, bytes1(0), "");
+        address[] memory allowedCallback = Solarray.addresses(instance.account);
+        init = abi.encodePacked(
+            IERC3156FlashBorrower.onFlashLoan.selector, bytes1(0), abi.encode(allowedCallback)
+        );
         owner.installModule({
             moduleTypeId: MODULE_TYPE_FALLBACK,
             module: address(flashloanCallback),

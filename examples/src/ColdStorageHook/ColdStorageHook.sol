@@ -9,6 +9,9 @@ import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
 import "forge-std/console2.sol";
 
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { IERC721 } from "forge-std/interfaces/IERC721.sol";
+
 import {
     FlashLoanType,
     IERC3156FlashBorrower,
@@ -16,6 +19,7 @@ import {
 } from "modulekit/src/interfaces/Flashloan.sol";
 
 import { FlashloanLender } from "../Flashloan/FlashloanLender.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title ColdStorageHook
@@ -77,9 +81,12 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
         address account = msg.sender;
 
         // bool isInitialized = isInitialized(account);
-        // check if the module is already initialized and revert if it is
-        // TODO: fix
-        if (isInitialized(account) && data.length == 0) return;
+        // check if the module is already initialized if data is not empty, revert. If data is
+        // empty, skip
+        if (isInitialized(account)) {
+            if (data.length == 0) return;
+            else revert AlreadyInitialized(account);
+        }
 
         // decode the data to get the waitPeriod and owner
         uint128 waitPeriod = uint128(bytes16(data[0:16]));
@@ -392,8 +399,18 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
             functionSig = bytes4(callData[0:4]);
         }
 
-        // TODO: scope this more
-        if (msgSender == address(this)) return bytes(abi.encode(PASS));
+        // This condition is true, if this coldstorage hook is making executions.
+        if (msgSender == address(this)) {
+            bytes4 targetSelector = bytes4(callData[:4]);
+
+            if (
+                targetSelector == IERC20.transfer.selector
+                    || targetSelector == IERC721.transferFrom.selector
+                    || targetSelector == IERC3156FlashBorrower.onFlashLoan.selector
+            ) {
+                return bytes(abi.encode(PASS));
+            }
+        }
         if (target == address(this) && functionSig == this.requestTimelockedExecution.selector) {
             // if the function is requestTimelockedExecution, return the function selector
             return abi.encode(this.requestTimelockedExecution.selector);
