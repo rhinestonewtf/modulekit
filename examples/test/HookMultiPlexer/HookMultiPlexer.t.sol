@@ -20,6 +20,8 @@ import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 
 import "erc7579/lib/ModeLib.sol";
 import { MockTarget } from "modulekit/src/mocks/MockTarget.sol";
+import "forge-std/interfaces/IERC20.sol";
+import "src/HookMultiPlexer/DataTypes.sol";
 
 contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
     using ModuleKitHelpers for *;
@@ -29,6 +31,7 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
     HookMultiPlexer internal hook;
     MockHook internal subHook1;
     MockTarget internal target;
+    MockERC20 internal token;
 
     bool preCheckCalled;
     bool postCheckCalled;
@@ -68,14 +71,21 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         subHook1 = new MockHook();
         vm.label(address(subHook1), "SubHook1");
 
-        IERC7579Hook[] memory globalHooks = new IERC7579Hook[](2);
+        token = new MockERC20("usdc", "usdc", 18);
+        token.mint(instance.account, 100 ether);
+        vm.deal(instance.account, 1000 ether);
+
+        IERC7579Hook[] memory globalHooks = new IERC7579Hook[](1);
         globalHooks[0] = IERC7579Hook(subHook1);
-        globalHooks[1] = IERC7579Hook(address(this));
+        IERC7579Hook[] memory _targetHooks = new IERC7579Hook[](1);
+        _targetHooks[0] = IERC7579Hook(address(this));
+        SigHookInit[] memory targetHooks = new SigHookInit[](1);
+        targetHooks[0] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: _targetHooks });
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(hook),
-            data: abi.encode(globalHooks, globalHooks, new IERC7579Hook[](0))
+            data: abi.encode(globalHooks, globalHooks, new SigHookInit[](0), targetHooks)
         });
     }
 
@@ -84,12 +94,27 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         uint256 value = 1 wei;
         bytes memory callData = abi.encodeCall(MockTarget.set, (1337));
 
-        UserOpData memory userOpData = instance.getExecOps({
-            target: target,
-            value: value,
-            callData: callData,
-            txValidator: address(defaultValidator)
+        Execution[] memory execution = new Execution[](3);
+        execution[0] = Execution({
+            target: address(target),
+            value: 0,
+            callData: abi.encodeCall(MockTarget.set, (1336))
         });
+
+        execution[1] = Execution({
+            target: address(token),
+            value: 0,
+            callData: abi.encodeCall(IERC20.transfer, (makeAddr("receiver"), 100))
+        });
+
+        execution[2] = Execution({
+            target: address(token),
+            value: 0,
+            callData: abi.encodeCall(IERC20.transfer, (makeAddr("receiver"), 100))
+        });
+
+        UserOpData memory userOpData =
+            instance.getExecOps({ executions: execution, txValidator: address(defaultValidator) });
         userOpData.execUserOps();
     }
 

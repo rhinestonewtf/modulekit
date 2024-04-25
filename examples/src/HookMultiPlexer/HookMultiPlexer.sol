@@ -11,18 +11,32 @@ import { HookMultiPlexerBase } from "./HookMultiPlexerBase.sol";
 import "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 
+import "forge-std/console2.sol";
+
 contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
     function onInstall(bytes calldata data) external override {
         Config storage $config = $getConfig(msg.sender);
         (
             IERC7579Hook[] memory globalHooks,
             IERC7579Hook[] memory valueHooks,
-            IERC7579Hook[] memory sigHooks
-        ) = abi.decode(data, (IERC7579Hook[], IERC7579Hook[], IERC7579Hook[]));
+            SigHookInit[] memory sigHooks,
+            SigHookInit[] memory targetSigHooks
+        ) = abi.decode(data, (IERC7579Hook[], IERC7579Hook[], SigHookInit[], SigHookInit[]));
 
         $config.globalHooks = globalHooks;
         $config.valueHooks = valueHooks;
-        // $config.sigHooks = sigHooks;
+
+        uint256 length = sigHooks.length;
+        for (uint256 i; i < length; i++) {
+            bytes4 hookForSig = sigHooks[i].sig;
+            $config.sigHooks[hookForSig] = sigHooks[i].subHooks;
+        }
+
+        length = targetSigHooks.length;
+        for (uint256 i; i < length; i++) {
+            bytes4 hookForSig = targetSigHooks[i].sig;
+            $config.targetSigHooks[hookForSig] = targetSigHooks[i].subHooks;
+        }
     }
 
     function onUninstall(bytes calldata) external override { }
@@ -185,6 +199,13 @@ contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
         }
         for (uint256 i; i < context.sigHooks.length; i++) {
             context.sigHooks[i].subHook.postCheck(context.sigHooks[i].context);
+        }
+        for (uint256 i; i < context.targetSigHooks.length; i++) {
+            console2.log("length=", context.targetSigHooks.length);
+            PreCheckContext[] memory _targetSigCtx = context.targetSigHooks[i];
+            for (uint256 y; y < _targetSigCtx.length; y++) {
+                _targetSigCtx[y].subHook.postCheck(_targetSigCtx[y].context);
+            }
         }
     }
 
