@@ -22,13 +22,13 @@
     "checknsignatures": "github:zeroknots/checknsignatures",
     "ds-test": "github:dapphub/ds-test",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
-    "erc7579": "github:erc7579/erc7579-implementation",
+    "erc7579": "github:erc7579/erc7579-implementation#feature/hook-changes-back",
     "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^4.5.2",
+    "solhint": "^4.5.4",
     "solmate": "github:transmissions11/solmate"
   },
   "files": [

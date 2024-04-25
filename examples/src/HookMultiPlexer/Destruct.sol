@@ -1,22 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { ERC7579HookBase } from "./ERC7579HookBase.sol";
-import { IERC7579Account } from "../Accounts.sol";
+import { ERC7579HookBase } from "modulekit/src/Modules.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 import {
-    ModeLib,
-    CallType,
-    ModeCode,
-    CALLTYPE_SINGLE,
-    CALLTYPE_BATCH,
-    CALLTYPE_DELEGATECALL
+    ModeLib, CallType, ModeCode, CALLTYPE_SINGLE, CALLTYPE_BATCH
 } from "erc7579/lib/ModeLib.sol";
 
 uint256 constant EXEC_OFFSET = 100;
 uint256 constant INSTALL_OFFSET = 132;
 
-abstract contract ERC7579HookDestruct is ERC7579HookBase {
+abstract contract ERC7579HookDestructWithData is ERC7579HookBase {
     error HookInvalidSelector();
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -48,7 +43,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                 : msgData[0:0];
             uint256 moduleType = uint256(bytes32(msgData[4:36]));
             address module = address(bytes20((msgData[48:68])));
-            return onInstallModule(msgSender, moduleType, module, initData);
+            return onInstallModule(msgSender, moduleType, module, initData, msgData);
         } else if (selector == IERC7579Account.uninstallModule.selector) {
             uint256 paramLen = msgData.length > INSTALL_OFFSET
                 ? uint256(bytes32(msgData[INSTALL_OFFSET - 32:INSTALL_OFFSET]))
@@ -60,7 +55,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
             uint256 moduleType = uint256(bytes32(msgData[4:36]));
             address module = address(bytes20((msgData[48:68])));
 
-            return onUninstallModule(msgSender, moduleType, module, initData);
+            return onUninstallModule(msgSender, moduleType, module, initData, msgData);
         } else {
             return onUnknownFunction(msgSender, msgValue, msgData);
         }
@@ -74,18 +69,18 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         returns (bytes memory hookData)
     {
         uint256 paramLen = uint256(bytes32(msgData[EXEC_OFFSET - 32:EXEC_OFFSET]));
-        bytes calldata encodedExecutions = msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen];
 
         ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
         CallType calltype = ModeLib.getCallType(mode);
 
         if (calltype == CALLTYPE_SINGLE) {
             (address to, uint256 value, bytes calldata callData) =
-                ExecutionLib.decodeSingle(encodedExecutions);
-            return onExecute(msgSender, to, value, callData);
+                ExecutionLib.decodeSingle(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+            return onExecute(msgSender, to, value, callData, msgData);
         } else if (calltype == CALLTYPE_BATCH) {
-            Execution[] calldata execs = ExecutionLib.decodeBatch(encodedExecutions);
-            return onExecuteBatch(msgSender, execs);
+            Execution[] calldata execs =
+                ExecutionLib.decodeBatch(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+            return onExecuteBatch(msgSender, execs, msgData);
         }
     }
 
@@ -97,18 +92,18 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         returns (bytes memory hookData)
     {
         uint256 paramLen = uint256(bytes32(msgData[EXEC_OFFSET - 32:EXEC_OFFSET]));
-        bytes calldata encodedExecutions = msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen];
 
         ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
         CallType calltype = ModeLib.getCallType(mode);
 
         if (calltype == CALLTYPE_SINGLE) {
             (address to, uint256 value, bytes calldata callData) =
-                ExecutionLib.decodeSingle(encodedExecutions);
-            return onExecuteFromExecutor(msgSender, to, value, callData);
+                ExecutionLib.decodeSingle(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+            return onExecuteFromExecutor(msgSender, to, value, callData, msgData);
         } else if (calltype == CALLTYPE_BATCH) {
-            Execution[] calldata execs = ExecutionLib.decodeBatch(encodedExecutions);
-            return onExecuteBatchFromExecutor(msgSender, execs);
+            Execution[] calldata execs =
+                ExecutionLib.decodeBatch(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+            return onExecuteBatchFromExecutor(msgSender, execs, msgData);
         }
     }
 
@@ -124,7 +119,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         address msgSender,
         address target,
         uint256 value,
-        bytes calldata callData
+        bytes calldata callData,
+        bytes calldata msgData
     )
         internal
         virtual
@@ -133,7 +129,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
     function onExecuteBatch(
         address msgSender,
-        Execution[] calldata
+        Execution[] calldata,
+        bytes calldata msgData
     )
         internal
         virtual
@@ -144,7 +141,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         address msgSender,
         address target,
         uint256 value,
-        bytes calldata callData
+        bytes calldata callData,
+        bytes calldata msgData
     )
         internal
         virtual
@@ -153,7 +151,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
 
     function onExecuteBatchFromExecutor(
         address msgSender,
-        Execution[] calldata
+        Execution[] calldata,
+        bytes calldata msgData
     )
         internal
         virtual
@@ -168,7 +167,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         address msgSender,
         uint256 moduleType,
         address module,
-        bytes calldata initData
+        bytes calldata initData,
+        bytes calldata msgData
     )
         internal
         virtual
@@ -179,7 +179,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         address msgSender,
         uint256 moduleType,
         address module,
-        bytes calldata deInitData
+        bytes calldata deInitData,
+        bytes calldata msgData
     )
         internal
         virtual
@@ -204,5 +205,5 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                                      POSTCHECK
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onPostCheck(bytes calldata hookData) internal virtual { }
+    function onPostCheck(bytes calldata hookData) internal virtual;
 }

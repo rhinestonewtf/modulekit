@@ -113,7 +113,7 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
      * Called on postcheck after every execution
      * @dev this function is unused
      */
-    function postCheck(bytes calldata, bool, bytes calldata) external { }
+    function postCheck(bytes calldata) external { }
 
     /**
      * Validates the userOperation during the validation phase

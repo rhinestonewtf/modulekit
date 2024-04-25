@@ -40,15 +40,13 @@ contract MockHook is ERC7579HookBaseNew {
         }
     }
 
-    function _postCheck(
-        address account,
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        override
-    {
+    function _postCheck(address account, bytes calldata hookData) internal override {
+        if (keccak256(hookData) == keccak256(abi.encode("revertPost"))) {
+            revert("revertPost");
+        }
+    }
+
+    function postCheck(bytes calldata hookData) external override {
         if (keccak256(hookData) == keccak256(abi.encode("revertPost"))) {
             revert("revertPost");
         }

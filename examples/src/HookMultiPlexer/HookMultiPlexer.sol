@@ -1,203 +1,224 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { ERC7579HookBase, ERC7579ExecutorBase } from "modulekit/src/Modules.sol";
-import { ERC7579HookBaseNew } from "modulekit/src/modules/ERC7579HookBaseNew.sol";
-import { SENTINEL, SentinelListLib } from "sentinellist/SentinelList.sol";
-import { IERC7579Account, Execution } from "modulekit/src/Accounts.sol";
-import { ModeLib } from "erc7579/lib/ModeLib.sol";
-import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
+import { IERC721 } from "forge-std/interfaces/IERC721.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import { ERC7579HookDestructWithData, Execution } from "./Destruct.sol";
+import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
+import { HookMultiPlexerBase } from "./HookMultiPlexerBase.sol";
+import "./DataTypes.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 
-contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
-    using SentinelListLib for SentinelListLib.SentinelList;
+contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
+    function onInstall(bytes calldata data) external override {
+        Config storage $config = $getConfig(msg.sender);
+        (
+            IERC7579Hook[] memory globalHooks,
+            IERC7579Hook[] memory valueHooks,
+            IERC7579Hook[] memory sigHooks
+        ) = abi.decode(data, (IERC7579Hook[], IERC7579Hook[], IERC7579Hook[]));
 
-    /*//////////////////////////////////////////////////////////////////////////
-                            CONSTANTS & STORAGE
-    //////////////////////////////////////////////////////////////////////////*/
-
-    error NoHookRegistered(address smartAccount);
-    error HookReverted(address hookAddress, bytes hookData);
-    error InvalidHookInitDataLength();
-
-    struct Config {
-        address[] globalHooks;
-        mapping(bytes4 => address[]) sigHooks;
-        mapping(bytes4 => address[]) targetSigHooks;
-        address[] valueHooks;
+        $config.globalHooks = globalHooks;
+        $config.valueHooks = valueHooks;
+        // $config.sigHooks = sigHooks;
     }
 
-    mapping(address account => Config) config;
+    function onUninstall(bytes calldata) external override { }
+    /**
+     * Execute function was called on the account
+     * @dev this function will revert as the module does not allow direct execution
+     */
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                    CONSTRUCTOR
-    //////////////////////////////////////////////////////////////////////////*/
-
-    IERC7484 public immutable REGISTRY;
-
-    constructor(IERC7484 _registry) {
-        REGISTRY = _registry;
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     CONFIG
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function onInstall(bytes calldata data) external {
-        // TODO
-    }
-
-    function onUninstall(bytes calldata) external override {
-        // TODO
-    }
-
-    function isInitialized(address smartAccount) public view returns (bool) {
-        // TODO: this is a temporary solution
-        return config[smartAccount].globalHooks.length != 0;
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     MODULE LOGIC
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function preCheck(
+    function onExecute(
         address msgSender,
-        uint256 msgValue,
+        address target,
+        uint256 value,
+        bytes calldata callData,
         bytes calldata msgData
     )
-        external
-        returns (bytes memory hookReturnData)
+        internal
+        virtual
+        override
+        returns (bytes memory context)
     {
-        address[] memory hooks =
-            _getHooks(msg.sender, bytes4(msgData[0:4]), _getTargetSig(msgData), msgValue > 0);
-        uint256 hooksLength = hooks.length;
+        context = _handleSingle(IERC7579Account.execute.selector, msgSender, value, msgData);
+    }
 
-        bytes[] memory hookReturnDataArray = new bytes[](hooksLength);
+    /**
+     * ExecuteBatch function was called on the account
+     * @dev this function will revert as the module does not allow direct execution
+     */
+    function onExecuteBatch(
+        address msgSender,
+        Execution[] calldata executions,
+        bytes calldata msgData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory context)
+    {
+        context = _handleBatch(IERC7579Account.execute.selector, msgSender, executions, msgData);
+    }
 
-        for (uint256 i = 0; i < hooksLength; i++) {
-            address hookAddress = hooks[i];
+    /**
+     * Execute from executor function was called on the account
+     * @dev this function will revert as the module does not allow direct execution
+     *
+     * @param target address of the target
+     * @param value value to be sent by account
+     * @param callData data to be sent by account
+     */
+    function onExecuteFromExecutor(
+        address msgSender,
+        address target,
+        uint256 value,
+        bytes calldata callData,
+        bytes calldata msgData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory context)
+    {
+        context =
+            _handleSingle(IERC7579Account.executeFromExecutor.selector, msgSender, value, msgData);
+    }
 
-            (bool success, bytes memory _hookReturnData) = hookAddress.call(
-                abi.encodePacked(
-                    abi.encodeCall(this.preCheck, (msgSender, msgValue, msgData)),
-                    address(this),
-                    msg.sender
-                )
-            );
-
-            if (!success) {
-                revert HookReverted(hookAddress, _hookReturnData);
-            }
-
-            hookReturnDataArray[i] = _hookReturnData;
-        }
-
-        hookReturnData = abi.encodePacked(
-            bytes4(msgData[0:4]),
-            _getTargetSig(msgData),
-            msgValue > 0,
-            abi.encode(hookReturnDataArray)
+    /**
+     * ExecuteBatch from executor function was called on the account
+     * @dev this function will revert as the module does not allow batched executions from executor
+     */
+    function onExecuteBatchFromExecutor(
+        address msgSender,
+        Execution[] calldata executions,
+        bytes calldata msgData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory context)
+    {
+        context = _handleBatch(
+            IERC7579Account.executeFromExecutor.selector, msgSender, executions, msgData
         );
     }
 
-    function postCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        external
-    {
-        (bytes4 sig, bytes4 targetSig, bool hasValue, bytes[] memory hookReturnDataArray) =
-            abi.decode(hookData, (bytes4, bytes4, bool, bytes[]));
-
-        address[] memory hooks = _getHooks(msg.sender, sig, targetSig, hasValue);
-        uint256 hooksLength = hooks.length;
-
-        for (uint256 i = 0; i < hooksLength; i++) {
-            address hookAddress = hooks[i];
-
-            (bool success,) = hookAddress.call(
-                abi.encodePacked(
-                    abi.encodeCall(
-                        this.postCheck,
-                        (hookReturnDataArray[i], executionSuccess, executionReturnValue)
-                    ),
-                    address(this),
-                    msg.sender
-                )
-            );
-
-            if (!success) {
-                revert HookReverted(hookAddress, bytes(""));
-            }
-        }
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     INTERNAL
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function _getTargetSig(bytes calldata msgData) internal pure returns (bytes4) {
-        return bytes4(msgData[0:4]);
-    }
-
-    function _getHooks(
-        address account,
-        bytes4 sig,
-        bytes4 targetSig,
-        bool hasValue
+    /**
+     * InstallModule function was called on the account
+     * @dev install module calls need to be timelocked
+     *
+     * @param moduleTypeId type of the module
+     * @param module address of the module
+     * @param initData data to be passed to the module
+     */
+    function onInstallModule(
+        address msgSender,
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata initData,
+        bytes calldata msgData
     )
         internal
-        returns (address[] memory)
+        virtual
+        override
+        returns (bytes memory context)
     {
-        address[] memory globals = config[account].globalHooks;
-        address[] memory sigHooks = config[account].sigHooks[sig];
-        address[] memory targetSigHooks = config[account].targetSigHooks[targetSig];
+        context = _handleSingle(IERC7579Account.installModule.selector, msgSender, 0, msgData);
+    }
 
-        address[] memory valueHooks;
-        if (hasValue) {
-            valueHooks = config[account].valueHooks;
+    /**
+     * UninstallModule function was called on the account
+     * @dev install module calls need to be timelocked
+     *
+     * @param moduleTypeId type of the module
+     * @param module address of the module
+     * @param deInitData data to be passed to the module
+     */
+    function onUninstallModule(
+        address msgSender,
+        uint256 moduleTypeId,
+        address module,
+        bytes calldata deInitData,
+        bytes calldata msgData
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory context)
+    {
+        context = _handleSingle(IERC7579Account.uninstallModule.selector, msgSender, 0, msgData);
+    }
+
+    /**
+     * Unknown function was called on the account
+     * @dev This function will revert except when used for flashloans
+     *
+     * @param msgSender address of the sender
+     * @param callData data passed to the account
+     *
+     * @return context bytes encoded data
+     */
+    function onUnknownFunction(
+        address msgSender,
+        uint256 value,
+        bytes calldata callData,
+        bytes calldata msgData
+    )
+        internal
+        virtual
+        returns (bytes memory context)
+    {
+        context = _handleSingle(bytes4(callData[:4]), msgSender, 0, msgData);
+    }
+
+    function onPostCheck(bytes calldata hookData) internal virtual override {
+        AllContext memory context = abi.decode(hookData, (AllContext));
+
+        for (uint256 i; i < context.globalHooks.length; i++) {
+            context.globalHooks[i].subHook.postCheck(context.globalHooks[i].context);
         }
-
-        uint256 hooksLength =
-            globals.length + sigHooks.length + targetSigHooks.length + valueHooks.length;
-
-        address[] memory hooks = new address[](hooksLength);
-
-        // this needs to be optimized
-        uint256 index = 0;
-        for (uint256 i = 0; i < globals.length; i++) {
-            hooks[index++] = globals[i];
+        for (uint256 i; i < context.valueHooks.length; i++) {
+            context.valueHooks[i].subHook.postCheck(context.valueHooks[i].context);
         }
-
-        for (uint256 i = 0; i < sigHooks.length; i++) {
-            hooks[index++] = sigHooks[i];
+        for (uint256 i; i < context.sigHooks.length; i++) {
+            context.sigHooks[i].subHook.postCheck(context.sigHooks[i].context);
         }
-
-        for (uint256 i = 0; i < targetSigHooks.length; i++) {
-            hooks[index++] = targetSigHooks[i];
-        }
-
-        for (uint256 i = 0; i < valueHooks.length; i++) {
-            hooks[index++] = valueHooks[i];
-        }
-
-        return hooks;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
+    /**
+     * Returns the type of the module
+     *
+     * @param typeID type of the module
+     *
+     * @return true if the type is a module type, false otherwise
+     */
+    function isModuleType(uint256 typeID) external pure virtual override returns (bool) {
+        return typeID == TYPE_HOOK;
+    }
 
-    function name() external pure returns (string memory) {
+    /**
+     * Returns the name of the module
+     *
+     * @return name of the module
+     */
+    function name() external pure virtual returns (string memory) {
         return "HookMultiPlexer";
     }
 
-    function version() external pure returns (string memory) {
-        return "1.0.0";
+    /**
+     * Returns the version of the module
+     *
+     * @return version of the module
+     */
+    function version() external pure virtual returns (string memory) {
+        return "1.0.2";
     }
 
-    function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_HOOK || typeID == TYPE_EXECUTOR;
-    }
+    function isInitialized(address smartAccount) public view returns (bool) { }
 }

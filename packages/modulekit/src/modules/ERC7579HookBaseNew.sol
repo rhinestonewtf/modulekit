@@ -42,15 +42,8 @@ abstract contract ERC7579HookBaseNew is IERC7579Hook, ERC7579ModuleBase {
         return _preCheck(_msgSender(), msgSender, msgValue, msgData);
     }
 
-    function postCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        external
-        virtual
-    {
-        _postCheck(_msgSender(), hookData, executionSuccess, executionReturnValue);
+    function postCheck(bytes calldata hookData) external virtual {
+        _postCheck(_msgSender(), hookData);
     }
 
     function _preCheck(
@@ -63,12 +56,5 @@ abstract contract ERC7579HookBaseNew is IERC7579Hook, ERC7579ModuleBase {
         virtual
         returns (bytes memory hookData);
 
-    function _postCheck(
-        address account,
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        virtual;
+    function _postCheck(address account, bytes calldata hookData) internal virtual;
 }

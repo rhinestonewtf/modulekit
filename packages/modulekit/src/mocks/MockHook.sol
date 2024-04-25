@@ -16,13 +16,7 @@ contract MockHook is ERC7579HookBase {
         external
         returns (bytes memory hookData)
     { }
-    function postCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        external
-    { }
+    function postCheck(bytes calldata hookData) external { }
 
     function isInitialized(address smartAccount) external pure returns (bool) {
         return false;
