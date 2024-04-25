@@ -2,8 +2,7 @@
 pragma solidity ^0.8.25;
 
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
-import { Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
-import "./DataTypes.sol";
+import { PreCheckContext, IERC7579Hook } from "./DataTypes.sol";
 
 library HookMultiPlexerLib {
     error SubHookPreCheckError(IERC7579Hook subHook);

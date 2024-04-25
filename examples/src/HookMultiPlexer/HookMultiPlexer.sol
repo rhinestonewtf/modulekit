@@ -1,19 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { IERC721 } from "forge-std/interfaces/IERC721.sol";
-import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
-import { ERC7579HookDestructWithData, Execution } from "./Destruct.sol";
-import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
+import { ERC7579HookBase } from "modulekit/src/Modules.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
-import { HookMultiPlexerBase } from "./HookMultiPlexerBase.sol";
-import "./DataTypes.sol";
+import { AllContext, SigHookInit, PreCheckContext, Config, IERC7579Hook } from "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
+import {
+    ModeLib, CallType, ModeCode, CALLTYPE_SINGLE, CALLTYPE_BATCH
+} from "erc7579/lib/ModeLib.sol";
+import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
+import { HookMultiPlexerLib } from "./HookMultiPlexerLib.sol";
 
-import "forge-std/console2.sol";
+uint256 constant EXEC_OFFSET = 100;
 
-contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
+contract HookMultiPlexer is ERC7579HookBase {
+    using HookMultiPlexerLib for IERC7579Hook[];
+
+    mapping(address account => Config config) internal accountConfig;
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
     function onInstall(bytes calldata data) external override {
         Config storage $config = $getConfig(msg.sender);
         (
@@ -40,155 +48,72 @@ contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
     }
 
     function onUninstall(bytes calldata) external override { }
-    /**
-     * Execute function was called on the account
-     * @dev this function will revert as the module does not allow direct execution
-     */
 
-    function onExecute(
+    function isInitialized(address smartAccount) public view returns (bool) { }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                MODULE LOGIC
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function preCheck(
         address msgSender,
-        address target,
-        uint256 value,
-        bytes calldata callData,
+        uint256 msgValue,
         bytes calldata msgData
     )
-        internal
+        external
         virtual
         override
-        returns (bytes memory context)
+        returns (bytes memory hookData)
     {
-        context = _handleSingle(IERC7579Account.execute.selector, msgSender, value, msgData);
+        Config storage $config = $getConfig(msg.sender);
+
+        AllContext memory _context;
+        _context.globalHooks = $config.globalHooks.preCheckSubHooks(msgSender, msgValue, msgData);
+        _context.sigHooks =
+            $config.sigHooks[bytes4(msgData[:4])].preCheckSubHooks(msgSender, msgValue, msgData);
+
+        bytes4 callDataSelector = bytes4(msgData[:4]);
+
+        if (
+            callDataSelector == IERC7579Account.execute.selector
+                || callDataSelector == IERC7579Account.executeFromExecutor.selector
+        ) {
+            uint256 paramLen = uint256(bytes32(msgData[EXEC_OFFSET - 32:EXEC_OFFSET]));
+
+            ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
+            CallType calltype = ModeLib.getCallType(mode);
+
+            if (calltype == CALLTYPE_SINGLE) {
+                (, uint256 value, bytes calldata callData) =
+                    ExecutionLib.decodeSingle(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+                if (value != 0) {
+                    _context.valueHooks =
+                        $config.valueHooks.preCheckSubHooks(msgSender, msgValue, msgData);
+                }
+                _context.targetSigHooks[0] = $config.targetSigHooks[bytes4(callData[:4])]
+                    .preCheckSubHooks(msgSender, msgValue, msgData);
+            } else if (calltype == CALLTYPE_BATCH) {
+                // avoid stack too deep
+                address sender = msgSender;
+                bytes calldata data = msgData;
+                uint256 value = msgValue;
+                Config storage $_config = $config;
+
+                Execution[] calldata execs =
+                    ExecutionLib.decodeBatch(data[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+                bool hasValue;
+                (_context.targetSigHooks, hasValue) = _getTargetSig(execs, sender, data);
+
+                if (hasValue) {
+                    _context.valueHooks = $_config.valueHooks.preCheckSubHooks(sender, value, data);
+                }
+            }
+        }
+
+        return abi.encode(_context);
     }
 
-    /**
-     * ExecuteBatch function was called on the account
-     * @dev this function will revert as the module does not allow direct execution
-     */
-    function onExecuteBatch(
-        address msgSender,
-        Execution[] calldata executions,
-        bytes calldata msgData
-    )
-        internal
-        virtual
-        override
-        returns (bytes memory context)
-    {
-        context = _handleBatch(IERC7579Account.execute.selector, msgSender, executions, msgData);
-    }
-
-    /**
-     * Execute from executor function was called on the account
-     * @dev this function will revert as the module does not allow direct execution
-     *
-     * @param target address of the target
-     * @param value value to be sent by account
-     * @param callData data to be sent by account
-     */
-    function onExecuteFromExecutor(
-        address msgSender,
-        address target,
-        uint256 value,
-        bytes calldata callData,
-        bytes calldata msgData
-    )
-        internal
-        virtual
-        override
-        returns (bytes memory context)
-    {
-        context =
-            _handleSingle(IERC7579Account.executeFromExecutor.selector, msgSender, value, msgData);
-    }
-
-    /**
-     * ExecuteBatch from executor function was called on the account
-     * @dev this function will revert as the module does not allow batched executions from executor
-     */
-    function onExecuteBatchFromExecutor(
-        address msgSender,
-        Execution[] calldata executions,
-        bytes calldata msgData
-    )
-        internal
-        virtual
-        override
-        returns (bytes memory context)
-    {
-        context = _handleBatch(
-            IERC7579Account.executeFromExecutor.selector, msgSender, executions, msgData
-        );
-    }
-
-    /**
-     * InstallModule function was called on the account
-     * @dev install module calls need to be timelocked
-     *
-     * @param moduleTypeId type of the module
-     * @param module address of the module
-     * @param initData data to be passed to the module
-     */
-    function onInstallModule(
-        address msgSender,
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata initData,
-        bytes calldata msgData
-    )
-        internal
-        virtual
-        override
-        returns (bytes memory context)
-    {
-        context = _handleSingle(IERC7579Account.installModule.selector, msgSender, 0, msgData);
-    }
-
-    /**
-     * UninstallModule function was called on the account
-     * @dev install module calls need to be timelocked
-     *
-     * @param moduleTypeId type of the module
-     * @param module address of the module
-     * @param deInitData data to be passed to the module
-     */
-    function onUninstallModule(
-        address msgSender,
-        uint256 moduleTypeId,
-        address module,
-        bytes calldata deInitData,
-        bytes calldata msgData
-    )
-        internal
-        virtual
-        override
-        returns (bytes memory context)
-    {
-        context = _handleSingle(IERC7579Account.uninstallModule.selector, msgSender, 0, msgData);
-    }
-
-    /**
-     * Unknown function was called on the account
-     * @dev This function will revert except when used for flashloans
-     *
-     * @param msgSender address of the sender
-     * @param callData data passed to the account
-     *
-     * @return context bytes encoded data
-     */
-    function onUnknownFunction(
-        address msgSender,
-        uint256 value,
-        bytes calldata callData,
-        bytes calldata msgData
-    )
-        internal
-        virtual
-        returns (bytes memory context)
-    {
-        context = _handleSingle(bytes4(callData[:4]), msgSender, 0, msgData);
-    }
-
-    function onPostCheck(bytes calldata hookData) internal virtual override {
+    function postCheck(bytes calldata hookData) external {
         AllContext memory context = abi.decode(hookData, (AllContext));
 
         for (uint256 i; i < context.globalHooks.length; i++) {
@@ -201,7 +126,6 @@ contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
             context.sigHooks[i].subHook.postCheck(context.sigHooks[i].context);
         }
         for (uint256 i; i < context.targetSigHooks.length; i++) {
-            console2.log("length=", context.targetSigHooks.length);
             PreCheckContext[] memory _targetSigCtx = context.targetSigHooks[i];
             for (uint256 y; y < _targetSigCtx.length; y++) {
                 _targetSigCtx[y].subHook.postCheck(_targetSigCtx[y].context);
@@ -210,8 +134,49 @@ contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _getTargetSig(
+        Execution[] calldata executions,
+        address msgSender,
+        bytes calldata msgData
+    )
+        internal
+        returns (PreCheckContext[][] memory targetSigHooks, bool hasValue)
+    {
+        uint256 length = executions.length;
+        targetSigHooks = new PreCheckContext[][](length);
+        bytes32 sigXor;
+        uint256 uniqueSigs;
+        for (uint256 i; i < length; i++) {
+            Execution calldata execution = executions[i];
+            if (execution.value != 0) hasValue = true;
+            bytes4 targetSelector = bytes4(execution.callData[:4]);
+            bytes32 _sigHash = bytes32(keccak256(abi.encodePacked(targetSelector)));
+            bytes32 xor = sigXor ^ _sigHash;
+            if (xor != bytes32(0)) {
+                targetSigHooks[uniqueSigs] = $getConfig(msg.sender).targetSigHooks[targetSelector]
+                    .preCheckSubHooks(msgSender, 0, msgData);
+
+                sigXor ^= xor;
+                uniqueSigs++;
+            }
+        }
+
+        assembly {
+            mstore(targetSigHooks, uniqueSigs)
+        }
+    }
+
+    function $getConfig(address account) internal view returns (Config storage) {
+        return accountConfig[account];
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                      METADATA
     //////////////////////////////////////////////////////////////////////////*/
+
     /**
      * Returns the type of the module
      *
@@ -238,8 +203,6 @@ contract HookMultiPlexer is ERC7579HookDestructWithData, HookMultiPlexerBase {
      * @return version of the module
      */
     function version() external pure virtual returns (string memory) {
-        return "1.0.2";
+        return "1.0.0";
     }
-
-    function isInitialized(address smartAccount) public view returns (bool) { }
 }
