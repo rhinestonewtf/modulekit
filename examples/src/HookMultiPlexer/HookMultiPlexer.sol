@@ -128,6 +128,10 @@ contract HookMultiPlexer is ERC7579HookBase {
         bool batchHasValue;
         for (uint256 i; i < length; i++) {
             Execution calldata execution = executions[i];
+            if (!batchHasValue && execution.value != 0) {
+                batchHasValue = true;
+                allHooks = $config.valueHooks;
+            }
             targetSigsInBatch[i] = uint256(bytes32(execution.callData[:4]));
         }
         targetSigsInBatch.insertionSort();

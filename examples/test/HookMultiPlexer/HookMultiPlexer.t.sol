@@ -81,8 +81,9 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         valueHooks[0] = address(address(this));
         address[] memory _targetHooks = new address[](1);
         _targetHooks[0] = address(address(this));
-        SigHookInit[] memory targetHooks = new SigHookInit[](1);
-        targetHooks[0] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: _targetHooks });
+        SigHookInit[] memory targetHooks = new SigHookInit[](2);
+        targetHooks[0] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: globalHooks });
+        targetHooks[1] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: _targetHooks });
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
