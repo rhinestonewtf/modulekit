@@ -31,15 +31,43 @@ contract HookMultiPlexer is ERC7579HookBase {
 
     function onInstall(bytes calldata data) external override {
         Config storage $config = $getConfig(msg.sender);
-        (
-            address[] memory globalHooks,
-            address[] memory valueHooks,
-            SigHookInit[] memory sigHooks,
-            SigHookInit[] memory targetSigHooks
-        ) = abi.decode(data, (address[], address[], SigHookInit[], SigHookInit[]));
+        // saves 3000 gas when 1 hook per type used
+        // (
+        //     address[] memory globalHooks,
+        //     address[] memory valueHooks,
+        //     SigHookInit[] memory sigHooks,
+        //     SigHookInit[] memory targetSigHooks
+        // ) = abi.decode(data, (address[], address[], SigHookInit[], SigHookInit[]));
+        address[] calldata globalHooks;
+        address[] calldata valueHooks;
+        SigHookInit[] calldata sigHooks;
+        SigHookInit[] calldata targetSigHooks;
+        assembly ("memory-safe") {
+            let offset := data.offset
+            let baseOffset := offset
 
-        if (!globalHooks.isSortedAndUniquified()) revert HooksNotSorted();
-        if (!valueHooks.isSortedAndUniquified()) revert HooksNotSorted();
+            let dataPointer := add(baseOffset, calldataload(offset))
+            globalHooks.offset := add(dataPointer, 0x20)
+            globalHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            valueHooks.offset := add(dataPointer, 0x20)
+            valueHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            sigHooks.offset := add(dataPointer, 0x20)
+            sigHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            targetSigHooks.offset := add(dataPointer, 0x20)
+            targetSigHooks.length := calldataload(dataPointer)
+        }
+
+        if (!globalHooks.isSortedAndUniquifiedCallData()) revert HooksNotSorted();
+        if (!valueHooks.isSortedAndUniquifiedCallData()) revert HooksNotSorted();
 
         $config.globalHooks = globalHooks;
         $config.valueHooks = valueHooks;
@@ -47,7 +75,7 @@ contract HookMultiPlexer is ERC7579HookBase {
         uint256 length = sigHooks.length;
         for (uint256 i; i < length; i++) {
             bytes4 hookForSig = sigHooks[i].sig;
-            if (!sigHooks[i].subHooks.isSortedAndUniquified()) revert HooksNotSorted();
+            if (!sigHooks[i].subHooks.isSortedAndUniquifiedCallData()) revert HooksNotSorted();
             $config.sigHooks[hookForSig] = sigHooks[i].subHooks;
         }
 
@@ -55,7 +83,9 @@ contract HookMultiPlexer is ERC7579HookBase {
         for (uint256 i; i < length; i++) {
             bytes4 hookForSig = targetSigHooks[i].sig;
 
-            if (!targetSigHooks[i].subHooks.isSortedAndUniquified()) revert HooksNotSorted();
+            if (!targetSigHooks[i].subHooks.isSortedAndUniquifiedCallData()) {
+                revert HooksNotSorted();
+            }
             $config.targetSigHooksEnabled = true;
             $config.targetSigHooks[hookForSig] = targetSigHooks[i].subHooks;
         }

@@ -76,4 +76,14 @@ library HookMultiPlexerLib {
             c[aLength + i] = b[i];
         }
     }
+
+    function isSortedAndUniquifiedCallData(address[] calldata array) internal pure returns (bool) {
+        uint256 length = array.length;
+        for (uint256 i = 1; i < length; i++) {
+            if (array[i - 1] >= array[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
