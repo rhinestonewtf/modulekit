@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { ERC7579ValidatorBase } from "modulekit/src/Modules.sol";
+import { ERC7579ValidatorBase, ERC7484RegistryAdapter } from "modulekit/src/Modules.sol";
 import { PackedUserOperation } from "modulekit/src/external/ERC4337.sol";
 import { IStatelessValidator } from "modulekit/src/interfaces/IStatelessValidator.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
@@ -20,7 +20,7 @@ import { MultiFactorLib } from "./MultiFactorLib.sol";
  * @dev A validator that multiplexes multiple other validators
  * @author Rhinestone
  */
-contract MultiFactor is ERC7579ValidatorBase {
+contract MultiFactor is ERC7579ValidatorBase, ERC7484RegistryAdapter {
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
@@ -46,23 +46,7 @@ contract MultiFactor is ERC7579ValidatorBase {
         uint256 iteration => mapping(address subValidator => IterativeSubvalidatorRecord record)
     ) internal iterationToSubValidator;
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                CONSTRUCTOR
-    //////////////////////////////////////////////////////////////////////////*/
-
-    // registry queried to check that a subValidator is an attested validator
-    IERC7484 public immutable REGISTRY;
-
-    /**
-     * Contract constructor
-     * @dev sets the registry as an immutable
-     *
-     * @param _registry The registry contract to check for subValidator attestation
-     */
-    constructor(IERC7484 _registry) {
-        // set the registry
-        REGISTRY = _registry;
-    }
+    constructor(IERC7484 _registry) ERC7484RegistryAdapter(_registry) { }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG

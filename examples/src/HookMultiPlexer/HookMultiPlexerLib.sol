@@ -87,6 +87,36 @@ library HookMultiplexerLib {
         }
     }
 
+    function indexOf(address[] storage array, address element) internal view returns (uint256) {
+        uint256 length = array.length;
+        for (uint256 i; i < length; i++) {
+            if (array[i] == element) {
+                return i;
+            }
+        }
+        return type(uint256).max;
+    }
+
+    function pushUnique(bytes4[] storage array, bytes4 sig) internal {
+        uint256 length = array.length;
+        for (uint256 i; i < length; i++) {
+            if (array[i] == sig) {
+                array.push(sig);
+                break;
+            }
+        }
+    }
+
+    function popUnique(bytes4[] storage array, bytes4 sig) internal {
+        uint256 length = array.length;
+        for (uint256 i; i < length; i++) {
+            if (array[i] == sig) {
+                delete array[i];
+                break;
+            }
+        }
+    }
+
     function decodeOnInstall(bytes calldata onInstallData)
         internal
         pure

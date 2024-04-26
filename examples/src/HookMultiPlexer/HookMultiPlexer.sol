@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { ERC7579HookBase } from "modulekit/src/Modules.sol";
+import { ERC7579HookBase, ERC7484RegistryAdapter } from "modulekit/src/Modules.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { SigHookInit, Config, HookType } from "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
@@ -20,30 +20,14 @@ import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 
 uint256 constant EXEC_OFFSET = 100;
 
-contract HookMultiplexer is ERC7579HookBase {
+contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
     using HookMultiplexerLib for *;
     using LibSort for uint256[];
     using LibSort for address[];
 
     mapping(address account => Config config) internal accountConfig;
 
-    /*//////////////////////////////////////////////////////////////////////////
-                                CONSTRUCTOR
-    //////////////////////////////////////////////////////////////////////////*/
-
-    // registry queried to check that a subValidator is an attested validator
-    IERC7484 public immutable REGISTRY;
-
-    /**
-     * Contract constructor
-     * @dev sets the registry as an immutable
-     *
-     * @param _registry The registry contract to check for subValidator attestation
-     */
-    constructor(IERC7484 _registry) {
-        // set the registry
-        REGISTRY = _registry;
-    }
+    constructor(IERC7484 _registry) ERC7484RegistryAdapter(_registry) { }
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -61,6 +45,8 @@ contract HookMultiplexer is ERC7579HookBase {
         Config storage $config = $getConfig(msg.sender);
         globalHooks.requireSortedAndUnique();
         valueHooks.requireSortedAndUnique();
+
+        // todo check registry for hooks?
 
         $config.globalHooks = globalHooks;
         $config.delegatecallHooks = delegatecallHooks;
@@ -128,6 +114,26 @@ contract HookMultiplexer is ERC7579HookBase {
             || $config.targetSigs.length != 0;
     }
 
+    function getHooks(address account) external view returns (address[] memory hooks) {
+        Config storage $config = $getConfig(msg.sender);
+
+        hooks = $config.globalHooks.join($config.delegatecallHooks);
+        hooks.join($config.valueHooks);
+
+        uint256 sigsLength = $config.sigs.length;
+        for (uint256 i; i < sigsLength; i++) {
+            hooks.join($config.sigHooks[$config.sigs[i]]);
+        }
+
+        uint256 targetSigsLength = $config.targetSigs.length;
+        for (uint256 i; i < targetSigsLength; i++) {
+            hooks.join($config.targetSigHooks[$config.targetSigs[i]]);
+        }
+
+        hooks.insertionSort();
+        hooks.uniquifySorted();
+    }
+
     function addHook(address hook, HookType hookType) external {
         // cache the account
         address account = msg.sender;
@@ -157,34 +163,10 @@ contract HookMultiplexer is ERC7579HookBase {
 
         if (hookType == HookType.SIG) {
             $config.sigHooks[sig].push(hook);
-
-            uint256 sigsLength = $config.sigs.length;
-            bool sigExists;
-            for (uint256 i; i < sigsLength; i++) {
-                if ($config.sigs[i] == sig) {
-                    sigExists = true;
-                    break;
-                }
-            }
-
-            if (!sigExists) {
-                $config.sigs.push(sig);
-            }
+            $config.sigs.pushUnique(sig);
         } else if (hookType == HookType.TARGET_SIG) {
             $config.targetSigHooks[sig].push(hook);
-
-            uint256 targetSigsLength = $config.targetSigs.length;
-            bool targetSigExists;
-            for (uint256 i; i < targetSigsLength; i++) {
-                if ($config.targetSigs[i] == sig) {
-                    targetSigExists = true;
-                    break;
-                }
-            }
-
-            if (!targetSigExists) {
-                $config.targetSigs.push(sig);
-            }
+            $config.targetSigs.pushUnique(sig);
         }
     }
 
@@ -196,8 +178,43 @@ contract HookMultiplexer is ERC7579HookBase {
 
         Config storage $config = $getConfig(account);
 
-        if (hookType == HookType.GLOBAL) { } else if (hookType == HookType.DELEGATECALL) { } else
-        if (hookType == HookType.VALUE) { }
+        if (hookType == HookType.GLOBAL) {
+            uint256 index = $config.globalHooks.indexOf(hook);
+            delete $config.globalHooks[index];
+        } else if (hookType == HookType.DELEGATECALL) {
+            uint256 index = $config.delegatecallHooks.indexOf(hook);
+            delete $config.delegatecallHooks[index];
+        } else if (hookType == HookType.VALUE) {
+            uint256 index = $config.valueHooks.indexOf(hook);
+            delete $config.valueHooks[index];
+        }
+    }
+
+    function removeSigHook(address hook, bytes4 sig, HookType hookType) external {
+        // cache the account
+        address account = msg.sender;
+        // check if the module is initialized and revert if it is not
+        if (!isInitialized(account)) revert NotInitialized(account);
+
+        Config storage $config = $getConfig(account);
+
+        if (hookType == HookType.SIG) {
+            uint256 index = $config.sigHooks[sig].indexOf(hook);
+            uint256 sigsHooksLength = $config.sigHooks[sig].length;
+            delete $config.sigHooks[sig][index];
+
+            if (sigsHooksLength == 1) {
+                $config.targetSigs.popUnique(sig);
+            }
+        } else if (hookType == HookType.TARGET_SIG) {
+            uint256 index = $config.targetSigHooks[sig].indexOf(hook);
+            uint256 targetSigsHooksLength = $config.targetSigHooks[sig].length;
+            delete $config.targetSigHooks[sig][index];
+
+            if (targetSigsHooksLength == 1) {
+                $config.targetSigs.popUnique(sig);
+            }
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////

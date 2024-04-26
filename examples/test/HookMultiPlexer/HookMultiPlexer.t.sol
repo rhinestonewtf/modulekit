@@ -22,12 +22,14 @@ import "erc7579/lib/ModeLib.sol";
 import { MockTarget } from "modulekit/src/mocks/MockTarget.sol";
 import "forge-std/interfaces/IERC20.sol";
 import "src/HookMultiplexer/DataTypes.sol";
+import { MockRegistry } from "test/mocks/MockRegistry.sol";
 
 contract HookMultiplexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     AccountInstance internal instance;
+    MockRegistry internal _registry;
     HookMultiplexer internal hook;
     MockHook internal subHook1;
     MockTarget internal target;
@@ -66,8 +68,9 @@ contract HookMultiplexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
 
         instance = makeAccountInstance("Account");
         target = new MockTarget();
+        _registry = new MockRegistry();
 
-        hook = new HookMultiplexer();
+        hook = new HookMultiplexer(_registry);
         subHook1 = new MockHook();
         vm.label(address(subHook1), "SubHook1");
 
