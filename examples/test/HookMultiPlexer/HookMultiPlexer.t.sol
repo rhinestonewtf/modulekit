@@ -77,8 +77,8 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
 
         address[] memory globalHooks = new address[](1);
         globalHooks[0] = address(subHook1);
-        address[] memory valueHooks = new address[](1);
-        valueHooks[0] = address(address(this));
+        address[] memory valueHooks = new address[](0);
+        // valueHooks[0] = address(address(this));
         address[] memory _targetHooks = new address[](1);
         _targetHooks[0] = address(address(this));
         SigHookInit[] memory targetHooks = new SigHookInit[](2);

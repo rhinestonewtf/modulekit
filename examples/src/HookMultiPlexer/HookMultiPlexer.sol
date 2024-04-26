@@ -69,6 +69,11 @@ contract HookMultiPlexer is ERC7579HookBase {
                                 MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
+    function _isExecution(bytes4 callDataSelector) internal pure returns (bool) {
+        return callDataSelector == IERC7579Account.execute.selector
+            || callDataSelector == IERC7579Account.executeFromExecutor.selector;
+    }
+
     function preCheck(
         address msgSender,
         uint256 msgValue,
@@ -83,12 +88,12 @@ contract HookMultiPlexer is ERC7579HookBase {
 
         bytes4 callDataSelector = bytes4(msgData[:4]);
 
+        // TODO: write tests for this. I think this breaks if globalHooks is empty
         address[] memory hooks = $config.globalHooks.join($config.sigHooks[callDataSelector]);
 
-        if (
-            callDataSelector == IERC7579Account.execute.selector
-                || callDataSelector == IERC7579Account.executeFromExecutor.selector
-        ) {
+        // if the hooked transaction is an execution, we need to check the value and the
+        // targetSigHooks
+        if (_isExecution(callDataSelector)) {
             uint256 paramLen = uint256(bytes32(msgData[EXEC_OFFSET - 32:EXEC_OFFSET]));
 
             ModeCode mode = ModeCode.wrap(bytes32(msgData[4:36]));
@@ -116,7 +121,11 @@ contract HookMultiPlexer is ERC7579HookBase {
         hooks.insertionSort();
         hooks.uniquifySorted();
 
-        return abi.encode(hooks, hooks.preCheckSubHooks(msgSender, msgValue, msgData));
+        // call all subhooks and get the subhook context datas
+        return abi.encode(
+            hooks,
+            hooks.preCheckSubHooks({ msgSender: msgSender, msgValue: msgValue, msgData: msgData })
+        );
     }
 
     function postCheck(bytes calldata hookData) external {
@@ -140,7 +149,7 @@ contract HookMultiPlexer is ERC7579HookBase {
         uint256 length = hooks.length;
 
         for (uint256 i; i < length; i++) {
-            hooks[i].postCheckSubHook(contexts[i]);
+            hooks[i].postCheckSubHook({ preCheckContext: contexts[i] });
         }
     }
 
@@ -158,18 +167,27 @@ contract HookMultiPlexer is ERC7579HookBase {
     {
         bool targetSigHooksEnabled = $config.targetSigHooksEnabled;
         uint256 length = executions.length;
+
+        // casting bytes4  functionSigs in here. We are using uint256, since thats the native type
+        // in LibSort
         uint256[] memory targetSigsInBatch = new uint256[](length);
         bool batchHasValue;
         for (uint256 i; i < length; i++) {
             Execution calldata execution = executions[i];
+            // value only has to be checked once. If there is a value in any of the executions,
+            // value hooks are used
             if (!batchHasValue && execution.value != 0) {
                 batchHasValue = true;
                 allHooks = $config.valueHooks;
+                // If targetSigHooks are not enabled, we can stop here and return
                 if (!targetSigHooksEnabled) return allHooks;
             }
             targetSigsInBatch[i] = uint256(bytes32(execution.callData[:4]));
         }
+        // If targetSigHooks are not enabled, we can stop here and return
         if (targetSigHooksEnabled) return allHooks;
+
+        // we only want to sload the targetSigHooks once
         targetSigsInBatch.insertionSort();
         targetSigsInBatch.uniquifySorted();
 
