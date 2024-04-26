@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
+enum HookType {
+    GLOBAL,
+    DELEGATECALL,
+    VALUE,
+    SIG,
+    TARGET_SIG
+}
 
 struct SigHookInit {
     bytes4 sig;
@@ -12,7 +18,8 @@ struct Config {
     address[] globalHooks;
     address[] delegatecallHooks;
     address[] valueHooks;
+    bytes4[] sigs;
     mapping(bytes4 => address[]) sigHooks;
-    bool targetSigHooksEnabled;
+    bytes4[] targetSigs;
     mapping(bytes4 => address[]) targetSigHooks;
 }

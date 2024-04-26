@@ -12,7 +12,7 @@ import {
     IERC7579Account
 } from "modulekit/src/external/ERC7579.sol";
 
-import { HookMultiPlexer } from "src/HookMultiPlexer/HookMultiPlexer.sol";
+import { HookMultiplexer } from "src/HookMultiplexer/HookMultiplexer.sol";
 import "forge-std/interfaces/IERC20.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { MockHook } from "test/mocks/MockHook.sol";
@@ -21,14 +21,14 @@ import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import { MockTarget } from "modulekit/src/mocks/MockTarget.sol";
 import "forge-std/interfaces/IERC20.sol";
-import "src/HookMultiPlexer/DataTypes.sol";
+import "src/HookMultiplexer/DataTypes.sol";
 
-contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
+contract HookMultiplexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     AccountInstance internal instance;
-    HookMultiPlexer internal hook;
+    HookMultiplexer internal hook;
     MockHook internal subHook1;
     MockTarget internal target;
     MockERC20 internal token;
@@ -67,7 +67,7 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         instance = makeAccountInstance("Account");
         target = new MockTarget();
 
-        hook = new HookMultiPlexer();
+        hook = new HookMultiplexer();
         subHook1 = new MockHook();
         vm.label(address(subHook1), "SubHook1");
 

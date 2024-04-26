@@ -1,0 +1,61 @@
+HookMultiplexer::onInstall
+├── when module is intialized
+│   ├── when initdata provided
+│   │   └── it should return
+│   └── when initdata not provided
+│      └── it should revert
+└── when module is not intialized
+    ├── it should set the config args to the provided data
+    └── it should set the lastAccess to the current block timestamp
+
+
+HookMultiplexer::onUninstall
+└── it should delete the config
+
+
+HookMultiplexer::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+HookMultiplexer::preCheck
+├── when module is not intialized
+│   ├── it should not update the lastAccess
+│   └── it should return
+└── when module is intialized
+    └── it set the lastAccess to the current block timestamp
+
+
+HookMultiplexer::postCheck
+└── it should return
+
+
+HookMultiplexer::validateUserOp
+├── when module is not intialized
+│   └── it should return 1
+└── when module is intialized
+    ├── when signature is invalid
+    │   └── it should return invalid sig
+    └── when signature is valid
+        └── it should return valid sig and valid after
+
+
+HookMultiplexer::isValidSignatureWithSender
+└── it should revert
+
+
+HookMultiplexer::name
+└── it should return HookMultiplexer
+
+
+HookMultiplexer::version
+└── it should return 1.0.0
+
+
+HookMultiplexer::isModuleType
+├── when typeID is 4
+│   └── it should return true
+└── when typeID is not 4
+    └── it should return false

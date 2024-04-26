@@ -2,10 +2,10 @@
 pragma solidity ^0.8.25;
 
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
-import { IERC7579Hook, SigHookInit } from "./DataTypes.sol";
-import { LibSort } from "solady/utils/LibSort.sol";
+import { SigHookInit } from "./DataTypes.sol";
+import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 
-library HookMultiPlexerLib {
+library HookMultiplexerLib {
     error SubHookPreCheckError(address subHook);
     error SubHookPostCheckError(address subHook);
     error HooksNotSorted();
@@ -93,6 +93,7 @@ library HookMultiPlexerLib {
         returns (
             address[] calldata globalHooks,
             address[] calldata valueHooks,
+            address[] calldata delegatecallHooks,
             SigHookInit[] calldata sigHooks,
             SigHookInit[] calldata targetSigHooks
         )
@@ -101,9 +102,10 @@ library HookMultiPlexerLib {
         // (
         //     address[] memory globalHooks,
         //     address[] memory valueHooks,
+        //     address[] memory delegatecallHooks,
         //     SigHookInit[] memory sigHooks,
         //     SigHookInit[] memory targetSigHooks
-        // ) = abi.decode(data, (address[], address[], SigHookInit[], SigHookInit[]));
+        // ) = abi.decode(data, (address[], address[], address[], SigHookInit[], SigHookInit[]));
         assembly ("memory-safe") {
             let offset := onInstallData.offset
             let baseOffset := offset
@@ -116,6 +118,11 @@ library HookMultiPlexerLib {
             dataPointer := add(baseOffset, calldataload(offset))
             valueHooks.offset := add(dataPointer, 0x20)
             valueHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            delegatecallHooks.offset := add(dataPointer, 0x20)
+            delegatecallHooks.length := calldataload(dataPointer)
             offset := add(offset, 0x20)
 
             dataPointer := add(baseOffset, calldataload(offset))
