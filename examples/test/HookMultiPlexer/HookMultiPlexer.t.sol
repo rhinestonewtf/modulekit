@@ -75,12 +75,12 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         token.mint(instance.account, 100 ether);
         vm.deal(instance.account, 1000 ether);
 
-        IERC7579Hook[] memory globalHooks = new IERC7579Hook[](1);
-        globalHooks[0] = IERC7579Hook(subHook1);
-        IERC7579Hook[] memory valueHooks = new IERC7579Hook[](1);
-        valueHooks[0] = IERC7579Hook(address(this));
-        IERC7579Hook[] memory _targetHooks = new IERC7579Hook[](1);
-        _targetHooks[0] = IERC7579Hook(address(this));
+        address[] memory globalHooks = new address[](1);
+        globalHooks[0] = address(subHook1);
+        address[] memory valueHooks = new address[](1);
+        valueHooks[0] = address(address(this));
+        address[] memory _targetHooks = new address[](1);
+        _targetHooks[0] = address(address(this));
         SigHookInit[] memory targetHooks = new SigHookInit[](1);
         targetHooks[0] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: _targetHooks });
 
@@ -91,7 +91,7 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         });
     }
 
-    function test_shouldCallPreCheck() public requireHookCall(2) {
+    function test_shouldCallPreCheck() public requireHookCall(1) {
         Execution[] memory execution = new Execution[](3);
         execution[0] = Execution({
             target: address(target),

@@ -12,17 +12,18 @@ struct AllContext {
 
 struct SigHookInit {
     bytes4 sig;
-    IERC7579Hook[] subHooks;
+    address[] subHooks;
 }
 
 struct PreCheckContext {
-    IERC7579Hook subHook;
+    address subHook;
     bytes context;
 }
 
 struct Config {
-    IERC7579Hook[] globalHooks;
-    IERC7579Hook[] valueHooks;
-    mapping(bytes4 => IERC7579Hook[]) sigHooks;
-    mapping(bytes4 => IERC7579Hook[]) targetSigHooks;
+    address[] globalHooks;
+    address[] valueHooks;
+    mapping(bytes4 => address[]) sigHooks;
+    bool targetSigHooksEnabled;
+    mapping(bytes4 => address[]) targetSigHooks;
 }

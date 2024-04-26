@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { ERC7579HookBase } from "modulekit/src/Modules.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
-import { AllContext, SigHookInit, PreCheckContext, Config, IERC7579Hook } from "./DataTypes.sol";
+import { AllContext, SigHookInit, PreCheckContext, Config } from "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import {
     ModeLib, CallType, ModeCode, CALLTYPE_SINGLE, CALLTYPE_BATCH
@@ -15,8 +15,11 @@ import { LibSort } from "solady/utils/LibSort.sol";
 uint256 constant EXEC_OFFSET = 100;
 
 contract HookMultiPlexer is ERC7579HookBase {
-    using HookMultiPlexerLib for IERC7579Hook[];
+    using HookMultiPlexerLib for address;
+    using HookMultiPlexerLib for address[];
+    using HookMultiPlexerLib for bytes4[];
     using LibSort for uint256[];
+    using LibSort for address[];
 
     mapping(address account => Config config) internal accountConfig;
 
@@ -27,11 +30,13 @@ contract HookMultiPlexer is ERC7579HookBase {
     function onInstall(bytes calldata data) external override {
         Config storage $config = $getConfig(msg.sender);
         (
-            IERC7579Hook[] memory globalHooks,
-            IERC7579Hook[] memory valueHooks,
+            address[] memory globalHooks,
+            address[] memory valueHooks,
             SigHookInit[] memory sigHooks,
             SigHookInit[] memory targetSigHooks
-        ) = abi.decode(data, (IERC7579Hook[], IERC7579Hook[], SigHookInit[], SigHookInit[]));
+        ) = abi.decode(data, (address[], address[], SigHookInit[], SigHookInit[]));
+
+        // TODO: check if sorted
 
         $config.globalHooks = globalHooks;
         $config.valueHooks = valueHooks;
@@ -69,12 +74,9 @@ contract HookMultiPlexer is ERC7579HookBase {
     {
         Config storage $config = $getConfig(msg.sender);
 
-        AllContext memory _context;
-        _context.globalHooks = $config.globalHooks.preCheckSubHooks(msgSender, msgValue, msgData);
-        _context.sigHooks =
-            $config.sigHooks[bytes4(msgData[:4])].preCheckSubHooks(msgSender, msgValue, msgData);
-
         bytes4 callDataSelector = bytes4(msgData[:4]);
+
+        address[] memory hooks = $config.globalHooks.join($config.sigHooks[callDataSelector]);
 
         if (
             callDataSelector == IERC7579Account.execute.selector
@@ -89,39 +91,70 @@ contract HookMultiPlexer is ERC7579HookBase {
                 (, uint256 value, bytes calldata callData) =
                     ExecutionLib.decodeSingle(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
                 if (value != 0) {
-                    _context.valueHooks =
-                        $config.valueHooks.preCheckSubHooks(msgSender, msgValue, msgData);
+                    hooks.join($config.valueHooks);
                 }
-                _context.targetSigHooks[0] = $config.targetSigHooks[bytes4(callData[:4])]
-                    .preCheckSubHooks(msgSender, msgValue, msgData);
+                hooks.join($config.targetSigHooks[bytes4(callData[:4])]);
             } else if (calltype == CALLTYPE_BATCH) {
-                Execution[] calldata execs =
-                    ExecutionLib.decodeBatch(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
-                (_context.targetSigHooks, _context.valueHooks) =
-                    _getTargetSig(execs, msgSender, msgData);
+                address[] memory targetSigHooks = _getTargetSig(
+                    $config,
+                    ExecutionLib.decodeBatch(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]),
+                    msgSender,
+                    msgData
+                );
+                hooks.join(targetSigHooks);
             }
         }
 
-        return abi.encode(_context);
+        hooks.insertionSort();
+        hooks.uniquifySorted();
+
+        return abi.encode(hooks, hooks.preCheckSubHooks(msgSender, msgValue, msgData));
+    }
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _getTargetSig(
+        Config storage $config,
+        Execution[] calldata executions,
+        address msgSender,
+        bytes calldata msgData
+    )
+        internal
+        returns (address[] memory allHooks)
+    {
+        uint256 length = executions.length;
+        uint256[] memory targetSigsInBatch = new uint256[](length);
+        bool batchHasValue;
+        for (uint256 i; i < length; i++) {
+            Execution calldata execution = executions[i];
+            targetSigsInBatch[i] = uint256(bytes32(execution.callData[:4]));
+        }
+        targetSigsInBatch.insertionSort();
+        targetSigsInBatch.uniquifySorted();
+
+        length = targetSigsInBatch.length;
+        for (uint256 i; i < length; i++) {
+            bytes4 targetSelector = bytes4(bytes32(targetSigsInBatch[i]));
+
+            address[] storage _targetHook = $config.targetSigHooks[targetSelector];
+            if (_targetHook.length == 0) continue;
+            if (allHooks.length == 0) {
+                allHooks = _targetHook;
+            } else {
+                allHooks.join(_targetHook);
+            }
+        }
     }
 
     function postCheck(bytes calldata hookData) external {
-        AllContext memory context = abi.decode(hookData, (AllContext));
+        (address[] memory hooks, bytes[] memory contexs) =
+            abi.decode(hookData, (address[], bytes[]));
 
-        for (uint256 i; i < context.globalHooks.length; i++) {
-            context.globalHooks[i].subHook.postCheck(context.globalHooks[i].context);
-        }
-        for (uint256 i; i < context.valueHooks.length; i++) {
-            context.valueHooks[i].subHook.postCheck(context.valueHooks[i].context);
-        }
-        for (uint256 i; i < context.sigHooks.length; i++) {
-            context.sigHooks[i].subHook.postCheck(context.sigHooks[i].context);
-        }
-        for (uint256 i; i < context.targetSigHooks.length; i++) {
-            PreCheckContext[] memory _targetSigCtx = context.targetSigHooks[i];
-            for (uint256 y; y < _targetSigCtx.length; y++) {
-                _targetSigCtx[y].subHook.postCheck(_targetSigCtx[y].context);
-            }
+        uint256 length = hooks.length;
+
+        for (uint256 i; i < length; i++) {
+            hooks[i].postCheckSubHook(contexs[i]);
         }
     }
 
@@ -129,39 +162,39 @@ contract HookMultiPlexer is ERC7579HookBase {
                                      INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _getTargetSig(
-        Execution[] calldata executions,
-        address msgSender,
-        bytes calldata msgData
-    )
-        internal
-        returns (PreCheckContext[][] memory targetSigHooks, PreCheckContext[] memory valueHooks)
-    {
-        uint256 length = executions.length;
-
-        uint256[] memory uniqueSigs = new uint256[](length);
-        bool hasValue;
-        for (uint256 i; i < length; i++) {
-            Execution calldata execution = executions[i];
-            uniqueSigs[i] = uint256(bytes32(bytes4(execution.callData[:4])));
-            if (!hasValue && execution.value != 0) {
-                hasValue = true;
-                valueHooks =
-                    $getConfig(msg.sender).valueHooks.preCheckSubHooks(msgSender, 0, msgData);
-            }
-        }
-        uniqueSigs.sort();
-        uniqueSigs.uniquifySorted();
-
-        length = uniqueSigs.length;
-        targetSigHooks = new PreCheckContext[][](length);
-
-        for (uint256 i; i < length; i++) {
-            bytes4 targetSelector = bytes4(bytes32(uniqueSigs[i]));
-            targetSigHooks[i] = $getConfig(msg.sender).targetSigHooks[targetSelector]
-                .preCheckSubHooks(msgSender, 0, msgData);
-        }
-    }
+    // function _getTargetSig(
+    //     Execution[] calldata executions,
+    //     address msgSender,
+    //     bytes calldata msgData
+    // )
+    //     internal
+    //     returns (PreCheckContext[][] memory targetSigHooks, PreCheckContext[] memory valueHooks)
+    // {
+    //     uint256 length = executions.length;
+    //
+    //     uint256[] memory uniqueSigs = new uint256[](length);
+    //     bool hasValue;
+    //     for (uint256 i; i < length; i++) {
+    //         Execution calldata execution = executions[i];
+    //         uniqueSigs[i] = uint256(bytes32(bytes4(execution.callData[:4])));
+    //         if (!hasValue && execution.value != 0) {
+    //             hasValue = true;
+    //             valueHooks =
+    //                 $getConfig(msg.sender).valueHooks.preCheckSubHooks(msgSender, 0, msgData);
+    //         }
+    //     }
+    //     uniqueSigs.sort();
+    //     uniqueSigs.uniquifySorted();
+    //
+    //     length = uniqueSigs.length;
+    //     targetSigHooks = new PreCheckContext[][](length);
+    //
+    //     for (uint256 i; i < length; i++) {
+    //         bytes4 targetSelector = bytes4(bytes32(uniqueSigs[i]));
+    //         targetSigHooks[i] = $getConfig(msg.sender).targetSigHooks[targetSelector]
+    //             .preCheckSubHooks(msgSender, 0, msgData);
+    //     }
+    // }
 
     function $getConfig(address account) internal view returns (Config storage) {
         return accountConfig[account];
