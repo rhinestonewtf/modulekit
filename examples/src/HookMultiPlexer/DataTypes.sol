@@ -10,6 +10,7 @@ struct SigHookInit {
 
 struct Config {
     address[] globalHooks;
+    address[] delegatecallHooks;
     address[] valueHooks;
     mapping(bytes4 => address[]) sigHooks;
     bool targetSigHooksEnabled;

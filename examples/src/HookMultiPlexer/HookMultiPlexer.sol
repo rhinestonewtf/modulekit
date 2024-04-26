@@ -6,7 +6,12 @@ import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { SigHookInit, Config } from "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import {
-    ModeLib, CallType, ModeCode, CALLTYPE_SINGLE, CALLTYPE_BATCH
+    ModeLib,
+    CallType,
+    ModeCode,
+    CALLTYPE_SINGLE,
+    CALLTYPE_BATCH,
+    CALLTYPE_DELEGATECALL
 } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 import { HookMultiPlexerLib } from "./HookMultiPlexerLib.sol";
@@ -40,6 +45,7 @@ contract HookMultiPlexer is ERC7579HookBase {
         $config.globalHooks = globalHooks;
         $config.valueHooks = valueHooks;
 
+        // TODO: add registry checks for all hooks
         uint256 length = sigHooks.length;
         for (uint256 i; i < length; i++) {
             SigHookInit calldata _sigHook = sigHooks[i];
@@ -110,6 +116,8 @@ contract HookMultiPlexer is ERC7579HookBase {
                         )
                     })
                 );
+            } else if (calltype == CALLTYPE_DELEGATECALL) {
+                hooks.join($config.delegatecallHooks);
             }
         }
 
