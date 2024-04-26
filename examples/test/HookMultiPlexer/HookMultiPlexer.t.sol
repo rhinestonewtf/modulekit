@@ -12,7 +12,7 @@ import {
     IERC7579Account
 } from "modulekit/src/external/ERC7579.sol";
 
-import { HookMultiPlexer } from "src/HookMultiPlexer/HookMultiPlexer.sol";
+import { HookMultiplexer } from "src/HookMultiplexer/HookMultiplexer.sol";
 import "forge-std/interfaces/IERC20.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { MockHook } from "test/mocks/MockHook.sol";
@@ -21,27 +21,29 @@ import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import { MockTarget } from "modulekit/src/mocks/MockTarget.sol";
 import "forge-std/interfaces/IERC20.sol";
-import "src/HookMultiPlexer/DataTypes.sol";
+import "src/HookMultiplexer/DataTypes.sol";
+import { MockRegistry } from "test/mocks/MockRegistry.sol";
 
-contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
+contract HookMultiplexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     AccountInstance internal instance;
-    HookMultiPlexer internal hook;
+    MockRegistry internal _registry;
+    HookMultiplexer internal hook;
     MockHook internal subHook1;
     MockTarget internal target;
     MockERC20 internal token;
 
-    bool preCheckCalled;
-    bool postCheckCalled;
+    uint256 preCheckCalled;
+    uint256 postCheckCalled;
 
-    modifier requireHookCall() {
-        preCheckCalled = false;
-        postCheckCalled = false;
+    modifier requireHookCall(uint256 expected) {
+        preCheckCalled = 0;
+        postCheckCalled = 0;
         _;
-        assertTrue(preCheckCalled);
-        assertTrue(postCheckCalled);
+        assertEq(preCheckCalled, expected);
+        assertEq(postCheckCalled, expected);
     }
 
     function preCheck(
@@ -54,11 +56,11 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         override
         returns (bytes memory hookData)
     {
-        preCheckCalled = true;
+        preCheckCalled++;
     }
 
     function postCheck(bytes calldata hookData) external {
-        postCheckCalled = true;
+        postCheckCalled++;
     }
 
     function setUp() public {
@@ -66,8 +68,9 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
 
         instance = makeAccountInstance("Account");
         target = new MockTarget();
+        _registry = new MockRegistry();
 
-        hook = new HookMultiPlexer();
+        hook = new HookMultiplexer(_registry);
         subHook1 = new MockHook();
         vm.label(address(subHook1), "SubHook1");
 
@@ -75,29 +78,32 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         token.mint(instance.account, 100 ether);
         vm.deal(instance.account, 1000 ether);
 
-        IERC7579Hook[] memory globalHooks = new IERC7579Hook[](1);
-        globalHooks[0] = IERC7579Hook(subHook1);
-        IERC7579Hook[] memory _targetHooks = new IERC7579Hook[](1);
-        _targetHooks[0] = IERC7579Hook(address(this));
-        SigHookInit[] memory targetHooks = new SigHookInit[](1);
-        targetHooks[0] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: _targetHooks });
+        address[] memory globalHooks = new address[](1);
+        globalHooks[0] = address(subHook1);
+        address[] memory valueHooks = new address[](1);
+        valueHooks[0] = address(address(this));
+        address[] memory _targetHooks = new address[](1);
+        _targetHooks[0] = address(address(this));
+        SigHookInit[] memory targetHooks = new SigHookInit[](2);
+        targetHooks[0] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: globalHooks });
+        targetHooks[1] = SigHookInit({ sig: IERC20.transfer.selector, subHooks: _targetHooks });
 
+        uint256 gasLeft = gasleft();
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(hook),
-            data: abi.encode(globalHooks, globalHooks, new SigHookInit[](0), targetHooks)
+            data: abi.encode(globalHooks, valueHooks, new SigHookInit[](0), targetHooks)
         });
+        gasLeft = gasLeft - gasleft();
+
+        console2.log("gasLeft", gasLeft);
     }
 
-    function test_shouldCallPreCheck() public requireHookCall {
-        address target = address(1);
-        uint256 value = 1 wei;
-        bytes memory callData = abi.encodeCall(MockTarget.set, (1337));
-
+    function test_shouldCallPreCheck() public requireHookCall(1) {
         Execution[] memory execution = new Execution[](3);
         execution[0] = Execution({
             target: address(target),
-            value: 0,
+            value: 1 wei,
             callData: abi.encodeCall(MockTarget.set, (1336))
         });
 

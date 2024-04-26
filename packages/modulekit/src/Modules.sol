@@ -16,3 +16,4 @@ import {
     IERC7579Fallback,
     IERC7579Hook
 } from "./external/ERC7579.sol";
+import { ERC7484RegistryAdapter } from "./modules/ERC7484RegistryAdapter.sol";
