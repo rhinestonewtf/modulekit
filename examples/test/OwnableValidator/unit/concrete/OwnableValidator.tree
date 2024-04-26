@@ -16,7 +16,7 @@ OwnableValidator::onInstall
                 ├── when owners include 0 address
                 │   └── it should revert
                 ├── when owners include duplicates
-                │   └── it should set only unique owners
+                │   └── it should revert
                 └── when owners include no duplicates
                     └── it should set all owners
      
@@ -103,11 +103,11 @@ OwnableValidator::isValidSignatureWithSender
 
 
 OwnableValidator::validateSignatureWithData
-├── when data is invalid
-│   └── it should revert
-└── when data is valid
+├── when owners are not unique 
+│   └── it should return false
+└── when owners are unique 
     ├── when threshold is not set
-    │   └── it should revert
+    │   └── it should return false
     └── when threshold is set
         ├── when the signatures are not valid
         │   └── it should return false

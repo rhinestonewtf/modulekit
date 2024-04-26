@@ -53,6 +53,12 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
         _guardianPks[0] = _guardian1Pk;
 
         (address _guardian2, uint256 _guardian2Pk) = makeAddrAndKey("guardian2");
+
+        uint256 counter = 0;
+        while (uint160(_guardian1) > uint160(_guardian2)) {
+            counter++;
+            (_guardian2, _guardian2Pk) = makeAddrAndKey(vm.toString(counter));
+        }
         _guardians[1] = _guardian2;
         _guardianPks[1] = _guardian2Pk;
 

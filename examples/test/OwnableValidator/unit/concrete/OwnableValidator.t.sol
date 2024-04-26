@@ -2,13 +2,20 @@
 pragma solidity ^0.8.23;
 
 import { BaseTest } from "test/Base.t.sol";
-import { OwnableValidator, ERC7579ValidatorBase } from "src/OwnableValidator/OwnableValidator.sol";
+import {
+    OwnableValidator,
+    ERC7579ValidatorBase,
+    SENTINEL
+} from "src/OwnableValidator/OwnableValidator.sol";
 import { IERC7579Module } from "modulekit/src/external/ERC7579.sol";
 import { PackedUserOperation, getEmptyUserOperation } from "test/utils/ERC4337.sol";
 import { signHash } from "test/utils/Signature.sol";
 import { EIP1271_MAGIC_VALUE } from "test/utils/Constants.sol";
+import { LibSort } from "solady/utils/LibSort.sol";
 
 contract OwnableValidatorTest is BaseTest {
+    using LibSort for *;
+
     /*//////////////////////////////////////////////////////////////////////////
                                     CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
@@ -39,6 +46,12 @@ contract OwnableValidatorTest is BaseTest {
         _ownerPks[0] = _owner1Pk;
 
         (address _owner2, uint256 _owner2Pk) = makeAddrAndKey("owner2");
+
+        uint256 counter = 0;
+        while (uint160(_owner1) > uint160(_owner2)) {
+            counter++;
+            (_owner2, _owner2Pk) = makeAddrAndKey(vm.toString(counter));
+        }
         _owners[1] = _owner2;
         _ownerPks[1] = _owner2Pk;
     }
@@ -102,6 +115,8 @@ contract OwnableValidatorTest is BaseTest {
         for (uint256 i = 0; i < 33; i++) {
             _newOwners[i] = makeAddr(vm.toString(i));
         }
+        _newOwners.sort();
+        _newOwners.uniquifySorted();
         bytes memory data = abi.encode(_threshold, _newOwners);
 
         vm.expectRevert(abi.encodeWithSelector(OwnableValidator.MaxOwnersReached.selector));
@@ -148,17 +163,15 @@ contract OwnableValidatorTest is BaseTest {
         whenOwnersLengthIsNotLessThanThreshold
         whenOwnersLengthIsNotMoreThanMax
     {
-        // it should set only unique owners
+        // it should revert
         address[] memory _newOwners = new address[](3);
         _newOwners[0] = _owners[0];
         _newOwners[1] = _owners[1];
         _newOwners[2] = _owners[0];
         bytes memory data = abi.encode(_threshold, _newOwners);
 
+        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.NotSortedAndUnique.selector));
         validator.onInstall(data);
-
-        address[] memory owners = validator.getOwners(address(this));
-        assertEq(owners.length, 2);
     }
 
     function test_OnInstallWhenOwnersIncludeNoDuplicates()
@@ -289,6 +302,8 @@ contract OwnableValidatorTest is BaseTest {
         for (uint256 i = 0; i < 32; i++) {
             _newOwners[i] = makeAddr(vm.toString(i));
         }
+        _newOwners.sort();
+        _newOwners.uniquifySorted();
         bytes memory data = abi.encode(_threshold, _newOwners);
 
         validator.onInstall(data);
@@ -342,7 +357,7 @@ contract OwnableValidatorTest is BaseTest {
         // it should remove the owner
         test_OnInstallWhenOwnersIncludeNoDuplicates();
 
-        validator.removeOwner(_owners[0], _owners[1]);
+        validator.removeOwner(SENTINEL, _owners[1]);
 
         uint256 ownerCount = validator.ownerCount(address(this));
         assertEq(ownerCount, 1);
@@ -354,8 +369,6 @@ contract OwnableValidatorTest is BaseTest {
 
         address[] memory owners = validator.getOwners(address(this));
         assertEq(owners.length, _owners.length);
-        assertEq(owners[0], _owners[0]);
-        assertEq(owners[1], _owners[1]);
     }
 
     function test_ValidateUserOpWhenThresholdIsNotSet() public {
@@ -494,32 +507,39 @@ contract OwnableValidatorTest is BaseTest {
         assertEq(result, EIP1271_MAGIC_VALUE);
     }
 
-    function test_ValidateSignatureWithDataRevertWhen_DataIsInvalid() external {
-        // it should revert
+    function test_ValidateSignatureWithDataRevertWhen_OwnersAreNotUnique() external {
+        // it should return false
         bytes32 hash = bytes32(keccak256("hash"));
-        bytes memory signatures = "";
-        bytes memory data = "";
 
-        vm.expectRevert();
-        validator.validateSignatureWithData(hash, signatures, data);
+        bytes memory signature1 = signHash(_ownerPks[0], hash);
+        bytes memory signature2 = signHash(_ownerPks[0], hash);
+        bytes memory signatures = abi.encodePacked(signature1, signature2);
+
+        address[] memory owners = new address[](2);
+        owners[0] = _owners[0];
+        owners[1] = _owners[1];
+        bytes memory data = abi.encode(_threshold, _owners);
+
+        bool isValid = validator.validateSignatureWithData(hash, signatures, data);
+        assertFalse(isValid);
     }
 
     function test_ValidateSignatureWithDataRevertWhen_ThresholdIsNotSet()
         external
-        whenDataIsValid
+        whenOwnersAreUnique
     {
-        // it should revert
+        //it should return false
         bytes32 hash = bytes32(keccak256("hash"));
         bytes memory signatures = "";
         bytes memory data = abi.encode(0, _owners);
 
-        vm.expectRevert(abi.encodeWithSelector(OwnableValidator.ThresholdNotSet.selector));
-        validator.validateSignatureWithData(hash, signatures, data);
+        bool isValid = validator.validateSignatureWithData(hash, signatures, data);
+        assertFalse(isValid);
     }
 
     function test_ValidateSignatureWithDataWhenTheSignaturesAreNotValid()
         external
-        whenDataIsValid
+        whenOwnersAreUnique
         whenThresholdIsSet
     {
         // it should return false
@@ -535,7 +555,7 @@ contract OwnableValidatorTest is BaseTest {
 
     function test_ValidateSignatureWithDataWhenTheUniqueSignaturesAreLessThanThreshold()
         external
-        whenDataIsValid
+        whenOwnersAreUnique
         whenThresholdIsSet
         whenTheSignaturesAreValid
     {
@@ -552,7 +572,7 @@ contract OwnableValidatorTest is BaseTest {
 
     function test_ValidateSignatureWithDataWhenTheUniqueSignaturesAreGreaterThanThreshold()
         external
-        whenDataIsValid
+        whenOwnersAreUnique
         whenThresholdIsSet
         whenTheSignaturesAreValid
     {
@@ -631,7 +651,7 @@ contract OwnableValidatorTest is BaseTest {
         _;
     }
 
-    modifier whenDataIsValid() {
+    modifier whenOwnersAreUnique() {
         _;
     }
 }

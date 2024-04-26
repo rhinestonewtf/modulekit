@@ -64,6 +64,12 @@ contract MultiFactorIntegrationTest is BaseIntegrationTest {
         _ownerPks[0] = _owner1Pk;
 
         (address _owner2, uint256 _owner2Pk) = makeAddrAndKey("owner2");
+
+        uint256 counter = 0;
+        while (uint160(_owner1) > uint160(_owner2)) {
+            counter++;
+            (_owner2, _owner2Pk) = makeAddrAndKey(vm.toString(counter));
+        }
         _owners[1] = _owner2;
         _ownerPks[1] = _owner2Pk;
 
