@@ -15,13 +15,9 @@ import { LibSort } from "solady/utils/LibSort.sol";
 uint256 constant EXEC_OFFSET = 100;
 
 contract HookMultiPlexer is ERC7579HookBase {
-    using HookMultiPlexerLib for address;
-    using HookMultiPlexerLib for address[];
-    using HookMultiPlexerLib for bytes4[];
+    using HookMultiPlexerLib for *;
     using LibSort for uint256[];
     using LibSort for address[];
-
-    error HooksNotSorted();
 
     mapping(address account => Config config) internal accountConfig;
 
@@ -30,64 +26,33 @@ contract HookMultiPlexer is ERC7579HookBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstall(bytes calldata data) external override {
+        (
+            address[] calldata globalHooks,
+            address[] calldata valueHooks,
+            SigHookInit[] calldata sigHooks,
+            SigHookInit[] calldata targetSigHooks
+        ) = data.decodeOnInstall();
+
         Config storage $config = $getConfig(msg.sender);
-        // saves 3000 gas when 1 hook per type used
-        // (
-        //     address[] memory globalHooks,
-        //     address[] memory valueHooks,
-        //     SigHookInit[] memory sigHooks,
-        //     SigHookInit[] memory targetSigHooks
-        // ) = abi.decode(data, (address[], address[], SigHookInit[], SigHookInit[]));
-        address[] calldata globalHooks;
-        address[] calldata valueHooks;
-        SigHookInit[] calldata sigHooks;
-        SigHookInit[] calldata targetSigHooks;
-        assembly ("memory-safe") {
-            let offset := data.offset
-            let baseOffset := offset
-
-            let dataPointer := add(baseOffset, calldataload(offset))
-            globalHooks.offset := add(dataPointer, 0x20)
-            globalHooks.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            valueHooks.offset := add(dataPointer, 0x20)
-            valueHooks.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            sigHooks.offset := add(dataPointer, 0x20)
-            sigHooks.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            targetSigHooks.offset := add(dataPointer, 0x20)
-            targetSigHooks.length := calldataload(dataPointer)
-        }
-
-        if (!globalHooks.isSortedAndUniquifiedCallData()) revert HooksNotSorted();
-        if (!valueHooks.isSortedAndUniquifiedCallData()) revert HooksNotSorted();
+        globalHooks.requireSortedAndUnique();
+        valueHooks.requireSortedAndUnique();
 
         $config.globalHooks = globalHooks;
         $config.valueHooks = valueHooks;
 
         uint256 length = sigHooks.length;
         for (uint256 i; i < length; i++) {
-            bytes4 hookForSig = sigHooks[i].sig;
-            if (!sigHooks[i].subHooks.isSortedAndUniquifiedCallData()) revert HooksNotSorted();
-            $config.sigHooks[hookForSig] = sigHooks[i].subHooks;
+            SigHookInit calldata _sigHook = sigHooks[i];
+            _sigHook.subHooks.requireSortedAndUnique();
+            $config.sigHooks[_sigHook.sig] = _sigHook.subHooks;
         }
 
         length = targetSigHooks.length;
         for (uint256 i; i < length; i++) {
-            bytes4 hookForSig = targetSigHooks[i].sig;
-
-            if (!targetSigHooks[i].subHooks.isSortedAndUniquifiedCallData()) {
-                revert HooksNotSorted();
-            }
+            SigHookInit calldata _targetSigHook = targetSigHooks[i];
+            _targetSigHook.subHooks.requireSortedAndUnique();
             $config.targetSigHooksEnabled = true;
-            $config.targetSigHooks[hookForSig] = targetSigHooks[i].subHooks;
+            $config.targetSigHooks[_targetSigHook.sig] = _targetSigHook.subHooks;
         }
     }
 

@@ -2,12 +2,13 @@
 pragma solidity ^0.8.25;
 
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
-import { IERC7579Hook } from "./DataTypes.sol";
+import { IERC7579Hook, SigHookInit } from "./DataTypes.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
 
 library HookMultiPlexerLib {
     error SubHookPreCheckError(address subHook);
     error SubHookPostCheckError(address subHook);
+    error HooksNotSorted();
 
     function preCheckSubHooks(
         address[] memory subHooks,
@@ -77,13 +78,54 @@ library HookMultiPlexerLib {
         }
     }
 
-    function isSortedAndUniquifiedCallData(address[] calldata array) internal pure returns (bool) {
+    function requireSortedAndUnique(address[] calldata array) internal pure {
         uint256 length = array.length;
         for (uint256 i = 1; i < length; i++) {
             if (array[i - 1] >= array[i]) {
-                return false;
+                revert HooksNotSorted();
             }
         }
-        return true;
+    }
+
+    function decodeOnInstall(bytes calldata onInstallData)
+        internal
+        pure
+        returns (
+            address[] calldata globalHooks,
+            address[] calldata valueHooks,
+            SigHookInit[] calldata sigHooks,
+            SigHookInit[] calldata targetSigHooks
+        )
+    {
+        // saves 2000 gas when 1 hook per type used
+        // (
+        //     address[] memory globalHooks,
+        //     address[] memory valueHooks,
+        //     SigHookInit[] memory sigHooks,
+        //     SigHookInit[] memory targetSigHooks
+        // ) = abi.decode(data, (address[], address[], SigHookInit[], SigHookInit[]));
+        assembly ("memory-safe") {
+            let offset := onInstallData.offset
+            let baseOffset := offset
+
+            let dataPointer := add(baseOffset, calldataload(offset))
+            globalHooks.offset := add(dataPointer, 0x20)
+            globalHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            valueHooks.offset := add(dataPointer, 0x20)
+            valueHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            sigHooks.offset := add(dataPointer, 0x20)
+            sigHooks.length := calldataload(dataPointer)
+            offset := add(offset, 0x20)
+
+            dataPointer := add(baseOffset, calldataload(offset))
+            targetSigHooks.offset := add(dataPointer, 0x20)
+            targetSigHooks.length := calldataload(dataPointer)
+        }
     }
 }
