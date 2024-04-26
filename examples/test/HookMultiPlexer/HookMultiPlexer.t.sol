@@ -33,15 +33,15 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
     MockTarget internal target;
     MockERC20 internal token;
 
-    bool preCheckCalled;
-    bool postCheckCalled;
+    uint256 preCheckCalled;
+    uint256 postCheckCalled;
 
-    modifier requireHookCall() {
-        preCheckCalled = false;
-        postCheckCalled = false;
+    modifier requireHookCall(uint256 expected) {
+        preCheckCalled = 0;
+        postCheckCalled = 0;
         _;
-        assertTrue(preCheckCalled);
-        assertTrue(postCheckCalled);
+        assertEq(preCheckCalled, expected);
+        assertEq(postCheckCalled, expected);
     }
 
     function preCheck(
@@ -54,11 +54,11 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         override
         returns (bytes memory hookData)
     {
-        preCheckCalled = true;
+        preCheckCalled++;
     }
 
     function postCheck(bytes calldata hookData) external {
-        postCheckCalled = true;
+        postCheckCalled++;
     }
 
     function setUp() public {
@@ -77,6 +77,8 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
 
         IERC7579Hook[] memory globalHooks = new IERC7579Hook[](1);
         globalHooks[0] = IERC7579Hook(subHook1);
+        IERC7579Hook[] memory valueHooks = new IERC7579Hook[](1);
+        valueHooks[0] = IERC7579Hook(address(this));
         IERC7579Hook[] memory _targetHooks = new IERC7579Hook[](1);
         _targetHooks[0] = IERC7579Hook(address(this));
         SigHookInit[] memory targetHooks = new SigHookInit[](1);
@@ -85,19 +87,15 @@ contract HookMultiPlexerTest is RhinestoneModuleKit, Test, IERC7579Hook {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(hook),
-            data: abi.encode(globalHooks, globalHooks, new SigHookInit[](0), targetHooks)
+            data: abi.encode(globalHooks, valueHooks, new SigHookInit[](0), targetHooks)
         });
     }
 
-    function test_shouldCallPreCheck() public requireHookCall {
-        address target = address(1);
-        uint256 value = 1 wei;
-        bytes memory callData = abi.encodeCall(MockTarget.set, (1337));
-
+    function test_shouldCallPreCheck() public requireHookCall(2) {
         Execution[] memory execution = new Execution[](3);
         execution[0] = Execution({
             target: address(target),
-            value: 0,
+            value: 1 wei,
             callData: abi.encodeCall(MockTarget.set, (1336))
         });
 
