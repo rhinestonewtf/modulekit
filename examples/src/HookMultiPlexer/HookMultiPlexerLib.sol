@@ -2,7 +2,7 @@
 pragma solidity ^0.8.25;
 
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
-import { PreCheckContext, IERC7579Hook } from "./DataTypes.sol";
+import { IERC7579Hook } from "./DataTypes.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
 
 library HookMultiPlexerLib {
@@ -46,7 +46,7 @@ library HookMultiPlexerLib {
         if (!success) revert SubHookPreCheckError(subHook);
     }
 
-    function postCheckSubHook(address subHook, bytes memory preCheckContext) internal {
+    function postCheckSubHook(address subHook, bytes calldata preCheckContext) internal {
         (bool success,) = address(subHook).call(packERC2771(preCheckContext));
         if (!success) revert SubHookPostCheckError(subHook);
     }
@@ -68,7 +68,7 @@ library HookMultiPlexerLib {
         uint256 aLength = a.length;
         uint256 bLength = b.length;
         uint256 totalLength = aLength + bLength;
-        assembly {
+        assembly ("memory-safe") {
             c := a
             mstore(c, totalLength)
         }
