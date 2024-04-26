@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
+// Hook types
 enum HookType {
     GLOBAL,
     DELEGATECALL,
@@ -9,11 +10,14 @@ enum HookType {
     TARGET_SIG
 }
 
+// Hook initialization data for sig hooks
 struct SigHookInit {
     bytes4 sig;
     address[] subHooks;
 }
 
+// Config for an account
+// We also need to store an array of sigs and target sigs to be able to remove them on uninstall
 struct Config {
     address[] globalHooks;
     address[] delegatecallHooks;
