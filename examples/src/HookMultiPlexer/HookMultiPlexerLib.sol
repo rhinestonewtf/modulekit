@@ -182,6 +182,18 @@ library HookMultiplexerLib {
     }
 
     /**
+     * Pops an address from an array
+     *
+     * @param array array to pop from
+     * @param element element to pop
+     */
+    function popAddress(address[] storage array, address element) internal {
+        uint256 index = indexOf(array, element);
+        array[index] = array[array.length - 1];
+        array.pop();
+    }
+
+    /**
      * Pops a unique element from an array
      *
      * @param array array to pop from

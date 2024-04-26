@@ -18,6 +18,8 @@ import { HookMultiplexerLib } from "./HookMultiplexerLib.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title HookMultiplexer
  * @dev A module that allows to add multiple hooks to a smart account
@@ -63,6 +65,9 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
      * @param data encoded data containing the hooks
      */
     function onInstall(bytes calldata data) external override {
+        // check if the module is already initialized and revert if it is
+        if (isInitialized(msg.sender)) revert AlreadyInitialized(msg.sender);
+
         // decode the hook arrays
         (
             address[] calldata globalHooks,
@@ -205,8 +210,10 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
         // cache the storage config
         Config storage $config = $getConfig(msg.sender);
 
-        // get the global and delegatecall hooks
-        hooks = $config.globalHooks.join($config.delegatecallHooks);
+        // get the global hooks
+        hooks = $config.globalHooks;
+        // get the delegatecall hooks
+        hooks.join($config.delegatecallHooks);
         // get the value hooks
         hooks.join($config.valueHooks);
 
@@ -302,27 +309,19 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
     function removeHook(address hook, HookType hookType) external {
         // cache the account
         address account = msg.sender;
-        // check if the module is initialized and revert if it is not
-        if (!isInitialized(account)) revert NotInitialized(account);
 
         // cache the storage config
         Config storage $config = $getConfig(account);
 
         if (hookType == HookType.GLOBAL) {
-            // get the index of the hook
-            uint256 index = $config.globalHooks.indexOf(hook);
             // delete the hook
-            delete $config.globalHooks[index];
+            $config.globalHooks.popAddress(hook);
         } else if (hookType == HookType.DELEGATECALL) {
-            // get the index of the hook
-            uint256 index = $config.delegatecallHooks.indexOf(hook);
             // delete the hook
-            delete $config.delegatecallHooks[index];
+            $config.delegatecallHooks.popAddress(hook);
         } else if (hookType == HookType.VALUE) {
-            // get the index of the hook
-            uint256 index = $config.valueHooks.indexOf(hook);
             // delete the hook
-            delete $config.valueHooks[index];
+            $config.valueHooks.popAddress(hook);
         }
     }
 
@@ -343,24 +342,20 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
         Config storage $config = $getConfig(account);
 
         if (hookType == HookType.SIG) {
-            // get the index of the hook
-            uint256 index = $config.sigHooks[sig].indexOf(hook);
             // get the length of the hooks for the same sig
             uint256 sigsHooksLength = $config.sigHooks[sig].length;
             // delete the hook
-            delete $config.sigHooks[sig][index];
+            $config.sigHooks[sig].popAddress(hook);
 
             // if there is only one hook for the sig, remove the sig
             if (sigsHooksLength == 1) {
                 $config.targetSigs.popUnique(sig);
             }
         } else if (hookType == HookType.TARGET_SIG) {
-            // get the index of the hook
-            uint256 index = $config.targetSigHooks[sig].indexOf(hook);
             // get the length of the hooks for the same sig
             uint256 targetSigsHooksLength = $config.targetSigHooks[sig].length;
             // delete the hook
-            delete $config.targetSigHooks[sig][index];
+            $config.targetSigHooks[sig].popAddress(hook);
 
             // if there is only one hook for the sig, remove the sig
             if (targetSigsHooksLength == 1) {
@@ -400,7 +395,8 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
 
         // TODO: write tests for this. I think this breaks if globalHooks is empty
         // get the global and account sig hooks
-        address[] memory hooks = $config.globalHooks.join($config.sigHooks[callDataSelector]);
+        address[] memory hooks = $config.globalHooks;
+        hooks.join($config.sigHooks[callDataSelector]);
 
         // if the hooked transaction is an execution, we need to check the value and the
         // targetSigHooks
