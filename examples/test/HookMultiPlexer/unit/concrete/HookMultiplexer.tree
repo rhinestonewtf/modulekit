@@ -53,7 +53,7 @@ HookMultiplexer::preCheck
 ├── when tx is not an execution
 │   └── it should call global and calldata hooks
 └── when tx is an execution
-    ├── it should call global and calldata hooks
+    ├── it should call global hooks
     ├── when execution is single
     │   ├── when execution has value 
     │   │   ├── it should call the target sig hooks

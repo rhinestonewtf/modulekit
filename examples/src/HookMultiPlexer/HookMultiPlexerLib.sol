@@ -5,6 +5,8 @@ import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { SigHookInit } from "./DataTypes.sol";
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title HookMultiplexerLib
  * @dev Library for multiplexing hooks
@@ -86,6 +88,7 @@ library HookMultiplexerLib {
         bytes memory data = abi.encodePacked(
             IERC7579Hook.postCheck.selector, preCheckContext, address(this), msg.sender
         );
+        console2.logBytes(data);
         // postcheck the subhook
         (bool success,) = address(subHook).call(data);
         // revert if the subhook postcheck fails

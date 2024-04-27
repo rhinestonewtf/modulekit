@@ -412,12 +412,16 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
                 // decode the execution
                 (, uint256 value, bytes calldata callData) =
                     ExecutionLib.decodeSingle(msgData[EXEC_OFFSET:EXEC_OFFSET + paramLen]);
+
                 // if there is a value, we need to check the value hooks
                 if (value != 0) {
                     hooks.join($config.valueHooks);
                 }
-                // add the targetSigHooks
-                hooks.join($config.targetSigHooks[bytes4(callData[:4])]);
+
+                // if there is callData, we need to check the targetSigHooks
+                if (callData.length > 4) {
+                    hooks.join($config.targetSigHooks[bytes4(callData[:4])]);
+                }
             } else if (calltype == CALLTYPE_BATCH) {
                 // decode the batch
                 hooks.join(
@@ -526,11 +530,13 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
                 // If targetSigHooks are not enabled, we can stop here and return
                 if (!targetSigHooksEnabled) return allHooks;
             }
-            // get the targetSigHooks
-            targetSigsInBatch[i] = uint256(bytes32(execution.callData[:4]));
+            // if there is callData, we need to check the targetSigHooks
+            if (execution.callData.length > 4) {
+                targetSigsInBatch[i] = uint256(bytes32(execution.callData[:4]));
+            }
         }
         // If targetSigHooks are not enabled, we can stop here and return
-        if (targetSigHooksEnabled) return allHooks;
+        if (!targetSigHooksEnabled) return allHooks;
 
         // we only want to sload the targetSigHooks once
         targetSigsInBatch.insertionSort();
@@ -543,15 +549,16 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
             bytes4 targetSelector = bytes4(bytes32(targetSigsInBatch[i]));
 
             // get the targetSigHooks
-            address[] storage _targetHook = $config.targetSigHooks[targetSelector];
+            address[] storage _targetHooks = $config.targetSigHooks[targetSelector];
+
             // if there are none, continue
-            if (_targetHook.length == 0) continue;
+            if (_targetHooks.length == 0) continue;
             if (allHooks.length == 0) {
                 // set the targetHooks if there are no other hooks
-                allHooks = _targetHook;
+                allHooks = _targetHooks;
             } else {
                 // join the targetHooks with the other hooks
-                allHooks.join(_targetHook);
+                allHooks.join(_targetHooks);
             }
         }
     }

@@ -128,6 +128,15 @@ contract HookMultiplexerTest is BaseTest {
         );
     }
 
+    function getPostCheckHookCallData(bytes memory preCheckContext)
+        internal
+        returns (bytes memory hookData)
+    {
+        hookData = abi.encodePacked(
+            abi.encodeCall(IERC7579Hook.postCheck, (preCheckContext)), address(hook), address(this)
+        );
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
@@ -285,7 +294,7 @@ contract HookMultiplexerTest is BaseTest {
     }
 
     function test_PreCheckWhenTxIsAnExecution() public whenTxIsAnExecution {
-        // it should call global and calldata hooks
+        // it should call global hooks
         test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
 
         address msgSender = address(1);
@@ -297,8 +306,6 @@ contract HookMultiplexerTest is BaseTest {
 
         address[] memory _hooks = _getHooks(true);
         vm.expectCall(_hooks[0], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
-        vm.expectCall(_hooks[3], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
-        vm.expectCall(_hooks[4], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
 
         hook.preCheck(msgSender, msgValue, msgData);
     }
@@ -455,9 +462,9 @@ contract HookMultiplexerTest is BaseTest {
         bytes[] memory contexts = new bytes[](_hooks.length);
 
         for (uint256 i; i < _hooks.length; i++) {
-            bytes memory context = abi.encode(toString(i));
+            bytes memory context = abi.encode(vm.toString(i));
             contexts[i] = context;
-            vm.expectCall(_hooks[i], 0, context, 1);
+            vm.expectCall(_hooks[i], 0, getPostCheckHookCallData(context), 1);
         }
 
         bytes memory hookData = abi.encode(_hooks, contexts);
