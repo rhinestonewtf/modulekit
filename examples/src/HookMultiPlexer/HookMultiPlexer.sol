@@ -349,7 +349,7 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
 
             // if there is only one hook for the sig, remove the sig
             if (sigsHooksLength == 1) {
-                $config.targetSigs.popUnique(sig);
+                $config.targetSigs.popBytes4(sig);
             }
         } else if (hookType == HookType.TARGET_SIG) {
             // get the length of the hooks for the same sig
@@ -359,7 +359,7 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
 
             // if there is only one hook for the sig, remove the sig
             if (targetSigsHooksLength == 1) {
-                $config.targetSigs.popUnique(sig);
+                $config.targetSigs.popBytes4(sig);
             }
         }
     }

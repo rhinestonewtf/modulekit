@@ -118,6 +118,15 @@ library HookMultiplexerLib {
         uint256 bLength = b.length;
         uint256 totalLength = aLength + bLength;
 
+        // if one or both arrays are empty, return the other array or an empty array
+        if (totalLength == 0) {
+            return c;
+        } else if (aLength == 0) {
+            return b;
+        } else if (bLength == 0) {
+            return a;
+        }
+
         // initialize the joined array
         assembly ("memory-safe") {
             c := a
@@ -168,20 +177,53 @@ library HookMultiplexerLib {
     }
 
     /**
-     * Pushes a unique element to an array
+     * Gets the index of an element in an array
      *
-     * @param array array to push to
-     * @param sig element to push
+     * @param array array to search
+     * @param element element to find
+     *
+     * @return index index of the element
      */
-    function pushUnique(bytes4[] storage array, bytes4 sig) internal {
+    function indexOf(bytes4[] storage array, bytes4 element) internal view returns (uint256) {
         // cache the length of the array
         uint256 length = array.length;
         for (uint256 i; i < length; i++) {
-            if (array[i] == sig) {
-                array.push(sig);
-                break;
+            // return the index of the element
+            if (array[i] == element) {
+                return i;
             }
         }
+        // return the maximum value if the element is not found
+        return type(uint256).max;
+    }
+
+    /**
+     * Pushes a unique element to an array
+     *
+     * @param array array to push to
+     * @param element element to push
+     */
+    function pushUnique(bytes4[] storage array, bytes4 element) internal {
+        // cache the length of the array
+        uint256 index = indexOf(array, element);
+        if (index == type(uint256).max) {
+            array.push(element);
+        }
+    }
+
+    /**
+     * Pops a bytes4 element from an array
+     *
+     * @param array array to pop from
+     * @param element element to pop
+     */
+    function popBytes4(bytes4[] storage array, bytes4 element) internal {
+        uint256 index = indexOf(array, element);
+        if (index == type(uint256).max) {
+            return;
+        }
+        array[index] = array[array.length - 1];
+        array.pop();
     }
 
     /**
@@ -192,24 +234,11 @@ library HookMultiplexerLib {
      */
     function popAddress(address[] storage array, address element) internal {
         uint256 index = indexOf(array, element);
+        if (index == type(uint256).max) {
+            return;
+        }
         array[index] = array[array.length - 1];
         array.pop();
-    }
-
-    /**
-     * Pops a unique element from an array
-     *
-     * @param array array to pop from
-     * @param sig element to pop
-     */
-    function popUnique(bytes4[] storage array, bytes4 sig) internal {
-        uint256 length = array.length;
-        for (uint256 i; i < length; i++) {
-            if (array[i] == sig) {
-                delete array[i];
-                break;
-            }
-        }
     }
 
     /**

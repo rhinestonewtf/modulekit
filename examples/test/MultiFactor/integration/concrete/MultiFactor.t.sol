@@ -19,7 +19,6 @@ import { EIP1271_MAGIC_VALUE } from "test/utils/Constants.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/src/external/ERC7579.sol";
 import { UserOpData } from "modulekit/src/ModuleKit.sol";
 import { IERC1271 } from "modulekit/src/interfaces/IERC1271.sol";
-import { MockRegistry } from "test/mocks/MockRegistry.sol";
 
 contract MultiFactorIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -31,7 +30,6 @@ contract MultiFactorIntegrationTest is BaseIntegrationTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     MultiFactor internal validator;
-    MockRegistry internal _registry;
     OwnableValidator internal subValidator1;
     OwnableValidator internal subValidator2;
 
@@ -50,8 +48,7 @@ contract MultiFactorIntegrationTest is BaseIntegrationTest {
     function setUp() public virtual override {
         BaseIntegrationTest.setUp();
 
-        _registry = new MockRegistry();
-        validator = new MultiFactor(_registry);
+        validator = new MultiFactor(instance.aux.registry);
 
         subValidator1 = new OwnableValidator();
         subValidator2 = new OwnableValidator();

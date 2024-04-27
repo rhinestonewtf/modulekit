@@ -16,4 +16,7 @@ quote_style = "double"
 tab_width = 4
 wrap_comments = true
 
+[fuzz]
+runs=1000
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
