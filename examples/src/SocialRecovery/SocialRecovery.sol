@@ -26,11 +26,12 @@ contract SocialRecovery is ERC7579ValidatorBase {
 
     error UnsopportedOperation();
     error InvalidGuardian(address guardian);
+    error NotSortedAndUnique();
     error MaxGuardiansReached();
     error ThresholdNotSet();
     error InvalidThreshold();
 
-    // maximum number of owners per account
+    // maximum number of guardians per account
     uint256 constant MAX_GUARDIANS = 32;
 
     // account => guardians
@@ -54,9 +55,10 @@ contract SocialRecovery is ERC7579ValidatorBase {
         // get the threshold and guardians from the data
         (uint256 _threshold, address[] memory _guardians) = abi.decode(data, (uint256, address[]));
 
-        // sort and uniquify the guardians to make sure a guardian is not reused
-        _guardians.sort();
-        _guardians.uniquifySorted();
+        // check that guardians are sorted and uniquified
+        if (!_guardians.isSortedAndUniquified()) {
+            revert NotSortedAndUnique();
+        }
 
         // make sure the threshold is set
         if (_threshold == 0) {
@@ -72,7 +74,7 @@ contract SocialRecovery is ERC7579ValidatorBase {
         // cache the account address
         address account = msg.sender;
 
-        // check if max owners is reached
+        // check if max guardians is reached
         if (guardiansLength > MAX_GUARDIANS) {
             revert MaxGuardiansReached();
         }
