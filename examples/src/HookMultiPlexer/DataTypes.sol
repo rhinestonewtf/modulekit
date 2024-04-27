@@ -16,6 +16,11 @@ struct SigHookInit {
     address[] subHooks;
 }
 
+struct HookAndContext {
+    address hook;
+    bytes context;
+}
+
 // Config for an account
 // We also need to store an array of sigs and target sigs to be able to remove them on uninstall
 struct Config {

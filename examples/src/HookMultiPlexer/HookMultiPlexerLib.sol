@@ -2,10 +2,8 @@
 pragma solidity ^0.8.25;
 
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
-import { SigHookInit } from "./DataTypes.sol";
+import { SigHookInit, HookAndContext } from "./DataTypes.sol";
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
-
-import "forge-std/console2.sol";
 
 /**
  * @title HookMultiplexerLib
@@ -25,7 +23,7 @@ library HookMultiplexerLib {
      * @param msgValue value of the transaction
      * @param msgData data of the transaction
      *
-     * @return contexts array of pre-check contexts
+     * @return hookAndContexts array of hook and context
      */
     function preCheckSubHooks(
         address[] memory subHooks,
@@ -34,15 +32,20 @@ library HookMultiplexerLib {
         bytes calldata msgData
     )
         internal
-        returns (bytes[] memory contexts)
+        returns (HookAndContext[] memory hookAndContexts)
     {
         // cache the length of the subhooks
         uint256 length = subHooks.length;
         // initialize the contexts array
-        contexts = new bytes[](length);
+        hookAndContexts = new HookAndContext[](length);
         for (uint256 i; i < length; i++) {
-            // precheck the subhook
-            contexts[i] = preCheckSubHook(subHooks[i], msgSender, msgValue, msgData);
+            // cache the subhook
+            address subHook = subHooks[i];
+            // precheck the subhook and return the context
+            hookAndContexts[i] = HookAndContext({
+                hook: subHook,
+                context: preCheckSubHook(subHook, msgSender, msgValue, msgData)
+            });
         }
     }
 
@@ -88,7 +91,6 @@ library HookMultiplexerLib {
         bytes memory data = abi.encodePacked(
             IERC7579Hook.postCheck.selector, preCheckContext, address(this), msg.sender
         );
-        console2.logBytes(data);
         // postcheck the subhook
         (bool success,) = address(subHook).call(data);
         // revert if the subhook postcheck fails

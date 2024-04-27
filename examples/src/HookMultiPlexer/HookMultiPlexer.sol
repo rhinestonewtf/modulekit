@@ -3,7 +3,7 @@ pragma solidity ^0.8.25;
 
 import { ERC7579HookBase, ERC7484RegistryAdapter } from "modulekit/src/Modules.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
-import { SigHookInit, Config, HookType } from "./DataTypes.sol";
+import { SigHookInit, Config, HookType, HookAndContext } from "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import {
     ModeLib,
@@ -443,12 +443,15 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
         // uniquify the hooks
         hooks.uniquifySorted();
 
-        // call all subhooks and get the subhook context datas
-        // todo: optimise into single array?
+        // call all subhooks and return the subhooks with their context datas
         return abi.encode(
-            hooks,
             hooks.preCheckSubHooks({ msgSender: msgSender, msgValue: msgValue, msgData: msgData })
         );
+        // return abi.encode(
+        //     hooks,
+        //     hooks.preCheckSubHooks({ msgSender: msgSender, msgValue: msgValue, msgData: msgData
+        // })
+        // );
     }
 
     /**
@@ -458,31 +461,24 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
      * @param hookData data of the hooks
      */
     function postCheck(bytes calldata hookData) external {
-        // create the hooks array
-        address[] calldata hooks;
-        // create the contexts array
-        bytes[] calldata contexts;
+        // create the hooks and contexts array
+        HookAndContext[] calldata hooksAndContexts;
 
         // decode the hookData
+        // todo: optimise
         assembly ("memory-safe") {
-            let offset := hookData.offset
-            let baseOffset := offset
-
-            let dataPointer := add(baseOffset, calldataload(offset))
-            hooks.offset := add(dataPointer, 0x20)
-            hooks.length := calldataload(dataPointer)
-            offset := add(offset, 0x20)
-
-            dataPointer := add(baseOffset, calldataload(offset))
-            contexts.offset := add(dataPointer, 0x20)
-            contexts.length := calldataload(dataPointer)
+            let dataPointer := add(hookData.offset, calldataload(hookData.offset))
+            hooksAndContexts.offset := add(dataPointer, 0x20)
+            hooksAndContexts.length := calldataload(dataPointer)
         }
 
         // get the length of the hooks
-        uint256 length = hooks.length;
+        uint256 length = hooksAndContexts.length;
         for (uint256 i; i < length; i++) {
+            // cache the hook and context
+            HookAndContext calldata hookAndContext = hooksAndContexts[i];
             // call postCheck on each hook
-            hooks[i].postCheckSubHook({ preCheckContext: contexts[i] });
+            hookAndContext.hook.postCheckSubHook({ preCheckContext: hookAndContext.context });
         }
     }
 
