@@ -39,10 +39,8 @@ library HookMultiplexerLib {
         // initialize the contexts array
         contexts = new bytes[](length);
         for (uint256 i; i < length; i++) {
-            // cache the subhook
-            address _subHook = subHooks[i];
             // precheck the subhook
-            contexts[i] = preCheckSubHook(_subHook, msgSender, msgValue, msgData);
+            contexts[i] = preCheckSubHook(subHooks[i], msgSender, msgValue, msgData);
         }
     }
 

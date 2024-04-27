@@ -10,9 +10,14 @@ import {
 } from "src/HookMultiplexer/HookMultiplexer.sol";
 import { IERC7579Account, IERC7579Module, IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { ModeLib } from "erc7579/lib/ModeLib.sol";
-import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
-import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
+import {
+    ModeLib,
+    CALLTYPE_DELEGATECALL,
+    EXECTYPE_DEFAULT,
+    MODE_DEFAULT,
+    ModePayload
+} from "erc7579/lib/ModeLib.sol";
+import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 import { MockRegistry } from "test/mocks/MockRegistry.sol";
 import { MockHook } from "test/mocks/MockHook.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
@@ -281,6 +286,21 @@ contract HookMultiplexerTest is BaseTest {
 
     function test_PreCheckWhenTxIsAnExecution() public whenTxIsAnExecution {
         // it should call global and calldata hooks
+        test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
+
+        address msgSender = address(1);
+        uint256 msgValue = 0;
+        bytes memory msgData = abi.encodeCall(
+            IERC7579Account.execute,
+            (ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(1), 0, ""))
+        );
+
+        address[] memory _hooks = _getHooks(true);
+        vm.expectCall(_hooks[0], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[3], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[4], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+
+        hook.preCheck(msgSender, msgValue, msgData);
     }
 
     function test_PreCheckWhenExecutionHasValue()
@@ -290,6 +310,26 @@ contract HookMultiplexerTest is BaseTest {
     {
         // it should call the target sig hooks
         // it should call the value hooks
+        test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
+
+        address msgSender = address(1);
+        uint256 msgValue = 0;
+        bytes memory msgData = abi.encodeCall(
+            IERC7579Account.execute,
+            (
+                ModeLib.encodeSimpleSingle(),
+                ExecutionLib.encodeSingle(
+                    address(1), 1, abi.encodeCall(IERC20.transfer, (address(1), 1))
+                )
+            )
+        );
+
+        address[] memory _hooks = _getHooks(true);
+        vm.expectCall(_hooks[0], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[5], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[6], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+
+        hook.preCheck(msgSender, msgValue, msgData);
     }
 
     function test_PreCheckWhenExecutionHasNoValue()
@@ -298,6 +338,25 @@ contract HookMultiplexerTest is BaseTest {
         whenExecutionIsSingle
     {
         // it should call the target sig hooks
+        test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
+
+        address msgSender = address(1);
+        uint256 msgValue = 0;
+        bytes memory msgData = abi.encodeCall(
+            IERC7579Account.execute,
+            (
+                ModeLib.encodeSimpleSingle(),
+                ExecutionLib.encodeSingle(
+                    address(1), 0, abi.encodeCall(IERC20.transfer, (address(1), 1))
+                )
+            )
+        );
+
+        address[] memory _hooks = _getHooks(true);
+        vm.expectCall(_hooks[5], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[6], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+
+        hook.preCheck(msgSender, msgValue, msgData);
     }
 
     function test_PreCheckWhenAnyExecutionHasValue()
@@ -307,6 +366,29 @@ contract HookMultiplexerTest is BaseTest {
     {
         // it should call the target sig hooks
         // it should call the value hooks
+        test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
+
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution({ target: address(1), value: 1, callData: "" });
+        executions[1] = Execution({
+            target: address(1),
+            value: 0,
+            callData: abi.encodeCall(IERC20.transfer, (address(1), 1))
+        });
+
+        address msgSender = address(1);
+        uint256 msgValue = 0;
+        bytes memory msgData = abi.encodeCall(
+            IERC7579Account.execute,
+            (ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions))
+        );
+
+        address[] memory _hooks = _getHooks(true);
+        vm.expectCall(_hooks[0], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[5], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[6], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+
+        hook.preCheck(msgSender, msgValue, msgData);
     }
 
     function test_PreCheckWhenNoExecutionHasValue()
@@ -315,14 +397,72 @@ contract HookMultiplexerTest is BaseTest {
         whenExecutionIsBatched
     {
         // it should call the target sig hooks
+        test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
+
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution({
+            target: address(1),
+            value: 0,
+            callData: abi.encodeCall(IERC20.transferFrom, (address(1), address(1), 1))
+        });
+        executions[1] = Execution({
+            target: address(1),
+            value: 0,
+            callData: abi.encodeCall(IERC20.transfer, (address(1), 1))
+        });
+
+        address msgSender = address(1);
+        uint256 msgValue = 0;
+        bytes memory msgData = abi.encodeCall(
+            IERC7579Account.execute,
+            (ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions))
+        );
+
+        address[] memory _hooks = _getHooks(true);
+        vm.expectCall(_hooks[5], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+        vm.expectCall(_hooks[6], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+
+        hook.preCheck(msgSender, msgValue, msgData);
     }
 
     function test_PreCheckWhenExecutionIsDelegatecall() public whenTxIsAnExecution {
         // it should call the delegatecall hooks
+        test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
+
+        address msgSender = address(1);
+        uint256 msgValue = 0;
+        bytes memory msgData = abi.encodeCall(
+            IERC7579Account.execute,
+            (
+                ModeLib.encode(
+                    CALLTYPE_DELEGATECALL, EXECTYPE_DEFAULT, MODE_DEFAULT, ModePayload.wrap(0x00)
+                ),
+                ExecutionLib.encodeSingle(
+                    address(1), 0, abi.encodeCall(IERC20.transfer, (address(1), 1))
+                )
+            )
+        );
+
+        address[] memory _hooks = _getHooks(true);
+        vm.expectCall(_hooks[2], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);
+
+        hook.preCheck(msgSender, msgValue, msgData);
     }
 
     function test_PostCheckShouldCallAllHooksProvidedInHookdata() public {
         // it should call all hooks provided in hookdata
+        address[] memory _hooks = _getHooks(true);
+        bytes[] memory contexts = new bytes[](_hooks.length);
+
+        for (uint256 i; i < _hooks.length; i++) {
+            bytes memory context = abi.encode(toString(i));
+            contexts[i] = context;
+            vm.expectCall(_hooks[i], 0, context, 1);
+        }
+
+        bytes memory hookData = abi.encode(_hooks, contexts);
+
+        hook.postCheck(hookData);
     }
 
     function test_NameShouldReturnHookMultiplexer() public {

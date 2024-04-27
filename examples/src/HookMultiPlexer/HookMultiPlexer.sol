@@ -440,6 +440,7 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
         hooks.uniquifySorted();
 
         // call all subhooks and get the subhook context datas
+        // todo: optimise into single array?
         return abi.encode(
             hooks,
             hooks.preCheckSubHooks({ msgSender: msgSender, msgValue: msgValue, msgData: msgData })
