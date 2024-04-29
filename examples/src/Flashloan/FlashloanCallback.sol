@@ -72,6 +72,7 @@ abstract contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase 
         pure
         returns (bytes32)
     {
+        // return the hash
         return keccak256(abi.encode(flashLoanType, executions, _nonce));
     }
 
@@ -112,14 +113,22 @@ abstract contract FlashloanCallback is ERC7579FallbackBase, ERC7579ExecutorBase 
         onlyAllowedCallbackSender
         returns (bytes32)
     {
+        // decode the data
         (FlashLoanType flashLoanType, bytes memory signature, Execution[] memory executions) =
             abi.decode(data, (FlashLoanType, bytes, Execution[]));
+        // get the hash
         bytes32 hash = getTokengatedTxHash(flashLoanType, executions, nonce[borrower]);
+        // increment the nonce
         nonce[borrower]++;
+        // format the hash
         hash = ECDSA.toEthSignedMessageHash(hash);
+        // check the signature
         bool validSig = address(msg.sender).isValidSignatureNow(hash, signature);
+        // if the signature is invalid, revert
         if (!validSig) revert TokenGatedTxFailed();
+        // execute the flashloan
         _execute(executions);
+        // return the hash
         return keccak256("ERC3156FlashBorrower.onFlashLoan");
     }
 

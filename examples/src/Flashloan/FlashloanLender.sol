@@ -73,9 +73,11 @@ abstract contract FlashloanLender is
         view
         returns (bool hasToken)
     {
+        // if token is ERC721, check if the token is owned by the borrower
         try IERC721(token).ownerOf(tokenId) returns (address holder) {
             hasToken = holder == address(msg.sender);
         } catch {
+            // else return false
             hasToken = false;
         }
     }
@@ -101,11 +103,14 @@ abstract contract FlashloanLender is
         onlyAllowedBorrower(address(receiver))
         returns (bool)
     {
+        // get the flashloan type
         (FlashLoanType flashLoanType,,) = abi.decode(data, (FlashLoanType, bytes, bytes));
 
+        // cache the account and balance before
         address account = msg.sender;
         uint256 balanceBefore;
 
+        // transfer the token to the receiver
         if (flashLoanType == FlashLoanType.ERC721) {
             balanceBefore = availableForFlashLoan({ token: token, tokenId: value }) ? 1 : 0;
             _execute(
@@ -132,8 +137,10 @@ abstract contract FlashloanLender is
             0,
             abi.encodeCall(IERC3156FlashBorrower.onFlashLoan, (account, token, value, 0, data))
         );
+        // check if the callback was successful
         bytes32 _ret = abi.decode(ret, (bytes32));
         bool success = _ret == keccak256("ERC3156FlashBorrower.onFlashLoan");
+        // revert if the callback failed
         if (!success) revert FlashloanCallbackFailed();
 
         // check that token was sent back
@@ -167,8 +174,4 @@ abstract contract FlashloanLender is
      * @return True if the borrower is allowed
      */
     function _isAllowedBorrower(address account) internal view virtual returns (bool);
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                     METADATA
-    //////////////////////////////////////////////////////////////////////////*/
 }

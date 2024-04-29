@@ -29,12 +29,19 @@ contract ColdStorageFlashloan is FlashloanCallback {
      * @param data The data passed during installation
      */
     function onInstall(bytes calldata data) external override {
+        // get the list
         SentinelListLib.SentinelList storage list = whitelist[msg.sender];
+        // if the list is already initialized and the data is empty, return
+        // this allows the module to be installed as two types
         if (list.alreadyInitialized() && data.length == 0) return;
+        // initialize the list
         list.init();
 
+        // get the addresses
         address[] memory addresses = abi.decode(data, (address[]));
+        // cache the length
         uint256 length = addresses.length;
+        // add the addresses to the list
         for (uint256 i; i < length; i++) {
             list.push(addresses[i]);
         }
@@ -42,11 +49,10 @@ contract ColdStorageFlashloan is FlashloanCallback {
 
     /**
      * Called when the module is uninstalled from a smart account
-     *
-     * @param data The data passed during uninstallation
      */
-    function onUninstall(bytes calldata data) external override {
-        // todo
+    function onUninstall(bytes calldata) external override {
+        // remove the list
+        whitelist[msg.sender].popAll();
     }
 
     /**
@@ -57,7 +63,7 @@ contract ColdStorageFlashloan is FlashloanCallback {
      * @return True if the module is initialized
      */
     function isInitialized(address smartAccount) external view override returns (bool) {
-        return whitelist[msg.sender].alreadyInitialized();
+        return whitelist[smartAccount].alreadyInitialized();
     }
 
     /**
