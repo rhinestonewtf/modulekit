@@ -11,21 +11,26 @@ import {
     IERC3156FlashLender
 } from "modulekit/src/interfaces/Flashloan.sol";
 
-import "forge-std/console2.sol";
-
+/**
+ * @title FlashloanLender
+ * @dev A base for flashloan lender modules
+ * @author Rhinestone
+ */
 abstract contract FlashloanLender is
     ERC7579FallbackBase,
     ERC7579ExecutorBase,
     IERC3156FlashLender
 {
-    error UnsupportedTokenType();
-    error TokenNotRepaid();
-    error FlashloanCallbackFailed();
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    mapping(address account => uint256 value) public nonce;
+    error UnsupportedTokenType();
+    error TokenNotRepaid();
+    error FlashloanCallbackFailed();
+
+    // account => nonce
+    mapping(address account => uint256) public nonce;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -35,10 +40,31 @@ abstract contract FlashloanLender is
                                      MODULE LOGIC
     //////////////////////////////////////////////////////////////////////////*/
 
+    /**
+     * Get the flash fee token address
+     *
+     * @return The flash fee token address
+     */
     function flashFeeToken() external view virtual returns (address);
 
+    /**
+     * Get the flash fee for a flashloan
+     *
+     * @param token The token address
+     * @param tokenId The token ID
+     *
+     * @return The flash fee
+     */
     function flashFee(address token, uint256 tokenId) external view virtual returns (uint256);
 
+    /**
+     * Check if a token is available for flashloan
+     *
+     * @param token The token address
+     * @param tokenId The token ID
+     *
+     * @return hasToken True if the token is available for flashloan
+     */
     function availableForFlashLoan(
         address token,
         uint256 tokenId
@@ -54,6 +80,16 @@ abstract contract FlashloanLender is
         }
     }
 
+    /**
+     * Execute a flashloan
+     *
+     * @param receiver The flashloan receiver
+     * @param token The token address
+     * @param value The token ID or amount
+     * @param data The data to be passed to the receiver
+     *
+     * @return success True if the flashloan was successful
+     */
     function flashLoan(
         IERC3156FlashBorrower receiver,
         address token,
@@ -113,11 +149,23 @@ abstract contract FlashloanLender is
         return true;
     }
 
+    /**
+     * Check if the borrower is allowed
+     *
+     * @param borrower The borrower address
+     */
     modifier onlyAllowedBorrower(address borrower) {
         require(_isAllowedBorrower(borrower), "FlashloanLender: not allowed borrower");
         _;
     }
 
+    /**
+     * Check if the borrower is allowed
+     *
+     * @param account The borrower address
+     *
+     * @return True if the borrower is allowed
+     */
     function _isAllowedBorrower(address account) internal view virtual returns (bool);
 
     /*//////////////////////////////////////////////////////////////////////////

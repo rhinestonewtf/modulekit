@@ -19,7 +19,6 @@ import {
 } from "modulekit/src/interfaces/Flashloan.sol";
 
 import { FlashloanLender } from "../Flashloan/FlashloanLender.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title ColdStorageHook
