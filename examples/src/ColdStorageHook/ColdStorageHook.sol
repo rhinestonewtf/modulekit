@@ -85,6 +85,9 @@ contract ColdStorageHook is ERC7579HookDestruct {
 
         // clear the vaultConfig
         delete vaultConfig[account];
+
+        // clear the trusted forwarder
+        clearTrustedForwarder();
     }
 
     /**

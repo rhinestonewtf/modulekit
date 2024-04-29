@@ -118,13 +118,9 @@ library HookMultiplexerLib {
         uint256 bLength = b.length;
         uint256 totalLength = aLength + bLength;
 
-        // if one or both arrays are empty, return the other array or an empty array
+        // if both arrays are empty, return an empty array
         if (totalLength == 0) {
             return c;
-        } else if (aLength == 0) {
-            return b;
-        } else if (bLength == 0) {
-            return a;
         }
 
         // initialize the joined array

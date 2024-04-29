@@ -78,6 +78,8 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
     function onUninstall(bytes calldata) external override {
         // delete the config
         delete config[msg.sender];
+        // clear the trusted forwarder
+        clearTrustedForwarder();
     }
 
     /**

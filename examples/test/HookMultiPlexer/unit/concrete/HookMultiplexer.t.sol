@@ -252,6 +252,9 @@ contract HookMultiplexerTest is BaseTest {
         // it should remove the hook
         test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
 
+        address[] memory __hooks = hook.getHooks(address(this));
+        assertEq(__hooks.length, 7);
+
         address[] memory _hooks = _getHooks(true);
 
         hook.removeHook(address(_hooks[0]), HookType.GLOBAL);

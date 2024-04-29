@@ -12,10 +12,12 @@ import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_HOOK,
-    IERC7579Account
+    MODULE_TYPE_EXECUTOR,
+    IERC7579Account,
+    IERC7579Module
 } from "modulekit/src/external/ERC7579.sol";
 
-import { HookMultiplexer } from "src/HookMultiplexer/HookMultiplexer.sol";
+import { HookMultiplexer, HookType } from "src/HookMultiplexer/HookMultiplexer.sol";
 import "forge-std/interfaces/IERC20.sol";
 import { MockHook } from "test/mocks/MockHook.sol";
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
@@ -26,6 +28,15 @@ import "forge-std/interfaces/IERC20.sol";
 import "src/HookMultiplexer/DataTypes.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
+
+import { TrustedForwarder } from "modulekit/src/modules/utils/TrustedForwarder.sol";
+
+import { DeadmanSwitch } from "src/DeadmanSwitch/DeadmanSwitch.sol";
+import { ColdStorageHook } from "src/ColdStorageHook/ColdStorageHook.sol";
+import { RegistryHook, IERC7484 } from "src/RegistryHook/RegistryHook.sol";
+
+import { ModeLib } from "erc7579/lib/ModeLib.sol";
+import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 
 contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
     using LibSort for address[];
@@ -51,6 +62,10 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
     MockTarget internal target;
     MockERC20 internal token;
 
+    ColdStorageHook internal coldStorage;
+    DeadmanSwitch internal deadmanSwitch;
+    RegistryHook internal registryHook;
+
     /*//////////////////////////////////////////////////////////////////////////
                                     VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
@@ -75,6 +90,56 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
         subHook6 = new MockHook();
         subHook7 = new MockHook();
         subHook8 = new MockHook();
+
+        coldStorage = new ColdStorageHook();
+        deadmanSwitch = new DeadmanSwitch();
+        registryHook = new RegistryHook();
+
+        Execution[] memory execution = new Execution[](6);
+        execution[0] = Execution({
+            target: address(coldStorage),
+            value: 0,
+            callData: abi.encodeCall(
+                IERC7579Module.onInstall, (abi.encodePacked(uint128(1), address(1)))
+            )
+        });
+
+        execution[1] = Execution({
+            target: address(deadmanSwitch),
+            value: 0,
+            callData: abi.encodeCall(
+                IERC7579Module.onInstall, (abi.encodePacked(address(1), uint48(1)))
+            )
+        });
+
+        execution[2] = Execution({
+            target: address(registryHook),
+            value: 0,
+            callData: abi.encodeCall(
+                IERC7579Module.onInstall, (abi.encodePacked(address(instance.aux.registry)))
+            )
+        });
+
+        execution[3] = Execution({
+            target: address(coldStorage),
+            value: 0,
+            callData: abi.encodeCall(TrustedForwarder.setTrustedForwarder, (address(hook)))
+        });
+
+        execution[4] = Execution({
+            target: address(deadmanSwitch),
+            value: 0,
+            callData: abi.encodeCall(TrustedForwarder.setTrustedForwarder, (address(hook)))
+        });
+
+        execution[5] = Execution({
+            target: address(registryHook),
+            value: 0,
+            callData: abi.encodeCall(TrustedForwarder.setTrustedForwarder, (address(hook)))
+        });
+
+        instance.getExecOps({ executions: execution, txValidator: address(defaultValidator) })
+            .execUserOps();
 
         token = new MockERC20("usdc", "usdc", 18);
         token.mint(instance.account, 100 ether);
@@ -162,10 +227,24 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+                                    MODIFIERS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    modifier expectHookCall(address hookAddress) {
+        vm.expectCall(
+            address(hookAddress), abi.encodeWithSelector(IERC7579Hook.preCheck.selector), 1
+        );
+        vm.expectCall(
+            address(hookAddress), abi.encodeWithSelector(IERC7579Hook.postCheck.selector), 1
+        );
+        _;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function test_shouldCallPreCheck() public {
+    function test_ShouldCallPreCheck() public {
         Execution[] memory execution = new Execution[](3);
         execution[0] = Execution({
             target: address(target),
@@ -190,7 +269,7 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
         userOpData.execUserOps();
     }
 
-    function test_shouldNotRevert() external {
+    function test_ShouldNotRevert() external {
         // It should never revert Hook
 
         address target = address(1);
@@ -208,7 +287,7 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
         userOpData.execUserOps();
     }
 
-    function test_shouldRevert__inPreCheck() external {
+    function test_ShouldRevert_InPreCheck() external {
         // It should never revert Hook
 
         address target = address(1);
@@ -241,7 +320,7 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
         userOpData.execUserOps();
     }
 
-    function test_shouldRevert__inPostCheck() external {
+    function test_ShouldRevert_InPostCheck() external {
         // It should never revert Hook
 
         address target = address(1);
@@ -272,5 +351,118 @@ contract HookMultiplexerIntegrationTest is BaseIntegrationTest {
 
         // Execute the userOp
         userOpData.execUserOps();
+    }
+
+    function test_DeadmanSwitch() public expectHookCall(address(deadmanSwitch)) {
+        address[] memory prevHooks = hook.getHooks(address(instance.account));
+        instance.getExecOps({
+            target: address(hook),
+            value: 0,
+            callData: abi.encodeCall(HookMultiplexer.addHook, (address(deadmanSwitch), HookType.GLOBAL)),
+            txValidator: address(defaultValidator)
+        }).execUserOps();
+
+        address[] memory newHooks = hook.getHooks(address(instance.account));
+        assertEq(prevHooks.length + 1, newHooks.length);
+
+        instance.getExecOps({
+            target: address(2),
+            value: 1 wei,
+            callData: "",
+            txValidator: address(defaultValidator)
+        }).execUserOps();
+
+        (uint48 lastAccess,,) = deadmanSwitch.config(instance.account);
+        assertEq(lastAccess, block.timestamp);
+    }
+
+    function test_RegistryHook() public expectHookCall(address(registryHook)) {
+        address[] memory prevHooks = hook.getHooks(address(instance.account));
+        instance.getExecOps({
+            target: address(hook),
+            value: 0,
+            callData: abi.encodeCall(
+                HookMultiplexer.addSigHook,
+                (address(registryHook), IERC7579Account.installModule.selector, HookType.SIG)
+            ),
+            txValidator: address(defaultValidator)
+        }).execUserOps();
+
+        address[] memory newHooks = hook.getHooks(address(instance.account));
+        assertEq(prevHooks.length + 1, newHooks.length);
+
+        address mockModule = address(24);
+        vm.etch(mockModule, hex"00");
+
+        vm.expectCall(
+            address(instance.aux.registry),
+            abi.encodeWithSelector(
+                0x529562a1, address(instance.account), mockModule, MODULE_TYPE_VALIDATOR
+            )
+        );
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_VALIDATOR, module: mockModule, data: "" });
+    }
+
+    function test_ColdStorageHook() public expectHookCall(address(coldStorage)) {
+        address[] memory prevHooks = hook.getHooks(address(instance.account));
+        instance.getExecOps({
+            target: address(hook),
+            value: 0,
+            callData: abi.encodeCall(
+                HookMultiplexer.addSigHook,
+                (address(coldStorage), IERC7579Account.executeFromExecutor.selector, HookType.SIG)
+            ),
+            txValidator: address(defaultValidator)
+        }).execUserOps();
+
+        address[] memory newHooks = hook.getHooks(address(instance.account));
+        assertEq(prevHooks.length + 1, newHooks.length);
+
+        address mockModule = address(24);
+        vm.etch(mockModule, hex"00");
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: mockModule, data: "" });
+
+        vm.prank(mockModule);
+
+        IERC7579Account(instance.account).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(),
+            ExecutionLib.encodeSingle(
+                address(coldStorage),
+                0,
+                abi.encodeCall(
+                    ColdStorageHook.requestTimelockedExecution,
+                    (Execution({ target: address(1), value: 1 wei, callData: "" }), 0)
+                )
+            )
+        );
+    }
+
+    function test_ColdStorageHook_RevertWhen_ColdStorageReverts() public {
+        address[] memory prevHooks = hook.getHooks(address(instance.account));
+        instance.getExecOps({
+            target: address(hook),
+            value: 0,
+            callData: abi.encodeCall(
+                HookMultiplexer.addSigHook,
+                (address(coldStorage), IERC7579Account.executeFromExecutor.selector, HookType.SIG)
+            ),
+            txValidator: address(defaultValidator)
+        }).execUserOps();
+
+        address[] memory newHooks = hook.getHooks(address(instance.account));
+        assertEq(prevHooks.length + 1, newHooks.length);
+
+        address mockModule = address(24);
+        vm.etch(mockModule, hex"00");
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: mockModule, data: "" });
+
+        vm.expectRevert();
+        vm.prank(mockModule);
+        IERC7579Account(instance.account).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(), ExecutionLib.encodeSingle(address(2), 1 wei, "")
+        );
     }
 }

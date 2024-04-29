@@ -15,6 +15,13 @@ abstract contract TrustedForwarder {
     }
 
     /**
+     * Clear the trusted forwarder for an account
+     */
+    function clearTrustedForwarder() public {
+        trustedForwarder[msg.sender] = address(0);
+    }
+
+    /**
      * Check if a forwarder is trusted for an account
      *
      * @param forwarder The address of the forwarder

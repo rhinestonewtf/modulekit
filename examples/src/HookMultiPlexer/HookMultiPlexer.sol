@@ -35,6 +35,8 @@ contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdap
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
+    error UnsupportedHookType();
+
     // offset used to decode ERC7579 execution callData
     uint256 constant EXEC_OFFSET = 100;
 
@@ -265,6 +267,8 @@ contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdap
         } else if (hookType == HookType.VALUE) {
             // add the hook to the value hooks
             $getConfig(account).valueHooks.push(hook);
+        } else {
+            revert UnsupportedHookType();
         }
     }
 
@@ -298,6 +302,8 @@ contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdap
             $config.targetSigHooks[sig].push(hook);
             // add the sig to the target sigs if it is not already added
             $config.targetSigs.pushUnique(sig);
+        } else {
+            revert UnsupportedHookType();
         }
     }
 
@@ -323,6 +329,8 @@ contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdap
         } else if (hookType == HookType.VALUE) {
             // delete the hook
             $config.valueHooks.popAddress(hook);
+        } else {
+            revert UnsupportedHookType();
         }
     }
 
@@ -362,6 +370,8 @@ contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdap
             if (targetSigsHooksLength == 1) {
                 $config.targetSigs.popBytes4(sig);
             }
+        } else {
+            revert UnsupportedHookType();
         }
     }
 
