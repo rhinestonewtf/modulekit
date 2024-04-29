@@ -92,6 +92,7 @@ contract RegistryHook is ERC7579HookDestruct {
      * @param module address of the module
      */
     function onInstallModule(
+        address account,
         address,
         uint256 moduleType,
         address module,
@@ -103,8 +104,8 @@ contract RegistryHook is ERC7579HookDestruct {
         returns (bytes memory)
     {
         // query the registry using stored attesters
-        IERC7484(registry[msg.sender]).checkForAccount({
-            smartAccount: msg.sender,
+        IERC7484(registry[account]).checkForAccount({
+            smartAccount: account,
             module: module,
             moduleType: moduleType
         });
@@ -116,6 +117,7 @@ contract RegistryHook is ERC7579HookDestruct {
      * @param msgSender the executor
      */
     function onExecuteFromExecutor(
+        address account,
         address msgSender,
         address,
         uint256,
@@ -127,8 +129,8 @@ contract RegistryHook is ERC7579HookDestruct {
         returns (bytes memory)
     {
         // query the registry using stored attesters
-        IERC7484(registry[msg.sender]).checkForAccount({
-            smartAccount: msg.sender,
+        IERC7484(registry[account]).checkForAccount({
+            smartAccount: account,
             module: msgSender,
             moduleType: MODULE_TYPE_EXECUTOR
         });

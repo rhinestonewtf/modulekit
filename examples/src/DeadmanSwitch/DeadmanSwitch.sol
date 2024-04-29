@@ -98,9 +98,16 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
      * Called on precheck before every execution
      * @dev this function updates the last access time for the account
      */
-    function preCheck(address, uint256, bytes calldata) external returns (bytes memory hookData) {
-        // cache the account address
-        address account = msg.sender;
+    function _preCheck(
+        address account,
+        address,
+        uint256,
+        bytes calldata
+    )
+        internal
+        override
+        returns (bytes memory hookData)
+    {
         // if the module is not initialized, return and dont update the last access time
         if (!isInitialized(account)) return "";
 
@@ -113,7 +120,7 @@ contract DeadmanSwitch is ERC7579HookBase, ERC7579ValidatorBase {
      * Called on postcheck after every execution
      * @dev this function is unused
      */
-    function postCheck(bytes calldata) external { }
+    function _postCheck(address, bytes calldata) internal override { }
 
     /**
      * Validates the userOperation during the validation phase

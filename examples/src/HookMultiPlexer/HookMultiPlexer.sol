@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { ERC7579HookBase, ERC7484RegistryAdapter } from "modulekit/src/Modules.sol";
-import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
+import { ERC7579ModuleBase } from "modulekit/src/modules/ERC7579ModuleBase.sol";
+import { ERC7484RegistryAdapter } from "modulekit/src/Modules.sol";
+import { IERC7579Account, IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { SigHookInit, Config, HookType, HookAndContext } from "./DataTypes.sol";
 import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import {
@@ -25,7 +26,7 @@ import "forge-std/console2.sol";
  * @dev A module that allows to add multiple hooks to a smart account
  * @author Rhinestone
  */
-contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
+contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdapter {
     using HookMultiplexerLib for *;
     using LibSort for uint256[];
     using LibSort for address[];
@@ -191,7 +192,7 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
      */
     function isInitialized(address smartAccount) public view returns (bool) {
         // cache the storage config
-        Config storage $config = $getConfig(msg.sender);
+        Config storage $config = $getConfig(smartAccount);
         // if any hooks are set, the module is initialized
         return $config.globalHooks.length != 0 || $config.delegatecallHooks.length != 0
             || $config.valueHooks.length != 0 || $config.sigs.length != 0
@@ -208,7 +209,7 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
      */
     function getHooks(address account) external view returns (address[] memory hooks) {
         // cache the storage config
-        Config storage $config = $getConfig(msg.sender);
+        Config storage $config = $getConfig(account);
 
         // get the global hooks
         hooks = $config.globalHooks;
@@ -460,7 +461,7 @@ contract HookMultiplexer is ERC7579HookBase, ERC7484RegistryAdapter {
      *
      * @param hookData data of the hooks
      */
-    function postCheck(bytes calldata hookData) external {
+    function postCheck(bytes calldata hookData) external override {
         // create the hooks and contexts array
         HookAndContext[] calldata hooksAndContexts;
 

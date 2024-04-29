@@ -15,6 +15,7 @@ import {
     MODULE_TYPE_EXECUTOR
 } from "modulekit/src/external/ERC7579.sol";
 import { ModeCode } from "erc7579/lib/ModeLib.sol";
+import { MockRegistry } from "test/mocks/MockRegistry.sol";
 
 contract RegistryHookIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -26,6 +27,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     RegistryHook internal hook;
+    MockRegistry internal registry;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     VARIABLES
@@ -41,6 +43,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
     function setUp() public virtual override {
         BaseIntegrationTest.setUp();
 
+        registry = new MockRegistry();
         hook = new RegistryHook();
 
         mockModule = makeAddr("mockModule");
@@ -52,7 +55,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(hook),
-            data: abi.encodePacked(address(instance.aux.registry))
+            data: abi.encodePacked(address(registry))
         });
     }
 
@@ -63,7 +66,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
     function test_OnInstallSetRegistry() public {
         // it should set the registry of account
         address registry = hook.registry(address(instance.account));
-        assertEq(registry, address(instance.aux.registry));
+        assertEq(registry, address(registry));
     }
 
     function test_OnUninstallRemoveRegistry() public {
@@ -133,7 +136,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
             module: address(hook),
-            data: abi.encodePacked(address(instance.aux.registry))
+            data: abi.encodePacked(address(registry))
         });
 
         vm.prank(module);

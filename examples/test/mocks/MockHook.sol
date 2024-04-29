@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
-import { ERC7579HookBaseNew } from "modulekit/src/modules/ERC7579HookBaseNew.sol";
+import { ERC7579HookBase } from "modulekit/src/modules/ERC7579HookBase.sol";
 import {
     ModeLib,
     CallType,
@@ -12,9 +12,7 @@ import {
     ModeSelector
 } from "erc7579/lib/ModeLib.sol";
 
-import "forge-std/console2.sol";
-
-contract MockHook is ERC7579HookBaseNew {
+contract MockHook is ERC7579HookBase {
     function onInstall(bytes calldata data) external override { }
 
     function onUninstall(bytes calldata data) external override { }
@@ -41,12 +39,6 @@ contract MockHook is ERC7579HookBaseNew {
     }
 
     function _postCheck(address account, bytes calldata hookData) internal override {
-        if (keccak256(hookData) == keccak256(abi.encode("revertPost"))) {
-            revert("revertPost");
-        }
-    }
-
-    function postCheck(bytes calldata hookData) external override {
         if (keccak256(hookData) == keccak256(abi.encode("revertPost"))) {
             revert("revertPost");
         }

@@ -8,15 +8,17 @@ contract MockHook is ERC7579HookBase {
 
     function onUninstall(bytes calldata data) external override { }
 
-    function preCheck(
+    function _preCheck(
+        address account,
         address msgSender,
         uint256 msgValue,
         bytes calldata msgData
     )
-        external
+        internal
+        override
         returns (bytes memory hookData)
     { }
-    function postCheck(bytes calldata hookData) external { }
+    function _postCheck(address account, bytes calldata hookData) internal override { }
 
     function isInitialized(address smartAccount) external pure returns (bool) {
         return false;
