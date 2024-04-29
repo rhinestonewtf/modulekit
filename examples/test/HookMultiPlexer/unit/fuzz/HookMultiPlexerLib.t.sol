@@ -130,15 +130,22 @@ contract HookMultiplexerLibFuzzTest is BaseTest {
 
         assertEq(c.length, aLength + bLength);
 
-        a.sort();
-        b.sort();
+        if (aLength > 0) a.sort();
+        if (bLength > 0) b.sort();
 
         for (uint256 i = 0; i < c.length; i++) {
-            (bool found,) = a.searchSorted(c[i]);
-            if (!found) {
-                (found,) = b.searchSorted(c[i]);
-                assertTrue(found);
+            bool found;
+            if (aLength > 0) {
+                (found,) = a.searchSorted(c[i]);
             }
+
+            if (!found) {
+                if (bLength > 0) {
+                    (found,) = b.searchSorted(c[i]);
+                }
+            }
+
+            assertTrue(found);
         }
     }
 
