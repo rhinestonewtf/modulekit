@@ -9,15 +9,58 @@ import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 
+library HookForwarderLib {
+    error HookReverted(address hookAddress);
+    error NoHookRegistered();
+
+    function preCheckSubHook(
+        address hook,
+        address msgSender,
+        uint256 msgValue,
+        bytes calldata msgData
+    )
+        internal
+        returns (bytes memory hookReturnData)
+    {
+        if (hook == address(0)) {
+            revert HookReverted(hook);
+        }
+        bool success;
+        (success, hookReturnData) = hook.call(
+            abi.encodePacked(
+                abi.encodeCall(ERC7579HookBaseNew.preCheck, (msgSender, msgValue, msgData)),
+                address(this),
+                msg.sender
+            )
+        );
+
+        if (!success) {
+            revert HookReverted(hook);
+        }
+    }
+
+    function postCheck(address subHook, bytes memory preHookContext) internal {
+        (bool success,) = subHook.call(
+            abi.encodePacked(
+                abi.encodeCall(this.postCheck, (preHookContext)), address(this), msg.sender
+            )
+        );
+
+        if (!success) {
+            revert HookReverted(subHook);
+        }
+    }
+}
+
 contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
     using SentinelListLib for SentinelListLib.SentinelList;
+    using HookForwarderLib for address;
 
     /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
     error NoHookRegistered(address smartAccount);
-    error HookReverted(address hookAddress, bytes hookData);
     error InvalidHookInitDataLength();
 
     struct Config {
@@ -86,7 +129,7 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
             );
 
             if (!success) {
-                revert HookReverted(hookAddress, _hookReturnData);
+                // revert HookReverted(hookAddress, _hookReturnData);
             }
 
             hookReturnDataArray[i] = _hookReturnData;
@@ -128,7 +171,7 @@ contract HookMultiPlexer is ERC7579HookBase, ERC7579ExecutorBase {
             );
 
             if (!success) {
-                revert HookReverted(hookAddress, bytes(""));
+                // revert HookReverted(hookAddress, hookReturnData);
             }
         }
     }
