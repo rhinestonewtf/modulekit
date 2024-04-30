@@ -9,7 +9,6 @@ import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
 import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
-
 import {
     FlashLoanType,
     IERC3156FlashBorrower,
@@ -608,7 +607,6 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
     function flashFeeToken() external view virtual override returns (address) { }
 
     function _isAllowedBorrower(address account) internal view virtual override returns (bool) {
-        console2.log(msg.sender, account, vaultConfig[msg.sender].owner);
         return account == vaultConfig[msg.sender].owner;
     }
 }
