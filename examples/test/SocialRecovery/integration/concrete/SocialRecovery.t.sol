@@ -53,6 +53,12 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
         _guardianPks[0] = _guardian1Pk;
 
         (address _guardian2, uint256 _guardian2Pk) = makeAddrAndKey("guardian2");
+
+        uint256 counter = 0;
+        while (uint160(_guardian1) > uint160(_guardian2)) {
+            counter++;
+            (_guardian2, _guardian2Pk) = makeAddrAndKey(vm.toString(counter));
+        }
         _guardians[1] = _guardian2;
         _guardianPks[1] = _guardian2Pk;
 
@@ -74,6 +80,9 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, _guardians.length);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, _guardians.length);
     }
 
     function test_OnUninstallRemoveThresholdAndGuardians() public {
@@ -89,11 +98,14 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, 0);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, 0);
     }
 
     function test_SetThreshold() public {
         // it should set the threshold
-        uint256 newThreshold = 3;
+        uint256 newThreshold = 1;
 
         instance.getExecOps({
             target: address(validator),
@@ -119,6 +131,9 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, _guardians.length + 1);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, _guardians.length + 1);
     }
 
     function test_RemoveGuardian() public {
@@ -134,6 +149,9 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
         address[] memory guardians = validator.getGuardians(address(instance.account));
         assertEq(guardians.length, _guardians.length - 1);
+
+        uint256 guardianCount = validator.guardianCount(address(instance.account));
+        assertEq(guardianCount, _guardians.length - 1);
     }
 
     function test_ValidateUserOp() public {

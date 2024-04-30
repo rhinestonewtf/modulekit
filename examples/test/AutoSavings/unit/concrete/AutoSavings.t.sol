@@ -9,6 +9,7 @@ import { MockERC4626 } from "solmate/test/utils/mocks/MockERC4626.sol";
 import { MockAccount } from "test/mocks/MockAccount.sol";
 import { MockUniswap } from "modulekit/src/integrations/uniswap/MockUniswap.sol";
 import { SWAPROUTER_ADDRESS } from "modulekit/src/integrations/uniswap/helpers/MainnetAddresses.sol";
+import { SENTINEL } from "sentinellist/SentinelList.sol";
 
 contract AutoSavingsTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
@@ -64,8 +65,8 @@ contract AutoSavingsTest is BaseTest {
 
     function getConfigs() public returns (AutoSavings.Config[] memory _configs) {
         _configs = new AutoSavings.Config[](2);
-        _configs[0] = AutoSavings.Config(100, address(vault1), 0);
-        _configs[1] = AutoSavings.Config(100, address(vault2), 0);
+        _configs[0] = AutoSavings.Config(100, address(vault1), 1);
+        _configs[1] = AutoSavings.Config(100, address(vault2), 1);
     }
 
     function installFromAccount(address account) public {
@@ -102,7 +103,43 @@ contract AutoSavingsTest is BaseTest {
         executor.onInstall(data);
     }
 
-    function test_OnInstallWhenModuleIsNotIntialized() public {
+    function test_OnInstallRevertWhen_TokensIsGreaterThanMax() public whenModuleIsNotIntialized {
+        // it should revert
+        uint256 maxTokens = 100;
+
+        address[] memory tokens = new address[](maxTokens + 1);
+        AutoSavings.Config[] memory configs = new AutoSavings.Config[](maxTokens + 1);
+        for (uint256 i = 0; i < maxTokens; i++) {
+            tokens[i] = makeAddr(vm.toString(i));
+            configs[i] = AutoSavings.Config(100, address(0), 0);
+        }
+
+        bytes memory data = abi.encode(tokens, configs);
+
+        vm.expectRevert(abi.encodeWithSelector(AutoSavings.TooManyTokens.selector));
+        executor.onInstall(data);
+    }
+
+    function test_OnInstallRevertWhen_SqrtPriceLimitX96Is0()
+        public
+        whenModuleIsNotIntialized
+        whenTokensIsNotGreaterThanMax
+    {
+        // it should revert
+        AutoSavings.Config[] memory _configs = getConfigs();
+        _configs[0].sqrtPriceLimitX96 = 0;
+
+        bytes memory data = abi.encode(_tokens, _configs);
+
+        vm.expectRevert(abi.encodeWithSelector(AutoSavings.InvalidSqrtPriceLimitX96.selector));
+        executor.onInstall(data);
+    }
+
+    function test_OnInstallWhenSqrtPriceLimitX96IsNot0()
+        public
+        whenModuleIsNotIntialized
+        whenTokensIsNotGreaterThanMax
+    {
         // it should set the configs for each token
         // it should add all tokens
         AutoSavings.Config[] memory _configs = getConfigs();
@@ -125,7 +162,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_OnUninstallShouldRemoveAllTheConfigs() public {
         // it should remove all the configs
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenSqrtPriceLimitX96IsNot0();
 
         executor.onUninstall("");
 
@@ -140,7 +177,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_OnUninstallShouldRemoveAllStoredTokens() public {
         // it should remove all stored tokens
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenSqrtPriceLimitX96IsNot0();
 
         executor.onUninstall("");
 
@@ -156,7 +193,7 @@ contract AutoSavingsTest is BaseTest {
 
     function test_IsInitializedWhenModuleIsIntialized() public {
         // it should return true
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenSqrtPriceLimitX96IsNot0();
 
         bool isInitialized = executor.isInitialized(address(this));
         assertTrue(isInitialized);
@@ -170,9 +207,20 @@ contract AutoSavingsTest is BaseTest {
         executor.setConfig(_tokens[0], getConfigs()[0]);
     }
 
-    function test_SetConfigWhenModuleIsIntialized() public {
+    function test_SetConfigRevertWhen_SqrtPriceLimitX96Is0() public whenModuleIsIntialized {
+        // it should revert
+        test_OnInstallWhenSqrtPriceLimitX96IsNot0();
+
+        address token = address(2);
+        AutoSavings.Config memory config = AutoSavings.Config(10, address(1), 0);
+
+        vm.expectRevert(abi.encodeWithSelector(AutoSavings.InvalidSqrtPriceLimitX96.selector));
+        executor.setConfig(token, config);
+    }
+
+    function test_SetConfigWhenSqrtPriceLimitX96IsNot0() public whenModuleIsIntialized {
         // it should set the config for the token
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_OnInstallWhenSqrtPriceLimitX96IsNot0();
 
         address token = address(2);
         AutoSavings.Config memory config = AutoSavings.Config(10, address(1), 100);
@@ -184,6 +232,26 @@ contract AutoSavingsTest is BaseTest {
         assertEq(_percentage, config.percentage);
         assertEq(_vault, config.vault);
         assertEq(_sqrtPriceLimitX96, config.sqrtPriceLimitX96);
+    }
+
+    function test_DeleteConfigRevertWhen_ModuleIsNotIntialized() public {
+        // it should revert
+        vm.expectRevert();
+        executor.deleteConfig(SENTINEL, _tokens[1]);
+    }
+
+    function test_DeleteConfigWhenModuleIsIntialized() public {
+        // it should remove the token from the stored tokens
+        // it should delete the config for the token
+        test_OnInstallWhenSqrtPriceLimitX96IsNot0();
+
+        executor.deleteConfig(SENTINEL, _tokens[1]);
+
+        (uint16 _percentage, address _vault, uint128 _sqrtPriceLimitX96) =
+            executor.config(address(this), _tokens[1]);
+        assertEq(_percentage, 0);
+        assertEq(_vault, address(0));
+        assertEq(_sqrtPriceLimitX96, 0);
     }
 
     function test_CalcDepositAmountShouldReturnTheDepositAmount() public {
@@ -215,7 +283,7 @@ contract AutoSavingsTest is BaseTest {
         // it should deposit the amount to the vault
         // it should emit an AutoSaveExecuted event
         installFromAccount(address(account));
-        AutoSavings.Config memory config = AutoSavings.Config(10, address(vault2), 0);
+        AutoSavings.Config memory config = AutoSavings.Config(10, address(vault2), 10);
 
         vm.prank(address(account));
         executor.setConfig(address(token1), config);
@@ -297,6 +365,14 @@ contract AutoSavingsTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
                                     MODIFIERS
     //////////////////////////////////////////////////////////////////////////*/
+
+    modifier whenTokensIsNotGreaterThanMax() {
+        _;
+    }
+
+    modifier whenModuleIsNotIntialized() {
+        _;
+    }
 
     modifier whenModuleIsIntialized() {
         _;

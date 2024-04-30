@@ -8,12 +8,13 @@ import {
     ModuleKitUserOp
 } from "test/BaseIntegration.t.sol";
 import { ColdStorageHook, Execution } from "src/ColdStorageHook/ColdStorageHook.sol";
-import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { MODULE_TYPE_HOOK, MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { IAccountModulesPaginated } from "modulekit/src/test/utils/ERC7579Helpers.sol";
 
 contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -80,6 +81,35 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         vm.warp(block.timestamp + _waitPeriod + additionalWait);
     }
 
+    function _cueAndWaitForModuleConfig(
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data,
+        bool isInstall,
+        uint256 additionalWait
+    )
+        internal
+    {
+        vm.prank(_owner);
+        IERC7579Account(instance.account).executeFromExecutor(
+            ModeLib.encodeSimpleSingle(),
+            ExecutionLib.encodeSingle(
+                address(hook),
+                0,
+                abi.encodeWithSelector(
+                    ColdStorageHook.requestTimelockedModuleConfig.selector,
+                    moduleTypeId,
+                    module,
+                    data,
+                    isInstall,
+                    additionalWait
+                )
+            )
+        );
+
+        vm.warp(block.timestamp + _waitPeriod + additionalWait);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
@@ -96,21 +126,9 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
 
     function test_OnUninstallRemovesOwnerAndWaitPeriod() public {
         // it should remove the owner and waitperiod
-        Execution memory exec = Execution({
-            target: address(instance.account),
-            value: 0,
-            callData: abi.encodeWithSelector(
-                IERC7579Account.uninstallModule.selector, MODULE_TYPE_HOOK, address(hook), ""
-            )
-        });
+        _cueAndWaitForModuleConfig(MODULE_TYPE_HOOK, address(hook), "", false, 0);
 
-        _cueAndWaitForExecution(exec, 0);
-
-        vm.prank(_owner);
-        IERC7579Account(instance.account).executeFromExecutor(
-            ModeLib.encodeSimpleSingle(),
-            ExecutionLib.encodeSingle(exec.target, exec.value, exec.callData)
-        );
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
         bool isInitialized = hook.isInitialized(address(instance.account));
         assertFalse(isInitialized);
@@ -182,25 +200,77 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         assertEq(newBalance, prevBalance + amount);
     }
 
-    function test_FlashloanERC20Tokens() public {
-        // install flashloan on owner
+    function test_InstallModule() public {
+        address module = makeAddr("module");
+        vm.etch(module, hex"00");
 
-        // owner calls into account to flashloan
+        _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, "", true, 0);
 
-        // owner calls onFlashLoan on owner
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
 
-        // Execution memory exec = Execution({
-        //     target: address(token),
-        //     value: 0,
-        //     callData: abi.encodeWithSelector(IERC20.transfer.selector, _owner, amount)
-        // });
-        // vm.prank(_owner);
-        // IERC7579Account(instance.account).executeFromExecutor(
-        //     ModeLib.encodeSimpleSingle(),
-        //     ExecutionLib.encodeSingle(exec.target, exec.value, exec.callData)
-        // );
-        //
-        // uint256 newBalance = token.balanceOf(_owner);
-        // assertEq(newBalance, prevBalance + amount);
+        bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            additionalContext: ""
+        });
+        assertTrue(isInstalled);
+    }
+
+    function test_InstallModule_WithData() public {
+        address module = makeAddr("module");
+        vm.etch(module, hex"00");
+
+        bytes memory data = abi.encodePacked(keccak256("hi"), keccak256("hello"));
+
+        _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, data, true, 0);
+
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: data });
+
+        bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            additionalContext: ""
+        });
+        assertTrue(isInstalled);
+    }
+
+    function test_UninstallModule() public {
+        test_InstallModule();
+
+        address module = makeAddr("module");
+
+        (address[] memory array,) = IAccountModulesPaginated(address(instance.account))
+            .getExecutorsPaginated(address(0x1), 100);
+
+        address previous;
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == module) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == module) previous = array[i - 1];
+            }
+        }
+
+        bytes memory initData = "";
+
+        _cueAndWaitForModuleConfig(
+            MODULE_TYPE_EXECUTOR, module, abi.encode(previous, initData), false, 0
+        );
+
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            data: initData
+        });
+
+        bool isInstalled = IERC7579Account(address(instance.account)).isModuleInstalled({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: module,
+            additionalContext: ""
+        });
+        assertFalse(isInstalled);
     }
 }

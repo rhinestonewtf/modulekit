@@ -26,12 +26,19 @@ contract OwnableValidator is ERC7579ValidatorBase {
 
     error ThresholdNotSet();
     error InvalidThreshold();
+    error NotSortedAndUnique();
+    error MaxOwnersReached();
     error InvalidOwner(address owner);
+
+    // maximum number of owners per account
+    uint256 constant MAX_OWNERS = 32;
 
     // account => owners
     SentinelList4337Lib.SentinelList owners;
     // account => threshold
     mapping(address account => uint256) public threshold;
+    // account => ownerCount
+    mapping(address => uint256) public ownerCount;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      CONFIG
@@ -44,15 +51,13 @@ contract OwnableValidator is ERC7579ValidatorBase {
      * @param data encoded data containing the threshold and owners
      */
     function onInstall(bytes calldata data) external override {
-        // cache the account address
-        address account = msg.sender;
-
         // decode the threshold and owners
         (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
 
-        // sort and uniquify the owners to make sure an owner is not reused
-        _owners.sort();
-        _owners.uniquifySorted();
+        // check that owners are sorted and uniquified
+        if (!_owners.isSortedAndUniquified()) {
+            revert NotSortedAndUnique();
+        }
 
         // make sure the threshold is set
         if (_threshold == 0) {
@@ -65,8 +70,19 @@ contract OwnableValidator is ERC7579ValidatorBase {
             revert InvalidThreshold();
         }
 
+        // cache the account address
+        address account = msg.sender;
+
         // set threshold
         threshold[account] = _threshold;
+
+        // check if max owners is reached
+        if (ownersLength > MAX_OWNERS) {
+            revert MaxOwnersReached();
+        }
+
+        // set owner count
+        ownerCount[account] = ownersLength;
 
         // initialize the owner list
         owners.init(account);
@@ -94,6 +110,9 @@ contract OwnableValidator is ERC7579ValidatorBase {
 
         // remove the threshold
         threshold[account] = 0;
+
+        // remove the owner count
+        ownerCount[account] = 0;
     }
 
     /**
@@ -123,7 +142,10 @@ contract OwnableValidator is ERC7579ValidatorBase {
             revert InvalidThreshold();
         }
 
-        // TODO check if the threshold is less than the number of owners
+        // make sure the threshold is less than the number of owners
+        if (ownerCount[account] < _threshold) {
+            revert InvalidThreshold();
+        }
 
         // set the threshold
         threshold[account] = _threshold;
@@ -146,6 +168,14 @@ contract OwnableValidator is ERC7579ValidatorBase {
             revert InvalidOwner(owner);
         }
 
+        // check if max owners is reached
+        if (ownerCount[account] >= MAX_OWNERS) {
+            revert MaxOwnersReached();
+        }
+
+        // increment the owner count
+        ownerCount[account]++;
+
         // add the owner to the linked list
         owners.push(account, owner);
     }
@@ -160,6 +190,9 @@ contract OwnableValidator is ERC7579ValidatorBase {
     function removeOwner(address prevOwner, address owner) external {
         // remove the owner
         owners.pop(msg.sender, prevOwner, owner);
+
+        // decrement the owner count
+        ownerCount[msg.sender]--;
     }
 
     /**
@@ -170,9 +203,8 @@ contract OwnableValidator is ERC7579ValidatorBase {
      * @return ownersArray array of owners
      */
     function getOwners(address account) external view returns (address[] memory ownersArray) {
-        // TODO: return length
         // get the owners from the linked list
-        (ownersArray,) = owners.getEntriesPaginated(account, SENTINEL, 10);
+        (ownersArray,) = owners.getEntriesPaginated(account, SENTINEL, MAX_OWNERS);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -196,38 +228,13 @@ contract OwnableValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
-        // get the account
-        address account = userOp.sender;
+        // validate the signature with the config
+        bool isValid = _validateSignatureWithConfig(userOp.sender, userOpHash, userOp.signature);
 
-        // get the threshold and check that its set
-        uint256 _threshold = threshold[account];
-        if (_threshold == 0) {
-            return VALIDATION_FAILED;
-        }
-
-        // recover the signers from the signatures
-        address[] memory signers = CheckSignatures.recoverNSignatures(
-            ECDSA.toEthSignedMessageHash(userOpHash), userOp.signature, _threshold
-        );
-
-        // sort and uniquify the signers to make sure a signer is not reused
-        signers.sort();
-        signers.uniquifySorted();
-
-        // check if the signers are owners
-        uint256 validSigners;
-        for (uint256 i = 0; i < signers.length; i++) {
-            if (owners.contains(account, signers[i])) {
-                validSigners++;
-            }
-        }
-
-        // check if the threshold is met and return the result
-        if (validSigners >= _threshold) {
-            // if the threshold is met, return validation success
+        // return the result
+        if (isValid) {
             return VALIDATION_SUCCESS;
         }
-        // if the threshold is not met, return validation failed
         return VALIDATION_FAILED;
     }
 
@@ -249,37 +256,13 @@ contract OwnableValidator is ERC7579ValidatorBase {
         override
         returns (bytes4)
     {
-        // get the account
-        address account = msg.sender;
+        // validate the signature with the config
+        bool isValid = _validateSignatureWithConfig(msg.sender, hash, data);
 
-        // get the threshold and check that its set
-        uint256 _threshold = threshold[account];
-        if (_threshold == 0) {
-            revert ThresholdNotSet();
-        }
-
-        // recover the signers from the signatures
-        address[] memory signers =
-            CheckSignatures.recoverNSignatures(ECDSA.toEthSignedMessageHash(hash), data, _threshold);
-
-        // sort and uniquify the signers to make sure a signer is not reused
-        signers.sort();
-        signers.uniquifySorted();
-
-        // check if the signers are owners
-        uint256 validSigners;
-        for (uint256 i = 0; i < signers.length; i++) {
-            if (owners.contains(account, signers[i])) {
-                validSigners++;
-            }
-        }
-
-        // check if the threshold is met and return the result
-        if (validSigners >= _threshold) {
-            // if the threshold is met, return validation success
+        // return the result
+        if (isValid) {
             return EIP1271_SUCCESS;
         }
-        // if the threshold is not met, return validation failed
         return EIP1271_FAILED;
     }
 
@@ -304,13 +287,14 @@ contract OwnableValidator is ERC7579ValidatorBase {
         // decode the threshold and owners
         (uint256 _threshold, address[] memory _owners) = abi.decode(data, (uint256, address[]));
 
-        // sort and uniquify the owners to make sure an owner is not reused
-        _owners.sort();
-        _owners.uniquifySorted();
+        // check that owners are sorted and uniquified
+        if (!_owners.isSortedAndUniquified()) {
+            return false;
+        }
 
         // check that threshold is set
         if (_threshold == 0) {
-            revert ThresholdNotSet();
+            return false;
         }
 
         // recover the signers from the signatures
@@ -324,7 +308,8 @@ contract OwnableValidator is ERC7579ValidatorBase {
 
         // check if the signers are owners
         uint256 validSigners;
-        for (uint256 i = 0; i < signers.length; i++) {
+        uint256 signersLength = signers.length;
+        for (uint256 i = 0; i < signersLength; i++) {
             (bool found,) = _owners.searchSorted(signers[i]);
             if (found) {
                 validSigners++;
@@ -337,6 +322,51 @@ contract OwnableValidator is ERC7579ValidatorBase {
             return true;
         }
         // if the threshold is not met, false
+        return false;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _validateSignatureWithConfig(
+        address account,
+        bytes32 hash,
+        bytes calldata data
+    )
+        internal
+        view
+        returns (bool)
+    {
+        // get the threshold and check that its set
+        uint256 _threshold = threshold[account];
+        if (_threshold == 0) {
+            return false;
+        }
+
+        // recover the signers from the signatures
+        address[] memory signers =
+            CheckSignatures.recoverNSignatures(ECDSA.toEthSignedMessageHash(hash), data, _threshold);
+
+        // sort and uniquify the signers to make sure a signer is not reused
+        signers.sort();
+        signers.uniquifySorted();
+
+        // check if the signers are owners
+        uint256 validSigners;
+        uint256 signersLength = signers.length;
+        for (uint256 i = 0; i < signersLength; i++) {
+            if (owners.contains(account, signers[i])) {
+                validSigners++;
+            }
+        }
+
+        // check if the threshold is met and return the result
+        if (validSigners >= _threshold) {
+            // if the threshold is met, return true
+            return true;
+        }
+        // if the threshold is not met, return false
         return false;
     }
 

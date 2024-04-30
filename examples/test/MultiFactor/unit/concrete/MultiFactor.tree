@@ -5,20 +5,19 @@ MultiFactor::onInstall
     ├── when threshold is 0
     │   └── it should revert
     └── when threshold is not 0
-        ├── it should set the threshold
         ├── when owners length is less than threshold
         │   └── it should revert
         └── when owners length is not less than threshold
-            ├── when owners include 0 address
+            ├── when a validator is not attested to
             │   └── it should revert
-            ├── when owners include duplicates
-            │   └── it should set only unique owners
-            └── when owners include no duplicates
-                └── it should set all owners
+            └── when all validators are attested to
+                ├── it should set threshold
+                ├── it should store the validators
+                └── it should emit a ValidatorAdded event for each validator
      
 
 MultiFactor::onUninstall
-├── it should remove all owners
+├── it should increment the iterator
 └── it should set threshold to 0
 
 
@@ -36,58 +35,55 @@ MultiFactor::setThreshold
     ├── when threshold is 0
     │   └── it should revert
     └── when threshold is not 0
-        ├── when threshold is higher than owners length
-        │   └── it should revert
-        └── when threshold is not higher than owners length
-            └── it should set the threshold
+        └── it should set the threshold
 
 
-MultiFactor::addOwner
+MultiFactor::setValidator
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
-    ├── when owner is 0 address
-    │   └── it should revert
-    ├── when owner is already added
-    │   └── it should revert
-    └── when owner is not added
-        └── it should add the owner
+    ├── it should emit a ValidatorAdded event
+    └── it should set the validator data
 
 
-MultiFactor::removeOwner
+MultiFactor::removeValidator
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
-    └── it should remove the owner
+    ├── it should emit a ValidatorRemoved event
+    └── it should remove the validator
 
 
-MultiFactor::getOwners
-└── it should get all owners
+MultiFactor::isSubValidator
+├── when subvalidator is not installed
+│   └── it should return false
+└── when subvalidator is installed
+    └── it should return true
 
 
 MultiFactor::validateUserOp
-├── when threshold is not set
+├── when validator length is zero
 │   └── it should return 1
-└── when threshold is set
-    ├── when the signatures are not valid
+└── when validator length is not zero
+    ├── when any validator is not set
     │   └── it should return 1
-    └── when the signatures are valid
-        ├── when the unique signatures are less than threshold
+    └── when all validators are set
+        ├── when valid signatures are less than threshold
         │   └── it should return 1
-        └── when the unique signatures are greater than threshold
+        └── when valid signatures are greater than threshold
             └── it should return 0
 
 
 MultiFactor::isValidSignatureWithSender
-├── when threshold is not set
-│   └── it should revert
-└── when threshold is set
-    ├── when the signatures are not valid
+├── when validator length is zero
+│   └── it should return EIP1271_FAILED
+└── when validator length is not zero
+    ├── when any validator is not set
     │   └── it should return EIP1271_FAILED
-    └── when the signatures are valid
-        ├── when the unique signatures are less than threshold
+    └── when all validators are set
+        ├── when valid signatures are less than threshold
         │   └── it should return EIP1271_FAILED
-        └── when the unique signatures are greater than threshold
+        └── when valid signatures are greater than threshold
             └── it should return ERC1271_MAGIC_VALUE
 
 
@@ -102,7 +98,5 @@ MultiFactor::version
 MultiFactor::isModuleType
 ├── when typeID is 1
 │   └── it should return true
-├── when typeID is 2
-│   └── it should return true
-└── when typeID is not 1 or 2
+└── when typeID is not 1
     └── it should return false

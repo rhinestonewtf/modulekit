@@ -84,8 +84,8 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
 
     function getConfigs() public returns (AutoSavings.Config[] memory _configs) {
         _configs = new AutoSavings.Config[](2);
-        _configs[0] = AutoSavings.Config(100, address(vault1), 0);
-        _configs[1] = AutoSavings.Config(100, address(vault2), 0);
+        _configs[0] = AutoSavings.Config(100, address(vault1), 10);
+        _configs[1] = AutoSavings.Config(100, address(vault2), 10);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -199,7 +199,8 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
 
     function test_AutoSave_WithNonUnderlyingToken() public {
         // it should deposit the underlying token into the vault
-        AutoSavings.Config memory config = AutoSavings.Config(10, address(vault2), 0);
+        uint128 limit = 100;
+        AutoSavings.Config memory config = AutoSavings.Config(10, address(vault2), limit);
 
         instance.getExecOps({
             target: address(executor),
@@ -207,6 +208,18 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
             callData: abi.encodeCall(AutoSavings.setConfig, (address(usdc), config)),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
+
+        // note: this is a hack to use limit 0 instead of calculating the correct limit for the pair
+        bytes32 slot = bytes32(
+            uint256(
+                keccak256(
+                    abi.encode(address(usdc), keccak256(abi.encode(address(instance.account), 0)))
+                )
+            ) + 1
+        );
+        bytes32 storedLimit = vm.load(address(executor), slot);
+        assertEq(uint256(storedLimit), uint256(limit));
+        vm.store(address(executor), slot, bytes32(0));
 
         uint256 amountReceived = 1000;
         uint256 assetsBefore = vault2.totalAssets();

@@ -7,15 +7,21 @@ import {
     ModuleKitSCM,
     ModuleKitUserOp
 } from "test/BaseIntegration.t.sol";
+import {
+    MultiFactor,
+    ERC7579ValidatorBase,
+    Validator,
+    ValidatorId
+} from "src/MultiFactor/MultiFactor.sol";
 import { OwnableValidator } from "src/OwnableValidator/OwnableValidator.sol";
 import { signHash } from "test/utils/Signature.sol";
 import { EIP1271_MAGIC_VALUE } from "test/utils/Constants.sol";
 import { MODULE_TYPE_VALIDATOR } from "modulekit/src/external/ERC7579.sol";
 import { UserOpData } from "modulekit/src/ModuleKit.sol";
 import { IERC1271 } from "modulekit/src/interfaces/IERC1271.sol";
-import { SENTINEL } from "sentinellist/SentinelList.sol";
+import { MockRegistry } from "test/mocks/MockRegistry.sol";
 
-contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
+contract MultiFactorIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
     using ModuleKitSCM for *;
     using ModuleKitUserOp for *;
@@ -24,13 +30,16 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
                                     CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    OwnableValidator internal validator;
+    MultiFactor internal validator;
+    MockRegistry internal _registry;
+    OwnableValidator internal subValidator1;
+    OwnableValidator internal subValidator2;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
-    uint256 _threshold = 2;
+    uint8 _threshold = 2;
     address[] _owners;
     uint256[] _ownerPks;
 
@@ -40,7 +49,12 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
 
     function setUp() public virtual override {
         BaseIntegrationTest.setUp();
-        validator = new OwnableValidator();
+
+        _registry = new MockRegistry();
+        validator = new MultiFactor(_registry);
+
+        subValidator1 = new OwnableValidator();
+        subValidator2 = new OwnableValidator();
 
         _owners = new address[](2);
         _ownerPks = new uint256[](2);
@@ -59,9 +73,27 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
         _owners[1] = _owner2;
         _ownerPks[1] = _owner2Pk;
 
+        Validator[] memory validators = _getValidators();
+
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(validator),
+            data: abi.encodePacked(_threshold, abi.encode(validators))
+        });
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _getValidators() internal returns (Validator[] memory validators) {
+        validators = new Validator[](2);
+        validators[0] = Validator({
+            packedValidatorAndId: bytes32(abi.encodePacked(uint96(0), address(subValidator1))),
+            data: abi.encode(_threshold, _owners)
+        });
+        validators[1] = Validator({
+            packedValidatorAndId: bytes32(abi.encodePacked(uint96(0), address(subValidator2))),
             data: abi.encode(_threshold, _owners)
         });
     }
@@ -70,16 +102,20 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function test_OnInstallSetOwnersAndThreshold() public {
-        // it should set the owners, threshold and ownercount
-        uint256 threshold = validator.threshold(address(instance.account));
+    function test_OnInstallSetValidatorsAndThreshold() public {
+        // it should set the validators and threshold
+        (uint8 threshold, uint128 iteration) = validator.accountConfig(address(instance.account));
         assertEq(threshold, _threshold);
 
-        address[] memory owners = validator.getOwners(address(instance.account));
-        assertEq(owners.length, _owners.length);
+        bool isSubValidator1 = validator.isSubValidator(
+            address(instance.account), address(subValidator1), ValidatorId.wrap(bytes12(0))
+        );
+        assertEq(isSubValidator1, true);
 
-        uint256 ownerCount = validator.ownerCount(address(instance.account));
-        assertEq(ownerCount, _owners.length);
+        bool isSubValidator2 = validator.isSubValidator(
+            address(instance.account), address(subValidator2), ValidatorId.wrap(bytes12(0))
+        );
+        assertEq(isSubValidator2, true);
     }
 
     function test_OnUninstallRemovesOwnersAndThreshold() public {
@@ -90,80 +126,78 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
             data: ""
         });
 
-        uint256 threshold = validator.threshold(address(instance.account));
-        assertEq(threshold, 0);
-
-        address[] memory owners = validator.getOwners(address(instance.account));
-        assertEq(owners.length, 0);
-
-        uint256 ownerCount = validator.ownerCount(address(instance.account));
-        assertEq(ownerCount, 0);
+        (uint8 threshold, uint128 iteration) = validator.accountConfig(address(instance.account));
+        assertEq(iteration, 1);
+        assertEq(threshold, uint8(0));
     }
 
     function test_SetThreshold() public {
         // it should set the threshold
-        uint256 newThreshold = 1;
+        uint8 newThreshold = 1;
 
         instance.getExecOps({
             target: address(validator),
             value: 0,
-            callData: abi.encodeWithSelector(OwnableValidator.setThreshold.selector, newThreshold),
+            callData: abi.encodeWithSelector(MultiFactor.setThreshold.selector, newThreshold),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
-        uint256 threshold = validator.threshold(address(instance.account));
+        (uint8 threshold,) = validator.accountConfig(address(instance.account));
         assertEq(threshold, newThreshold);
     }
 
-    function test_SetThreshold_RevertWhen_ThresholdTooHigh() public {
+    function test_SetThreshold_RevertWhen_ThresholdZero() public {
         // it should set the threshold
-        uint256 newThreshold = 3;
+        uint8 newThreshold = 0;
 
         instance.expect4337Revert();
         instance.getExecOps({
             target: address(validator),
             value: 0,
-            callData: abi.encodeWithSelector(OwnableValidator.setThreshold.selector, newThreshold),
+            callData: abi.encodeWithSelector(MultiFactor.setThreshold.selector, newThreshold),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
     }
 
-    function test_AddOwner() public {
-        // it should add an owner
-        // it should increment the owner count
+    function test_SetValidator() public {
+        // it should set the validator
         (address _owner, uint256 _ownerPk) = makeAddrAndKey("owner3");
 
         instance.getExecOps({
             target: address(validator),
             value: 0,
-            callData: abi.encodeWithSelector(OwnableValidator.addOwner.selector, _owner),
-            txValidator: address(instance.defaultValidator)
-        }).execUserOps();
-
-        address[] memory owners = validator.getOwners(address(instance.account));
-        assertEq(owners.length, _owners.length + 1);
-
-        uint256 ownerCount = validator.ownerCount(address(instance.account));
-        assertEq(ownerCount, _owners.length + 1);
-    }
-
-    function test_RemoveOwner() public {
-        // it should remove an owner
-        // it should decrement the owner count
-        instance.getExecOps({
-            target: address(validator),
-            value: 0,
             callData: abi.encodeWithSelector(
-                OwnableValidator.removeOwner.selector, SENTINEL, _owners[1]
+                MultiFactor.setValidator.selector,
+                address(subValidator1),
+                ValidatorId.wrap(bytes12(uint96(1))),
+                abi.encode(_threshold, _owners)
             ),
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
-        address[] memory owners = validator.getOwners(address(instance.account));
-        assertEq(owners.length, _owners.length - 1);
+        bool isValidator = validator.isSubValidator(
+            address(instance.account), address(subValidator1), ValidatorId.wrap(bytes12(uint96(1)))
+        );
+        assertTrue(isValidator);
+    }
 
-        uint256 ownerCount = validator.ownerCount(address(instance.account));
-        assertEq(ownerCount, _owners.length - 1);
+    function test_RemoveValidator() public {
+        // it should remove a validator
+        instance.getExecOps({
+            target: address(validator),
+            value: 0,
+            callData: abi.encodeWithSelector(
+                MultiFactor.removeValidator.selector,
+                address(subValidator1),
+                ValidatorId.wrap(bytes12(0))
+            ),
+            txValidator: address(instance.defaultValidator)
+        }).execUserOps();
+
+        bool isValidator = validator.isSubValidator(
+            address(instance.account), address(subValidator1), ValidatorId.wrap(bytes12(uint96(1)))
+        );
+        assertFalse(isValidator);
     }
 
     function test_ValidateUserOp() public {
@@ -176,9 +210,16 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
             callData: "",
             txValidator: address(validator)
         });
+        Validator[] memory validators = _getValidators();
+
         bytes memory signature1 = signHash(_ownerPks[0], userOpData.userOpHash);
         bytes memory signature2 = signHash(_ownerPks[1], userOpData.userOpHash);
-        userOpData.userOp.signature = abi.encodePacked(signature1, signature2);
+        bytes memory encodedSig = abi.encodePacked(signature1, signature2);
+
+        validators[0].data = encodedSig;
+        validators[1].data = encodedSig;
+
+        userOpData.userOp.signature = abi.encode(validators);
         userOpData.execUserOps();
 
         assertEq(target.balance, 1);
@@ -188,13 +229,17 @@ contract OwnableValidatorIntegrationTest is BaseIntegrationTest {
         // it should return the magic value
         address sender = address(1);
         bytes32 hash = bytes32(keccak256("hash"));
+        Validator[] memory validators = _getValidators();
 
         bytes memory signature1 = signHash(_ownerPks[0], hash);
         bytes memory signature2 = signHash(_ownerPks[1], hash);
-        bytes memory data = abi.encodePacked(signature1, signature2);
+        bytes memory encodedSig = abi.encodePacked(signature1, signature2);
+
+        validators[0].data = encodedSig;
+        validators[1].data = encodedSig;
 
         bytes4 result = IERC1271(instance.account).isValidSignature(
-            hash, abi.encodePacked(address(validator), data)
+            hash, abi.encodePacked(address(validator), abi.encode(validators))
         );
         assertEq(result, EIP1271_MAGIC_VALUE);
     }

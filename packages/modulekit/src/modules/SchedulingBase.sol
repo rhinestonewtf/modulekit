@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.25;
 
 import { ERC7579ExecutorBase } from "./ERC7579ExecutorBase.sol";
 

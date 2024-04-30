@@ -2,8 +2,14 @@ AutoSavings::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
-    ├── it should set the configs for each token
-    └── it should add all tokens
+    ├── when tokens is greater than max
+    │   └── it should revert
+    └── when tokens is not greater than max
+        ├── when sqrtPriceLimitX96 is 0
+        │   └── it should revert
+        └── when sqrtPriceLimitX96 is not 0
+            ├── it should set the configs for each token
+            └── it should add all tokens
 
 
 AutoSavings::onUninstall
@@ -22,10 +28,13 @@ AutoSavings::setConfig
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
-    └── it should set the config for the token
+    ├── when sqrtPriceLimitX96 is 0
+    │   └── it should revert
+    └── when sqrtPriceLimitX96 is not 0
+        └── it should set the config for the token
 
 
-AutoSavings::setConfig
+AutoSavings::deleteConfig
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized

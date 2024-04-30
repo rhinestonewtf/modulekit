@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+// SPDX-License-Identifier: AGPL-3.0-only
+pragma solidity ^0.8.25;
 
 import { ERC7579HookBase } from "./ERC7579HookBase.sol";
 import { IERC7579Account } from "../Accounts.sol";
@@ -50,8 +50,13 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
             address module = address(bytes20((msgData[48:68])));
             return onInstallModule(msgSender, moduleType, module, initData);
         } else if (selector == IERC7579Account.uninstallModule.selector) {
-            uint256 paramLen = uint256(bytes32(msgData[INSTALL_OFFSET - 32:INSTALL_OFFSET]));
-            bytes calldata initData = msgData[INSTALL_OFFSET:INSTALL_OFFSET + paramLen];
+            uint256 paramLen = msgData.length > INSTALL_OFFSET
+                ? uint256(bytes32(msgData[INSTALL_OFFSET - 32:INSTALL_OFFSET]))
+                : uint256(0);
+            bytes calldata initData = msgData.length > INSTALL_OFFSET
+                ? msgData[INSTALL_OFFSET:INSTALL_OFFSET + paramLen]
+                : msgData[0:0];
+
             uint256 moduleType = uint256(bytes32(msgData[4:36]));
             address module = address(bytes20((msgData[48:68])));
 

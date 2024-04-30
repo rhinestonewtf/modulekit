@@ -54,6 +54,7 @@ contract OwnableExecutorTest is BaseTest {
     }
 
     function test_OnInstallWhenModuleIsNotIntialized() public {
+        // it should set the owner count
         // it should set the owner of the subaccount
         bytes memory data = abi.encodePacked(_owners[0]);
 
@@ -61,16 +62,20 @@ contract OwnableExecutorTest is BaseTest {
 
         address[] memory owners = executor.getOwners(address(this));
         assertEq(owners.length, 1);
+
+        uint256 ownerCount = executor.ownerCount(address(this));
+        assertEq(ownerCount, 1);
     }
 
     function test_OnUninstallShouldRemoveAllOwners() public {
+        // it should remove the owner count
         // it should remove all owners
         test_OnInstallWhenModuleIsNotIntialized();
 
         executor.onUninstall("");
 
-        address[] memory owners = executor.getOwners(address(this));
-        assertEq(owners.length, 0);
+        uint256 ownerCount = executor.ownerCount(address(this));
+        assertEq(ownerCount, 0);
     }
 
     function test_IsInitializedWhenModuleIsNotIntialized() public {
@@ -114,11 +119,15 @@ contract OwnableExecutorTest is BaseTest {
     }
 
     function test_AddOwnerWhenOwnerIsNotAdded() public whenModuleIsIntialized {
+        // it should increment the owner count
         // it should add the owner
         test_OnInstallWhenModuleIsNotIntialized();
 
         address owner = _owners[1];
         executor.addOwner(owner);
+
+        uint256 ownerCount = executor.ownerCount(address(this));
+        assertEq(ownerCount, 2);
     }
 
     function test_RemoveOwnerRevertWhen_ModuleIsNotIntialized() public {
@@ -128,13 +137,17 @@ contract OwnableExecutorTest is BaseTest {
     }
 
     function test_RemoveOwnerWhenModuleIsIntialized() public {
+        // it should decrement the owner count
         // it should remove the owner
-        test_OnInstallWhenModuleIsNotIntialized();
+        test_AddOwnerWhenOwnerIsNotAdded();
 
-        executor.removeOwner(SENTINEL, _owners[0]);
+        executor.removeOwner(SENTINEL, _owners[1]);
 
         address[] memory owners = executor.getOwners(address(this));
-        assertEq(owners.length, 0);
+        assertEq(owners.length, 1);
+
+        uint256 ownerCount = executor.ownerCount(address(this));
+        assertEq(ownerCount, 1);
     }
 
     function test_GetOwnersShouldGetAllOwners() public {

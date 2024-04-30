@@ -3,6 +3,7 @@ pragma solidity ^0.8.25;
 
 import { ERC7579HookDestruct } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
+import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 
 /**
  * @title RegistryHook
@@ -106,6 +107,30 @@ contract RegistryHook is ERC7579HookDestruct {
             smartAccount: msg.sender,
             module: module,
             moduleType: moduleType
+        });
+    }
+
+    /**
+     * Called when an executor executes a transaction
+     *
+     * @param msgSender the executor
+     */
+    function onExecuteFromExecutor(
+        address msgSender,
+        address,
+        uint256,
+        bytes calldata
+    )
+        internal
+        virtual
+        override
+        returns (bytes memory)
+    {
+        // query the registry using stored attesters
+        IERC7484(registry[msg.sender]).checkForAccount({
+            smartAccount: msg.sender,
+            module: msgSender,
+            moduleType: MODULE_TYPE_EXECUTOR
         });
     }
 
