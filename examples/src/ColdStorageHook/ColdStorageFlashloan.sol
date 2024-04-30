@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { SentinelListLib } from "sentinellist/SentinelList.sol";
+import { SentinelListLib, SENTINEL } from "sentinellist/SentinelList.sol";
 import "../Flashloan/FlashloanCallback.sol";
 
 /**
@@ -64,6 +64,43 @@ contract ColdStorageFlashloan is FlashloanCallback {
      */
     function isInitialized(address smartAccount) external view override returns (bool) {
         return whitelist[smartAccount].alreadyInitialized();
+    }
+
+    /**
+     * Add an address to the whitelist
+     *
+     * @param addressToAdd The address to add
+     */
+    function addAddress(address addressToAdd) external {
+        // add the address to the whitelist
+        whitelist[msg.sender].push(addressToAdd);
+    }
+
+    /**
+     * Remove an address from the whitelist
+     *
+     * @param addressToRemove The address to remove
+     * @param prevAddress The previous address in the list
+     */
+    function removeAddress(address addressToRemove, address prevAddress) external {
+        // remove the address from the whitelist
+        whitelist[msg.sender].pop(addressToRemove, prevAddress);
+    }
+
+    /**
+     * Get the whitelist of a smart account
+     *
+     * @param smartAccount The smart account address
+     *
+     * @return whitelistArray The whitelist of the smart account
+     */
+    function getWhitelist(address smartAccount)
+        external
+        view
+        returns (address[] memory whitelistArray)
+    {
+        // get the whitelist
+        (whitelistArray,) = whitelist[smartAccount].getEntriesPaginated(SENTINEL, 100);
     }
 
     /**
