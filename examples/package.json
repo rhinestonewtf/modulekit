@@ -22,7 +22,7 @@
     "checknsignatures": "github:zeroknots/checknsignatures",
     "ds-test": "github:dapphub/ds-test",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
-    "erc7579": "github:erc7579/erc7579-implementation#feature/hook-changes-back",
+    "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
