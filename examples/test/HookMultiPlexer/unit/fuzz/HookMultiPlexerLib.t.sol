@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { BaseTest, console2 } from "test/Base.t.sol";
+import { BaseTest } from "test/Base.t.sol";
 import {
     HookMultiplexer,
     SigHookInit,
@@ -145,9 +145,7 @@ contract HookMultiplexerLibFuzzTest is BaseTest {
         uint256 found;
         for (uint256 i = 0; i < a.length; i++) {
             address element = a[i];
-            console2.log(element);
             for (uint256 j = 0; j < joinedArray.length; j++) {
-                console2.log(joinedArray[j]);
                 if (element == joinedArray[j]) {
                     found++;
                     break;
@@ -157,7 +155,7 @@ contract HookMultiplexerLibFuzzTest is BaseTest {
         assertEq(found, a.length);
     }
 
-    function testFuzz_Join_WithUints(uint256 a, uint256 b) public {
+    function testFuzz_Join_WithUints(uint8 a, uint8 b) public {
         vm.assume(a > 0);
         vm.assume(b > 0);
         vm.assume(a < 20);

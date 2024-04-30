@@ -5,8 +5,6 @@ import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { SigHookInit, HookAndContext } from "./DataTypes.sol";
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 
-import "forge-std/console2.sol";
-
 /**
  * @title HookMultiplexerLib
  * @dev Library for multiplexing hooks
