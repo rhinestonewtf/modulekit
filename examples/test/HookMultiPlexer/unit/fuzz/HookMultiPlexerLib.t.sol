@@ -119,6 +119,8 @@ contract HookMultiplexerLibFuzzTest is BaseTest {
     function testFuzz_Join(address[] memory a, address[] memory b) public {
         uint256 aLength = a.length;
         uint256 bLength = b.length;
+        vm.assume(aLength < 20);
+        vm.assume(bLength < 20);
         for (uint256 i = 0; i < aLength; i++) {
             vm.assume(a[i] != address(0));
         }
@@ -126,27 +128,54 @@ contract HookMultiplexerLibFuzzTest is BaseTest {
             vm.assume(b[j] != address(0));
         }
 
-        address[] memory c = a.join(b);
+        address[] memory joinedArray = new address[](aLength + bLength);
 
-        assertEq(c.length, aLength + bLength);
+        for (uint256 i = 0; i < aLength; i++) {
+            joinedArray[i] = a[i];
+        }
 
-        if (aLength > 0) a.sort();
-        if (bLength > 0) b.sort();
+        for (uint256 j = 0; j < bLength; j++) {
+            joinedArray[aLength + j] = b[j];
+        }
 
-        for (uint256 i = 0; i < c.length; i++) {
-            bool found;
-            if (aLength > 0) {
-                (found,) = a.searchSorted(c[i]);
-            }
+        a.join(b);
 
-            if (!found) {
-                if (bLength > 0) {
-                    (found,) = b.searchSorted(c[i]);
+        assertEq(a.length, joinedArray.length);
+
+        uint256 found;
+        for (uint256 i = 0; i < a.length; i++) {
+            address element = a[i];
+            console2.log(element);
+            for (uint256 j = 0; j < joinedArray.length; j++) {
+                console2.log(joinedArray[j]);
+                if (element == joinedArray[j]) {
+                    found++;
+                    break;
                 }
             }
-
-            assertTrue(found);
         }
+        assertEq(found, a.length);
+    }
+
+    function testFuzz_Join_WithUints(uint256 a, uint256 b) public {
+        vm.assume(a > 0);
+        vm.assume(b > 0);
+        vm.assume(a < 20);
+        vm.assume(b < 20);
+        address[] memory aArray = new address[](a);
+        address[] memory bArray = new address[](b);
+
+        for (uint256 i = 0; i < a; i++) {
+            aArray[i] = address(uint160(i + 1));
+        }
+
+        for (uint256 i = 0; i < b; i++) {
+            bArray[i] = address(uint160(40 + i + 1));
+        }
+
+        aArray.join(bArray);
+
+        assertEq(aArray.length, a + b);
     }
 
     function testFuzz_RequireSortedAndUnique(address[] memory array) public {

@@ -5,6 +5,8 @@ import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { SigHookInit, HookAndContext } from "./DataTypes.sol";
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 
+import "forge-std/console2.sol";
+
 /**
  * @title HookMultiplexerLib
  * @dev Library for multiplexing hooks
@@ -102,17 +104,8 @@ library HookMultiplexerLib {
      *
      * @param a first array
      * @param b second array
-     *
-     * @return c joined array
      */
-    function join(
-        address[] memory a,
-        address[] memory b
-    )
-        internal
-        pure
-        returns (address[] memory c)
-    {
+    function join(address[] memory a, address[] memory b) internal pure {
         // cache the lengths of the arrays
         uint256 aLength = a.length;
         uint256 bLength = b.length;
@@ -120,18 +113,25 @@ library HookMultiplexerLib {
 
         // if both arrays are empty, return an empty array
         if (totalLength == 0) {
-            return c;
+            return;
+        } else if (bLength == 0) {
+            return;
         }
 
         // initialize the joined array
-        assembly ("memory-safe") {
-            c := a
-            mstore(c, totalLength)
+        uint256 offset;
+        assembly {
+            mstore(a, totalLength)
+            offset := add(b, 0x20)
         }
 
         for (uint256 i; i < bLength; i++) {
             // join the arrays
-            c[aLength + i] = b[i];
+            address next;
+            assembly {
+                next := mload(add(offset, mul(i, 0x20)))
+            }
+            a[aLength + i] = next;
         }
     }
 
