@@ -99,6 +99,9 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
 
         // clear the vaultConfig
         delete vaultConfig[account];
+
+        // clear the trusted forwarder
+        clearTrustedForwarder();
     }
 
     /**
@@ -346,9 +349,9 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      *
      * @param executionHash bytes32 hash of the execution
      */
-    function _checkTimelockedExecution(bytes32 executionHash) internal view {
+    function _checkTimelockedExecution(address account, bytes32 executionHash) internal view {
         // get the executeAfter timestamp
-        (bool success, bytes32 executeAfter) = executions[msg.sender].tryGet(executionHash);
+        (bool success, bytes32 executeAfter) = executions[account].tryGet(executionHash);
 
         // if the executionHash is not found, revert
         if (!success) revert InvalidExecutionHash(executionHash);
@@ -363,6 +366,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @dev this function will revert as the module does not allow direct execution
      */
     function onExecute(
+        address,
         address,
         address,
         uint256,
@@ -381,6 +385,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @dev this function will revert as the module does not allow direct execution
      */
     function onExecuteBatch(
+        address,
         address,
         Execution[] calldata
     )
@@ -401,6 +406,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @param callData data to be sent by account
      */
     function onExecuteFromExecutor(
+        address account,
         address msgSender,
         address target,
         uint256 value,
@@ -443,10 +449,10 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
             bytes32 executionHash = _execDigest(target, value, callData);
 
             // check the timelocked execution
-            _checkTimelockedExecution(executionHash);
+            _checkTimelockedExecution(account, executionHash);
 
             // emit the TimelockExecuted event
-            emit TimelockExecuted(msg.sender, executionHash);
+            emit TimelockExecuted(account, executionHash);
 
             return "";
         }
@@ -457,6 +463,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @dev this function will revert as the module does not allow batched executions from executor
      */
     function onExecuteBatchFromExecutor(
+        address,
         address,
         Execution[] calldata
     )
@@ -477,6 +484,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @param initData data to be passed to the module
      */
     function onInstallModule(
+        address account,
         address,
         uint256 moduleTypeId,
         address module,
@@ -491,10 +499,10 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
         bytes32 executionHash = _moduleDigest(moduleTypeId, module, initData, true);
 
         // check the timelocked execution
-        _checkTimelockedExecution(executionHash);
+        _checkTimelockedExecution(account, executionHash);
 
         // emit the TimelockExecuted event
-        emit TimelockExecuted(msg.sender, executionHash);
+        emit TimelockExecuted(account, executionHash);
     }
 
     /**
@@ -506,6 +514,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @param deInitData data to be passed to the module
      */
     function onUninstallModule(
+        address account,
         address,
         uint256 moduleTypeId,
         address module,
@@ -520,10 +529,10 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
         bytes32 executionHash = _moduleDigest(moduleTypeId, module, deInitData, false);
 
         // check the timelocked execution
-        _checkTimelockedExecution(executionHash);
+        _checkTimelockedExecution(account, executionHash);
 
         // emit the TimelockExecuted event
-        emit TimelockExecuted(msg.sender, executionHash);
+        emit TimelockExecuted(account, executionHash);
     }
 
     /**
@@ -536,6 +545,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @return bytes encoded data
      */
     function onUnknownFunction(
+        address account,
         address msgSender,
         uint256,
         bytes calldata callData
@@ -546,7 +556,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
         returns (bytes memory)
     {
         // get the vault config
-        VaultConfig memory _config = vaultConfig[msg.sender];
+        VaultConfig memory _config = vaultConfig[account];
 
         if (callData.length >= 4 && msgSender == _config.owner) {
             // if the sender is the owner, check if the function is a flashloan function

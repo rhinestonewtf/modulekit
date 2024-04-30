@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { ERC7579HookBase } from "./ERC7579HookBase.sol";
 import { IERC7579Account } from "../Accounts.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 import {
@@ -12,11 +11,14 @@ import {
     CALLTYPE_BATCH,
     CALLTYPE_DELEGATECALL
 } from "erc7579/lib/ModeLib.sol";
+import { IERC7579Hook } from "../external/ERC7579.sol";
+import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
+import { TrustedForwarder } from "./utils/TrustedForwarder.sol";
 
 uint256 constant EXEC_OFFSET = 100;
 uint256 constant INSTALL_OFFSET = 132;
 
-abstract contract ERC7579HookDestruct is ERC7579HookBase {
+abstract contract ERC7579HookDestruct is IERC7579Hook, ERC7579ModuleBase, TrustedForwarder {
     error HookInvalidSelector();
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -48,7 +50,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                 : msgData[0:0];
             uint256 moduleType = uint256(bytes32(msgData[4:36]));
             address module = address(bytes20((msgData[48:68])));
-            return onInstallModule(msgSender, moduleType, module, initData);
+            return onInstallModule(_getAccount(), msgSender, moduleType, module, initData);
         } else if (selector == IERC7579Account.uninstallModule.selector) {
             uint256 paramLen = msgData.length > INSTALL_OFFSET
                 ? uint256(bytes32(msgData[INSTALL_OFFSET - 32:INSTALL_OFFSET]))
@@ -60,9 +62,9 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
             uint256 moduleType = uint256(bytes32(msgData[4:36]));
             address module = address(bytes20((msgData[48:68])));
 
-            return onUninstallModule(msgSender, moduleType, module, initData);
+            return onUninstallModule(_getAccount(), msgSender, moduleType, module, initData);
         } else {
-            return onUnknownFunction(msgSender, msgValue, msgData);
+            return onUnknownFunction(_getAccount(), msgSender, msgValue, msgData);
         }
     }
 
@@ -82,10 +84,10 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         if (calltype == CALLTYPE_SINGLE) {
             (address to, uint256 value, bytes calldata callData) =
                 ExecutionLib.decodeSingle(encodedExecutions);
-            return onExecute(msgSender, to, value, callData);
+            return onExecute(_getAccount(), msgSender, to, value, callData);
         } else if (calltype == CALLTYPE_BATCH) {
             Execution[] calldata execs = ExecutionLib.decodeBatch(encodedExecutions);
-            return onExecuteBatch(msgSender, execs);
+            return onExecuteBatch(_getAccount(), msgSender, execs);
         }
     }
 
@@ -105,22 +107,15 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         if (calltype == CALLTYPE_SINGLE) {
             (address to, uint256 value, bytes calldata callData) =
                 ExecutionLib.decodeSingle(encodedExecutions);
-            return onExecuteFromExecutor(msgSender, to, value, callData);
+            return onExecuteFromExecutor(_getAccount(), msgSender, to, value, callData);
         } else if (calltype == CALLTYPE_BATCH) {
             Execution[] calldata execs = ExecutionLib.decodeBatch(encodedExecutions);
-            return onExecuteBatchFromExecutor(msgSender, execs);
+            return onExecuteBatchFromExecutor(_getAccount(), msgSender, execs);
         }
     }
 
-    function postCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        external
-        override
-    {
-        onPostCheck(hookData, executionSuccess, executionReturnValue);
+    function postCheck(bytes calldata hookData) external virtual override {
+        onPostCheck(_getAccount(), hookData);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -128,6 +123,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onExecute(
+        address account,
         address msgSender,
         address target,
         uint256 value,
@@ -139,6 +135,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     { }
 
     function onExecuteBatch(
+        address account,
         address msgSender,
         Execution[] calldata
     )
@@ -148,6 +145,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     { }
 
     function onExecuteFromExecutor(
+        address account,
         address msgSender,
         address target,
         uint256 value,
@@ -159,6 +157,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     { }
 
     function onExecuteBatchFromExecutor(
+        address account,
         address msgSender,
         Execution[] calldata
     )
@@ -172,6 +171,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onInstallModule(
+        address account,
         address msgSender,
         uint256 moduleType,
         address module,
@@ -183,6 +183,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     { }
 
     function onUninstallModule(
+        address account,
         address msgSender,
         uint256 moduleType,
         address module,
@@ -198,6 +199,7 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
     //////////////////////////////////////////////////////////////////////////*/
 
     function onUnknownFunction(
+        address account,
         address msgSender,
         uint256 msgValue,
         bytes calldata msgData
@@ -211,12 +213,5 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                                      POSTCHECK
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onPostCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        virtual
-    { }
+    function onPostCheck(address account, bytes calldata hookData) internal virtual { }
 }

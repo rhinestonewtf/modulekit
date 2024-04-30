@@ -134,7 +134,7 @@ contract DeadmanSwitchTest is BaseTest {
 
     function test_PostCheckShouldReturn() public {
         // it should return
-        dms.postCheck("", true, "");
+        dms.postCheck("");
     }
 
     function test_ValidateUserOpWhenModuleIsNotIntialized() public {

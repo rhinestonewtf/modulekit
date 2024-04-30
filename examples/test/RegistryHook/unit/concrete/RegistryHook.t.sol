@@ -167,7 +167,7 @@ contract RegistryHookTest is BaseTest {
 
     function test_PostCheckShouldReturn() public {
         // it should return
-        hook.postCheck("", true, "");
+        hook.postCheck("");
     }
 
     function test_NameShouldReturnRegistryHook() public {
