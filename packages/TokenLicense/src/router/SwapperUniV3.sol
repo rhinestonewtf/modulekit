@@ -9,8 +9,6 @@ import "../DataTypes.sol";
 import "../lib/TickMath.sol";
 import "../lib/Path.sol";
 
-import "forge-std/console2.sol";
-
 abstract contract Swapper {
     using Path for bytes;
 
@@ -83,7 +81,13 @@ abstract contract Swapper {
             : (tokenOut < tokenIn, uint256(amount1Delta));
 
         if (isExactInput) {
-            _permitPay(tokenIn, data.payer, msg.sender, amountToPay, data.claim);
+            _permitPay({
+                token: tokenIn,
+                payer: data.payer,
+                receiver: msg.sender,
+                amount: amountToPay,
+                claim: data.claim
+            });
         } else {
             // either initiate the next swap or pay
             if (data.path.hasMultiplePools()) {
@@ -92,7 +96,13 @@ abstract contract Swapper {
             } else {
                 amountInCached = amountToPay;
                 tokenIn = tokenOut; // swap in/out because exact output swaps are reversed
-                _permitPay(tokenIn, data.payer, msg.sender, amountToPay, data.claim);
+                _permitPay({
+                    token: tokenIn,
+                    payer: data.payer,
+                    receiver: msg.sender,
+                    amount: amountToPay,
+                    claim: data.claim
+                });
             }
         }
     }

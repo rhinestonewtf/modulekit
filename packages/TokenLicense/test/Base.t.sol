@@ -60,12 +60,14 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, ForkTest {
         instance.deployAccount();
         vm.deal(instance.account, 100 ether);
         permit2 = deployPermit2();
+        vm.label(permit2, "Permit2");
         deal(address(usdc), instance.account, 100_000 ether);
-        deal(address(weth), instance.account, 100_000_000 ether);
+        deal(address(weth), instance.account, type(uint256).max);
         vm.label(address(usdc), "USDC");
         vm.label(address(weth), "WETH");
         deal(instance.account, 100 ether);
         licenseMgr = new LicenseManager(IPermit2(permit2), poolFactory, usdc);
+        vm.label(address(licenseMgr), "LicenseManager");
         signer = new MultiSigner(permit2, address(licenseMgr));
         feemachine = new FeeMachine();
         licenseMgr.initSigners(address(signer));
@@ -84,18 +86,17 @@ contract BaseTest is RhinestoneModuleKit, DeployPermit2, ForkTest {
             data: ""
         });
 
-        ClaimType[] memory claimTypes = new ClaimType[](1);
+        ClaimType[] memory claimTypes = new ClaimType[](3);
         claimTypes[0] = ClaimType.Transaction;
+        claimTypes[1] = ClaimType.Subscription;
+        claimTypes[2] = ClaimType.SingleCharge;
 
-        MultiSigner.FeePermissions[] memory permissions = new MultiSigner.FeePermissions[](1);
+        MultiSigner.FeePermissions[] memory permissions = new MultiSigner.FeePermissions[](3);
         permissions[0] = MultiSigner.FeePermissions({ enabled: true, usdAmountMax: 1000 ether });
+        permissions[1] = MultiSigner.FeePermissions({ enabled: true, usdAmountMax: 1000 ether });
+        permissions[2] = MultiSigner.FeePermissions({ enabled: true, usdAmountMax: 1000 ether });
 
         signer.configureSelfPay(module.addr, claimTypes, permissions);
-
-        // TxFeeSigner.TxConfig memory config =
-        //     TxFeeSigner.TxConfig({ enabled: true, maxTxPercentage: bps.wrap(500) });
-        // txSigner.configure(module.addr, config);
-        // subSigner.configure(module.addr, true);
 
         vm.stopPrank();
 

@@ -179,7 +179,7 @@ contract HookMultiPlexer is ERC7579HookDestruct, IHookMultiPlexer {
             module: module,
             callData: abi.encodeCall(
                 ISubHook.onExecuteFromExecutor, (msg.sender, module, target, value, callData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isExecutorHook
         });
     }
@@ -197,7 +197,7 @@ contract HookMultiPlexer is ERC7579HookDestruct, IHookMultiPlexer {
             module: module,
             callData: abi.encodeCall(
                 ISubHook.onExecuteBatchFromExecutor, (msg.sender, module, executions)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isExecutorHook
         });
     }
@@ -217,7 +217,7 @@ contract HookMultiPlexer is ERC7579HookDestruct, IHookMultiPlexer {
             module: module,
             callData: abi.encodeCall(
                 ISubHook.onInstallModule, (msg.sender, module, moduleType, installModule, initData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isConfigHook
         });
     }
@@ -237,7 +237,7 @@ contract HookMultiPlexer is ERC7579HookDestruct, IHookMultiPlexer {
             module: module,
             callData: abi.encodeCall(
                 ISubHook.onInstallModule, (msg.sender, module, moduleType, uninstallModule, deInitData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isConfigHook
         });
     }

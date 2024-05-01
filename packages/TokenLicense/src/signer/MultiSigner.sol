@@ -17,6 +17,16 @@ contract MultiSigner is LicenseSignerBase {
 
     error InvalidInput();
 
+    event ConfiguredSelfPay(
+        address indexed smartAccount, address indexed module, ClaimType claimType
+    );
+    event ConfiguredSponsorPay(
+        address indexed smartAccount,
+        address indexed module,
+        address indexed licensee,
+        ClaimType claimType
+    );
+
     struct FeePermissions {
         bool enabled;
         uint128 usdAmountMax;
@@ -26,7 +36,7 @@ contract MultiSigner is LicenseSignerBase {
         mapping(ClaimType claimType => FeePermissions permissions) _selfConfigs;
         mapping(
             address licensee => mapping(ClaimType claimType => FeePermissions sponsoredPermissions)
-            ) _sponsorConfigs;
+        ) _sponsorConfigs;
     }
 
     mapping(address smartAccount => mapping(address module => AccountConfig conf)) internal
@@ -39,6 +49,9 @@ contract MultiSigner is LicenseSignerBase {
         LicenseSignerBase(permit2, licenseManager)
     { }
 
+    /**
+     * Authorize which modules may charge fees on a users account
+     */
     function configureSelfPay(
         address module,
         ClaimType[] calldata claimTypes,
@@ -51,7 +64,9 @@ contract MultiSigner is LicenseSignerBase {
 
         AccountConfig storage $conf = _accountConfigs[msg.sender][module];
         for (uint256 i; i < length; i++) {
-            $conf._selfConfigs[claimTypes[i]] = permissions[i];
+            ClaimType claimType = claimTypes[i];
+            $conf._selfConfigs[claimType] = permissions[i];
+            emit ConfiguredSelfPay(msg.sender, module, claimType);
         }
     }
 
@@ -68,7 +83,9 @@ contract MultiSigner is LicenseSignerBase {
 
         AccountConfig storage $conf = _accountConfigs[msg.sender][module];
         for (uint256 i; i < length; i++) {
-            $conf._sponsorConfigs[licensee][claimTypes[i]] = permissions[i];
+            ClaimType claimType = claimTypes[i];
+            $conf._sponsorConfigs[licensee][claimType] = permissions[i];
+            emit ConfiguredSponsorPay(msg.sender, module, licensee, claimType);
         }
     }
 

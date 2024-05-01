@@ -112,7 +112,7 @@ contract PermissionHook is ERC7579HookDestruct {
             module: module,
             callData: abi.encodeCall(
                 IHookPolicy.onExecute, (msg.sender, module, target, value, callData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.is4337Hook
         });
     }
@@ -148,7 +148,7 @@ contract PermissionHook is ERC7579HookDestruct {
             module: module,
             callData: abi.encodeCall(
                 IHookPolicy.onExecuteFromExecutor, (msg.sender, module, target, value, callData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isExecutorHook
         });
     }
@@ -166,7 +166,7 @@ contract PermissionHook is ERC7579HookDestruct {
             module: module,
             callData: abi.encodeCall(
                 IHookPolicy.onExecuteBatchFromExecutor, (msg.sender, module, executions)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isExecutorHook
         });
     }
@@ -186,7 +186,7 @@ contract PermissionHook is ERC7579HookDestruct {
             module: module,
             callData: abi.encodeCall(
                 IHookPolicy.onInstallModule, (msg.sender, module, moduleType, installModule, initData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isConfigHook
         });
     }
@@ -207,7 +207,7 @@ contract PermissionHook is ERC7579HookDestruct {
             callData: abi.encodeCall(
                 IHookPolicy.onInstallModule,
                 (msg.sender, module, moduleType, uninstallModule, deInitData)
-                ),
+            ),
             checkFlagFn: HookEncodingLib.isConfigHook
         });
     }

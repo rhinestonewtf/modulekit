@@ -197,7 +197,7 @@ contract MultiFactor is ERC7579ValidatorBase, ECDSAFactor {
                     value: 0,
                     callData: abi.encodeCall(
                         ECDSAFactor.setECDSAFactor, (abi.decode(datas[i], (FactorConfig)))
-                        )
+                    )
                 });
             }
             // only allow the installation of subvalidators, if the validator module is not
