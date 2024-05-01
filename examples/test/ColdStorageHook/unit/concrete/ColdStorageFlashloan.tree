@@ -19,6 +19,24 @@ ColdStorageFlashloan::isInitialized
     └── it should return true
 
 
+ColdStorageFlashloan::addAddress
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should add the address to the whitelist
+
+
+ColdStorageFlashloan::removeAddress
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should remove the address from the whitelist
+
+
+ColdStorageFlashloan::getWhitelist
+└── it should return the whitelist
+
+
 ColdStorageFlashloan::getTokengatedTxHash
 └── it should return the tokengatedTxHash
 
@@ -32,7 +50,7 @@ ColdStorageFlashloan::onFlashLoan
     └── when the signature is valid
         ├── it should execute the flashloan
         ├── it should increment the nonce
-        └── it should rerturn the right hash
+        └── it should return the right hash
 
 
 ColdStorageFlashloan::name

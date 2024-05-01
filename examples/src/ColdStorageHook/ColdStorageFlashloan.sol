@@ -62,7 +62,7 @@ contract ColdStorageFlashloan is FlashloanCallback {
      *
      * @return True if the module is initialized
      */
-    function isInitialized(address smartAccount) external view override returns (bool) {
+    function isInitialized(address smartAccount) public view override returns (bool) {
         return whitelist[smartAccount].alreadyInitialized();
     }
 
@@ -72,8 +72,12 @@ contract ColdStorageFlashloan is FlashloanCallback {
      * @param addressToAdd The address to add
      */
     function addAddress(address addressToAdd) external {
+        // cache the account
+        address account = msg.sender;
+        // check if the module is initialized
+        if (!isInitialized(account)) revert NotInitialized(account);
         // add the address to the whitelist
-        whitelist[msg.sender].push(addressToAdd);
+        whitelist[account].push(addressToAdd);
     }
 
     /**
@@ -84,7 +88,7 @@ contract ColdStorageFlashloan is FlashloanCallback {
      */
     function removeAddress(address addressToRemove, address prevAddress) external {
         // remove the address from the whitelist
-        whitelist[msg.sender].pop(addressToRemove, prevAddress);
+        whitelist[msg.sender].pop({ prevEntry: prevAddress, popEntry: addressToRemove });
     }
 
     /**

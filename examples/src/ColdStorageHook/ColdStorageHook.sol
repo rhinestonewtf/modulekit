@@ -6,7 +6,7 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import { ERC7579HookDestruct, Execution } from "modulekit/src/modules/ERC7579HookDestruct.sol";
 import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
-import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.sol";
+import { IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { IERC721 } from "forge-std/interfaces/IERC721.sol";
 import {
@@ -425,12 +425,10 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
 
         // This condition is true, if this coldstorage hook is making executions.
         if (msgSender == address(this)) {
-            bytes4 targetSelector = bytes4(callData[:4]);
-
             if (
-                targetSelector == IERC20.transfer.selector
-                    || targetSelector == IERC721.transferFrom.selector
-                    || targetSelector == IERC3156FlashBorrower.onFlashLoan.selector
+                functionSig == IERC20.transfer.selector
+                    || functionSig == IERC721.transferFrom.selector
+                    || functionSig == IERC3156FlashBorrower.onFlashLoan.selector
             ) {
                 return "";
             }

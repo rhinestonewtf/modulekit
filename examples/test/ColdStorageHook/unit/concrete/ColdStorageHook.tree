@@ -1,6 +1,9 @@
 ColdStorageHook::onInstall
 ├── when module is intialized
-│   └── it should revert
+│   ├── when module data is not empty
+│   │   └── it should revert
+│   └── when module data empty
+│       └── it should return
 └── when module is not intialized
     ├── when the owner is 0
     │   └── it should revert
@@ -93,6 +96,8 @@ ColdStorageHook::preCheck
 │   └── when function is not a flashloan function
 │       └── it should revert
 └── when function is executeFromExecutor
+    ├── when coldstorage is performing an execution
+    │   └── it should return
     ├── when target is this and function is requestTimelockedExecution or requestTimelockedModuleConfig
     │   └── it should return
     └── when target is not this or function is not requestTimelockedExecution
@@ -110,6 +115,32 @@ ColdStorageHook::postCheck
 └── it should return
 
 
+ColdStorageHook::availableForFlashLoan
+├── when sender is not the owner of the token
+│   └── it should return false
+└── when sender is the owner of the token
+    └── it should return true
+
+
+ColdStorageHook::flashLoan
+├── when receiver is not the owner
+│   └── it should revert
+└── when receiver is the owner
+    ├── when flashloan type is not supported
+    │   └── it should revert
+    └── when flashloan type is supported
+        ├── it should transfer the token to the receiver
+        ├── it should call onFlashLoan on the receiver
+        ├── it should transfer the token back to the cold storage
+        ├── when return is invalid
+        │   └── it should revert
+        └── when return is valid
+            ├── when token was not sent back
+            │   └── it should revert
+            └── when token was sent back
+                └── it should return
+
+
 ColdStorageHook::name
 └── it should return ColdStorageHook
 
@@ -118,7 +149,9 @@ ColdStorageHook::version
 └── it should return 1.0.0
 
 
-ColdStorageHook::isModuleType
+ColdStorageHook::isModuleType   
+├── when typeID is 3
+│   └── it should return true
 ├── when typeID is 4
 │   └── it should return true
 └── when typeID is not 4

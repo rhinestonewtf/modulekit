@@ -88,6 +88,50 @@ contract ColdStorageFlashloanTest is BaseTest {
         assertTrue(initialized);
     }
 
+    function test_AddAddressRevertWhen_ModuleIsNotIntialized() public {
+        // it should revert
+        vm.expectRevert();
+        module.addAddress(address(5));
+    }
+
+    function test_AddAddressWhenModuleIsIntialized() public {
+        // it should add the address to the whitelist
+        test_OnInstallWhenModuleIsNotIntialized();
+
+        address[] memory prevWhitelist = module.getWhitelist(address(this));
+
+        module.addAddress(address(5));
+
+        address[] memory whitelist = module.getWhitelist(address(this));
+        assertEq(whitelist.length, prevWhitelist.length + 1);
+    }
+
+    function test_RemoveAddressRevertWhen_ModuleIsNotIntialized() public {
+        // it should revert
+        vm.expectRevert();
+        module.removeAddress(address(5), address(0));
+    }
+
+    function test_RemoveAddressWhenModuleIsIntialized() public {
+        // it should remove the address from the whitelist
+        test_OnInstallWhenModuleIsNotIntialized();
+
+        address[] memory prevWhitelist = module.getWhitelist(address(this));
+
+        module.removeAddress(_whitelist[1], address(1));
+
+        address[] memory whitelist = module.getWhitelist(address(this));
+        assertEq(whitelist.length, prevWhitelist.length - 1);
+    }
+
+    function test_GetWhitelist() public {
+        // it should return the whitelist
+        test_OnInstallWhenModuleIsNotIntialized();
+
+        address[] memory whitelist = module.getWhitelist(address(this));
+        assertEq(whitelist.length, _whitelist.length);
+    }
+
     function test_GetTokengatedTxHashShouldReturnTheTokengatedTxHash() public {
         // it should return the tokengatedTxHash
         Execution[] memory executions = new Execution[](1);
@@ -133,7 +177,7 @@ contract ColdStorageFlashloanTest is BaseTest {
     function test_OnFlashLoanWhenTheSignatureIsValid() public whenTheSenderIsAllowed {
         // it should execute the flashloan
         // it should increment the nonce
-        // it should rerturn the right hash
+        // it should return the right hash
         test_OnInstallWhenModuleIsNotIntialized();
 
         address borrower = address(1);

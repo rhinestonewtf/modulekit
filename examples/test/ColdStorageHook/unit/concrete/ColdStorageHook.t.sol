@@ -2,12 +2,23 @@
 pragma solidity ^0.8.23;
 
 import { BaseTest } from "test/Base.t.sol";
-import { ColdStorageHook, Execution } from "src/ColdStorageHook/ColdStorageHook.sol";
+import {
+    ColdStorageHook, Execution, FlashloanLender
+} from "src/ColdStorageHook/ColdStorageHook.sol";
 import { IERC7579Module, IERC7579Account } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { IERC3156FlashLender } from "modulekit/src/interfaces/Flashloan.sol";
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { MockERC721 } from "solmate/test/utils/mocks/MockERC721.sol";
+import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+import { IERC721 } from "forge-std/interfaces/IERC721.sol";
+import {
+    FlashLoanType,
+    IERC3156FlashBorrower,
+    IERC3156FlashLender
+} from "modulekit/src/interfaces/Flashloan.sol";
 
 contract ColdStorageHookTest is BaseTest {
     /*//////////////////////////////////////////////////////////////////////////
@@ -15,6 +26,8 @@ contract ColdStorageHookTest is BaseTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     ColdStorageHook internal hook;
+    MockERC20 internal token;
+    MockERC721 internal nft;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     VARIABLES
@@ -31,6 +44,9 @@ contract ColdStorageHookTest is BaseTest {
         BaseTest.setUp();
         hook = new ColdStorageHook();
 
+        token = new MockERC20("USDC", "USDC", 18);
+        nft = new MockERC721("NFT", "NFT");
+
         _owner = makeAddr("owner");
         _waitPeriod = uint128(100);
     }
@@ -39,7 +55,7 @@ contract ColdStorageHookTest is BaseTest {
                                       TESTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function test_OnInstallRevertWhen_ModuleIsIntialized() public {
+    function test_OnInstallRevertWhen_ModuleDataIsNotEmpty() public whenModuleIsIntialized {
         // it should revert
         bytes memory data = abi.encodePacked(_waitPeriod, _owner);
 
@@ -49,6 +65,14 @@ contract ColdStorageHookTest is BaseTest {
             abi.encodeWithSelector(IERC7579Module.AlreadyInitialized.selector, address(this))
         );
         hook.onInstall(data);
+    }
+
+    function test_OnInstallWhenModuleDataEmpty() public whenModuleIsIntialized {
+        // it should return
+        bytes memory data = abi.encodePacked(_waitPeriod, _owner);
+
+        hook.onInstall(data);
+        hook.onInstall("");
     }
 
     function test_OnInstallRevertWhen_TheOwnerIs0() public whenModuleIsNotIntialized {
@@ -518,7 +542,7 @@ contract ColdStorageHookTest is BaseTest {
         hook.preCheck(address(1), 0, msgData);
     }
 
-    function test_PreCheckWhenFunctionIsAFlashloanFunction() external whenFunctionIsUnknown {
+    function test_PreCheckWhenFunctionIsAFlashloanFunction() public whenFunctionIsUnknown {
         // it should return
         test_RequestTimelockedExecutionWhenTheCallIsToSetWaitPeriod();
 
@@ -529,7 +553,7 @@ contract ColdStorageHookTest is BaseTest {
     }
 
     function test_PreCheckRevertWhen_FunctionIsNotAFlashloanFunction()
-        external
+        public
         whenFunctionIsUnknown
     {
         // it should revert
@@ -537,6 +561,22 @@ contract ColdStorageHookTest is BaseTest {
 
         vm.expectRevert(ColdStorageHook.UnsupportedExecution.selector);
         hook.preCheck(address(1), 0, msgData);
+    }
+
+    function test_PreCheckWhenColdstorageIsPerformingAnExecution()
+        public
+        whenFunctionIsExecuteFromExecutor
+    {
+        // it should return
+        bytes memory msgData = abi.encodeWithSelector(
+            IERC7579Account.executeFromExecutor.selector,
+            ModeLib.encodeSimpleSingle(),
+            ExecutionLib.encodeSingle(
+                address(hook), 0, abi.encodeCall(IERC20.transfer, (address(1), 10))
+            )
+        );
+
+        hook.preCheck(address(hook), 0, msgData);
     }
 
     function test_PreCheckWhenTargetIsThisAndFunctionIsRequestTimelockedExecution()
@@ -647,6 +687,118 @@ contract ColdStorageHookTest is BaseTest {
         hook.postCheck("");
     }
 
+    function test_AvailableForFlashLoanWhenSenderIsNotTheOwnerOfTheToken() public {
+        // it should return false
+        nft.mint(address(2), 1);
+
+        bool available = hook.availableForFlashLoan({ token: address(nft), tokenId: 1 });
+        assertFalse(available);
+    }
+
+    function test_AvailableForFlashLoanWhenSenderIsTheOwnerOfTheToken() public {
+        // it should return true
+        nft.mint(address(this), 1);
+
+        bool available = hook.availableForFlashLoan({ token: address(nft), tokenId: 1 });
+        assertTrue(available);
+    }
+
+    function test_FlashLoanRevertWhen_ReceiverIsNotTheOwner() public {
+        // it should revert
+        test_OnInstallWhenTheWaitPeriodIsNot0();
+
+        bytes memory flashloanData =
+            abi.encode(FlashLoanType.ERC20, bytes("signature"), bytes("executions"));
+
+        vm.expectRevert();
+        hook.flashLoan(IERC3156FlashBorrower(address(2)), address(token), 1, flashloanData);
+    }
+
+    function test_FlashLoanRevertWhen_FlashloanTypeIsNotSupported() public whenReceiverIsTheOwner {
+        // it should revert
+        bytes memory data = abi.encodePacked(_waitPeriod, address(this));
+        hook.onInstall(data);
+
+        bytes memory flashloanData = abi.encode(uint8(3), bytes("signature"), bytes("executions"));
+
+        vm.expectRevert();
+        hook.flashLoan(IERC3156FlashBorrower(address(this)), address(token), 1, flashloanData);
+    }
+
+    function test_FlashLoanWhenFlashloanTypeIsSupported()
+        public
+        whenReceiverIsTheOwner
+        whenFlashloanTypeIsSupported
+    {
+        // it should transfer the token to the receiver
+        // it should call onFlashLoan on the receiver
+        // it should transfer the token back to the cold storage
+        bytes memory data = abi.encodePacked(_waitPeriod, address(this));
+        hook.onInstall(data);
+
+        token.mint(address(this), 100);
+
+        bytes memory flashloanData =
+            abi.encode(FlashLoanType.ERC20, bytes("signature"), bytes("executions"));
+
+        hook.flashLoan(IERC3156FlashBorrower(address(this)), address(token), 1, flashloanData);
+    }
+
+    function test_FlashLoanRevertWhen_ReturnIsInvalid()
+        public
+        whenReceiverIsTheOwner
+        whenFlashloanTypeIsSupported
+    {
+        // it should revert
+        bytes memory data = abi.encodePacked(_waitPeriod, address(this));
+        hook.onInstall(data);
+
+        token.mint(address(this), 100);
+
+        bytes memory flashloanData =
+            abi.encode(FlashLoanType.ERC20, bytes("nodata"), bytes("executions"));
+
+        vm.expectRevert(abi.encodeWithSelector(FlashloanLender.FlashloanCallbackFailed.selector));
+        hook.flashLoan(IERC3156FlashBorrower(address(this)), address(token), 1, flashloanData);
+    }
+
+    function test_FlashLoanRevertWhen_TokenWasNotSentBack()
+        public
+        whenReceiverIsTheOwner
+        whenFlashloanTypeIsSupported
+        whenReturnIsValid
+    {
+        // it should revert
+        bytes memory data = abi.encodePacked(_waitPeriod, address(this));
+        hook.onInstall(data);
+
+        token.mint(address(this), 100);
+
+        bytes memory flashloanData =
+            abi.encode(FlashLoanType.ERC20, bytes("noreturn"), bytes("executions"));
+
+        vm.expectRevert(abi.encodeWithSelector(FlashloanLender.TokenNotRepaid.selector));
+        hook.flashLoan(IERC3156FlashBorrower(address(this)), address(token), 1, flashloanData);
+    }
+
+    function test_FlashLoanWhenTokenWasSentBack()
+        public
+        whenReceiverIsTheOwner
+        whenFlashloanTypeIsSupported
+        whenReturnIsValid
+    {
+        // it should return
+        bytes memory data = abi.encodePacked(_waitPeriod, address(this));
+        hook.onInstall(data);
+
+        token.mint(address(this), 100);
+
+        bytes memory flashloanData =
+            abi.encode(FlashLoanType.ERC20, bytes("signature"), bytes("executions"));
+
+        hook.flashLoan(IERC3156FlashBorrower(address(this)), address(token), 1, flashloanData);
+    }
+
     function test_NameShouldReturnColdStorageHook() public {
         // it should return ColdStorageHook
         string memory name = hook.name();
@@ -657,6 +809,12 @@ contract ColdStorageHookTest is BaseTest {
         // it should return 1.0.0
         string memory version = hook.version();
         assertEq(version, "1.0.0");
+    }
+
+    function test_IsModuleTypeWhenTypeIDIs3() public {
+        // it should return true
+        bool isModuleType = hook.isModuleType(3);
+        assertTrue(isModuleType);
     }
 
     function test_IsModuleTypeWhenTypeIDIs4() public {
@@ -721,5 +879,70 @@ contract ColdStorageHookTest is BaseTest {
 
     modifier whenFunctionIsInstallModule() {
         _;
+    }
+
+    modifier whenReceiverIsTheOwner() {
+        _;
+    }
+
+    modifier whenReturnIsValid() {
+        _;
+    }
+
+    modifier whenFlashloanTypeIsSupported() {
+        _;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    CALLBACKS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function onFlashLoan(
+        address initiator,
+        address token,
+        uint256 amount,
+        uint256 fee,
+        bytes calldata data
+    )
+        external
+        returns (bytes32)
+    {
+        (FlashLoanType flashLoanType, bytes memory bytesData,) =
+            abi.decode(data, (FlashLoanType, bytes, bytes));
+
+        if (keccak256(bytesData) == keccak256(bytes("noreturn"))) {
+            if (flashLoanType == FlashLoanType.ERC721) {
+                IERC721(token).transferFrom(address(this), address(3), amount);
+            } else if (flashLoanType == FlashLoanType.ERC20) {
+                IERC20(token).transfer(address(3), amount);
+            }
+            return keccak256("ERC3156FlashBorrower.onFlashLoan");
+        } else if (keccak256(bytesData) == keccak256(bytes("nodata"))) {
+            return bytes32(0);
+        }
+
+        if (flashLoanType == FlashLoanType.ERC721) {
+            IERC721(token).transferFrom(address(this), initiator, amount);
+        } else if (flashLoanType == FlashLoanType.ERC20) {
+            IERC20(token).transfer(initiator, amount);
+        }
+
+        return keccak256("ERC3156FlashBorrower.onFlashLoan");
+    }
+
+    function executeFromExecutor(
+        bytes32 mode,
+        bytes calldata executionCalldata
+    )
+        external
+        payable
+        returns (bytes[] memory returnData)
+    {
+        (address target, uint256 value, bytes calldata callData) =
+            ExecutionLib.decodeSingle(executionCalldata);
+        (bool success, bytes memory ret) = target.call{ value: value }(callData);
+
+        returnData = new bytes[](1);
+        returnData[0] = ret;
     }
 }
