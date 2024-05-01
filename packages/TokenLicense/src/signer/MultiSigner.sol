@@ -40,7 +40,7 @@ contract MultiSigner is LicenseSignerBase {
     }
 
     mapping(address smartAccount => mapping(address module => AccountConfig conf)) internal
-        _accountConfigs;
+        $accountConfig;
 
     constructor(
         address permit2,
@@ -62,7 +62,7 @@ contract MultiSigner is LicenseSignerBase {
         uint256 length = permissions.length;
         if (claimTypes.length != length) revert InvalidInput();
 
-        AccountConfig storage $conf = _accountConfigs[msg.sender][module];
+        AccountConfig storage $conf = $accountConfig[msg.sender][module];
         for (uint256 i; i < length; i++) {
             ClaimType claimType = claimTypes[i];
             $conf._selfConfigs[claimType] = permissions[i];
@@ -81,7 +81,7 @@ contract MultiSigner is LicenseSignerBase {
         uint256 length = permissions.length;
         if (claimTypes.length != length) revert InvalidInput();
 
-        AccountConfig storage $conf = _accountConfigs[msg.sender][module];
+        AccountConfig storage $conf = $accountConfig[msg.sender][module];
         for (uint256 i; i < length; i++) {
             ClaimType claimType = claimTypes[i];
             $conf._sponsorConfigs[licensee][claimType] = permissions[i];
@@ -111,7 +111,7 @@ contract MultiSigner is LicenseSignerBase {
             return 0x00000000;
         }
 
-        AccountConfig storage $conf = _accountConfigs[msg.sender][claim.module];
+        AccountConfig storage $conf = $accountConfig[msg.sender][claim.module];
         // self pay
         if (claim.smartAccount == msg.sender) {
             FeePermissions storage $permissions = $conf._selfConfigs[claim.claimType];

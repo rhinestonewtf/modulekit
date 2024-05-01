@@ -10,25 +10,4 @@ interface IFeeMachine {
     )
         external
         returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers);
-    // function getPermitTx(TransactionClaim calldata claim)
-    //     external
-    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers);
-    //
-    // function getPermitTx(
-    //     TransactionClaim calldata claim,
-    //     address referral
-    // )
-    //     external
-    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers);
-    //
-    // function getPermitSub(SubscriptionClaim calldata claim)
-    //     external
-    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers);
-    //
-    // function getPermitSub(
-    //     SubscriptionClaim calldata claim,
-    //     address referral
-    // )
-    //     external
-    //     returns (ISignatureTransfer.SignatureTransferDetails[] memory transfers);
 }

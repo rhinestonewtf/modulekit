@@ -16,31 +16,65 @@ abstract contract ProcessClaim is ModuleRecords, Subscription {
     using LicenseHash for *;
     using TokenPermissionsLib for ISignatureTransfer.SignatureTransferDetails[];
 
+    error UnauthorizedCallerNotModule();
+
     event TranactionClaim(address account, address module, uint256 amount);
     event SubscriptionClaim(address account, address module, uint256 amount);
     event UsageClaim(address account, address module, uint256 amount);
 
-    function permitClaim(address payer, address referral, Claim memory claim) external {
+    modifier onlyAuthorized(Claim memory claim) {
+        if (claim.claimType == ClaimType.Transaction || claim.claimType == ClaimType.SingleCharge) {
+            if (claim.module != msg.sender) revert UnauthorizedCallerNotModule();
+        }
+        _;
+    }
+
+    function permitClaim(
+        address payer,
+        address referral,
+        Claim memory claim
+    )
+        external
+        onlyAuthorized(claim)
+    {
         IFeeMachine shareholder = $moduleShareholders[claim.module];
         ISignatureTransfer.SignatureTransferDetails[] memory transfers =
             shareholder.getSplit(claim, referral);
 
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                    Transaction Claims                      */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
         if (claim.claimType == ClaimType.Transaction) {
-            require(claim.module == msg.sender, "Invalid module");
             _settleClaim(payer, claim, transfers);
             emit TranactionClaim(claim.smartAccount, msg.sender, claim.usdAmount);
-        } else if (claim.claimType == ClaimType.Subscription) {
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                    Subscription Claims                      */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        else if (claim.claimType == ClaimType.Subscription) {
+            // calculate new validUntil time if subscription claim is successful
             uint48 newValidUntil = _validUntil(claim.smartAccount, claim.module, claim.usdAmount);
+            // SSTORE new validUntil time
             $activeLicenses[claim.module][claim.smartAccount].validUntil = newValidUntil;
             _settleClaim(payer, claim, transfers);
             emit SubscriptionClaim(claim.smartAccount, claim.module, claim.usdAmount);
-        } else if (claim.claimType == ClaimType.SingleCharge) {
-            require(claim.module == msg.sender, "Invalid module");
+        }
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                    Single Charge Claims                      */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+        else if (claim.claimType == ClaimType.SingleCharge) {
             _settleClaim(payer, claim, transfers);
             emit UsageClaim(claim.smartAccount, msg.sender, claim.usdAmount);
         }
     }
 
+    /**
+     * @dev settle the claim by transferring the token from the payer to the beneficiaries
+     * @param payer the address of the payer
+     * @param claim the claim object
+     * @param transfers the array of SignatureTransferDetails
+     * @return totalAmount the total amount of the token transferred
+     */
     function _settleClaim(
         address payer,
         Claim memory claim,
@@ -50,7 +84,9 @@ abstract contract ProcessClaim is ModuleRecords, Subscription {
         returns (uint256 totalAmount)
     {
         ISignatureTransfer.TokenPermissions[] memory permissions;
-        // no swap required. just transfer the token from the smart account to the beneficiaries
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                      No Swap required                      */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
         if (address(claim.payToken) == FEE_TOKEN) {
             (permissions, totalAmount) = transfers.makeTokenPermissions(FEE_TOKEN);
 
@@ -63,6 +99,7 @@ abstract contract ProcessClaim is ModuleRecords, Subscription {
                 deadline: block.timestamp
             });
 
+            // transfer claim to all beneficiaries with batched transfer via Permit2
             PERMIT2.permitWitnessTransferFrom({
                 permit: permit,
                 transferDetails: transfers,
@@ -72,7 +109,9 @@ abstract contract ProcessClaim is ModuleRecords, Subscription {
                 signature: abi.encodePacked(SIGNER, abi.encode(permit, claim))
             });
         }
-        // swap required
+        /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+        /*                       Swap required!                       */
+        /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
         else {
             exactOutputSingle(
                 SwapParams({
