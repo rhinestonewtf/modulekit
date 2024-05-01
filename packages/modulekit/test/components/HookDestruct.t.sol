@@ -226,15 +226,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
         returns (bytes memory hookData)
     { }
 
-    function onPostCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        virtual
-        override
-    { }
+    function onPostCheck(bytes calldata hookData) internal virtual override { }
 
     function onInstall(bytes calldata) public { }
     function onUninstall(bytes calldata) public { }

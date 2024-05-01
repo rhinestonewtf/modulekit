@@ -45,7 +45,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     bool internal isInit;
 
-    MockValidator public defaultValidator;
+    MockValidator public _defaultValidator;
 
     constructor() {
         init();
@@ -70,8 +70,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         // label(address(accountFactory), "ERC7579AccountFactory");
 
         accountFactory = new MultiAccountFactory();
-        defaultValidator = new MockValidator();
-        label(address(defaultValidator), "DefaultValidator");
+        _defaultValidator = new MockValidator();
+        label(address(_defaultValidator), "DefaultValidator");
 
         // Stake factory on EntryPoint
         deal(address(accountFactory), 10 ether);
@@ -99,7 +99,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             account: counterFactualAddress,
             aux: auxiliary,
             salt: salt,
-            defaultValidator: IERC7579Validator(address(defaultValidator)),
+            defaultValidator: IERC7579Validator(address(_defaultValidator)),
             initCode: initCode4337,
             gasLog: false
         });
@@ -134,11 +134,13 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         // defaultValidator is used a lot in ModuleKit, to make it easier to use
         // if defaultValidator isnt available on the account, a lot of ModuleKit Abstractions would
         // break
-        if (validators[0].module != address(0) && validators[0].module != address(defaultValidator))
-        {
+        if (
+            validators[0].module != address(0) && validators[0].module != address(_defaultValidator)
+        ) {
             ERC7579BootstrapConfig[] memory _validators =
                 new ERC7579BootstrapConfig[](validators.length + 1);
-            _validators[0] = ERC7579BootstrapConfig({ module: address(defaultValidator), data: "" });
+            _validators[0] =
+                ERC7579BootstrapConfig({ module: address(_defaultValidator), data: "" });
             for (uint256 i = 0; i < validators.length; i++) {
                 _validators[i + 1] = validators[i];
             }
@@ -172,7 +174,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     function makeAccountInstance(bytes32 salt) internal returns (AccountInstance memory instance) {
         init();
         ERC7579BootstrapConfig[] memory validators =
-            makeBootstrapConfig(address(defaultValidator), "");
+            makeBootstrapConfig(address(_defaultValidator), "");
 
         ERC7579BootstrapConfig[] memory executors = _emptyConfigs();
 
