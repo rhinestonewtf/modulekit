@@ -1,0 +1,21 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib", "node_modules"]
+fs_permissions = [{ access = "read", path = "out-optimized" }, { access = "read-write", path = "gas_calculations" }]
+allow_paths = ["*", "/"]
+evm_version = "cancun"
+ignored_error_codes = [2394]
+
+[rpc_endpoints]
+#mainnet = "https://eth.llamarpc.com"
+mainnet = "https://mainnet.infura.io/v3/d6194b452e6c4e0cb5f32eadc72237fb"
+[fmt]
+bracket_spacing = true
+int_types = "long"
+line_length = 100
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+tab_width = 4
+wrap_comments = true
