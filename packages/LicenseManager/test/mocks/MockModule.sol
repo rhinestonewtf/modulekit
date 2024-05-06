@@ -7,7 +7,7 @@ contract MockModule {
         LICENSE_MANAGER = _licenseManager;
     }
 
-    function triggerClaim(address account, ClaimTransaction calldata claim) external {
-        LICENSE_MANAGER.settleTransaction(account, claim);
+    function triggerClaim(ClaimTransaction calldata claim) external {
+        LICENSE_MANAGER.settleTransaction(claim);
     }
 }

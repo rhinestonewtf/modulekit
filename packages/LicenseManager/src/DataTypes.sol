@@ -25,9 +25,20 @@ struct ClaimSubscription {
     address referral;
 }
 
+struct ClaimPerUse {
+    address account;
+    bytes feeMachineData;
+    address referral;
+}
+
 struct SubscriptionRecord {
     uint48 validUntil;
     uint48 renewalSeconds;
+}
+
+struct PerUseRecord {
+    Currency currency;
+    uint256 amount;
 }
 
 struct SubscriptionPricing {

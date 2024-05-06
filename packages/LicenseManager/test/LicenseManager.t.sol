@@ -64,12 +64,12 @@ contract LicenseManagerTest is Test {
         amounts[1] = 0.1 ether;
         feeMachine.setSplit(beneficiaries, amounts);
 
-        vm.startPrank(account);
-
-        token1.approve(address(licenseManager), 10_000 ether);
-        token2.approve(address(licenseManager), 10_000 ether);
-
-        vm.stopPrank();
+        // vm.startPrank(account);
+        //
+        // token1.approve(address(licenseManager), 10_000 ether);
+        // token2.approve(address(licenseManager), 10_000 ether);
+        //
+        // vm.stopPrank();
 
         vm.prank(beneficiary1);
         licenseManager.setOperator(address(operator), true);
@@ -92,11 +92,10 @@ contract LicenseManagerTest is Test {
             feeMachineData: "",
             referral: address(0)
         });
-        module.triggerClaim({ account: account, claim: claim });
+        module.triggerClaim({ claim: claim });
     }
 
     function test_claim_subscription() public {
-
         uint48 validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
         assertTrue(validUntil == 0);
         uint256 balanceBefore = token1.balanceOf(account);
@@ -114,8 +113,8 @@ contract LicenseManagerTest is Test {
         uint256 balanceAfter = token1.balanceOf(account);
 
         assertTrue(balanceAfter < balanceBefore);
-         validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
-         assertTrue(validUntil > 0);
+        validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
+        assertTrue(validUntil > 0);
     }
 
     function test_simulateSwap() public {

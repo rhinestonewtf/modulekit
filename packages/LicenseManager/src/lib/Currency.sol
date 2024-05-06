@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { IERC20Minimal } from "../interfaces/external/IERC20Minimal.sol";
+import { ERC7579Execution } from "./ERC7579Execution.sol";
 
 type Currency is address;
 
@@ -32,6 +33,7 @@ function greaterThanOrEqualTo(Currency currency, Currency other) pure returns (b
 /// @dev This library allows for transferring and holding native tokens and ERC20 tokens
 library CurrencyLibrary {
     using CurrencyLibrary for Currency;
+    using ERC7579Execution for address;
 
     /// @notice Thrown when a native transfer fails
     error NativeTransferFailed();
@@ -103,7 +105,65 @@ library CurrencyLibrary {
         }
     }
 
-    function transferFrom(Currency currency, address owner, uint256 amount) internal {
+    function transfer(address account, Currency currency, address to, uint256 amount) internal {
+        if (currency.isNative()) {
+            account.execute({ to: address(this), value: amount, data: "" });
+        } else {
+            bool success = transferFrom(currency, account, amount);
+            if (success) {
+                return;
+            } else {
+                account.execute({
+                    to: Currency.unwrap(currency),
+                    value: 0,
+                    data: abi.encodeWithSelector(IERC20Minimal.approve.selector, to, amount)
+                });
+                safeTransferFrom(currency, account, amount);
+            }
+        }
+    }
+
+    function transferFrom(
+        Currency currency,
+        address owner,
+        uint256 amount
+    )
+        internal
+        returns (bool success)
+    {
+        address to = address(this);
+
+        if (currency.isZero()) {
+            revert InvalidCurrency();
+        } else {
+            assembly {
+                // We'll write our calldata to this slot below, but restore it later.
+                let memPointer := mload(0x40)
+
+                // Write the abi-encoded calldata into memory, beginning with the function selector.
+                mstore(0, 0x23b872dd00000000000000000000000000000000000000000000000000000000)
+                mstore(4, owner) // Append the "from" argument.
+                mstore(36, to) // Append the "to" argument.
+                mstore(68, amount) // Append the "amount" argument.
+
+                success :=
+                    and(
+                        // Set success to whether the call reverted, if not we check it either
+                        // returned exactly 1 (can't just be non-zero data), or had no return data.
+                        or(and(eq(mload(0), 1), gt(returndatasize(), 31)), iszero(returndatasize())),
+                        // We use 100 because that's the total length of our calldata (4 + 32 * 3)
+                        // Counterintuitively, this call() must be positioned after the or() in the
+                        // surrounding and() because and() evaluates its arguments from right to left.
+                        call(gas(), currency, 0, 0, 100, 0, 32)
+                    )
+
+                mstore(0x60, 0) // Restore the zero slot to zero.
+                mstore(0x40, memPointer) // Restore the memPointer.
+            }
+        }
+    }
+
+    function safeTransferFrom(Currency currency, address owner, uint256 amount) internal {
         bool success;
 
         address to = address(this);

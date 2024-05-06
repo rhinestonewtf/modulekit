@@ -21,15 +21,12 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         _initializeOwner(address(controller));
     }
 
-    function settleTransaction(
-        address account,
-        ClaimTransaction calldata claim
-    )
+    function settleTransaction(ClaimTransaction calldata claim)
         public
         returns (bool success, uint256 totalAfterFee)
     {
         ModuleFee memory moduleFee = $moduleFees[msg.sender];
-        if (moduleFee.enabled == false) revert UnauthorizedModule(); // TODO should this return?
+        if (moduleFee.enabled == false) return (false, 0);
 
         Split[] memory split = moduleFee.feeMachine.split({ module: msg.sender, claim: claim });
         uint256 total = _mint(claim.currency, split);
@@ -38,7 +35,7 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         uint256 protocolFee;
         address beneficiary;
         (protocolFee, total, beneficiary) = addProtocolFee({
-            account: account,
+            account: claim.account,
             currency: claim.currency,
             module: msg.sender,
             feeMachine: moduleFee.feeMachine,
@@ -47,9 +44,9 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         });
 
         _mint({ receiver: beneficiary, id: claim.currency.toId(), amount: protocolFee });
-        claim.currency.transferFrom(claim.account, total);
+        claim.currency.transfer(claim.account, total);
 
-        emit TransactionSettled({ account: account, module: msg.sender, amountCharged: total });
+        emit TransactionSettled({ account: claim.account, module: msg.sender, amountCharged: total });
 
         return (true, claim.amount - total);
     }
@@ -60,6 +57,8 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         SubscriptionRecord storage $license = $activeLicenses[module][account];
         SubscriptionPricing memory subscriptionRecord = $moduleSubPricing[module];
         ModuleFee memory moduleFee = $moduleFees[module];
+
+        if (moduleFee.enabled == false) return false;
 
         $license.validUntil =
             _validUntil({ smartAccount: account, module: module, amount: claim.amount });
@@ -79,14 +78,31 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         });
 
         _mint({ receiver: beneficiary, id: subscriptionRecord.currency.toId(), amount: protocolFee });
-        subscriptionRecord.currency.transferFrom(msg.sender, total);
+        subscriptionRecord.currency.transfer(msg.sender, total);
         emit SubscriptionSettled({ account: account, module: msg.sender, amountCharged: total });
         success = true;
     }
 
+    // function settlePerUsage(ClaimPerUse calldata claim) external returns(bool success){
+    //     address account = msg.sender;
+    //     address module = claim.module;
+    //     SubscriptionRecord storage $license = $activeLicenses[module][account];
+    //     SubscriptionPricing memory subscriptionRecord = $moduleSubPricing[module];
+    //     ModuleFee memory moduleFee = $moduleFees[module];
+    //
+    //     if (moduleFee.enabled == false) return false;
+    //
+    //
+    // }
+
     function withdraw(Currency currency, uint256 amount) external {
         _burn(msg.sender, currency.toId(), amount);
         currency.transfer(msg.sender, amount);
+    }
+
+    function deposit(Currency currency, address receiver, uint256 amount) external {
+        currency.transferFrom(msg.sender, amount);
+        _mint({ receiver: receiver, id: currency.toId(), amount: amount });
     }
 
     function _mint(Currency currency, Split[] memory splits) internal returns (uint256 total) {

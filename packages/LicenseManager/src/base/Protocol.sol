@@ -1,5 +1,5 @@
 import "../interfaces/IProtocolController.sol";
-import { Ownable } from "solady/auth/Ownable.sol";
+import { Ownable } from "solady/src/auth/Ownable.sol";
 
 abstract contract Protocol is Ownable {
     function protocolController() public returns (IProtocolController controller) {
