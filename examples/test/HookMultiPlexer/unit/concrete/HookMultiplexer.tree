@@ -1,4 +1,4 @@
-HookMultiplexer::onInstall
+HookMultiPlexer::onInstall
 ├── when module is intialized
 │   └── it should revert
 └── when module is not intialized
@@ -8,29 +8,29 @@ HookMultiplexer::onInstall
         └── it should set all the hooks
 
 
-HookMultiplexer::onUninstall
+HookMultiPlexer::onUninstall
 └── it should delete all the hooks and sigs
 
 
-HookMultiplexer::isInitialized
+HookMultiPlexer::isInitialized
 ├── when module is not intialized
 │   └── it should return false
 └── when module is intialized
     └── it should return true
 
 
-HookMultiplexer::getHooks
+HookMultiPlexer::getHooks
 └── it should return all the hooks
 
 
-HookMultiplexer::addHook
+HookMultiPlexer::addHook
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
     └── it should add the hook
 
 
-HookMultiplexer::addSigHook
+HookMultiPlexer::addSigHook
 ├── when module is not intialized
 │   └── it should revert
 └── when module is intialized
@@ -39,17 +39,17 @@ HookMultiplexer::addSigHook
         └── it should add the sig
 
 
-HookMultiplexer::removeHook
+HookMultiPlexer::removeHook
 └── it should remove the hook
 
 
-HookMultiplexer::removeSigHook
+HookMultiPlexer::removeSigHook
 ├── it should remove the hook
 └── when sig was only used by this hook
     └── it should remove the sig
 
 
-HookMultiplexer::preCheck
+HookMultiPlexer::preCheck
 ├── when tx is not an execution
 │   └── it should call global and calldata hooks
 └── when tx is an execution
@@ -70,19 +70,19 @@ HookMultiplexer::preCheck
         └── it should call the delegatecall hooks
 
 
-HookMultiplexer::postCheck
+HookMultiPlexer::postCheck
 └── it should call all hooks provided in hookdata
 
 
-HookMultiplexer::name
-└── it should return HookMultiplexer
+HookMultiPlexer::name
+└── it should return HookMultiPlexer
 
 
-HookMultiplexer::version
+HookMultiPlexer::version
 └── it should return 1.0.0
 
 
-HookMultiplexer::isModuleType
+HookMultiPlexer::isModuleType
 ├── when typeID is 4
 │   └── it should return true
 └── when typeID is not 4

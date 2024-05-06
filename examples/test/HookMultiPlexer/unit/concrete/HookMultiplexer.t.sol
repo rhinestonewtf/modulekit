@@ -3,12 +3,12 @@ pragma solidity ^0.8.23;
 
 import { BaseTest, console2 } from "test/Base.t.sol";
 import {
-    HookMultiplexer,
+    HookMultiPlexer,
     SigHookInit,
-    HookMultiplexerLib,
+    HookMultiPlexerLib,
     HookType,
     HookAndContext
-} from "src/HookMultiplexer/HookMultiplexer.sol";
+} from "src/HookMultiPlexer/HookMultiPlexer.sol";
 import { IERC7579Account, IERC7579Module, IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import {
@@ -25,14 +25,14 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
 
-contract HookMultiplexerTest is BaseTest {
+contract HookMultiPlexerTest is BaseTest {
     using LibSort for address[];
 
     /*//////////////////////////////////////////////////////////////////////////
                                     CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    HookMultiplexer internal hook;
+    HookMultiPlexer internal hook;
     MockRegistry internal _registry;
     MockHook internal subHook1;
     MockHook internal subHook2;
@@ -54,7 +54,7 @@ contract HookMultiplexerTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
         _registry = new MockRegistry();
-        hook = new HookMultiplexer(_registry);
+        hook = new HookMultiPlexer(_registry);
 
         subHook1 = new MockHook();
         subHook2 = new MockHook();
@@ -161,7 +161,7 @@ contract HookMultiplexerTest is BaseTest {
         // it should revert
         bytes memory data = _getInitData(false);
 
-        vm.expectRevert(abi.encodeWithSelector(HookMultiplexerLib.HooksNotSorted.selector));
+        vm.expectRevert(abi.encodeWithSelector(HookMultiPlexerLib.HooksNotSorted.selector));
         hook.onInstall(data);
     }
 
@@ -478,10 +478,10 @@ contract HookMultiplexerTest is BaseTest {
         hook.postCheck(hookData);
     }
 
-    function test_NameShouldReturnHookMultiplexer() public {
-        // it should return HookMultiplexer
+    function test_NameShouldReturnHookMultiPlexer() public {
+        // it should return HookMultiPlexer
         string memory name = hook.name();
-        assertEq(name, "HookMultiplexer");
+        assertEq(name, "HookMultiPlexer");
     }
 
     function test_VersionShouldReturn100() public {

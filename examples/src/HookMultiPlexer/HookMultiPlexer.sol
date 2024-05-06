@@ -15,19 +15,17 @@ import {
     CALLTYPE_DELEGATECALL
 } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
-import { HookMultiplexerLib } from "./HookMultiplexerLib.sol";
+import { HookMultiPlexerLib } from "./HookMultiPlexerLib.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
 import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
 
-import "forge-std/console2.sol";
-
 /**
- * @title HookMultiplexer
+ * @title HookMultiPlexer
  * @dev A module that allows to add multiple hooks to a smart account
  * @author Rhinestone
  */
-contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdapter {
-    using HookMultiplexerLib for *;
+contract HookMultiPlexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdapter {
+    using HookMultiPlexerLib for *;
     using LibSort for uint256[];
     using LibSort for address[];
 
@@ -615,7 +613,7 @@ contract HookMultiplexer is IERC7579Hook, ERC7579ModuleBase, ERC7484RegistryAdap
      * @return name of the module
      */
     function name() external pure virtual returns (string memory) {
-        return "HookMultiplexer";
+        return "HookMultiPlexer";
     }
 
     /**

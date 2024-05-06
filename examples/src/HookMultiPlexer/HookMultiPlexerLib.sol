@@ -6,11 +6,11 @@ import { SigHookInit, HookAndContext } from "./DataTypes.sol";
 import { IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 
 /**
- * @title HookMultiplexerLib
+ * @title HookMultiPlexerLib
  * @dev Library for multiplexing hooks
  * @author Rhinestone
  */
-library HookMultiplexerLib {
+library HookMultiPlexerLib {
     error SubHookPreCheckError(address subHook);
     error SubHookPostCheckError(address subHook);
     error HooksNotSorted();

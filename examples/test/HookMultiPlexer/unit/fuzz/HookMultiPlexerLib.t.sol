@@ -3,12 +3,12 @@ pragma solidity ^0.8.23;
 
 import { BaseTest } from "test/Base.t.sol";
 import {
-    HookMultiplexer,
+    HookMultiPlexer,
     SigHookInit,
-    HookMultiplexerLib,
+    HookMultiPlexerLib,
     HookType,
     HookAndContext
-} from "src/HookMultiplexer/HookMultiplexer.sol";
+} from "src/HookMultiPlexer/HookMultiPlexer.sol";
 import { IERC7579Account, IERC7579Module, IERC7579Hook } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import {
@@ -24,10 +24,10 @@ import { MockHook } from "test/mocks/MockHook.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
-import { HookMultiplexerLib } from "src/HookMultiplexer/HookMultiplexerLib.sol";
+import { HookMultiPlexerLib } from "src/HookMultiPlexer/HookMultiPlexerLib.sol";
 
-contract HookMultiplexerLibExternal {
-    using HookMultiplexerLib for *;
+contract HookMultiPlexerLibExternal {
+    using HookMultiPlexerLib for *;
 
     address[] public array;
     bytes4[] public bytes4Array;
@@ -83,16 +83,16 @@ contract HookMultiplexerLibExternal {
     }
 }
 
-contract HookMultiplexerLibFuzzTest is BaseTest {
+contract HookMultiPlexerLibFuzzTest is BaseTest {
     using LibSort for address[];
     using LibSort for uint256[];
-    using HookMultiplexerLib for *;
+    using HookMultiPlexerLib for *;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     CONTRACTS
     //////////////////////////////////////////////////////////////////////////*/
 
-    HookMultiplexerLibExternal libExternal;
+    HookMultiPlexerLibExternal libExternal;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     VARIABLES
@@ -105,7 +105,7 @@ contract HookMultiplexerLibFuzzTest is BaseTest {
     function setUp() public virtual override {
         BaseTest.setUp();
 
-        libExternal = new HookMultiplexerLibExternal();
+        libExternal = new HookMultiPlexerLibExternal();
     }
 
     /*//////////////////////////////////////////////////////////////////////////
