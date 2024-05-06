@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Ownable } from "solady/auth/Ownable.sol";
-import { ECDSA } from "solady/utils/ECDSA.sol";
+import { Ownable } from "solady/src/auth/Ownable.sol";
+import { ECDSA } from "solady/src/utils/ECDSA.sol";
 import { PackedUserOperation, IOperator } from "./IOperator.sol";
 import "../LicenseManager.sol";
 import "../lib/Currency.sol";
+import "./ISwapRouter.sol";
 
 contract SwapOperator is IOperator, Ownable {
     using CurrencyLibrary for Currency;
@@ -40,7 +41,7 @@ contract SwapOperator is IOperator, Ownable {
 
             LICENSE_MANAGER.transferFrom({
                 sender: tokenOwner.account,
-                recipient: address(this),
+                receiver: address(this),
                 id: currencyId,
                 amount: tokenOwner.amount
             });
@@ -49,26 +50,28 @@ contract SwapOperator is IOperator, Ownable {
 
     function _distributeTokenOut(
         Currency tokenOut,
-        uint256 amountTokenIn,
-        uint256 amountTokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
         OwnerAndBalance[] calldata withdraws
     )
         internal
     {
         uint256 factor = 100_000;
-        uint256 ratio = (amountTokenOut / amountTokenIn) * factor;
+        uint256 ratio = (amountOut / amountIn) * factor;
 
         uint256 length;
 
         for (uint256 i; i < length; i++) {
             OwnerAndBalance calldata withdraw = withdraws[i];
-
-            uint256 _tokenOut = withdraw.amount * ratio;
+            // TODO: check math
+            uint256 _tokenOut = (withdraw.amount * ratio) / factor;
+            tokenOut.transfer({ to: withdraw.account, amount: _tokenOut });
         }
     }
 
     function swap(
         Currency tokenIn,
+        Currency tokenOut,
         OwnerAndBalance[] calldata withdraws,
         bytes calldata path,
         ISwapRouter.ExactOutputSingleParams calldata gasRefund
@@ -92,6 +95,12 @@ contract SwapOperator is IOperator, Ownable {
 
         uint256 amountOut = SWAP_ROUTER.exactInput(params);
         uint256 amountIn = SWAP_ROUTER.exactOutputSingle(gasRefund);
+        _distributeTokenOut({
+            tokenOut: tokenOut,
+            amountIn: amountIn,
+            amountOut: amountOut,
+            withdraws: withdraws
+        });
     }
 
     function validateUserOp(
@@ -103,8 +112,10 @@ contract SwapOperator is IOperator, Ownable {
         onlyEntryPoint
         returns (uint256 packed)
     {
-        bool validSig =
-            ECDSA.recover(userOp.signature, ECDSA.toEthSignedMessageHash(userOpHash)) == owner();
+        bool validSig = ECDSA.recover({
+            hash: ECDSA.toEthSignedMessageHash(userOpHash),
+            signature: userOp.signature
+        }) == owner();
 
         // TODO check middingAccountFunds
 
