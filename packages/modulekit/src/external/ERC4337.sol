@@ -15,5 +15,7 @@ import {
 import { IStakeManager } from "@ERC4337/account-abstraction/contracts/interfaces/IStakeManager.sol";
 import { IAccount as IERC4337 } from
     "@ERC4337/account-abstraction/contracts/interfaces/IAccount.sol";
+import { IAccountExecute } from
+    "@ERC4337/account-abstraction/contracts/interfaces/IAccountExecute.sol";
 
 /* solhint-enable no-unused-import */
