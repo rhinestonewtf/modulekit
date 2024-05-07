@@ -38,4 +38,11 @@ contract MockFeeMachine is IFeeMachine {
             splits[i] = Split({ beneficiary: beneficiaries[i], amount: amounts[i] });
         }
     }
+
+    function split(ClaimPerUse calldata claim) external returns (Split[] memory splits) {
+        splits = new Split[](beneficiaries.length);
+        for (uint256 i = 0; i < beneficiaries.length; i++) {
+            splits[i] = Split({ beneficiary: beneficiaries[i], amount: amounts[i] });
+        }
+    }
 }

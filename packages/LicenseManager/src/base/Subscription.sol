@@ -13,6 +13,7 @@ abstract contract Subscription is ILicenseManager {
         $activeLicenses;
     mapping(address module => SubscriptionPricing conf) internal $moduleSubPricing;
 
+    // TODO: access control
     function setSubscriptionConfig(
         address module,
         Currency currency,

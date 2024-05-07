@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./base/ERC6909.sol";
 import "./base/Protocol.sol";
+import "./base/PerUsage.sol";
 import "./base/ModulesRegister.sol";
 import "./lib/Currency.sol";
 import "./interfaces/ILicenseManager.sol";
@@ -11,7 +12,14 @@ import "./base/Subscription.sol";
 
 import "forge-std/console2.sol";
 
-contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegister, ERC6909 {
+contract LicenseManager is
+    ILicenseManager,
+    Protocol,
+    Subscription,
+    ModulesRegister,
+    PerUsage,
+    ERC6909
+{
     using CurrencyLibrary for Currency;
 
     error UnauthorizedModule();
@@ -44,27 +52,32 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         });
 
         _mint({ receiver: beneficiary, id: claim.currency.toId(), amount: protocolFee });
-        claim.currency.transfer(claim.account, total);
+
+        console2.log("transfer", claim.account, total, Currency.unwrap(claim.currency));
+        claim.currency.transferOrApprove(claim.account, total);
 
         emit TransactionSettled({ account: claim.account, module: msg.sender, amountCharged: total });
 
         return (true, claim.amount - total);
     }
 
-    function settleSubscription(ClaimSubscription calldata claim) external returns (bool success) {
+    function settleSubscription(ClaimSubscription calldata claim)
+        external
+        returns (bool success, uint256 total)
+    {
         address account = claim.account;
         address module = claim.module;
         SubscriptionRecord storage $license = $activeLicenses[module][account];
         SubscriptionPricing memory subscriptionRecord = $moduleSubPricing[module];
         ModuleFee memory moduleFee = $moduleFees[module];
 
-        if (moduleFee.enabled == false) return false;
+        if (moduleFee.enabled == false) return (false, 0);
 
         $license.validUntil =
             _validUntil({ smartAccount: account, module: module, amount: claim.amount });
         Split[] memory split = moduleFee.feeMachine.split({ claim: claim });
-        uint256 total = _mint(subscriptionRecord.currency, split);
-        if (total == 0) return true;
+        total = _mint(subscriptionRecord.currency, split);
+        if (total == 0) return (true, 0);
 
         uint256 protocolFee;
         address beneficiary;
@@ -78,22 +91,41 @@ contract LicenseManager is ILicenseManager, Protocol, Subscription, ModulesRegis
         });
 
         _mint({ receiver: beneficiary, id: subscriptionRecord.currency.toId(), amount: protocolFee });
-        subscriptionRecord.currency.transfer(msg.sender, total);
-        emit SubscriptionSettled({ account: account, module: msg.sender, amountCharged: total });
+        subscriptionRecord.currency.transferOrApprove({ account: msg.sender, amount: total });
+        emit SubscriptionSettled({ account: account, module: module, amountCharged: total });
         success = true;
     }
 
-    // function settlePerUsage(ClaimPerUse calldata claim) external returns(bool success){
-    //     address account = msg.sender;
-    //     address module = claim.module;
-    //     SubscriptionRecord storage $license = $activeLicenses[module][account];
-    //     SubscriptionPricing memory subscriptionRecord = $moduleSubPricing[module];
-    //     ModuleFee memory moduleFee = $moduleFees[module];
-    //
-    //     if (moduleFee.enabled == false) return false;
-    //
-    //
-    // }
+    function settlePerUsage(ClaimPerUse calldata claim)
+        external
+        returns (bool success, uint256 total)
+    {
+        address account = claim.account;
+        address module = msg.sender;
+
+        ModuleFee memory moduleFee = $moduleFees[module];
+        PerUseRecord memory perUseRecord = $perUseRecord[module];
+
+        Split[] memory split = moduleFee.feeMachine.split({ claim: claim });
+        total = _mint(perUseRecord.currency, split);
+
+        uint256 protocolFee;
+        address beneficiary;
+        (protocolFee, total, beneficiary) = addProtocolFee({
+            account: account,
+            module: msg.sender,
+            currency: perUseRecord.currency,
+            feeMachine: moduleFee.feeMachine,
+            claimType: ClaimType.Transaction,
+            total: total
+        });
+
+        _mint({ receiver: beneficiary, id: perUseRecord.currency.toId(), amount: protocolFee });
+        perUseRecord.currency.transferFrom(account, total);
+
+        emit PerUseSettled({ account: account, module: module, amountCharged: total });
+        return (true, total);
+    }
 
     function withdraw(Currency currency, uint256 amount) external {
         _burn(msg.sender, currency.toId(), amount);

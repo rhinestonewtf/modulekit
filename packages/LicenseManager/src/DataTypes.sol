@@ -38,7 +38,7 @@ struct SubscriptionRecord {
 
 struct PerUseRecord {
     Currency currency;
-    uint256 amount;
+    uint128 pricePerUsage;
 }
 
 struct SubscriptionPricing {

@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { IERC20Minimal } from "../interfaces/external/IERC20Minimal.sol";
 import { ERC7579Execution } from "./ERC7579Execution.sol";
+import "forge-std/console2.sol";
 
 type Currency is address;
 
@@ -105,7 +106,7 @@ library CurrencyLibrary {
         }
     }
 
-    function transfer(address account, Currency currency, address to, uint256 amount) internal {
+    function transferOrApprove(Currency currency, address account, uint256 amount) internal {
         if (currency.isNative()) {
             account.execute({ to: address(this), value: amount, data: "" });
         } else {
@@ -116,7 +117,7 @@ library CurrencyLibrary {
                 account.execute({
                     to: Currency.unwrap(currency),
                     value: 0,
-                    data: abi.encodeWithSelector(IERC20Minimal.approve.selector, to, amount)
+                    data: abi.encodeWithSelector(IERC20Minimal.approve.selector, address(this), amount)
                 });
                 safeTransferFrom(currency, account, amount);
             }

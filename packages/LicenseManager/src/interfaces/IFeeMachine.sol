@@ -13,4 +13,5 @@ interface IFeeMachine is IERC165 {
         returns (Split[] memory);
 
     function split(ClaimSubscription calldata claim) external returns (Split[] memory);
+    function split(ClaimPerUse calldata claim) external returns (Split[] memory);
 }

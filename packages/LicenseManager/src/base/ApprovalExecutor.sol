@@ -7,24 +7,51 @@ import "../lib/Currency.sol";
 import "../interfaces/external/IERC20Minimal.sol";
 
 contract ApprovalExecutor is ERC7579ExecutorBase {
-    function _setERC20Approval(Currency currency, address account, uint256 amount) internal {
-        _execute({
-            account: account,
-            to: Currency.unwrap(currency),
-            value: 0,
-            data: abi.encodeCall(IERC20Minimal.approve, (address(this), amount))
-        });
+    struct Config {
+        bool globalEnabled;
+        bool isInitialized;
+        mapping(address module => bool enabled) moduleEnabled;
+        address[] allEnabledModules;
     }
 
-    function _getNative(address account, uint256 amount) internal {
-        _execute({ account: account, to: address(this), value: amount, data: "" });
+    mapping(address account => Config config) internal config;
+
+    function onInstall(bytes calldata data) external {
+        (bool globalEnabled, address[] memory enabledModules) = abi.decode(data, (bool, address[]));
+
+        config[msg.sender].isInitialized = true;
+
+        if (globalEnabled) {
+            config[msg.sender].globalEnabled = true;
+        } else {
+            uint256 length = enabledModules.length;
+
+            for (uint256 i; i < length; i++) {
+                config[msg.sender].moduleEnabled[enabledModules[i]] = true;
+                config[msg.sender].allEnabledModules.push(enabledModules[i]);
+            }
+        }
     }
 
-    function onInstall(bytes calldata data) external { }
+    function onUninstall(bytes calldata data) external {
+        address[] storage allEnabledModules = config[msg.sender].allEnabledModules;
 
-    function onUninstall(bytes calldata data) external { }
+        uint256 length = allEnabledModules.length;
 
-    function isModuleType(uint256 typeID) external view returns (bool) { }
+        for (uint256 i; i < length; i++) {
+            config[msg.sender].moduleEnabled[allEnabledModules[i]] = false;
+        }
 
-    function isInitialized(address smartAccount) external view returns (bool) { }
+        delete config[msg.sender].allEnabledModules;
+        delete config[msg.sender].globalEnabled;
+        delete config[msg.sender].isInitialized;
+    }
+
+    function isModuleType(uint256 typeID) external view returns (bool) {
+        if (typeID == 2) return true;
+    }
+
+    function isInitialized(address smartAccount) external view returns (bool) {
+        return config[smartAccount].isInitialized;
+    }
 }

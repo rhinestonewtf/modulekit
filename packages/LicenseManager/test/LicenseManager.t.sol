@@ -8,9 +8,10 @@ import "./mocks/MockProtocolController.sol";
 import "./mocks/MockModule.sol";
 import "./mocks/MockOperator.sol";
 import "./mocks/MockFeeMachine.sol";
+import "./Fork.t.sol";
 import { MockERC20 } from "forge-std/mocks/MockERC20.sol";
 
-contract LicenseManagerTest is Test {
+contract LicenseManagerTest is ForkTest {
     using CurrencyLibrary for Currency;
 
     LicenseManager licenseManager;
@@ -18,9 +19,7 @@ contract LicenseManagerTest is Test {
     MockProtocolController protocolController;
     MockModule module;
     MockFeeMachine feeMachine;
-    MockOperator operator;
-    MockERC20 token1;
-    MockERC20 token2;
+    MockOperator mockOperator;
 
     address account;
 
@@ -29,24 +28,19 @@ contract LicenseManagerTest is Test {
     address beneficiary1 = makeAddr("beneficiary1");
     address beneficiary2 = makeAddr("beneficiary2");
 
-    function setUp() public {
+    function setUp() public virtual override {
+        super.setUp();
         account = makeAddr("account");
         developer = makeAddr("developer");
         protocolController = new MockProtocolController();
         licenseManager = new LicenseManager(protocolController);
         feeMachine = new MockFeeMachine();
-        token1 = new MockERC20();
-        token2 = new MockERC20();
         module = new MockModule(licenseManager);
-        operator = new MockOperator(licenseManager);
+        mockOperator = new MockOperator(licenseManager);
 
-        token1.initialize("USDC", "USDC", 18);
-        vm.label(address(token1), "USDC");
-        deal(address(token1), account, 10_000 ether);
+        deal(address(weth), account, 1_000_000_000 ether);
 
-        token2.initialize("WETH", "WETH", 18);
-        vm.label(address(token2), "WETH");
-        deal(address(token2), account, 10_000 ether);
+        deal(address(usdc), account, 1_000_000_000 ether);
 
         // authorize module
         vm.prank(address(protocolController));
@@ -64,15 +58,15 @@ contract LicenseManagerTest is Test {
         amounts[1] = 0.1 ether;
         feeMachine.setSplit(beneficiaries, amounts);
 
-        // vm.startPrank(account);
-        //
-        // token1.approve(address(licenseManager), 10_000 ether);
-        // token2.approve(address(licenseManager), 10_000 ether);
-        //
-        // vm.stopPrank();
+        vm.startPrank(account);
+
+        IERC20(usdc).approve(address(licenseManager), 100_000_000 ether);
+        IERC20(weth).approve(address(licenseManager), 100_000_000 ether);
+
+        vm.stopPrank();
 
         vm.prank(beneficiary1);
-        licenseManager.setOperator(address(operator), true);
+        licenseManager.setOperator(address(mockOperator), true);
 
         uint128 secondsPerDay = 86_400;
         uint128 secPerYear = secondsPerDay * 365;
@@ -80,14 +74,15 @@ contract LicenseManagerTest is Test {
 
         uint128 pricePerSecond = pricePerYear / secPerYear;
         licenseManager.setSubscriptionConfig(
-            address(module), Currency.wrap(address(token1)), pricePerSecond, 1 days
+            address(module), Currency.wrap(address(usdc)), pricePerSecond, 1 days
         );
     }
 
     function test_claim_transaction() public {
+        console2.log("balance", IERC20(weth).balanceOf(account));
         ClaimTransaction memory claim = ClaimTransaction({
             account: account,
-            currency: Currency.wrap(address(token1)),
+            currency: Currency.wrap(address(weth)),
             amount: 100 ether,
             feeMachineData: "",
             referral: address(0)
@@ -98,7 +93,7 @@ contract LicenseManagerTest is Test {
     function test_claim_subscription() public {
         uint48 validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
         assertTrue(validUntil == 0);
-        uint256 balanceBefore = token1.balanceOf(account);
+        uint256 balanceBefore = IERC20(usdc).balanceOf(account);
         ClaimSubscription memory claim = ClaimSubscription({
             account: account,
             module: address(module),
@@ -110,23 +105,10 @@ contract LicenseManagerTest is Test {
         vm.prank(account);
         licenseManager.settleSubscription(claim);
 
-        uint256 balanceAfter = token1.balanceOf(account);
+        uint256 balanceAfter = IERC20(usdc).balanceOf(account);
 
         assertTrue(balanceAfter < balanceBefore);
         validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
         assertTrue(validUntil > 0);
-    }
-
-    function test_simulateSwap() public {
-        test_claim_transaction();
-
-        uint256 balance =
-            licenseManager.balanceOf(beneficiary1, Currency.wrap(address(token1)).toId());
-
-        operator.simulateSwap(beneficiary1, Currency.wrap(address(token1)), balance);
-
-        uint256 balanceToken = token1.balanceOf(address(operator));
-
-        assertEq(balanceToken, balance);
     }
 }

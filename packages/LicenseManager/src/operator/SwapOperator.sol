@@ -7,9 +7,24 @@ import { PackedUserOperation, IOperator } from "./IOperator.sol";
 import "../LicenseManager.sol";
 import "../lib/Currency.sol";
 import "./ISwapRouter.sol";
+import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
+
+import "forge-std/interfaces/IERC20.sol";
+
+library PathLib {
+    function decodeCurrency(bytes calldata path)
+        internal
+        pure
+        returns (Currency tokenIn, Currency tokenOut)
+    {
+        tokenIn = Currency.wrap(address(bytes20(path[0:20])));
+        tokenOut = Currency.wrap(address(bytes20(path[path.length - 20:])));
+    }
+}
 
 contract SwapOperator is IOperator, Ownable {
     using CurrencyLibrary for Currency;
+    using PathLib for bytes;
 
     struct OwnerAndBalance {
         address account;
@@ -28,17 +43,17 @@ contract SwapOperator is IOperator, Ownable {
     }
 
     function _transferLicenseManagerTokens(
-        uint256 currencyId,
+        Currency currency,
         OwnerAndBalance[] calldata withdraws
     )
         internal
         returns (uint256 totalAmount)
     {
-        uint256 length;
+        uint256 currencyId = currency.toId();
+        uint256 length = withdraws.length;
         for (uint256 i; i < length; i++) {
             OwnerAndBalance calldata tokenOwner = withdraws[i];
             totalAmount += tokenOwner.amount;
-
             LICENSE_MANAGER.transferFrom({
                 sender: tokenOwner.account,
                 receiver: address(this),
@@ -50,28 +65,33 @@ contract SwapOperator is IOperator, Ownable {
 
     function _distributeTokenOut(
         Currency tokenOut,
-        uint256 amountIn,
         uint256 amountOut,
+        uint256 amountIn,
         OwnerAndBalance[] calldata withdraws
     )
         internal
     {
-        uint256 factor = 100_000;
-        uint256 ratio = (amountOut / amountIn) * factor;
+        IERC20 _tokenOut = IERC20(Currency.unwrap(tokenOut));
+        console2.log("balanceOf", _tokenOut.balanceOf(address(this)));
 
-        uint256 length;
+        uint256 length = withdraws.length;
+        uint256 ratio;
+        if (amountOut < amountIn) {
+            ratio = amountIn / amountOut;
 
-        for (uint256 i; i < length; i++) {
-            OwnerAndBalance calldata withdraw = withdraws[i];
-            // TODO: check math
-            uint256 _tokenOut = (withdraw.amount * ratio) / factor;
-            tokenOut.transfer({ to: withdraw.account, amount: _tokenOut });
-        }
+            console2.log("ratio", ratio);
+
+            for (uint256 i; i < length; i++) {
+                OwnerAndBalance calldata withdraw = withdraws[i];
+                uint256 _tokenOut = withdraw.amount / ratio;
+
+                console2.log("tokenOut", _tokenOut);
+                tokenOut.transfer({ to: withdraw.account, amount: _tokenOut });
+            }
+        } else { }
     }
 
     function swap(
-        Currency tokenIn,
-        Currency tokenOut,
         OwnerAndBalance[] calldata withdraws,
         bytes calldata path,
         ISwapRouter.ExactOutputSingleParams calldata gasRefund
@@ -79,26 +99,27 @@ contract SwapOperator is IOperator, Ownable {
         external
         onlyEntryPoint
     {
-        uint256 currencyId = tokenIn.toId();
-        uint256 totalAmount = _transferLicenseManagerTokens(currencyId, withdraws);
+        (Currency tokenIn, Currency tokenOut) = path.decodeCurrency();
+        uint256 amountIn = _transferLicenseManagerTokens(tokenIn, withdraws);
 
-        LICENSE_MANAGER.withdraw({ currency: tokenIn, amount: totalAmount });
+        LICENSE_MANAGER.withdraw({ currency: tokenIn, amount: amountIn });
 
-        // TODO: check that path first token ins tokenIn
         ISwapRouter.ExactInputParams memory params = ISwapRouter.ExactInputParams({
             path: path,
             recipient: address(this),
             deadline: block.timestamp,
-            amountIn: totalAmount,
+            amountIn: amountIn,
             amountOutMinimum: 0
         });
 
+        IERC20(Currency.unwrap(tokenIn)).approve(address(SWAP_ROUTER), amountIn);
+
         uint256 amountOut = SWAP_ROUTER.exactInput(params);
-        uint256 amountIn = SWAP_ROUTER.exactOutputSingle(gasRefund);
+
         _distributeTokenOut({
             tokenOut: tokenOut,
-            amountIn: amountIn,
             amountOut: amountOut,
+            amountIn: amountIn,
             withdraws: withdraws
         });
     }
