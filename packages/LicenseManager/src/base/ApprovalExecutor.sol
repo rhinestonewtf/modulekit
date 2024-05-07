@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "@rhinestone/modulekit/src/modules/ERC7579ExecutorBase.sol";
+import "modulekit/modules/ERC7579ExecutorBase.sol";
 import "../DataTypes.sol";
 import "../lib/Currency.sol";
 import "../interfaces/external/IERC20Minimal.sol";

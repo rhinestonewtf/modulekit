@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../DataTypes.sol";
-import { Ownable } from "solady/src/auth/Ownable.sol";
+import { Ownable } from "solady/auth/Ownable.sol";
 import "../interfaces/IFeeMachine.sol";
 
 abstract contract ModulesRegister is Ownable {

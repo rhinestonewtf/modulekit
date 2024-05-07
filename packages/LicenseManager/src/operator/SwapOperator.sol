@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Ownable } from "solady/src/auth/Ownable.sol";
-import { ECDSA } from "solady/src/utils/ECDSA.sol";
+import { Ownable } from "solady/auth/Ownable.sol";
+import { ECDSA } from "solady/utils/ECDSA.sol";
 import { PackedUserOperation, IOperator } from "./IOperator.sol";
 import "../LicenseManager.sol";
 import "../lib/Currency.sol";

@@ -2,9 +2,10 @@
 pragma solidity ^0.8.20;
 
 import "./LicenseManager.t.sol";
-import "@rhinestone/modulekit/src/ModuleKit.sol";
+import "modulekit/ModuleKit.sol";
+import { MODULE_TYPE_EXECUTOR } from "erc7579/interfaces/IERC7579Module.sol";
 
-contract ExecutorTest is LicenseManager, RhinestoneModuleKit {
+contract ExecutorTest is LicenseManagerTest, RhinestoneModuleKit {
     using ModuleKitHelpers for *;
     using ModuleKitSCM for *;
     using ModuleKitUserOp for *;
@@ -14,11 +15,11 @@ contract ExecutorTest is LicenseManager, RhinestoneModuleKit {
     function setUp() public override {
         super.setUp();
 
-        instance = makeAccount("instance");
+        instance = makeAccountInstance("instance");
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_EXECUTOR,
-            module: address(autosavings),
+            module: address(licenseManager),
             data: abi.encode(true, new address[](0))
         });
     }

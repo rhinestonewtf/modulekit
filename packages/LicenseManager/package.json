@@ -1,8 +1,8 @@
 {
-  "name": "@rhinestone/licensemanagerv2",
-  "description": "rhinestones licensemanager",
+  "name": "@rhinestone/licensemanager",
+  "description": "LicenseManager for Modules",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "author": {
     "name": "zeroknots.eth",
     "url": "https://rhinestone.wtf"
@@ -15,23 +15,17 @@
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@openzeppelin/contracts": "5.0.1",
     "@prb/math": "^4.0.2",
-    "@rhinestone/modulekit": "workspace:*",
-    "@rhinestone/safe7579": "workspace:*",
-    "@rhinestone/sessionkeymanager": "workspace:*",
+    "@rhinestone/modulekit-foundry": "workspace:*",
     "@safe-global/safe-contracts": "^1.4.1",
-    "@uniswap/v3-core": "github:Uniswap/v3-core",
-    "@uniswap/v3-periphery": "github:Uniswap/v3-periphery",
     "ds-test": "github:dapphub/ds-test",
     "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
-    "erc7579": "github:erc7579/erc7579-implementation#feature/hookRevert",
-    "forge-std": "github:foundry-rs/forge-std#v1.8.0",
-    "p256-verifier": "github:daimo-eth/p256-verifier",
-    "permit2": "github:Uniswap/permit2",
+    "erc7579": "github:erc7579/erc7579-implementation",
+    "forge-std": "github:foundry-rs/forge-std",
     "prettier": "^2.8.8",
     "sentinellist": "github:zeroknots/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^4.5.2"
+    "solhint": "^4.5.4"
   },
   "files": [
     "artifacts",
@@ -40,6 +34,7 @@
     "CHANGELOG.md",
     "LICENSE-GPL.md"
   ],
+  "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
   "keywords": [
     "blockchain",
     "ethereum",
@@ -53,10 +48,9 @@
   },
   "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
+    "build": "forge build",
     "fmt": "forge fmt",
     "fmt:check": "forge fmt --check",
-    "build": "forge build && ./bytecode.sh",
-    "bytecode": "./bytescode.sh",
     "build:optimized": "FOUNDRY_PROFILE=optimized forge build",
     "build:smt": "FOUNDRY_PROFILE=smt forge build",
     "clean": "rm -rf artifacts broadcast cache docs out out-optimized out-svg",
