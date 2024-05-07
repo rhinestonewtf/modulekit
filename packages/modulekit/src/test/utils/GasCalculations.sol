@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { UD60x18, ud, intoUint256 } from "@prb/math/src/UD60x18.sol";
 import { PRBMathCastingUint256 } from "@prb/math/src/casting/Uint256.sol";
-import { LibZip } from "solady/src/utils/LibZip.sol";
+import { LibZip } from "solady/utils/LibZip.sol";
 import { parseJson, toString } from "./Vm.sol";
 
 struct GasCalculations {

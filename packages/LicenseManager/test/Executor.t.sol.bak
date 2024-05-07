@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "./LicenseManager.t.sol";
-import "modulekit/ModuleKit.sol";
+import "@rhinestone/modulekit/src/ModuleKit.sol";
 import { MODULE_TYPE_EXECUTOR } from "erc7579/interfaces/IERC7579Module.sol";
 
 contract ExecutorTest is LicenseManagerTest, RhinestoneModuleKit {
