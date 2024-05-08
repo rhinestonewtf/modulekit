@@ -7,6 +7,7 @@ import "./base/ProtocolConfig.sol";
 import "./base/Subscription.sol";
 import "./base/PricingConfig.sol";
 import "./lib/Currency.sol";
+import "./lib/Helpers.sol";
 import "./interfaces/ILicenseManager.sol";
 import "./interfaces/IFeeMachine.sol";
 
@@ -14,6 +15,7 @@ import "forge-std/console2.sol";
 
 contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, PricingConfig {
     using CurrencyLibrary for Currency;
+    using Helpers for address;
 
     error InvalidClaim();
 
@@ -30,8 +32,10 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         onlyEnabledModules(msg.sender)
         returns (bool success, uint256 totalAfterFee)
     {
-        ModuleRecord storage $moduleRecord = $module[msg.sender];
+        address module = msg.sender;
+        ModuleRecord storage $moduleRecord = $module[module];
 
+        IFeeMachine feeMachine = $moduleRecord.feeMachine;
         Split[] memory split = $moduleRecord.feeMachine.split({ module: msg.sender, claim: claim });
         uint256 total = _mint(claim.currency, split);
         if (total == 0) return (true, claim.amount);
@@ -41,7 +45,7 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         (protocolFee, total, beneficiary) = addProtocolFee({
             account: claim.account,
             currency: claim.currency,
-            module: msg.sender,
+            module: module,
             feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,
             total: total
@@ -51,7 +55,7 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
 
         claim.currency.transferOrApprove(claim.account, total);
 
-        emit TransactionSettled({ account: claim.account, module: msg.sender, amountCharged: total });
+        emit TransactionSettled({ account: claim.account, module: module, amountCharged: total });
 
         return (true, claim.amount - total);
     }
@@ -77,7 +81,7 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         address beneficiary;
         (protocolFee, total, beneficiary) = addProtocolFee({
             account: account,
-            module: msg.sender,
+            module: claim.module,
             currency: subscriptionRecord.currency,
             feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,
@@ -85,7 +89,7 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         });
 
         _mint({ receiver: beneficiary, id: subscriptionRecord.currency.toId(), amount: protocolFee });
-        subscriptionRecord.currency.transferOrApprove({ account: msg.sender, amount: total });
+        subscriptionRecord.currency.transferOrApprove({ account: account, amount: total });
         emit SubscriptionSettled({ account: account, module: module, amountCharged: total });
         success = true;
     }
@@ -98,7 +102,7 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         address account = claim.account;
         address module = msg.sender;
 
-        ModuleRecord storage $moduleRecord = $module[msg.sender];
+        ModuleRecord storage $moduleRecord = $module[module];
         PricingPerUse memory perUsePricing = $moduleRecord.perUse;
 
         Split[] memory split = $moduleRecord.feeMachine.split({ claim: claim });
@@ -108,7 +112,7 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         address beneficiary;
         (protocolFee, total, beneficiary) = addProtocolFee({
             account: account,
-            module: msg.sender,
+            module: module,
             currency: perUsePricing.currency,
             feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,

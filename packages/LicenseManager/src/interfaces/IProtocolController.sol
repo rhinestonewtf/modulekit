@@ -15,6 +15,8 @@ interface IProtocolController {
     function protocolFeeForModule(
         address module,
         IFeeMachine feeMachine,
+        uint256 feeMachineAmount,
+        Currency currency,
         ClaimType claimType
     )
         external

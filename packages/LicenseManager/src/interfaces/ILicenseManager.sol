@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "../lib/Currency.sol";
+import "../subscription/ISubscription.sol";
 
 interface ILicenseManager {
     event TransactionSettled(address account, address module, uint256 amountCharged);
@@ -9,4 +10,6 @@ interface ILicenseManager {
     event PerUseSettled(address account, address module, uint256 amountCharged);
 
     error SubscriptionTooShort();
+
+    function subtoken() external view returns (ISubscription);
 }
