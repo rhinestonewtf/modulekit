@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import "src/LicenseManager.sol";
 import "src/DataTypes.sol";
+import "src/subscription/Subscription.sol";
 import "./mocks/MockProtocolController.sol";
 import "./mocks/MockModule.sol";
 import "./mocks/MockOperator.sol";
@@ -15,6 +16,8 @@ contract LicenseManagerTest is ForkTest {
     using CurrencyLibrary for Currency;
 
     LicenseManager licenseManager;
+
+    SubscriptionToken subtoken;
 
     MockProtocolController protocolController;
     MockModule module;
@@ -33,7 +36,9 @@ contract LicenseManagerTest is ForkTest {
         account = makeAddr("account");
         developer = makeAddr("developer");
         protocolController = new MockProtocolController();
-        licenseManager = new LicenseManager(protocolController);
+        subtoken = new SubscriptionToken();
+        licenseManager = new LicenseManager(protocolController, ISubscription(address(subtoken)));
+        subtoken.authorizeMintAuthority(address(licenseManager));
         feeMachine = new MockFeeMachine();
         module = new MockModule(licenseManager);
         mockOperator = new MockOperator(licenseManager);
@@ -44,7 +49,7 @@ contract LicenseManagerTest is ForkTest {
 
         // authorize module
         vm.prank(address(protocolController));
-        licenseManager.setFeeMachine(feeMachine, true);
+        licenseManager.authorizeFeeMachine(feeMachine, true);
 
         vm.prank(address(feeMachine));
         licenseManager.setModule(address(module), developer, true);
@@ -73,8 +78,14 @@ contract LicenseManagerTest is ForkTest {
         uint128 pricePerYear = 10 ether;
 
         uint128 pricePerSecond = pricePerYear / secPerYear;
-        licenseManager.setSubscriptionConfig(
-            address(module), Currency.wrap(address(usdc)), pricePerSecond, 1 days
+        vm.prank(developer);
+        licenseManager.setSubscription(
+            address(module),
+            PricingSubscription({
+                currency: Currency.wrap(address(usdc)),
+                pricePerSecond: pricePerSecond,
+                minSubTime: 1 days
+            })
         );
     }
 
@@ -91,7 +102,7 @@ contract LicenseManagerTest is ForkTest {
     }
 
     function test_claim_subscription() public {
-        uint48 validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
+        uint256 validUntil = subtoken.subscriptionOf({ module: address(module), account: account });
         assertTrue(validUntil == 0);
         uint256 balanceBefore = IERC20(usdc).balanceOf(account);
         ClaimSubscription memory claim = ClaimSubscription({
@@ -108,7 +119,7 @@ contract LicenseManagerTest is ForkTest {
         uint256 balanceAfter = IERC20(usdc).balanceOf(account);
 
         assertTrue(balanceAfter < balanceBefore);
-        validUntil = licenseManager.getSubscriptionValidUntil(account, address(module));
+        validUntil = subtoken.subscriptionOf({ module: address(module), account: account });
         assertTrue(validUntil > 0);
     }
 }

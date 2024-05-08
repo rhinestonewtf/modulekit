@@ -3,30 +3,22 @@ pragma solidity ^0.8.20;
 
 import "../interfaces/ILicenseManager.sol";
 import "../DataTypes.sol";
+import "./LicenseManagerBase.sol";
+import "../subscription/ISubscription.sol";
 
-abstract contract Subscription is ILicenseManager {
+abstract contract Subscription is ILicenseManager, LicenseManagerBase {
     error SubscriptionAmountTooLow(uint256 amount, uint256 minAmount);
 
     event NewSubscription(address account, address module, uint48 newValidUntil);
 
-    mapping(address module => mapping(address account => SubscriptionRecord)) internal
-        $activeLicenses;
-    mapping(address module => SubscriptionPricing conf) internal $moduleSubPricing;
+    ISubscription public subtoken;
 
-    // TODO: access control
-    function setSubscriptionConfig(
-        address module,
-        Currency currency,
-        uint128 pricePerSecond,
-        uint128 minSubTime
-    )
-        external
-    {
-        $moduleSubPricing[module] = SubscriptionPricing({
-            currency: currency,
-            pricePerSecond: pricePerSecond,
-            minSubTime: minSubTime
-        });
+    constructor(ISubscription _subtoken) {
+        subtoken = _subtoken;
+    }
+
+    function migrateToken(ISubscription _newSubscriptionToken) external onlyOwner {
+        subtoken = _newSubscriptionToken;
     }
 
     function _validUntil(
@@ -36,12 +28,12 @@ abstract contract Subscription is ILicenseManager {
     )
         internal
         view
-        returns (uint48 newValidUntil)
+        returns (uint256 newValidUntil)
     {
-        SubscriptionPricing memory subscriptionPricing = $moduleSubPricing[module];
+        PricingSubscription memory subscriptionPricing = $module[module].subscription;
         uint256 minAmount = subscriptionPricing.minSubTime * subscriptionPricing.pricePerSecond;
         if (amount < minAmount) revert SubscriptionAmountTooLow(amount, minAmount);
-        uint256 currentValidUntil = getSubscriptionValidUntil(smartAccount, module);
+        uint256 currentValidUntil = getSubscription({ account: smartAccount, module: module });
 
         newValidUntil = (currentValidUntil == 0)
             ? uint48(block.timestamp + subscriptionPricing.minSubTime) // license is not valid, so
@@ -53,18 +45,15 @@ abstract contract Subscription is ILicenseManager {
         }
     }
 
-    function isActiveSubscription(address account, address module) external view returns (bool) {
-        return $activeLicenses[module][account].validUntil > block.timestamp;
+    function _mintSubscription(address account, address module, uint256 newValid) internal {
+        subtoken.mint({ account: account, module: module, validUntil: newValid });
     }
 
-    function getSubscriptionValidUntil(
-        address account,
-        address module
-    )
-        public
-        view
-        returns (uint48)
-    {
-        return $activeLicenses[module][account].validUntil;
+    function isActiveSubscription(address account, address module) external view returns (bool) {
+        return getSubscription({ account: account, module: module }) > block.timestamp;
+    }
+
+    function getSubscription(address account, address module) public view returns (uint256) {
+        return subtoken.subscriptionOf({ account: account, module: module });
     }
 }

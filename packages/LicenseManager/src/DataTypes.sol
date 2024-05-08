@@ -9,6 +9,15 @@ enum ClaimType {
     Subscription
 }
 
+struct Split {
+    address receiver;
+    uint256 amount;
+}
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                          Claims                            */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
 struct ClaimTransaction {
     address account;
     Currency currency;
@@ -31,29 +40,35 @@ struct ClaimPerUse {
     address referral;
 }
 
-struct SubscriptionRecord {
-    uint48 validUntil;
-    uint48 renewalSeconds;
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                      Module Pricing                        */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+struct ModuleRecord {
+    bool enabled;
+    address authority;
+    IFeeMachine feeMachine;
+    PricingPerUse perUse;
+    PricingSubscription subscription;
+    PricingTransaction transaction;
 }
 
-struct PerUseRecord {
+struct PricingTransaction {
+    uint256 bps;
+}
+
+struct PricingPerUse {
     Currency currency;
     uint128 pricePerUsage;
 }
 
-struct SubscriptionPricing {
+struct PricingSubscription {
     Currency currency;
     uint128 pricePerSecond;
     uint128 minSubTime;
 }
 
-struct Split {
-    address beneficiary;
-    uint256 amount;
-}
-
-struct ModuleFee {
-    bool enabled;
-    IFeeMachine feeMachine;
-    address developer;
+struct SubscriptionRecord {
+    uint48 validUntil;
+    uint48 renewalSeconds;
 }

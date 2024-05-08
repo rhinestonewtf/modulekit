@@ -2,41 +2,37 @@
 pragma solidity ^0.8.20;
 
 import "./base/ERC6909.sol";
-import "./base/Protocol.sol";
-import "./base/PerUsage.sol";
-import "./base/ModulesRegister.sol";
+import "./base/LicenseManagerBase.sol";
+import "./base/ProtocolConfig.sol";
+import "./base/Subscription.sol";
+import "./base/PricingConfig.sol";
 import "./lib/Currency.sol";
 import "./interfaces/ILicenseManager.sol";
 import "./interfaces/IFeeMachine.sol";
-import "./base/Subscription.sol";
 
 import "forge-std/console2.sol";
 
-contract LicenseManager is
-    ILicenseManager,
-    Protocol,
-    Subscription,
-    ModulesRegister,
-    PerUsage,
-    ERC6909
-{
+contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, PricingConfig {
     using CurrencyLibrary for Currency;
 
-    error UnauthorizedModule();
     error InvalidClaim();
 
-    constructor(IProtocolController controller) {
-        _initializeOwner(address(controller));
-    }
+    constructor(
+        IProtocolController controller,
+        ISubscription subtoken
+    )
+        Subscription(subtoken)
+        LicenseManagerBase(controller)
+    { }
 
     function settleTransaction(ClaimTransaction calldata claim)
-        public
+        external
+        onlyEnabledModules(msg.sender)
         returns (bool success, uint256 totalAfterFee)
     {
-        ModuleFee memory moduleFee = $moduleFees[msg.sender];
-        if (moduleFee.enabled == false) return (false, 0);
+        ModuleRecord storage $moduleRecord = $module[msg.sender];
 
-        Split[] memory split = moduleFee.feeMachine.split({ module: msg.sender, claim: claim });
+        Split[] memory split = $moduleRecord.feeMachine.split({ module: msg.sender, claim: claim });
         uint256 total = _mint(claim.currency, split);
         if (total == 0) return (true, claim.amount);
 
@@ -46,14 +42,13 @@ contract LicenseManager is
             account: claim.account,
             currency: claim.currency,
             module: msg.sender,
-            feeMachine: moduleFee.feeMachine,
+            feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,
             total: total
         });
 
         _mint({ receiver: beneficiary, id: claim.currency.toId(), amount: protocolFee });
 
-        console2.log("transfer", claim.account, total, Currency.unwrap(claim.currency));
         claim.currency.transferOrApprove(claim.account, total);
 
         emit TransactionSettled({ account: claim.account, module: msg.sender, amountCharged: total });
@@ -63,19 +58,18 @@ contract LicenseManager is
 
     function settleSubscription(ClaimSubscription calldata claim)
         external
+        onlyEnabledModules(claim.module)
         returns (bool success, uint256 total)
     {
         address account = claim.account;
         address module = claim.module;
-        SubscriptionRecord storage $license = $activeLicenses[module][account];
-        SubscriptionPricing memory subscriptionRecord = $moduleSubPricing[module];
-        ModuleFee memory moduleFee = $moduleFees[module];
+        ModuleRecord storage $moduleRecord = $module[claim.module];
+        PricingSubscription memory subscriptionRecord = $moduleRecord.subscription;
 
-        if (moduleFee.enabled == false) return (false, 0);
-
-        $license.validUntil =
+        uint256 newValidUntil =
             _validUntil({ smartAccount: account, module: module, amount: claim.amount });
-        Split[] memory split = moduleFee.feeMachine.split({ claim: claim });
+        _mintSubscription({ account: account, module: module, newValid: newValidUntil });
+        Split[] memory split = $moduleRecord.feeMachine.split({ claim: claim });
         total = _mint(subscriptionRecord.currency, split);
         if (total == 0) return (true, 0);
 
@@ -85,7 +79,7 @@ contract LicenseManager is
             account: account,
             module: msg.sender,
             currency: subscriptionRecord.currency,
-            feeMachine: moduleFee.feeMachine,
+            feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,
             total: total
         });
@@ -98,30 +92,31 @@ contract LicenseManager is
 
     function settlePerUsage(ClaimPerUse calldata claim)
         external
+        onlyEnabledModules(msg.sender)
         returns (bool success, uint256 total)
     {
         address account = claim.account;
         address module = msg.sender;
 
-        ModuleFee memory moduleFee = $moduleFees[module];
-        PerUseRecord memory perUseRecord = $perUseRecord[module];
+        ModuleRecord storage $moduleRecord = $module[msg.sender];
+        PricingPerUse memory perUsePricing = $moduleRecord.perUse;
 
-        Split[] memory split = moduleFee.feeMachine.split({ claim: claim });
-        total = _mint(perUseRecord.currency, split);
+        Split[] memory split = $moduleRecord.feeMachine.split({ claim: claim });
+        total = _mint(perUsePricing.currency, split);
 
         uint256 protocolFee;
         address beneficiary;
         (protocolFee, total, beneficiary) = addProtocolFee({
             account: account,
             module: msg.sender,
-            currency: perUseRecord.currency,
-            feeMachine: moduleFee.feeMachine,
+            currency: perUsePricing.currency,
+            feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,
             total: total
         });
 
-        _mint({ receiver: beneficiary, id: perUseRecord.currency.toId(), amount: protocolFee });
-        perUseRecord.currency.transferFrom(account, total);
+        _mint({ receiver: beneficiary, id: perUsePricing.currency.toId(), amount: protocolFee });
+        perUsePricing.currency.transferFrom(account, total);
 
         emit PerUseSettled({ account: account, module: module, amountCharged: total });
         return (true, total);
@@ -142,10 +137,10 @@ contract LicenseManager is
 
         uint256 length = splits.length;
         for (uint256 i; i < length; i++) {
-            address beneficiary = splits[i].beneficiary;
+            address receiver = splits[i].receiver;
             uint256 amount = splits[i].amount;
             total += amount;
-            _mint({ receiver: beneficiary, id: id, amount: amount });
+            _mint({ receiver: receiver, id: id, amount: amount });
         }
     }
 }
