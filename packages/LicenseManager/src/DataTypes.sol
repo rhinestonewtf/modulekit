@@ -14,7 +14,7 @@ struct Split {
     uint256 amount;
 }
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*´:°•.°+.*•´.*˚ .°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                          Claims                            */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
@@ -48,8 +48,8 @@ struct ModuleRecord {
     bool enabled;
     address authority;
     IFeeMachine feeMachine;
-    PricingPerUse perUse;
     PricingSubscription subscription;
+    PricingPerUse perUse;
     PricingTransaction transaction;
 }
 

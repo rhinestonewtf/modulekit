@@ -1,12 +1,23 @@
 import "../interfaces/IProtocolController.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
 
-abstract contract Protocol is Ownable {
-    function protocolController() public returns (IProtocolController controller) {
+import { IProtocolController } from "../interfaces/IProtocolController.sol";
+
+abstract contract ProtocolConfig is Ownable {
+    function protocolController() public view returns (IProtocolController controller) {
         return IProtocolController(owner());
     }
 
-    function addProtocolFee(
+    constructor(IProtocolController protocolController) {
+        _initializeOwner(address(protocolController));
+    }
+
+    modifier onlyProtocolController() {
+        if (msg.sender != address(protocolController())) revert Unauthorized();
+        _;
+    }
+
+    function getProtocolFee(
         address account,
         Currency currency,
         address module,
@@ -15,20 +26,21 @@ abstract contract Protocol is Ownable {
         uint256 total
     )
         internal
-        returns (uint256 protocolFee, uint256 newTotal, address beneficiary)
+        view
+        returns (uint256 protocolFee, address receiver)
     {
         IProtocolController controller = protocolController();
-        if (controller == IProtocolController(address(0))) return (0, total, address(0));
+        if (controller == IProtocolController(address(0))) return (0, address(0));
         uint256 bps;
-        (bps, beneficiary) = controller.protocolFeeForModule({
+        (bps, receiver) = controller.protocolFeeForModule({
+            account: account,
             module: module,
             feeMachine: feeMachine,
+            feeMachineAmount: total,
+            currency: currency,
             claimType: claimType
         });
 
-        // TODO: check max bps
         protocolFee = (total * bps) / 10_000;
-
-        newTotal = total + protocolFee;
     }
 }

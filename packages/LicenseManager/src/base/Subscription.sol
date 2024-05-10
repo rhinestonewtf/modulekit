@@ -3,10 +3,10 @@ pragma solidity ^0.8.20;
 
 import "../interfaces/ILicenseManager.sol";
 import "../DataTypes.sol";
-import "./LicenseManagerBase.sol";
+import "./ModuleRegister.sol";
 import "../subscription/ISubscription.sol";
 
-abstract contract Subscription is ILicenseManager, LicenseManagerBase {
+abstract contract Subscription is ILicenseManager, ModuleRegister {
     error SubscriptionAmountTooLow(uint256 amount, uint256 minAmount);
 
     event NewSubscription(address account, address module, uint48 newValidUntil);
@@ -43,10 +43,6 @@ abstract contract Subscription is ILicenseManager, LicenseManagerBase {
         if (newValidUntil < block.timestamp) {
             revert SubscriptionTooShort();
         }
-    }
-
-    function _mintSubscription(address account, address module, uint256 newValid) internal {
-        subtoken.mint({ account: account, module: module, validUntil: newValid });
     }
 
     function isActiveSubscription(address account, address module) external view returns (bool) {

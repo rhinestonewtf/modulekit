@@ -92,20 +92,4 @@ abstract contract ERC6909 {
         return interfaceId == 0x01ffc9a7 // ERC165 Interface ID for ERC165
             || interfaceId == 0x0f632fb3; // ERC165 Interface ID for ERC6909
     }
-
-    /*//////////////////////////////////////////////////////////////
-                        INTERNAL MINT/BURN LOGIC
-    //////////////////////////////////////////////////////////////*/
-
-    function _mint(address receiver, uint256 id, uint256 amount) internal virtual {
-        balanceOf[receiver][id] += amount;
-
-        emit Transfer(msg.sender, address(0), receiver, id, amount);
-    }
-
-    function _burn(address sender, uint256 id, uint256 amount) internal virtual {
-        balanceOf[sender][id] -= amount;
-
-        emit Transfer(msg.sender, sender, address(0), id, amount);
-    }
 }

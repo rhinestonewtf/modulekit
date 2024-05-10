@@ -2,20 +2,20 @@
 pragma solidity ^0.8.20;
 
 import "./base/ERC6909.sol";
-import "./base/LicenseManagerBase.sol";
+import "./base/ModuleRegister.sol";
 import "./base/ProtocolConfig.sol";
 import "./base/Subscription.sol";
 import "./base/PricingConfig.sol";
 import "./lib/Currency.sol";
-import "./lib/Helpers.sol";
+import "./lib/MintLib.sol";
 import "./interfaces/ILicenseManager.sol";
 import "./interfaces/IFeeMachine.sol";
 
 import "forge-std/console2.sol";
 
-contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, PricingConfig {
+contract LicenseManager is ILicenseManager, ERC6909, Subscription, PricingConfig {
     using CurrencyLibrary for Currency;
-    using Helpers for address;
+    using MintLib for mapping(address => mapping(uint256 => uint256));
 
     error InvalidClaim();
 
@@ -24,25 +24,27 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         ISubscription subtoken
     )
         Subscription(subtoken)
-        LicenseManagerBase(controller)
+        ProtocolConfig(controller)
     { }
 
     function settleTransaction(ClaimTransaction calldata claim)
         external
         onlyEnabledModules(msg.sender)
-        returns (bool success, uint256 totalAfterFee)
+        returns (bool success, uint256 remaining)
     {
         address module = msg.sender;
         ModuleRecord storage $moduleRecord = $module[module];
+        uint256 total;
 
         IFeeMachine feeMachine = $moduleRecord.feeMachine;
-        Split[] memory split = $moduleRecord.feeMachine.split({ module: msg.sender, claim: claim });
-        uint256 total = _mint(claim.currency, split);
+        if (address(feeMachine) != address(0)) {
+            Split[] memory splits =
+                $moduleRecord.feeMachine.split({ module: msg.sender, claim: claim });
+            total = balanceOf.mint({ currency: claim.currency, splits: splits });
+        }
         if (total == 0) return (true, claim.amount);
 
-        uint256 protocolFee;
-        address beneficiary;
-        (protocolFee, total, beneficiary) = addProtocolFee({
+        (uint256 protocolFee, address receiver) = getProtocolFee({
             account: claim.account,
             currency: claim.currency,
             module: module,
@@ -50,11 +52,10 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
             claimType: ClaimType.Transaction,
             total: total
         });
-
-        _mint({ receiver: beneficiary, id: claim.currency.toId(), amount: protocolFee });
+        balanceOf.mint({ receiver: receiver, id: claim.currency.toId(), amount: protocolFee });
+        total += protocolFee;
 
         claim.currency.transferOrApprove(claim.account, total);
-
         emit TransactionSettled({ account: claim.account, module: module, amountCharged: total });
 
         return (true, claim.amount - total);
@@ -63,35 +64,41 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
     function settleSubscription(ClaimSubscription calldata claim)
         external
         onlyEnabledModules(claim.module)
-        returns (bool success, uint256 total)
+        returns (bool success, uint256 remaining)
     {
         address account = claim.account;
         address module = claim.module;
+        uint256 total;
         ModuleRecord storage $moduleRecord = $module[claim.module];
-        PricingSubscription memory subscriptionRecord = $moduleRecord.subscription;
+        Currency currency = $moduleRecord.subscription.currency;
 
-        uint256 newValidUntil =
-            _validUntil({ smartAccount: account, module: module, amount: claim.amount });
-        _mintSubscription({ account: account, module: module, newValid: newValidUntil });
-        Split[] memory split = $moduleRecord.feeMachine.split({ claim: claim });
-        total = _mint(subscriptionRecord.currency, split);
-        if (total == 0) return (true, 0);
+        subtoken.mint({
+            account: account,
+            module: module,
+            validUntil: _validUntil({ smartAccount: account, module: module, amount: claim.amount })
+        });
 
-        uint256 protocolFee;
-        address beneficiary;
-        (protocolFee, total, beneficiary) = addProtocolFee({
+        IFeeMachine feeMachine = $moduleRecord.feeMachine;
+        if (address(feeMachine) != address(0)) {
+            Split[] memory splits = $moduleRecord.feeMachine.split({ claim: claim });
+            total = balanceOf.mint({ currency: currency, splits: splits });
+        }
+        if (total == 0) return (true, claim.amount);
+
+        (uint256 protocolFee, address receiver) = getProtocolFee({
             account: account,
             module: claim.module,
-            currency: subscriptionRecord.currency,
-            feeMachine: $moduleRecord.feeMachine,
-            claimType: ClaimType.Transaction,
+            currency: currency,
+            feeMachine: feeMachine,
+            claimType: ClaimType.Subscription,
             total: total
         });
 
-        _mint({ receiver: beneficiary, id: subscriptionRecord.currency.toId(), amount: protocolFee });
-        subscriptionRecord.currency.transferOrApprove({ account: account, amount: total });
+        balanceOf.mint({ receiver: receiver, id: currency.toId(), amount: protocolFee });
+        total += protocolFee;
+        currency.transferOrApprove({ account: account, amount: total });
         emit SubscriptionSettled({ account: account, module: module, amountCharged: total });
-        success = true;
+        return (true, claim.amount - total);
     }
 
     function settlePerUsage(ClaimPerUse calldata claim)
@@ -105,21 +112,21 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
         ModuleRecord storage $moduleRecord = $module[module];
         PricingPerUse memory perUsePricing = $moduleRecord.perUse;
 
-        Split[] memory split = $moduleRecord.feeMachine.split({ claim: claim });
-        total = _mint(perUsePricing.currency, split);
+        Currency currency = $moduleRecord.perUse.currency;
 
-        uint256 protocolFee;
-        address beneficiary;
-        (protocolFee, total, beneficiary) = addProtocolFee({
+        Split[] memory splits = $moduleRecord.feeMachine.split({ claim: claim });
+        total = balanceOf.mint({ currency: currency, splits: splits });
+
+        (uint256 protocolFee, address receiver) = getProtocolFee({
             account: account,
             module: module,
-            currency: perUsePricing.currency,
+            currency: currency,
             feeMachine: $moduleRecord.feeMachine,
             claimType: ClaimType.Transaction,
             total: total
         });
 
-        _mint({ receiver: beneficiary, id: perUsePricing.currency.toId(), amount: protocolFee });
+        balanceOf.mint({ receiver: receiver, id: currency.toId(), amount: protocolFee });
         perUsePricing.currency.transferFrom(account, total);
 
         emit PerUseSettled({ account: account, module: module, amountCharged: total });
@@ -127,24 +134,12 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, Protocol, Pri
     }
 
     function withdraw(Currency currency, uint256 amount) external {
-        _burn(msg.sender, currency.toId(), amount);
+        balanceOf.burn({ sender: msg.sender, id: currency.toId(), amount: amount });
         currency.transfer(msg.sender, amount);
     }
 
     function deposit(Currency currency, address receiver, uint256 amount) external {
+        balanceOf.mint({ receiver: receiver, id: currency.toId(), amount: amount });
         currency.transferFrom(msg.sender, amount);
-        _mint({ receiver: receiver, id: currency.toId(), amount: amount });
-    }
-
-    function _mint(Currency currency, Split[] memory splits) internal returns (uint256 total) {
-        uint256 id = currency.toId();
-
-        uint256 length = splits.length;
-        for (uint256 i; i < length; i++) {
-            address receiver = splits[i].receiver;
-            uint256 amount = splits[i].amount;
-            total += amount;
-            _mint({ receiver: receiver, id: id, amount: amount });
-        }
     }
 }

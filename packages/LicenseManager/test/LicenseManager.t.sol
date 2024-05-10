@@ -52,7 +52,7 @@ contract LicenseManagerTest is ForkTest {
         licenseManager.authorizeFeeMachine(feeMachine, true);
 
         vm.prank(address(feeMachine));
-        licenseManager.setModule(address(module), developer, true);
+        licenseManager.enableModule(address(module), developer, true);
 
         address[] memory beneficiaries = new address[](2);
         beneficiaries[0] = beneficiary1;

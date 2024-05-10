@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import "../DataTypes.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
-import { IProtocolController } from "../interfaces/IProtocolController.sol";
+import "./ProtocolConfig.sol";
 
-abstract contract LicenseManagerBase is Ownable {
+abstract contract ModuleRegister is ProtocolConfig {
     event FeeMachineEnabled(IFeeMachine feeMachine, bool enabled);
     event NewFeeMachine(address module, IFeeMachine newFeeMachine);
     event ModuleEnabled(address module, bool enabled);
@@ -16,14 +16,10 @@ abstract contract LicenseManagerBase is Ownable {
     mapping(address module => ModuleRecord moduleRecord) internal $module;
     mapping(IFeeMachine feeMachine => bool enabled) internal $enabledFeeMachines;
 
-    constructor(IProtocolController protocolController) {
-        _initializeOwner(address(protocolController));
-    }
-
-    modifier onlyFeeMachine(address module) {
-        if (msg.sender != address($module[module].feeMachine)) revert UnauthorizedFeeMachine();
-        _;
-    }
+    // modifier onlyFeeMachine(address module) {
+    //     if (msg.sender != address($module[module].feeMachine)) revert UnauthorizedFeeMachine();
+    //     _;
+    // }
 
     modifier onlyEnabledModules(address module) {
         if ($module[module].enabled == false) {
@@ -39,12 +35,7 @@ abstract contract LicenseManagerBase is Ownable {
         _;
     }
 
-    function _setFeeMachine(address module, IFeeMachine newFeeMachine) internal {
-        $module[module].feeMachine = newFeeMachine;
-        emit NewFeeMachine(module, newFeeMachine);
-    }
-
-    function setModule(
+    function enableModule(
         address module,
         address authority,
         bool enabled
@@ -67,17 +58,27 @@ abstract contract LicenseManagerBase is Ownable {
         }
     }
 
-    function transferFeeMachine(
-        address module,
-        IFeeMachine newFeeMachine
-    )
-        external
-        onlyFeeMachine(module)
-    {
+    function transferFeeMachineOwnership(address module, IFeeMachine newFeeMachine) external {
+        if (
+            address($module[module].feeMachine) != msg.sender
+                || address(protocolController()) != msg.sender
+        ) revert Unauthorized();
+
         _setFeeMachine({ module: module, newFeeMachine: newFeeMachine });
     }
 
-    function authorizeFeeMachine(IFeeMachine feeMachine, bool enabled) external onlyOwner {
+    function _setFeeMachine(address module, IFeeMachine newFeeMachine) internal {
+        $module[module].feeMachine = newFeeMachine;
+        emit NewFeeMachine(module, newFeeMachine);
+    }
+
+    function authorizeFeeMachine(
+        IFeeMachine feeMachine,
+        bool enabled
+    )
+        external
+        onlyProtocolController
+    {
         if (!feeMachine.supportsInterface(type(IFeeMachine).interfaceId)) {
             revert UnauthorizedFeeMachine();
         }

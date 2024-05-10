@@ -13,6 +13,7 @@ interface IProtocolController {
         view
         returns (bool ok);
     function protocolFeeForModule(
+        address account,
         address module,
         IFeeMachine feeMachine,
         uint256 feeMachineAmount,

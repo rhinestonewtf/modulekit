@@ -19,8 +19,11 @@ contract MockProtocolController is IProtocolController {
     }
 
     function protocolFeeForModule(
+        address account,
         address module,
         IFeeMachine feeMachine,
+        uint256 feeMachineAmount,
+        Currency currency,
         ClaimType claimType
     )
         external
