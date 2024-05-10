@@ -68,6 +68,11 @@ contract LicenseManagerTest is ForkTest {
         IERC20(usdc).approve(address(licenseManager), 100_000_000 ether);
         IERC20(weth).approve(address(licenseManager), 100_000_000 ether);
 
+        licenseManager.authorizeModule(
+            address(module),
+            Authorization({ allowTransaction: true, allowSubscription: true, allowPerUse: true })
+        );
+
         vm.stopPrank();
 
         vm.prank(beneficiary1);

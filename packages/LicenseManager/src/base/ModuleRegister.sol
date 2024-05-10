@@ -52,6 +52,7 @@ abstract contract ModuleRegister is ProtocolConfig {
             $module[module].enabled = enabled;
             $module[module].authority = authority;
             $module[module].feeMachine = IFeeMachine(msg.sender);
+
             emit ModuleEnabled(module, enabled);
         } else {
             revert UnauthorizedFeeMachine();

@@ -6,12 +6,19 @@ import "./interfaces/IFeeMachine.sol";
 
 enum ClaimType {
     Transaction,
-    Subscription
+    Subscription,
+    PerUse
 }
 
 struct Split {
     address receiver;
     uint256 amount;
+}
+
+struct Authorization {
+    bool allowTransaction;
+    bool allowSubscription;
+    bool allowPerUse;
 }
 
 /*´:°•.°+.*•´.*˚ .°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/

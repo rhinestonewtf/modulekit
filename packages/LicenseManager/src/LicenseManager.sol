@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import "./base/ERC6909.sol";
 import "./base/ModuleRegister.sol";
+import "./base/FeeAuthorization.sol";
 import "./base/ProtocolConfig.sol";
 import "./base/Subscription.sol";
 import "./base/PricingConfig.sol";
@@ -13,7 +14,13 @@ import "./interfaces/IFeeMachine.sol";
 
 import "forge-std/console2.sol";
 
-contract LicenseManager is ILicenseManager, ERC6909, Subscription, PricingConfig {
+contract LicenseManager is
+    ILicenseManager,
+    FeeAuthorization,
+    ERC6909,
+    Subscription,
+    PricingConfig
+{
     using CurrencyLibrary for Currency;
     using MintLib for mapping(address => mapping(uint256 => uint256));
 
@@ -30,107 +37,112 @@ contract LicenseManager is ILicenseManager, ERC6909, Subscription, PricingConfig
     function settleTransaction(ClaimTransaction calldata claim)
         external
         onlyEnabledModules(msg.sender)
-        returns (bool success, uint256 remaining)
+        onlyAuthorizedModule(claim.account, msg.sender, ClaimType.Transaction)
+        returns (uint256 amountCharged)
     {
-        address module = msg.sender;
-        ModuleRecord storage $moduleRecord = $module[module];
-        uint256 total;
+        ModuleRecord storage $moduleRecord = $module[msg.sender];
 
         IFeeMachine feeMachine = $moduleRecord.feeMachine;
-        if (address(feeMachine) != address(0)) {
-            Split[] memory splits =
-                $moduleRecord.feeMachine.split({ module: msg.sender, claim: claim });
-            total = balanceOf.mint({ currency: claim.currency, splits: splits });
-        }
-        if (total == 0) return (true, claim.amount);
+        amountCharged = balanceOf.mint({
+            currency: claim.currency,
+            splits: feeMachine.split({ module: msg.sender, claim: claim })
+        });
 
         (uint256 protocolFee, address receiver) = getProtocolFee({
             account: claim.account,
             currency: claim.currency,
-            module: module,
-            feeMachine: $moduleRecord.feeMachine,
+            module: msg.sender,
+            feeMachine: feeMachine,
             claimType: ClaimType.Transaction,
-            total: total
+            total: amountCharged
         });
         balanceOf.mint({ receiver: receiver, id: claim.currency.toId(), amount: protocolFee });
-        total += protocolFee;
+        amountCharged += protocolFee;
 
-        claim.currency.transferOrApprove(claim.account, total);
-        emit TransactionSettled({ account: claim.account, module: module, amountCharged: total });
-
-        return (true, claim.amount - total);
+        claim.currency.transferOrApprove(claim.account, amountCharged);
+        emit TransactionSettled({
+            account: claim.account,
+            module: msg.sender,
+            amountCharged: amountCharged
+        });
     }
 
     function settleSubscription(ClaimSubscription calldata claim)
         external
         onlyEnabledModules(claim.module)
-        returns (bool success, uint256 remaining)
+        onlyAuthorizedModule(msg.sender, claim.module, ClaimType.Subscription)
+        returns (uint256 amountCharged)
     {
-        address account = claim.account;
-        address module = claim.module;
-        uint256 total;
         ModuleRecord storage $moduleRecord = $module[claim.module];
         Currency currency = $moduleRecord.subscription.currency;
 
         subtoken.mint({
-            account: account,
-            module: module,
-            validUntil: _validUntil({ smartAccount: account, module: module, amount: claim.amount })
+            account: claim.account,
+            module: claim.module,
+            validUntil: _validUntil({
+                smartAccount: claim.account,
+                module: claim.module,
+                amount: claim.amount
+            })
         });
 
         IFeeMachine feeMachine = $moduleRecord.feeMachine;
-        if (address(feeMachine) != address(0)) {
-            Split[] memory splits = $moduleRecord.feeMachine.split({ claim: claim });
-            total = balanceOf.mint({ currency: currency, splits: splits });
-        }
-        if (total == 0) return (true, claim.amount);
+        amountCharged = balanceOf.mint({
+            currency: currency,
+            splits: $moduleRecord.feeMachine.split({ claim: claim })
+        });
 
         (uint256 protocolFee, address receiver) = getProtocolFee({
-            account: account,
+            account: claim.account,
             module: claim.module,
             currency: currency,
             feeMachine: feeMachine,
             claimType: ClaimType.Subscription,
-            total: total
+            total: amountCharged
         });
 
         balanceOf.mint({ receiver: receiver, id: currency.toId(), amount: protocolFee });
-        total += protocolFee;
-        currency.transferOrApprove({ account: account, amount: total });
-        emit SubscriptionSettled({ account: account, module: module, amountCharged: total });
-        return (true, claim.amount - total);
+        amountCharged += protocolFee;
+        currency.transferOrApprove({ account: claim.account, amount: amountCharged });
+        emit SubscriptionSettled({
+            account: claim.account,
+            module: claim.module,
+            amountCharged: amountCharged
+        });
     }
 
     function settlePerUsage(ClaimPerUse calldata claim)
         external
         onlyEnabledModules(msg.sender)
-        returns (bool success, uint256 total)
+        onlyAuthorizedModule(claim.account, msg.sender, ClaimType.PerUse)
+        returns (uint256 amountCharged)
     {
-        address account = claim.account;
-        address module = msg.sender;
-
-        ModuleRecord storage $moduleRecord = $module[module];
-        PricingPerUse memory perUsePricing = $moduleRecord.perUse;
+        ModuleRecord storage $moduleRecord = $module[msg.sender];
 
         Currency currency = $moduleRecord.perUse.currency;
 
-        Split[] memory splits = $moduleRecord.feeMachine.split({ claim: claim });
-        total = balanceOf.mint({ currency: currency, splits: splits });
+        IFeeMachine feeMachine = $moduleRecord.feeMachine;
+        amountCharged =
+            balanceOf.mint({ currency: currency, splits: feeMachine.split({ claim: claim }) });
 
         (uint256 protocolFee, address receiver) = getProtocolFee({
-            account: account,
-            module: module,
+            account: claim.account,
+            module: msg.sender,
             currency: currency,
-            feeMachine: $moduleRecord.feeMachine,
-            claimType: ClaimType.Transaction,
-            total: total
+            feeMachine: feeMachine,
+            claimType: ClaimType.PerUse,
+            total: amountCharged
         });
 
         balanceOf.mint({ receiver: receiver, id: currency.toId(), amount: protocolFee });
-        perUsePricing.currency.transferFrom(account, total);
+        amountCharged += protocolFee;
+        currency.transferOrApprove(claim.account, amountCharged);
 
-        emit PerUseSettled({ account: account, module: module, amountCharged: total });
-        return (true, total);
+        emit PerUseSettled({
+            account: claim.account,
+            module: msg.sender,
+            amountCharged: amountCharged
+        });
     }
 
     function withdraw(Currency currency, uint256 amount) external {
