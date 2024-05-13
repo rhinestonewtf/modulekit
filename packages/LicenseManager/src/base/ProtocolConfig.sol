@@ -1,9 +1,10 @@
 import "../interfaces/IProtocolController.sol";
+import "../ILicenseManager.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
 
 import { IProtocolController } from "../interfaces/IProtocolController.sol";
 
-abstract contract ProtocolConfig is Ownable {
+abstract contract ProtocolConfig is ILicenseManager, Ownable {
     function protocolController() public view returns (IProtocolController controller) {
         return IProtocolController(owner());
     }

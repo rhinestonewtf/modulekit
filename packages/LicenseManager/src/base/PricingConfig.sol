@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import "../DataTypes.sol";
 import "../interfaces/IFeeMachine.sol";
+import "../ILicenseManager.sol";
 import "./ModuleRegister.sol";
 
-abstract contract PricingConfig is ModuleRegister {
+abstract contract PricingConfig is ILicenseManager, ModuleRegister {
     error UnauthorizedModuleAuthority();
 
     event NewModuleAuthority(address oldAuthority, address newAuthority);

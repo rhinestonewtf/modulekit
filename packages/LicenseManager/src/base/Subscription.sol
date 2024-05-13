@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../interfaces/ILicenseManager.sol";
+import "../ILicenseManager.sol";
 import "../DataTypes.sol";
 import "./ModuleRegister.sol";
 import "../subscription/ISubscription.sol";
@@ -17,7 +17,7 @@ abstract contract Subscription is ILicenseManager, ModuleRegister {
         subtoken = _subtoken;
     }
 
-    function migrateToken(ISubscription _newSubscriptionToken) external onlyOwner {
+    function migrateToken(ISubscription _newSubscriptionToken) external onlyProtocolController {
         subtoken = _newSubscriptionToken;
     }
 

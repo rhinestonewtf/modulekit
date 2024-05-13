@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "../DataTypes.sol";
+import "../ILicenseManager.sol";
 
-contract FeeAuthorization {
+abstract contract FeeAuthorization is ILicenseManager {
     error UnauthorizedTransaction();
 
     mapping(address module => mapping(address account => Authorization)) internal $authorization;

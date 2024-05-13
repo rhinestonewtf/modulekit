@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { ILicenseManager } from "../interfaces/ILicenseManager.sol";
+import { ILicenseManager } from "../ILicenseManager.sol";
 
 abstract contract LicensedModuleBase {
     ILicenseManager immutable LICENSE_MANAGER;

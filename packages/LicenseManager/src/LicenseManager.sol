@@ -9,7 +9,7 @@ import "./base/Subscription.sol";
 import "./base/PricingConfig.sol";
 import "./lib/Currency.sol";
 import "./lib/MintLib.sol";
-import "./interfaces/ILicenseManager.sol";
+import "./ILicenseManager.sol";
 import "./interfaces/IFeeMachine.sol";
 
 import "forge-std/console2.sol";

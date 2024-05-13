@@ -2,10 +2,11 @@
 pragma solidity ^0.8.20;
 
 import "../DataTypes.sol";
+import "../ILicenseManager.sol";
 import { Ownable } from "solady/auth/Ownable.sol";
 import "./ProtocolConfig.sol";
 
-abstract contract ModuleRegister is ProtocolConfig {
+abstract contract ModuleRegister is ILicenseManager, ProtocolConfig {
     event FeeMachineEnabled(IFeeMachine feeMachine, bool enabled);
     event NewFeeMachine(address module, IFeeMachine newFeeMachine);
     event ModuleEnabled(address module, bool enabled);
@@ -48,7 +49,7 @@ abstract contract ModuleRegister is ProtocolConfig {
 
         address currentFeeMachine = address($moduleRecord.feeMachine);
 
-        if (currentFeeMachine != msg.sender || currentFeeMachine != address(0)) {
+        if (currentFeeMachine == msg.sender || currentFeeMachine == address(0)) {
             $module[module].enabled = enabled;
             $module[module].authority = authority;
             $module[module].feeMachine = IFeeMachine(msg.sender);
