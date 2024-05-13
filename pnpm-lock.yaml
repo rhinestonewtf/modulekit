@@ -54,8 +54,8 @@ importers:
         specifier: github:rhinestonewtf/erc4337-validation
         version: '@rhinestone/erc4337-validation@https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/abaff656852e3a4b9790e458e17165adf00e3e54'
       erc7579:
-        specifier: github:erc7579/erc7579-implementation#feature/hook-changes-back
-        version: micro-msa@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/881022f64d68319d6b1a1f45752e1bf9cf3972d5
+        specifier: github:erc7579/erc7579-implementation
+        version: micro-msa@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/e043cee0ccd5b11a50f081667eb9f4c192dcc26c
       forge-std:
         specifier: github:foundry-rs/forge-std
         version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/e4aef94c1768803a16fe19f7ce8b65defd027cfd
@@ -1559,6 +1559,10 @@ packages:
 
   micro-msa@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/881022f64d68319d6b1a1f45752e1bf9cf3972d5:
     resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/881022f64d68319d6b1a1f45752e1bf9cf3972d5}
+    version: 0.3.1
+
+  micro-msa@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/e043cee0ccd5b11a50f081667eb9f4c192dcc26c:
+    resolution: {tarball: https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/e043cee0ccd5b11a50f081667eb9f4c192dcc26c}
     version: 0.3.1
 
   micromatch@4.0.5:
@@ -3973,6 +3977,10 @@ snapshots:
       '@openzeppelin/contracts': 5.0.1
 
   micro-msa@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/881022f64d68319d6b1a1f45752e1bf9cf3972d5:
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+
+  micro-msa@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/e043cee0ccd5b11a50f081667eb9f4c192dcc26c:
     dependencies:
       '@openzeppelin/contracts': 5.0.1
 

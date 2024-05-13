@@ -111,6 +111,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecute(
+        address account,
         address msgSender,
         address target,
         uint256 value,
@@ -132,6 +133,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecuteBatch(
+        address account,
         address msgSender,
         Execution[] calldata executions
     )
@@ -153,6 +155,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecuteFromExecutor(
+        address account,
         address msgSender,
         address target,
         uint256 value,
@@ -174,6 +177,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecuteBatchFromExecutor(
+        address account,
         address msgSender,
         Execution[] calldata executions
     )
@@ -195,6 +199,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onInstallModule(
+        address account,
         address msgSender,
         uint256 moduleType,
         address module,
@@ -215,6 +220,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onUninstallModule(
+        address account,
         address msgSender,
         uint256 moduleType,
         address module,
@@ -226,15 +232,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
         returns (bytes memory hookData)
     { }
 
-    function onPostCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        virtual
-        override
-    { }
+    function onPostCheck(address account, bytes calldata hookData) internal virtual override { }
 
     function onInstall(bytes calldata) public { }
     function onUninstall(bytes calldata) public { }

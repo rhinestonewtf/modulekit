@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.25;
 
-import { IERC7484 } from "modulekit/src/interfaces/IERC7484.sol";
+import { IERC7484 } from "../interfaces/IERC7484.sol";
 
 abstract contract ERC7484RegistryAdapter {
     // registry address
