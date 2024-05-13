@@ -119,8 +119,8 @@ contract HookMultiPlexerLibFuzzTest is BaseTest {
     function testFuzz_Join(address[] memory a, address[] memory b) public {
         uint256 aLength = a.length;
         uint256 bLength = b.length;
-        vm.assume(aLength < 20);
-        vm.assume(bLength < 20);
+        vm.assume(aLength < 50);
+        vm.assume(bLength < 50);
         for (uint256 i = 0; i < aLength; i++) {
             vm.assume(a[i] != address(0));
         }
