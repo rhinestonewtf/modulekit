@@ -20,6 +20,12 @@ A notable feature of LicenseManager is its referral fee system, which allows dec
 
 The operator component, an upcoming feature within the Rhinestone protocol, is designed to facilitate token swaps for fee beneficiaries who opt-in to the service. By periodically executing token conversions, the operator component enables seamless transitions of tokens to the desired target token, such as a stablecoin. This functionality aims to enhance the efficiency and flexibility of token management within the ecosystem, offering users a convenient mechanism to optimize their token holdings. With the introduction of the operator component, Rhinestone further expands its ecosystem capabilities, providing users with enhanced control and versatility in managing their token assets across various payment modalities and use cases.
 
+## LicenseManager as an Executor
+
+LicenseManager introduces a unique feature wherein it can be installed on smart accounts as an ERC7579 executor, enabling the payment of License Fees in native tokens or executing ERC20 approvals on behalf of the smart account. This opt-in functionality enhances user experience by streamlining payment processes and facilitating interactions with various assets within the ecosystem. By leveraging this feature, smart accounts can automate ERC20 approvals for efficient asset management, eliminating the need for manual approval for each asset involved in module interactions. Moreover, the system ensures that ERC20 approvals are dynamically adjusted "just in time" when a claim occurs, optimizing the approval process and preventing excessive approvals. Additionally, LicenseManager supports the seamless transacting and handling of native assets, including Ether (ETH), further expanding the versatility and utility of the platform for users interacting with different asset types within the Rhinestone ecosystem.
+
+## Sequence Diagram
+
 ```mermaid
 sequenceDiagram
 actor SmartAccount
