@@ -61,8 +61,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             isInit = true;
         }
 
-        isInit = true;
-
         // // Deploy default contracts
         // accountImplementationSingleton = new ERC7579Account();
         // label(address(accountImplementationSingleton), "ERC7579AccountImpl");
