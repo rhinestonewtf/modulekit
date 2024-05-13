@@ -50,7 +50,6 @@ contract MultiAccountFactory is
         if (env == AccountType.SAFE7579) {
             return _makeSafe(salt, initCode);
         } else if (env == AccountType.KERNEL7579) {
-            //TODO check for data length
             return _makeKernel(initCode, salt);
         } else {
             return _makeDefault(salt, initCode);
@@ -119,6 +118,8 @@ contract MultiAccountFactory is
                 )
             );
         } else if (env == AccountType.KERNEL7579) {
+            //TODO need to change this to kernels accpeted calldata
+            // delete this!
             init = abi.encode(
                 address(bootstrapDefault),
                 abi.encodeCall(
