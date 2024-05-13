@@ -46,7 +46,7 @@ contract DeadmanSwitchIntegrationTest is BaseIntegrationTest {
         dms = new DeadmanSwitch();
 
         (_nominee, _nomineePk) = makeAddrAndKey("nominee");
-        _timeout = uint48(100 days);
+        _timeout = uint48(block.timestamp + 100 days);
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
@@ -115,7 +115,7 @@ contract DeadmanSwitchIntegrationTest is BaseIntegrationTest {
         });
         userOpData.userOp.signature = signHash(_nomineePk, userOpData.userOpHash);
 
-        vm.expectRevert();
+        instance.expect4337Revert();
         userOpData.execUserOps();
     }
 
