@@ -16,6 +16,7 @@ import {
 } from "modulekit/src/external/ERC7579.sol";
 import { ModeCode } from "erc7579/lib/ModeLib.sol";
 import { MockRegistry } from "test/mocks/MockRegistry.sol";
+import { MockModule } from "test/mocks/MockModule.sol";
 
 contract RegistryHookIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -35,6 +36,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
 
     address mockModule;
     address mockModuleRevoked;
+    address mockModuleCode;
 
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
@@ -46,11 +48,13 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
         registry = new MockRegistry();
         hook = new RegistryHook();
 
+        mockModuleCode = address(new MockModule());
+
         mockModule = makeAddr("mockModule");
-        vm.etch(mockModule, hex"00");
+        vm.etch(mockModule, mockModuleCode.code);
 
         mockModuleRevoked = address(0x420);
-        vm.etch(mockModuleRevoked, hex"00");
+        vm.etch(mockModuleRevoked, mockModuleCode.code);
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
@@ -115,7 +119,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
     function testExecuteFromExecutor() public {
         // it should query the registry
         address module = makeAddr("module");
-        vm.etch(module, hex"00");
+        vm.etch(module, mockModuleCode.code);
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
 
@@ -130,7 +134,7 @@ contract RegistryHookIntegrationTest is BaseIntegrationTest {
         instance.uninstallModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
         address module = address(0x420);
-        vm.etch(module, hex"00");
+        vm.etch(module, mockModuleCode.code);
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: module, data: "" });
         instance.installModule({

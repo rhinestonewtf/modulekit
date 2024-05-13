@@ -35,6 +35,7 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
     uint256 _threshold = 2;
     address[] _guardians;
     uint256[] _guardianPks;
+    uint256 _recoverCount;
 
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
@@ -156,8 +157,7 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
 
     function test_ValidateUserOp() public {
         // it should validate the recovery user op
-        address newValidator = makeAddr("newValidator");
-        vm.etch(newValidator, hex"600160015500");
+        address newValidator = address(this);
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
@@ -176,6 +176,20 @@ contract SocialRecoveryIntegrationTest is BaseIntegrationTest {
         userOpData.userOp.signature = abi.encodePacked(signature1, signature2);
         userOpData.execUserOps();
 
-        assertEq(vm.load(newValidator, bytes32(uint256(1))), bytes32(uint256(1)));
+        assertEq(_recoverCount, 1);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    CALLBACKS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function isModuleType(uint256) external pure returns (bool) {
+        return true;
+    }
+
+    function onInstall(bytes calldata) external { }
+
+    function recover() external {
+        _recoverCount++;
     }
 }

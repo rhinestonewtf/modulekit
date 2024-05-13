@@ -15,6 +15,7 @@ import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 import { MODULE_TYPE_HOOK, MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { IAccountModulesPaginated } from "modulekit/src/test/utils/ERC7579Helpers.sol";
+import { MockModule } from "test/mocks/MockModule.sol";
 
 contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
     using ModuleKitHelpers for *;
@@ -34,6 +35,7 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
 
     address _owner;
     uint128 _waitPeriod;
+    address mockModuleCode;
 
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
@@ -50,9 +52,15 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         vm.label(address(token), "USDC");
         token.mint(address(instance.account), 1_000_000);
 
-        vm.etch(_owner, hex"00");
+        mockModuleCode = address(new MockModule());
 
-        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: _owner, data: "" });
+        vm.etch(_owner, mockModuleCode.code);
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: address(_owner),
+            data: ""
+        });
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_HOOK,
@@ -202,7 +210,7 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
 
     function test_InstallModule() public {
         address module = makeAddr("module");
-        vm.etch(module, hex"00");
+        vm.etch(module, mockModuleCode.code);
 
         _cueAndWaitForModuleConfig(MODULE_TYPE_EXECUTOR, module, "", true, 0);
 
@@ -218,7 +226,7 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
 
     function test_InstallModule_WithData() public {
         address module = makeAddr("module");
-        vm.etch(module, hex"00");
+        vm.etch(module, mockModuleCode.code);
 
         bytes memory data = abi.encodePacked(keccak256("hi"), keccak256("hello"));
 
@@ -238,6 +246,7 @@ contract ColdStorageHookIntegrationTest is BaseIntegrationTest {
         test_InstallModule();
 
         address module = makeAddr("module");
+        vm.etch(module, mockModuleCode.code);
 
         (address[] memory array,) = IAccountModulesPaginated(address(instance.account))
             .getExecutorsPaginated(address(0x1), 100);

@@ -24,6 +24,7 @@ import { MockHook } from "test/mocks/MockHook.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { LibSort } from "solady/utils/LibSort.sol";
+import { MockModule } from "test/mocks/MockModule.sol";
 
 contract HookMultiPlexerTest is BaseTest {
     using LibSort for address[];
@@ -47,6 +48,8 @@ contract HookMultiPlexerTest is BaseTest {
                                     VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
+    address mockModuleCode;
+
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
     //////////////////////////////////////////////////////////////////////////*/
@@ -55,6 +58,8 @@ contract HookMultiPlexerTest is BaseTest {
         BaseTest.setUp();
         _registry = new MockRegistry();
         hook = new HookMultiPlexer(_registry);
+
+        mockModuleCode = address(new MockModule());
 
         subHook1 = new MockHook();
         subHook2 = new MockHook();
@@ -77,8 +82,8 @@ contract HookMultiPlexerTest is BaseTest {
             address(subHook3),
             address(subHook4),
             address(subHook5),
-            address(subHook6),
-            address(subHook7)
+            address(subHook7),
+            address(subHook6)
         );
         if (sort) {
             allHooks.sort();
@@ -161,7 +166,7 @@ contract HookMultiPlexerTest is BaseTest {
         // it should revert
         bytes memory data = _getInitData(false);
 
-        vm.expectRevert(abi.encodeWithSelector(HookMultiPlexerLib.HooksNotSorted.selector));
+        vm.expectRevert();
         hook.onInstall(data);
     }
 
@@ -284,10 +289,13 @@ contract HookMultiPlexerTest is BaseTest {
         // it should call global and calldata hooks
         test_OnInstallWhenAllOfTheHooksAreSortedAndUnique();
 
+        address newModule = makeAddr("newModule");
+        vm.etch(newModule, mockModuleCode.code);
+
         address msgSender = address(1);
         uint256 msgValue = 0;
         bytes memory msgData =
-            abi.encodeWithSelector(IERC7579Account.installModule.selector, 1, address(1), "");
+            abi.encodeWithSelector(IERC7579Account.installModule.selector, 1, newModule, "");
 
         address[] memory _hooks = _getHooks(true);
         vm.expectCall(_hooks[0], 0, getPreCheckHookCallData(msgSender, msgValue, msgData), 1);

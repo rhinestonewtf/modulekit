@@ -37,6 +37,9 @@ import { RegistryHook, IERC7484 } from "src/RegistryHook/RegistryHook.sol";
 
 import { ModeLib } from "erc7579/lib/ModeLib.sol";
 import { ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
+import { MockModule } from "test/mocks/MockModule.sol";
+
+import "forge-std/console2.sol";
 
 contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
     using LibSort for address[];
@@ -70,6 +73,8 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
                                     VARIABLES
     //////////////////////////////////////////////////////////////////////////*/
 
+    address mockModuleCode;
+
     /*//////////////////////////////////////////////////////////////////////////
                                       SETUP
     //////////////////////////////////////////////////////////////////////////*/
@@ -80,6 +85,8 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
         vm.warp(100);
 
         target = new MockTarget();
+
+        mockModuleCode = address(new MockModule());
 
         hook = new HookMultiPlexer(instance.aux.registry);
         subHook1 = new MockHook();
@@ -392,7 +399,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
         assertEq(prevHooks.length + 1, newHooks.length);
 
         address mockModule = address(24);
-        vm.etch(mockModule, hex"00");
+        vm.etch(mockModule, mockModuleCode.code);
 
         vm.expectCall(
             address(instance.aux.registry),
@@ -420,7 +427,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
         assertEq(prevHooks.length + 1, newHooks.length);
 
         address mockModule = address(24);
-        vm.etch(mockModule, hex"00");
+        vm.etch(mockModule, mockModuleCode.code);
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: mockModule, data: "" });
 
@@ -455,7 +462,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
         assertEq(prevHooks.length + 1, newHooks.length);
 
         address mockModule = address(24);
-        vm.etch(mockModule, hex"00");
+        vm.etch(mockModule, mockModuleCode.code);
 
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: mockModule, data: "" });
 
