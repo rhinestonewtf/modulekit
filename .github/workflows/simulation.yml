@@ -12,26 +12,33 @@ jobs:
     strategy:
       fail-fast: true
 
+    env:
+      working-directory: ./examples
+
     name: Foundry project
     runs-on: ubuntu-latest
-    working-directory: ./examples
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+        working-directory: ${{env.working-directory}}
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+        working-directory: ${{env.working-directory}}
 
       - name: Run Forge build
         run: |
           forge --version
           forge build --sizes
         id: build
+        working-directory: ${{env.working-directory}}
 
       - name: Run Forge tests
         run: |
           SIMULATE=true forge test -vvv
         id: test
+        working-directory: ${{env.working-directory}}
