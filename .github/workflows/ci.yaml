@@ -48,3 +48,35 @@ jobs:
     uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
     with:
       match-workspace: "@rhinestone/modulekit-examples"
+
+  test-modulekit-examples-simulate:
+    needs: ["build-modulekit"]
+    jobs:
+      check:
+        strategy:
+          fail-fast: true
+
+        name: Foundry project
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v3
+            with:
+              submodules: recursive
+
+          - name: Install Foundry
+            uses: foundry-rs/foundry-toolchain@v1
+            with:
+              version: nightly
+
+          - name: Run Forge build
+            run: |
+              forge --version
+              forge build --sizes
+            id: build
+
+          - name: Run Forge tests
+            run: |
+              SIMULATE=true forge test -vvv
+            id: test
+    with:
+      match-workspace: "@rhinestone/modulekit-examples"
