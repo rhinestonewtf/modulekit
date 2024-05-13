@@ -12,9 +12,6 @@ jobs:
     strategy:
       fail-fast: true
 
-    env:
-      working-directory: ./examples
-
     name: Foundry project
     runs-on: ubuntu-latest
 
@@ -22,25 +19,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-           match-workspace: "@rhinestone/modulekit-examples"
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
-           match-workspace: "@rhinestone/modulekit-examples"
 
       - name: Run Forge build
         run: |
           forge --version
           forge build --sizes
         id: build
-        with:
-           match-workspace: "@rhinestone/modulekit-examples"
+        working-directory: ./examples
 
       - name: Run Forge tests
         run: |
           SIMULATE=true forge test -vvv
         id: test
-        with:
-           match-workspace: "@rhinestone/modulekit-examples"
+        working-directory: ./examples
