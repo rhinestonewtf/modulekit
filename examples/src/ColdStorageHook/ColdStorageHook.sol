@@ -585,7 +585,7 @@ contract ColdStorageHook is ERC7579HookDestruct, FlashloanLender {
      * @return true if the type is a module type, false otherwise
      */
     function isModuleType(uint256 typeID) external pure virtual returns (bool) {
-        if (typeID == TYPE_HOOK || typeID == TYPE_FALLBACK) {
+        if (typeID == TYPE_EXECUTOR || typeID == TYPE_HOOK || typeID == TYPE_FALLBACK) {
             return true;
         }
     }
