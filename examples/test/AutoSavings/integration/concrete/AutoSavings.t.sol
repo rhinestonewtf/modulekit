@@ -13,6 +13,8 @@ import { MockERC4626, ERC20 } from "solmate/test/utils/mocks/MockERC4626.sol";
 import { SENTINEL } from "sentinellist/SentinelList.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
+import { etchEntrypoint } from "modulekit/src/test/predeploy/EntryPoint.sol";
+
 address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
@@ -70,6 +72,8 @@ contract AutoSavingsIntegrationTest is BaseIntegrationTest {
         AutoSavings.Config[] memory _configs = getConfigs();
 
         bytes memory data = abi.encode(_tokens, _configs);
+
+        etchEntrypoint();
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_EXECUTOR,

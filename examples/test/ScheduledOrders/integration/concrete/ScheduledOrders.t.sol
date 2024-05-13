@@ -11,6 +11,8 @@ import { ScheduledOrders, SchedulingBase } from "src/ScheduledOrders/ScheduledOr
 import { MODULE_TYPE_EXECUTOR } from "modulekit/src/external/ERC7579.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 
+import { etchEntrypoint } from "modulekit/src/test/predeploy/EntryPoint.sol";
+
 address constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 address constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
@@ -61,6 +63,8 @@ contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
         uint48 _startDate = uint48(block.timestamp);
         _executionData =
             abi.encode(address(address(usdc)), address(address(weth)), uint256(100), uint160(0));
+
+        etchEntrypoint();
 
         instance.installModule({
             moduleTypeId: MODULE_TYPE_EXECUTOR,
