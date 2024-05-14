@@ -10,8 +10,10 @@ contract MockFactory {
     ISwapRouter public uniswap;
 
     constructor() {
-        MockUniswap _mockUniswap = new MockUniswap();
-        etch(SWAPROUTER_ADDRESS, address(_mockUniswap).code);
-        uniswap = ISwapRouter(SWAPROUTER_ADDRESS);
+        if (SWAPROUTER_ADDRESS.code.length == 0) {
+            MockUniswap _mockUniswap = new MockUniswap();
+            etch(SWAPROUTER_ADDRESS, address(_mockUniswap).code);
+            uniswap = ISwapRouter(SWAPROUTER_ADDRESS);
+        }
     }
 }

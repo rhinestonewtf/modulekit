@@ -47,10 +47,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     MockValidator public defaultValidator;
 
-    constructor() {
-        init();
-    }
-
     /**
      * Initializes Auxiliary and /src/core
      * This function will run before any accounts can be created
