@@ -15,3 +15,5 @@ erc4337-validation/=node_modules/erc4337-validation/src/
 @ERC4337/=node_modules/@ERC4337/
 @prb/math/=node_modules/@prb/math/
 checknsignatures/=node_modules/checknsignatures/src/
+kernel/=node_modules/kernel/src/
+ExcessivelySafeCall/=node_modules/@nomad-xyz/excessively-safe-call/src/

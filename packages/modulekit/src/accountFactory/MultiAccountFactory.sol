@@ -6,6 +6,10 @@ import "./safe7579/Safe7579Factory.sol";
 import "./referenceImpl/RefImplFactory.sol";
 import {ERC7579BootstrapConfig} from "../external/ERC7579.sol";
 import {Kernel7579Factory} from "./kernel7579/Kernel7579Factory.sol";
+import {ValidatorLib} from "kernel/utils/ValidationTypeLib.sol";
+import {IValidator, IHook} from "kernel/interfaces/IERC7579Modules.sol";
+import {ValidationId} from "kernel/types/Types.sol";
+import {Kernel} from "kernel/Kernel.sol";
 
 enum AccountType {
     DEFAULT,
@@ -103,38 +107,109 @@ contract MultiAccountFactory is
         salt = keccak256(abi.encodePacked(_salt, initCode));
     }
 
-    function getBootstrapCallData(
-        ERC7579BootstrapConfig[] calldata _validators,
-        ERC7579BootstrapConfig[] calldata _executors,
-        ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig[] calldata _fallbacks
+    function getMinimalInitData(
+        address validator,
+        bytes memory initData
     ) external view returns (bytes memory init) {
         if (env == AccountType.SAFE7579) {
+            ERC7579BootstrapConfig[] memory _validators = generateConfig(
+                validator,
+                initData
+            );
+            ERC7579BootstrapConfig[] memory _executors = _emptyConfigs();
+
+            ERC7579BootstrapConfig memory _hook = _emptyConfig();
+
+            ERC7579BootstrapConfig[] memory _fallBacks = _emptyConfigs();
             init = abi.encode(
                 address(bootstrapSafe),
                 abi.encodeCall(
                     ERC7579Bootstrap.initMSA,
-                    (_validators, _executors, _hook, _fallbacks)
+                    (_validators, _executors, _hook, _fallBacks)
                 )
             );
         } else if (env == AccountType.KERNEL7579) {
-            //TODO need to change this to kernels accpeted calldata
-            // delete this!
-            init = abi.encode(
-                address(bootstrapDefault),
-                abi.encodeCall(
-                    ERC7579Bootstrap.initMSA,
-                    (_validators, _executors, _hook, _fallbacks)
-                )
+            ValidationId rootValidator = ValidatorLib.validatorToIdentifier(
+                IValidator(validator)
+            );
+
+            init = abi.encodeCall(
+                Kernel.initialize,
+                (rootValidator, IHook(address(0)), initData, "")
             );
         } else {
+            ERC7579BootstrapConfig[] memory _validators = generateConfig(
+                validator,
+                initData
+            );
+            ERC7579BootstrapConfig[] memory _executors = _emptyConfigs();
+
+            ERC7579BootstrapConfig memory _hook = _emptyConfig();
+
+            ERC7579BootstrapConfig[] memory _fallBacks = _emptyConfigs();
             init = abi.encode(
                 address(bootstrapDefault),
                 abi.encodeCall(
                     BootstrapSafe.initMSA,
-                    (_validators, _executors, _hook, _fallbacks)
+                    (_validators, _executors, _hook, _fallBacks)
                 )
             );
         }
     }
+
+    function generateConfig(
+        address module,
+        bytes memory data
+    ) private pure returns (ERC7579BootstrapConfig[] memory config) {
+        config = new ERC7579BootstrapConfig[](1);
+        config[0].module = module;
+        config[0].data = data;
+    }
+
+    function _emptyConfig()
+        private
+        pure
+        returns (ERC7579BootstrapConfig memory config)
+    {}
+
+    function _emptyConfigs()
+        private
+        pure
+        returns (ERC7579BootstrapConfig[] memory config)
+    {}
+    // function getBootstrapCallData(
+    //     ERC7579BootstrapConfig[] calldata _validators,
+    //     ERC7579BootstrapConfig[] calldata _executors,
+    //     ERC7579BootstrapConfig calldata _hook,
+    //     ERC7579BootstrapConfig[] calldata _fallbacks
+    // ) external view returns (bytes memory init) {
+    //     if (env == AccountType.SAFE7579) {
+    //         init = abi.encode(
+    //             address(bootstrapSafe),
+    //             abi.encodeCall(
+    //                 ERC7579Bootstrap.initMSA,
+    //                 (_validators, _executors, _hook, _fallbacks)
+    //             )
+    //         );
+    //     } else if (env == AccountType.KERNEL7579) {
+    //         //TODO remove the comment
+    //         // init = abi.encode(
+    //         //     address(bootstrapDefault),
+    //         //     abi.encodeCall(
+    //         //         ERC7579Bootstrap.initMSA,
+    //         //         (_validators, _executors, _hook, _fallbacks)
+    //         //     )
+    //         // );
+
+    //         // init = abi.encodeCall(Kernel.initialize, (rootValidator, hook, validatorData, hookData));
+    //     } else {
+    //         init = abi.encode(
+    //             address(bootstrapDefault),
+    //             abi.encodeCall(
+    //                 BootstrapSafe.initMSA,
+    //                 (_validators, _executors, _hook, _fallbacks)
+    //             )
+    //         );
+    //     }
+    // }
 }
