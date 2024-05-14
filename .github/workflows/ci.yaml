@@ -48,5 +48,5 @@ jobs:
     uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
     with:
       match-workspace: "@rhinestone/modulekit-examples"
-    env:
+    secrets:
       MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
