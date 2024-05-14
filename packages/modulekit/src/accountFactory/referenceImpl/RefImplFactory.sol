@@ -19,10 +19,9 @@ abstract contract RefImplFactory {
 
     function _createUMSA(bytes32 salt, bytes memory initCode) public returns (address account) {
         bytes32 _salt = _getSalt(salt, initCode);
-        address account = LibClone.cloneDeterministic(0, address(implementation), initCode, _salt);
+        account = LibClone.cloneDeterministic(0, address(implementation), initCode, _salt);
 
         IMSA(account).initializeAccount(initCode);
-        return account;
     }
 
     function getAddressUMSA(

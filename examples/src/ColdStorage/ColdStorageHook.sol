@@ -170,15 +170,7 @@ contract ColdStorageHook is ERC7579HookDestruct {
         }
     }
 
-    function onPostCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        virtual
-        override
-    {
+    function onPostCheck(bytes calldata hookData) internal virtual override {
         if (
             keccak256(hookData) == keccak256(abi.encode(this.requestTimelockedExecution.selector))
                 || keccak256(hookData) == keccak256(abi.encode(PASS))

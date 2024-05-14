@@ -60,14 +60,14 @@ library SessionKeyManagerLib {
     }
 
     function encodeSignature(
-        bytes32 digest,
+        bytes32 sigDigest,
         bytes memory sessionKeySignature
     )
         internal
         pure
         returns (bytes memory)
     {
-        return abi.encodePacked(NULL, abi.encode(digest, sessionKeySignature));
+        return abi.encodePacked(NULL, abi.encode(sigDigest, sessionKeySignature));
     }
 
     function encodeSignature(
@@ -114,7 +114,7 @@ library SessionKeyManagerLib {
     function decodeSignatureSingle(bytes calldata signature)
         internal
         pure
-        returns (bytes32 digest, bytes calldata sessionKeySignature)
+        returns (bytes32 sigDigest, bytes calldata sessionKeySignature)
     {
         /*
         * Session Data Pre Enabled Signature Layout
@@ -128,7 +128,7 @@ library SessionKeyManagerLib {
             let offset := add(signature.offset, 0x1)
             let baseOffset := offset
 
-            digest := calldataload(offset)
+            sigDigest := calldataload(offset)
             offset := add(offset, 0x20)
 
             let dataPointer := add(baseOffset, calldataload(offset))

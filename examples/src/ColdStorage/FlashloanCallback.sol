@@ -56,7 +56,7 @@ contract FlashloanCallback is IFallbackMethod, ERC7579ExecutorBase {
             (
                 address lender,
                 address token,
-                uint256 value,
+                uint256 dataValue,
                 uint256 fee,
                 bytes memory tokenGatedAction
             ) = abi.decode(data[4:], (address, address, uint256, uint256, bytes));

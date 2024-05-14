@@ -112,15 +112,8 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
         }
     }
 
-    function postCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        external
-        override
-    {
-        onPostCheck(hookData, executionSuccess, executionReturnValue);
+    function postCheck(bytes calldata hookData) external override {
+        onPostCheck(hookData);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -211,12 +204,5 @@ abstract contract ERC7579HookDestruct is ERC7579HookBase {
                                      POSTCHECK
     //////////////////////////////////////////////////////////////////////////*/
 
-    function onPostCheck(
-        bytes calldata hookData,
-        bool executionSuccess,
-        bytes calldata executionReturnValue
-    )
-        internal
-        virtual
-    { }
+    function onPostCheck(bytes calldata hookData) internal virtual { }
 }

@@ -14,7 +14,6 @@ import { MultiFactor } from "../src/MultiFactor/MultiFactor.sol";
 import { OwnableValidator } from "../src/OwnableValidator/OwnableValidator.sol";
 import { ScheduledOrders } from "../src/ScheduledTransactions/ScheduledOrders.sol";
 import { ScheduledTransfers } from "../src/ScheduledTransactions/ScheduledTransfers.sol";
-import { WebAuthnValidator } from "../src/WebAuthnValidator/WebAuthnValidator.sol";
 
 /**
  * @title Deploy
@@ -46,8 +45,6 @@ contract DeployScript is Script {
 
         ScheduledOrders scheduledOrders = new ScheduledOrders{ salt: salt }();
         ScheduledTransfers scheduledTransfers = new ScheduledTransfers{ salt: salt }();
-
-        WebAuthnValidator webAuthnValidator = new WebAuthnValidator{ salt: salt }();
 
         vm.stopBroadcast();
     }

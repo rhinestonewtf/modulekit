@@ -5,10 +5,9 @@ import "ds-test/test.sol";
 import "src/test/utils/GasCalculations.sol";
 
 contract GasCalculationsTest is DSTest {
- 
     function test_formatGasValue() public {
-        uint256 prevValue = 37054;
-        uint256 newValue = 187170;
+        uint256 prevValue = 37_054;
+        uint256 newValue = 187_170;
 
         string memory result = formatGasValue(prevValue, newValue);
 
@@ -17,7 +16,7 @@ contract GasCalculationsTest is DSTest {
     }
 
     function test_formatGas() public {
-        int256 value = 2550948;
+        int256 value = 2_550_948;
 
         string memory result = formatGas(value);
 

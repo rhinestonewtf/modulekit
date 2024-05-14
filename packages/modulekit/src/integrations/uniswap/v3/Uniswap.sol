@@ -55,7 +55,7 @@ library UniswapV3Integration {
                         sqrtPriceLimitX96: sqrtPriceLimitX96
                     })
                 )
-                )
+            )
         });
     }
 
@@ -87,7 +87,7 @@ library UniswapV3Integration {
                         sqrtPriceLimitX96: 0
                     })
                 )
-                )
+            )
         });
     }
 }
