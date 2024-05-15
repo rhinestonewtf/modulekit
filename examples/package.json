@@ -10,7 +10,7 @@
   "bugs": {
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
-  "devDependencies": {
+  "dependencies": {
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@openzeppelin/contracts": "5.0.1",
@@ -29,7 +29,8 @@
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
     "solhint": "^4.5.4",
-    "solmate": "github:transmissions11/solmate"
+    "solmate": "github:transmissions11/solmate",
+    "associatedBytesLib": "github:rhinestonewtf/associatedBytesLib"
   },
   "files": [
     "artifacts",

@@ -79,7 +79,7 @@ importers:
         version: https://codeload.github.com/transmissions11/solmate/tar.gz/c892309933b25c03d32b1b0d674df7ae292ba925
 
   examples:
-    devDependencies:
+    dependencies:
       '@ERC4337/account-abstraction':
         specifier: github:kopy-kat/account-abstraction#develop
         version: accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.3(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
@@ -104,6 +104,9 @@ importers:
       '@safe-global/safe-contracts':
         specifier: ^1.4.1
         version: 1.4.1(ethers@5.7.2)
+      associatedBytesLib:
+        specifier: github:rhinestonewtf/associatedBytesLib#849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd
+        version: associatedBytesLib#849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd@https://codeload.github.com/rhinestonewtf/associatedBytesLib/tar.gz/849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd
       checknsignatures:
         specifier: github:zeroknots/checknsignatures
         version: https://codeload.github.com/zeroknots/checknsignatures/tar.gz/53617ecdec7de32b9900a4a2d0027078207d4fcb
@@ -746,6 +749,10 @@ packages:
   array-union@2.1.0:
     resolution: {integrity: sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==}
     engines: {node: '>=8'}
+
+  associatedBytesLib#849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd@https://codeload.github.com/rhinestonewtf/associatedBytesLib/tar.gz/849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd:
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/associatedBytesLib/tar.gz/849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd}
+    version: 0.0.0
 
   ast-parents@0.0.1:
     resolution: {integrity: sha512-XHusKxKz3zoYk1ic8Un640joHbFMhbqneyoZfoKnEGtf2ey9Uh/IdpcQplODdO/kENaMIWsD0nJm4+wX3UNLHA==}
@@ -2938,6 +2945,8 @@ snapshots:
 
   array-union@2.1.0: {}
 
+  associatedBytesLib#849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd@https://codeload.github.com/rhinestonewtf/associatedBytesLib/tar.gz/849ca1fc2f588a6c8fe2ae6b36ccd85a051e2fdd: {}
+
   ast-parents@0.0.1: {}
 
   astral-regex@2.0.0: {}
@@ -4205,7 +4214,7 @@ snapshots:
 
   rimraf@2.7.1:
     dependencies:
-      glob: 7.2.0
+      glob: 7.2.3
 
   ripemd160@2.0.2:
     dependencies:
