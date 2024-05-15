@@ -41,7 +41,7 @@ contract ScheduledOrdersIntegrationTest is BaseIntegrationTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual override {
-        string memory mainnetUrl = vm.envString("MAINNET_RPC_URL");
+        string memory mainnetUrl = vm.rpcUrl("mainnet");
         mainnetFork = vm.createFork(mainnetUrl);
         vm.selectFork(mainnetFork);
         vm.rollFork(19_274_877);
