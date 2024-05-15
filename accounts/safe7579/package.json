@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "0.1.0",
   "author": {
-    "name": "zeroknots.eth",
+    "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
@@ -22,7 +22,7 @@
     "forge-std": "github:foundry-rs/forge-std",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",
-    "sentinellist": "github:zeroknots/sentinellist",
+    "sentinellist": "github:rhinestonewtf/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
     "solmate": "github:transmissions11/solmate",

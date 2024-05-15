@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "0.1.0",
   "author": {
-    "name": "zeroknots.eth",
+    "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
@@ -15,7 +15,7 @@
     "ds-test": "github:dapphub/ds-test",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
-    "sentinellist": "github:zeroknots/sentinellist",
+    "sentinellist": "github:rhinestonewtf/sentinellist",
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",

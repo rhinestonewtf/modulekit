@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "0.3.1",
   "author": {
-    "name": "zeroknots.eth",
+    "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
@@ -24,7 +24,7 @@
     "@safe-global/safe-contracts": "^1.4.1",
     "erc7579": "github:erc7579/erc7579-implementation",
     "prettier": "^2.8.8",
-    "sentinellist": "github:zeroknots/sentinellist",
+    "sentinellist": "github:rhinestonewtf/sentinellist",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
     "solhint": "^4.1.1"
