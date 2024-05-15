@@ -77,7 +77,21 @@ library ERC7579Helpers {
         if (notDeployedYet) {
             initCode = instance.initCode;
         }
-
+        {
+            string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
+            if (
+                keccak256(abi.encodePacked(env)) !=
+                keccak256(abi.encodePacked("KERNEL7579"))
+            ) {
+                initData = configModule(
+                    instance.account,
+                    moduleType,
+                    module,
+                    initData,
+                    fn
+                );
+            }
+        }
         userOp = PackedUserOperation({
             sender: instance.account,
             nonce: getNonce(
@@ -87,13 +101,7 @@ library ERC7579Helpers {
                 address(instance.defaultValidator)
             ),
             initCode: initCode,
-            callData: configModule(
-                instance.account,
-                moduleType,
-                module,
-                initData,
-                fn
-            ),
+            callData: initData,
             accountGasLimits: bytes32(
                 abi.encodePacked(uint128(2e6), uint128(2e6))
             ),
@@ -442,6 +450,20 @@ library ERC7579Helpers {
             nonce = entrypoint.getNonce(address(account), key);
         }
     }
+
+    // function signatureInNonce(
+    //     address account,
+    //     IEntryPoint entrypoint,
+    //     PackedUserOperation memory userOp,
+    //     address validator,
+    //     bytes memory signature
+    // ) internal view returns (bytes32 userOpHash, PackedUserOperation memory) {
+    //     userOp.nonce = getNonce(account, entrypoint, validator);
+    //     userOp.signature = signature;
+
+    //     userOpHash = entrypoint.getUserOpHash(userOp);
+    //     return (userOpHash, userOp);
+    // }
 }
 
 abstract contract BootstrapUtil {

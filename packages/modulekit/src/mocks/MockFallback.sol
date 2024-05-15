@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC7579FallbackBase } from "../Modules.sol";
+import {ERC7579FallbackBase} from "../Modules.sol";
 
 contract MockFallback is ERC7579FallbackBase {
-    function onInstall(bytes calldata data) external override { }
+    function onInstall(bytes calldata data) external override {}
 
-    function onUninstall(bytes calldata data) external override { }
+    function onUninstall(bytes calldata data) external override {}
 
     function targetFunction() external returns (bool) {
         return true;
@@ -18,5 +18,9 @@ contract MockFallback is ERC7579FallbackBase {
 
     function isInitialized(address smartAccount) external view returns (bool) {
         return false;
+    }
+
+    function fallbackFunction(uint256 v) external pure returns (uint256) {
+        return v * v;
     }
 }
