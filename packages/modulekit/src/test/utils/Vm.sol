@@ -97,9 +97,14 @@ function stopAndReturnStateDiff() returns (VmSafe.AccountAccess[] memory) {
     return Vm(VM_ADDR).stopAndReturnStateDiff();
 }
 
+function envOr(string memory name, string memory defaultValue) view returns (string memory value){
+    return Vm(VM_ADDR).envOr(name, defaultValue);
+}
+
 function envOr(string memory name, bool defaultValue) view returns (bool value) {
     return Vm(VM_ADDR).envOr(name, defaultValue);
 }
+
 
 function envBool(string memory key) view returns (bool value) {
     return Vm(VM_ADDR).envBool(key);
