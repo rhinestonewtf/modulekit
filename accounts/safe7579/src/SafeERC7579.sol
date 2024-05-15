@@ -67,8 +67,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
             revert UnsupportedCallType(callType);
         }
 
-        // TODO: add correct data
-        _doPostHook(hook, hookPreContext, true, new bytes(0));
+        _doPostHook(hook, hookPreContext);
     }
 
     /**
@@ -100,8 +99,7 @@ contract SafeERC7579 is ISafeOp, IERC7579Account, AccessControl, IMSA, HookManag
             revert UnsupportedCallType(callType);
         }
 
-        // TODO: add correct data
-        _doPostHook(hook, hookPreContext, true, new bytes(0));
+        _doPostHook(hook, hookPreContext);
     }
 
     // TODO: comments

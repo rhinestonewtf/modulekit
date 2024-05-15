@@ -145,8 +145,10 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             callData: abi.encodeCall(TrustedForwarder.setTrustedForwarder, (address(hook)))
         });
 
-        instance.getExecOps({ executions: execution, txValidator: address(defaultValidator) })
-            .execUserOps();
+        instance.getExecOps({
+            executions: execution,
+            txValidator: address(instance.defaultValidator)
+        }).execUserOps();
 
         token = new MockERC20("usdc", "usdc", 18);
         token.mint(instance.account, 100 ether);
@@ -271,8 +273,10 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             callData: abi.encodeCall(IERC20.transfer, (makeAddr("receiver"), 100))
         });
 
-        UserOpData memory userOpData =
-            instance.getExecOps({ executions: execution, txValidator: address(defaultValidator) });
+        UserOpData memory userOpData = instance.getExecOps({
+            executions: execution,
+            txValidator: address(instance.defaultValidator)
+        });
         userOpData.execUserOps();
     }
 
@@ -287,7 +291,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             target: target,
             value: value,
             callData: callData,
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         });
 
         // Execute the userOp
@@ -305,7 +309,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             target: target,
             value: value,
             callData: callData,
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         });
 
         ModeSelector modeSelector = ModeSelector.wrap(bytes4(keccak256(abi.encode("revert"))));
@@ -338,7 +342,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             target: target,
             value: value,
             callData: callData,
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         });
 
         ModeSelector modeSelector = ModeSelector.wrap(bytes4(keccak256(abi.encode("revertPost"))));
@@ -366,7 +370,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             target: address(hook),
             value: 0,
             callData: abi.encodeCall(HookMultiPlexer.addHook, (address(deadmanSwitch), HookType.GLOBAL)),
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
         address[] memory newHooks = hook.getHooks(address(instance.account));
@@ -376,7 +380,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
             target: address(2),
             value: 1 wei,
             callData: "",
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
         (uint48 lastAccess,,) = deadmanSwitch.config(instance.account);
@@ -392,7 +396,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
                 HookMultiPlexer.addSigHook,
                 (address(registryHook), IERC7579Account.installModule.selector, HookType.SIG)
             ),
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
         address[] memory newHooks = hook.getHooks(address(instance.account));
@@ -420,7 +424,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
                 HookMultiPlexer.addSigHook,
                 (address(coldStorage), IERC7579Account.executeFromExecutor.selector, HookType.SIG)
             ),
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
         address[] memory newHooks = hook.getHooks(address(instance.account));
@@ -455,7 +459,7 @@ contract HookMultiPlexerIntegrationTest is BaseIntegrationTest {
                 HookMultiPlexer.addSigHook,
                 (address(coldStorage), IERC7579Account.executeFromExecutor.selector, HookType.SIG)
             ),
-            txValidator: address(defaultValidator)
+            txValidator: address(instance.defaultValidator)
         }).execUserOps();
 
         address[] memory newHooks = hook.getHooks(address(instance.account));
