@@ -1,39 +1,55 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-/* solhint-disable no-unused-vars */
-import { IERC7484Registry } from "../interfaces/IERC7484Registry.sol";
+import { IERC7484 } from "../interfaces/IERC7484.sol";
+
 /// @title MockRegistry
 /// @author zeroknots
+contract MockRegistry is IERC7484 {
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*          Check with Registry internal attesters            */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+    function check(address module) external view { }
 
-contract MockRegistry is IERC7484Registry {
-    function check(
-        address executor,
-        address trustedAuthority
+    function checkForAccount(address smartAccount, address module) external view { }
+
+    function check(address module, uint256 moduleType) external view { }
+
+    function checkForAccount(
+        address smartAccount,
+        address module,
+        uint256 moduleType
     )
         external
         view
-        override
-        returns (uint256 listedAt)
-    {
-        return 1337;
-    }
+    { }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*              Check with external attester(s)               */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    function check(address module, address attester) external view { }
+
+    function check(address module, uint256 moduleType, address attester) external view { }
 
     function checkN(
         address module,
-        address[] memory attesters,
+        address[] calldata attesters,
         uint256 threshold
     )
         external
         view
-        override
-        returns (uint256[] memory)
-    {
-        uint256 attestersLength = attesters.length;
-        uint256[] memory attestedAtArray = new uint256[](attestersLength);
-        for (uint256 i; i < attestersLength; ++i) {
-            attestedAtArray[i] = uint256(1234);
-        }
-        return attestedAtArray;
-    }
+    { }
+
+    function checkN(
+        address module,
+        uint256 moduleType,
+        address[] calldata attesters,
+        uint256 threshold
+    )
+        external
+        view
+    { }
+
+    function trustAttesters(uint8 threshold, address[] calldata attesters) external { }
 }

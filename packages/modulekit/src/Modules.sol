@@ -8,6 +8,7 @@ import { ERC7579ExecutorBase } from "./modules/ERC7579ExecutorBase.sol";
 import { ERC7579HookBase } from "./modules/ERC7579HookBase.sol";
 import { ERC7579HookDestruct } from "./modules/ERC7579HookDestruct.sol";
 import { ERC7579FallbackBase } from "./modules/ERC7579FallbackBase.sol";
+import { SchedulingBase } from "./modules/SchedulingBase.sol";
 import { ExtensibleFallbackHandler } from "./core/ExtensibleFallbackHandler.sol";
 import {
     IERC7579Validator,
@@ -15,3 +16,4 @@ import {
     IERC7579Fallback,
     IERC7579Hook
 } from "./external/ERC7579.sol";
+import { ERC7484RegistryAdapter } from "./modules/ERC7484RegistryAdapter.sol";

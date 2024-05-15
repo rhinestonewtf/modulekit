@@ -4,7 +4,7 @@
   "license": "MIT",
   "version": "0.3.7",
   "author": {
-    "name": "zeroknots.eth",
+    "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
   "bugs": {
@@ -43,7 +43,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": "github.com/rhinestonewtf/modulekit",
+  "repository": "github:rhinestonewtf/modulekit",
   "scripts": {
     "build": "forge build",
     "fmt": "forge fmt",

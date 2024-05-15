@@ -1,0 +1,133 @@
+OwnableValidator::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── when threshold is 0
+    │   └── it should revert
+    └── when threshold is not 0
+        ├── it should set the threshold
+        ├── when owners length is less than threshold
+        │   └── it should revert
+        └── when owners length is not less than threshold
+            ├── when owners length is more than max
+            │   └── it should revert
+            └── when owners length is not more than max
+                ├── it should set owner count
+                ├── when owners include 0 address
+                │   └── it should revert
+                ├── when owners include duplicates
+                │   └── it should revert
+                └── when owners include no duplicates
+                    └── it should set all owners
+     
+
+OwnableValidator::onUninstall
+├── it should remove all owners
+├── it should set threshold to 0
+└── it should set owner count to 0
+
+
+OwnableValidator::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+OwnableValidator::setThreshold
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when threshold is 0
+    │   └── it should revert
+    └── when threshold is not 0
+        ├── when threshold is higher than owners length
+        │   └── it should revert
+        └── when threshold is not higher than owners length
+            └── it should set the threshold
+
+
+OwnableValidator::addOwner
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when owner is 0 address
+    │   └── it should revert
+    └── when owner is not 0 address
+        ├── when owner count is more than max
+        │   └── it should revert
+        └── when owner count is not more than max
+            ├── when owner is already added
+            │   └── it should revert
+            └── when owner is not added
+                ├── it should increment owner count
+                └── it should add the owner
+
+
+OwnableValidator::removeOwner
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should decrement owner count
+    └── it should remove the owner
+
+
+OwnableValidator::getOwners
+└── it should get all owners
+
+
+OwnableValidator::validateUserOp
+├── when threshold is not set
+│   └── it should return 1
+└── when threshold is set
+    ├── when the signatures are not valid
+    │   └── it should return 1
+    └── when the signatures are valid
+        ├── when the unique signatures are less than threshold
+        │   └── it should return 1
+        └── when the unique signatures are greater than threshold
+            └── it should return 0
+
+
+OwnableValidator::isValidSignatureWithSender
+├── when threshold is not set
+│   └── it should return EIP1271_FAILED
+└── when threshold is set
+    ├── when the signatures are not valid
+    │   └── it should return EIP1271_FAILED
+    └── when the signatures are valid
+        ├── when the unique signatures are less than threshold
+        │   └── it should return EIP1271_FAILED
+        └── when the unique signatures are greater than threshold
+            └── it should return ERC1271_MAGIC_VALUE
+
+
+OwnableValidator::validateSignatureWithData
+├── when owners are not unique 
+│   └── it should return false
+└── when owners are unique 
+    ├── when threshold is not set
+    │   └── it should return false
+    └── when threshold is set
+        ├── when the signatures are not valid
+        │   └── it should return false
+        └── when the signatures are valid
+            ├── when the unique signatures are less than threshold
+            │   └── it should return false
+            └── when the unique signatures are greater than threshold
+                └── it should return true
+
+
+OwnableValidator::name
+└── it should return OwnableValidator
+
+
+OwnableValidator::version
+└── it should return 1.0.0
+
+
+OwnableValidator::isModuleType
+├── when typeID is 1
+│   └── it should return true
+└── when typeID is not 1
+    └── it should return false

@@ -1,0 +1,158 @@
+ColdStorageHook::onInstall
+├── when module is intialized
+│   ├── when module data is not empty
+│   │   └── it should revert
+│   └── when module data empty
+│       └── it should return
+└── when module is not intialized
+    ├── when the owner is 0
+    │   └── it should revert
+    └── when the owner is not 0
+        ├── when the waitPeriod is 0
+        │   └── it should revert
+        └── when the waitPeriod is not 0
+            ├── it should set the waitPeriod
+            └── it should set the owner
+     
+
+ColdStorageHook::onUninstall
+└── it should remove the config
+
+
+ColdStorageHook::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+ColdStorageHook::setWaitPeriod
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when waitPeriod is 0
+    │   └── it should revert
+    └── when waitPeriod is not 0
+        └── it should set the waitPeriod
+
+
+ColdStorageHook::checkHash
+├── when the hash is not valid
+│   └── it should return entry 0
+└── when the hash is valid
+    └── it should return the entry
+
+
+ColdStorageHook::requestTimelockedExecution
+├── when calldata length is not 0
+│   ├── when the receiver is not the owner
+│   │   ├── when the call is not to setWaitPeriod
+│   │   │   └── it should revert
+│   │   └── when the call is to setWaitPeriod
+│   │       ├── it should store the execution
+│   │       ├── it should store the executeAfter time
+│   │       └── it should emit an TimelockRequested event
+│   └── when the receiver is the owner
+│       ├── it should store the execution
+│       ├── it should store the executeAfter time
+│       └── it should emit an TimelockRequested event
+└── when calldata length is 0
+    ├── when the target is not the owner
+    │   └── it should revert
+    └── when the target is the owner
+        ├── it should store the execution
+        ├── it should store the executeAfter time
+        └── it should emit an TimelockRequested event
+
+
+ColdStorageHook::requestTimelockedModuleConfig
+├── it should store the execution
+├── it should store the executeAfter time
+└── it should emit an TimelockRequested event
+
+
+ColdStorageHook::preCheck
+├── when function is execute
+│   └── it should revert
+├── when function is executeBatch
+│   └── it should revert
+├── when function is executeBatchFromExecutor
+│   └── it should revert
+├── when function is installModule
+│   ├── when install timelock is not up
+│   │   └── it should revert
+│   └── when install timelock is up
+│       ├── it should emit TimelockExecuted
+│       └── it should return
+├── when function is uninstallModule
+│   ├── when uninstall timelock is not up
+│   │   └── it should revert
+│   └── when uninstall timelock is up
+│       ├── it should emit TimelockExecuted
+│       └── it should return
+├── when function is unknown
+│   ├── when function is a flashloan function
+│   │   └── it should return
+│   └── when function is not a flashloan function
+│       └── it should revert
+└── when function is executeFromExecutor
+    ├── when coldstorage is performing an execution
+    │   └── it should return
+    ├── when target is this and function is requestTimelockedExecution or requestTimelockedModuleConfig
+    │   └── it should return
+    └── when target is not this or function is not requestTimelockedExecution
+        ├── when an execution does not exist
+        │   └── it should revert
+        └── when an execution exists
+            ├── when the timelock is not up
+            │   └── it should revert
+            └── when the timelock is up
+                ├── it should emit TimelockExecuted
+                └── it should return
+
+
+ColdStorageHook::postCheck
+└── it should return
+
+
+ColdStorageHook::availableForFlashLoan
+├── when sender is not the owner of the token
+│   └── it should return false
+└── when sender is the owner of the token
+    └── it should return true
+
+
+ColdStorageHook::flashLoan
+├── when receiver is not the owner
+│   └── it should revert
+└── when receiver is the owner
+    ├── when flashloan type is not supported
+    │   └── it should revert
+    └── when flashloan type is supported
+        ├── it should transfer the token to the receiver
+        ├── it should call onFlashLoan on the receiver
+        ├── it should transfer the token back to the cold storage
+        ├── when return is invalid
+        │   └── it should revert
+        └── when return is valid
+            ├── when token was not sent back
+            │   └── it should revert
+            └── when token was sent back
+                └── it should return
+
+
+ColdStorageHook::name
+└── it should return ColdStorageHook
+
+
+ColdStorageHook::version
+└── it should return 1.0.0
+
+
+ColdStorageHook::isModuleType   
+├── when typeID is 3
+│   └── it should return true
+├── when typeID is 4
+│   └── it should return true
+└── when typeID is not 4
+    └── it should return false

@@ -1,0 +1,74 @@
+AutoSavings::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── when tokens is greater than max
+    │   └── it should revert
+    └── when tokens is not greater than max
+        ├── when sqrtPriceLimitX96 is 0
+        │   └── it should revert
+        └── when sqrtPriceLimitX96 is not 0
+            ├── it should set the configs for each token
+            └── it should add all tokens
+
+
+AutoSavings::onUninstall
+├── it should remove all the configs
+└── it should remove all stored tokens
+
+
+AutoSavings::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+AutoSavings::setConfig
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when sqrtPriceLimitX96 is 0
+    │   └── it should revert
+    └── when sqrtPriceLimitX96 is not 0
+        └── it should set the config for the token
+
+
+AutoSavings::deleteConfig
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should remove the token from the stored tokens
+    └── it should delete the config for the token
+
+
+AutoSavings::calcDepositAmount
+└── it should return the deposit amount
+
+
+AutoSavings::autoSave
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when the token provided is not the underlying asset
+    │   ├── it should execute a swap to the underlying asset
+    │   ├── it should deposit the amount to the vault
+    │   └── it should emit an AutoSaveExecuted event
+    └── when the token provided is the underlying asset
+        ├── it should deposit the amount to the vault
+        └── it should emit an AutoSaveExecuted event
+
+
+AutoSavings::name
+└── it should return AutoSavings
+
+
+AutoSavings::version
+└── it should return 1.0.0
+
+
+AutoSavings::isModuleType
+├── when typeID is 2
+│   └── it should return true
+└── when typeID is not 2
+    └── it should return false

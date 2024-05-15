@@ -15,6 +15,8 @@ import "./GasCalculations.sol";
 import { Simulator } from "erc4337-validation/Simulator.sol";
 
 library ERC4337Helpers {
+    using Simulator for PackedUserOperation;
+
     error UserOperationReverted(
         bytes32 userOpHash, address sender, uint256 nonce, bytes revertReason
     );
@@ -22,18 +24,23 @@ library ERC4337Helpers {
     function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
         // ERC-4337 specs validation
         if (envOr("SIMULATE", false) || getSimulateUserOp()) {
-            Simulator.simulateUserOp(userOps[0], address(onEntryPoint));
+            userOps[0].simulateUserOp(address(onEntryPoint));
         }
         // Record logs to determine if a revert happened
         recordLogs();
 
         // Execute userOps
-        address beneficiary = address(0x69);
-        onEntryPoint.handleOps(userOps, payable(beneficiary));
+        address payable beneficiary = payable(address(0x69));
+        bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
+        (bool success,) = address(onEntryPoint).call(userOpCalldata);
+
+        uint256 isExpectRevert = getExpectRevert();
+        if (isExpectRevert == 0) {
+            require(success, "UserOperation execution failed");
+        }
 
         // Parse logs and determine if a revert happened
         VmSafe.Log[] memory logs = getRecordedLogs();
-        uint256 isExpectRevert = getExpectRevert();
         uint256 totalUserOpGas = 0;
         for (uint256 i; i < logs.length; i++) {
             // UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)
@@ -41,10 +48,10 @@ library ERC4337Helpers {
                 logs[i].topics[0]
                     == 0x49628fd1471006c1482da88028e9ce4dbb080b815c9b0344d39e5a8e6ec1419f
             ) {
-                (uint256 nonce, bool success,, uint256 actualGasUsed) =
+                (uint256 nonce, bool userOpSuccess,, uint256 actualGasUsed) =
                     abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
                 totalUserOpGas = actualGasUsed;
-                if (!success) {
+                if (!userOpSuccess) {
                     if (isExpectRevert == 0) {
                         bytes32 userOpHash = logs[i].topics[1];
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
@@ -58,7 +65,14 @@ library ERC4337Helpers {
             }
         }
         isExpectRevert = getExpectRevert();
-        if (isExpectRevert != 0) revert("UserOperation did not revert");
+        if (isExpectRevert != 0) {
+            if (success) {
+                revert("UserOperation did not revert");
+                require(!success, "UserOperation execution did not fail as expected");
+            } else {
+                require(!success, "UserOperation execution did not fail as expected");
+            }
+        }
         writeExpectRevert(0);
 
         // Calculate gas for userOp

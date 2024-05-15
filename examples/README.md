@@ -5,16 +5,18 @@
 Modules:
 
 - AutoSavings
-- AutoSend
+- ColdStorageHook
 - ColdStorage
-- Deadman Switch
-- Dollar Cost Averaging
-- ERC1271 PreHash Validator
-- Multi Factor Authentication
-- ECDSA Validator (OwnableValidator)
-- Scheduled Transactions
-- Automated Token Revocation
-- Webauthn Validator
+- Flashloan
+- DeadmanSwitch
+- HookMultiPlexer
+- MFA
+- OwnableExecutor
+- OwnableValidator
+- RegistryHook
+- ScheduledOrders
+- ScheduledTransactions
+- SocialRecovery
 
 ## Usage as part of ModuleKit
 

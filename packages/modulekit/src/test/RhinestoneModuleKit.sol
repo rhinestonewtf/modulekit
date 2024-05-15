@@ -47,10 +47,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     MockValidator public _defaultValidator;
 
-    constructor() {
-        init();
-    }
-
     /**
      * Initializes Auxiliary and /src/core
      * This function will run before any accounts can be created
@@ -60,8 +56,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             super.init();
             isInit = true;
         }
-
-        isInit = true;
 
         // // Deploy default contracts
         // accountImplementationSingleton = new ERC7579Account();

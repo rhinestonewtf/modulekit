@@ -1,0 +1,71 @@
+ScheduledTransfers::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── it should set the jobCount to 1
+    ├── it should store the execution config
+    └── it should emit an ExecutionAdded event
+
+
+ScheduledTransfers::onUninstall
+├── it should remove all executions
+├── it should set the account job count to 0
+└── it should emit an ExecutionsCancelled event
+
+
+ScheduledTransfers::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+ScheduledTransfers::addOrder
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should increment the jobCount by 1
+    ├── it should store the execution config
+    └── it should emit an ExecutionAdded event
+
+
+ScheduledTransfers::toggleOrder
+├── when order does not exist
+│   └── it should revert
+└── when order exists
+    ├── it should toggle the order enabled state
+    └── it should emit an ExecutionStatusUpdated event
+
+
+ScheduledTransfers::executeOrder
+├── when order is not enabled
+│   └── it should revert
+└── when order is enabled
+    ├── when the order is not due
+    │   └── it should revert
+    └── when the order is due
+        ├── when all executions have been completed
+        │   └── it should revert
+        └── when all executions have not been completed
+            ├── when the start date is in the future
+            │   └── it should revert
+            └── when the start date is in the past
+                ├── it should make the stored transfer
+                ├── it should update the last order timestamp
+                ├── it should update the order execution count
+                └── it should emit an ExecutionTriggered event
+
+
+ScheduledTransfers::name
+└── it should return ScheduledTransfers
+
+
+ScheduledTransfers::version
+└── it should return 1.0.0
+
+
+ScheduledTransfers::isModuleType
+├── when typeID is 2
+│   └── it should return true
+└── when typeID is not 2
+    └── it should return false

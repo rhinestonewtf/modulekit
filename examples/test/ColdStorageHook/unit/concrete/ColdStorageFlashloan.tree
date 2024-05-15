@@ -1,0 +1,68 @@
+ColdStorageFlashloan::onInstall
+├── when module is intialized
+│   ├── when data is not empty
+│   │   └── it should revert
+│   └── when data is empty
+│       └── it should return
+└── when module is not intialized
+    └── it should set the whitelist
+     
+
+ColdStorageFlashloan::onUninstall
+└── it should remove the whitelist
+
+
+ColdStorageFlashloan::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+ColdStorageFlashloan::addAddress
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should add the address to the whitelist
+
+
+ColdStorageFlashloan::removeAddress
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should remove the address from the whitelist
+
+
+ColdStorageFlashloan::getWhitelist
+└── it should return the whitelist
+
+
+ColdStorageFlashloan::getTokengatedTxHash
+└── it should return the tokengatedTxHash
+
+
+ColdStorageFlashloan::onFlashLoan
+├── when the sender is not allowed
+│   └── it should revert
+└── when the sender is allowed
+    ├── when the signature is invalid
+    │   └── it should revert
+    └── when the signature is valid
+        ├── it should execute the flashloan
+        ├── it should increment the nonce
+        └── it should return the right hash
+
+
+ColdStorageFlashloan::name
+└── it should return FlashloanCallback
+
+
+ColdStorageFlashloan::version
+└── it should return 1.0.0
+
+
+ColdStorageFlashloan::isModuleType
+├── when typeID is 2 and 3
+│   └── it should return true
+└── when typeID is not 2 or 3
+    └── it should return false

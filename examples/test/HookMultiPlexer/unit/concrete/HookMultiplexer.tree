@@ -1,0 +1,89 @@
+HookMultiPlexer::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── when any of the hooks are not sorted and unique
+    │   └── it should revert
+    └── when all of the hooks are sorted and unique
+        └── it should set all the hooks
+
+
+HookMultiPlexer::onUninstall
+└── it should delete all the hooks and sigs
+
+
+HookMultiPlexer::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+HookMultiPlexer::getHooks
+└── it should return all the hooks
+
+
+HookMultiPlexer::addHook
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    └── it should add the hook
+
+
+HookMultiPlexer::addSigHook
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should add the hook
+    └── when sig is not already added
+        └── it should add the sig
+
+
+HookMultiPlexer::removeHook
+└── it should remove the hook
+
+
+HookMultiPlexer::removeSigHook
+├── it should remove the hook
+└── when sig was only used by this hook
+    └── it should remove the sig
+
+
+HookMultiPlexer::preCheck
+├── when tx is not an execution
+│   └── it should call global and calldata hooks
+└── when tx is an execution
+    ├── it should call global hooks
+    ├── when execution is single
+    │   ├── when execution has value 
+    │   │   ├── it should call the target sig hooks
+    │   │   └── it should call the value hooks
+    │   └── when execution has no value 
+    │       └── it should call the target sig hooks
+    ├── when execution is batched
+    │   ├── when any execution has value 
+    │   │   ├── it should call the target sig hooks
+    │   │   └── it should call the value hooks
+    │   └── when no execution has value 
+    │       └── it should call the target sig hooks
+    └── when execution is delegatecall
+        └── it should call the delegatecall hooks
+
+
+HookMultiPlexer::postCheck
+└── it should call all hooks provided in hookdata
+
+
+HookMultiPlexer::name
+└── it should return HookMultiPlexer
+
+
+HookMultiPlexer::version
+└── it should return 1.0.0
+
+
+HookMultiPlexer::isModuleType
+├── when typeID is 4
+│   └── it should return true
+└── when typeID is not 4
+    └── it should return false

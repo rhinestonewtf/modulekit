@@ -1,0 +1,31 @@
+Contract::onInstall
+# when module is intialized
+## it should revert
+# when module is not intialized
+## 
+
+
+Contract::onUninstall
+# 
+
+
+Contract::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+Contract::name
+└── it should return SocialRecoveryValidator
+
+
+Contract::version
+└── it should return 1.0.0
+
+
+Contract::isModuleType
+├── when typeID is 1
+│   └── it should return true
+└── when typeID is not 1
+    └── it should return false

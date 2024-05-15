@@ -51,15 +51,12 @@ library ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory) internal  returns (address, uint256, bytes memory)
-            fn
+        function(address, uint256, address, bytes memory) internal  returns (bytes memory) fn
     )
         internal
         returns (bytes memory erc7579Tx)
     {
-        (address to, uint256 value, bytes memory callData) =
-            fn(account, moduleType, module, initData);
-        erc7579Tx = encode(to, value, callData);
+        erc7579Tx = fn(account, moduleType, module, initData);
     }
 
     function configModuleUserOp(
@@ -67,8 +64,7 @@ library ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory) internal  returns (address, uint256, bytes memory)
-            fn,
+        function(address, uint256, address, bytes memory) internal  returns (bytes memory) fn,
         address txValidator
     )
         internal
@@ -136,7 +132,7 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
             return installValidator(account, module, initData);
@@ -162,7 +158,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
             return uninstallValidator(account, module, initData);
@@ -187,10 +183,8 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
-        to = account;
-        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_VALIDATOR, validator, initData)
         );
@@ -206,7 +200,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
         // get previous validator in sentinel list
         address previous;
@@ -224,8 +218,6 @@ library ERC7579Helpers {
             }
         }
 
-        to = account;
-        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.uninstallModule,
             (MODULE_TYPE_VALIDATOR, validator, abi.encode(previous, initData))
@@ -242,10 +234,8 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
-        to = account;
-        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_EXECUTOR, executor, initData)
         );
@@ -261,7 +251,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
         // get previous executor in sentinel list
         address previous;
@@ -279,8 +269,6 @@ library ERC7579Helpers {
             }
         }
 
-        to = account;
-        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.uninstallModule,
             (MODULE_TYPE_EXECUTOR, executor, abi.encode(previous, initData))
@@ -297,10 +285,8 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
-        to = account;
-        value = 0;
         callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
@@ -314,14 +300,10 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
-        hook = hook; // avoid solhint-no-unused-vars
-        to = account;
-        value = 0;
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
-        );
+        callData =
+            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -334,10 +316,8 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
-        to = account;
-        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
@@ -353,13 +333,10 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (address to, uint256 value, bytes memory callData)
+        returns (bytes memory callData)
     {
-        fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
-        to = account;
-        value = 0;
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
     }
 

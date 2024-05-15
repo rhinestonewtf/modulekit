@@ -14,30 +14,19 @@ abstract contract HookManager is ModuleManager {
     error HookPostCheckFailed();
     error HookAlreadyInstalled(address currentHook);
 
-    modifier withHook() {
-        address hook = $hookManager[msg.sender];
-        bool isHookEnabled = hook != address(0);
-        bytes memory hookPreContext;
-
-        // pre hook
-        if (isHookEnabled) hookPreContext = _doPreHook(hook);
-
-        _; // <-- hooked Function Bytecode here
-
-        // post hook
-        if (isHookEnabled) _doPostHook(hook, hookPreContext);
-    }
-
-    function _doPreHook(address hook) internal returns (bytes memory hookPreContext) {
-        hookPreContext = abi.decode(
-            _executeReturnData({
-                safe: msg.sender,
-                target: hook,
-                value: 0,
-                callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.value, msg.data))
-            }),
-            (bytes)
-        );
+    function _doPreHook() internal returns (address hook, bytes memory hookPreContext) {
+        hook = $hookManager[msg.sender];
+        if (hook != address(0)) {
+            hookPreContext = abi.decode(
+                _executeReturnData({
+                    safe: msg.sender,
+                    target: hook,
+                    value: 0,
+                    callData: abi.encodeCall(IHook.preCheck, (_msgSender(), msg.value, msg.data))
+                }),
+                (bytes)
+            );
+        }
     }
 
     function _doPostHook(address hook, bytes memory hookPreContext) internal {

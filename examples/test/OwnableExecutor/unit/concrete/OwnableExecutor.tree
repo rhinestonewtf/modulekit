@@ -1,0 +1,72 @@
+OwnableExecutor::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── it should set the owner count
+    └── it should set the owner of the subaccount
+     
+
+OwnableExecutor::onUninstall
+├── it should remove the owner count
+└── it should remove all owners
+
+
+OwnableExecutor::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+OwnableExecutor::addOwner
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when owner is 0 address
+    │   └── it should revert
+    ├── when owner is already added
+    │   └── it should revert
+    └── when owner is not added
+        ├── it should increment the owner count
+        └── it should add the owner
+
+
+OwnableExecutor::removeOwner
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should decrement the owner count
+    └── it should remove the owner
+
+
+OwnableExecutor::getOwners
+└── it should get all owners
+
+
+OwnableExecutor::executeOnOwnedAccount
+├── when msgSender is not an owner
+│   └── it should revert
+└── when msgSender is an owner
+    └── it should execute the calldata on the owned account
+
+
+OwnableExecutor::executeBatchOnOwnedAccount
+├── when msgSender is not an owner
+│   └── it should revert
+└── when msgSender is an owner
+    └── it should execute the calldata on the owned account
+
+
+OwnableExecutor::name
+└── it should return OwnableExecutor
+
+
+OwnableExecutor::version
+└── it should return 1.0.0
+
+
+OwnableExecutor::isModuleType
+├── when typeID is 2
+│   └── it should return true
+└── when typeID is not 2
+    └── it should return false

@@ -1,8 +1,0 @@
-DeadmanSwitchTest
-├─ It should never revert Hook
-├─ When account is used
-│  └─ It should set lastAccess
-├─ When validator is used and timeout not reached
-│  └─ It should revert
-└─ When validator is used and timeout is reached
-   └─ It should allow nominee to execute

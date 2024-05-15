@@ -1,0 +1,59 @@
+RegistryHook::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── it should set the registry of msg.sender
+    └── it should emit RegistrySet
+
+
+RegistryHook::onUninstall
+└── it should remove the registry
+
+
+RegistryHook::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+RegistryHook::setRegistry
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should set the registry of msg.sender
+    └── it should emit RegistrySet
+
+
+RegistryHook::preCheck
+├── when function is not installModule or executeFromExecutor
+│   └── it should return
+├── when function is executeFromExecutor
+│   ├── when executor is not attested
+│   │   └── it should revert
+│   └── when executor is attested
+│       └── it should return
+└── when function is installModule
+    ├── when module is not attested
+    │   └── it should revert
+    └── when module is attested
+        └── it should return
+
+
+RegistryHook::postCheck
+└── it should return
+
+
+RegistryHook::name
+└── it should return RegistryHook
+
+
+RegistryHook::version
+└── it should return 1.0.0
+
+
+RegistryHook::isModuleType
+├── when typeID is 4
+│   └── it should return true
+└── when typeID is not 4
+    └── it should return false

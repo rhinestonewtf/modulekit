@@ -1,0 +1,102 @@
+MultiFactor::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── when threshold is 0
+    │   └── it should revert
+    └── when threshold is not 0
+        ├── when owners length is less than threshold
+        │   └── it should revert
+        └── when owners length is not less than threshold
+            ├── when a validator is not attested to
+            │   └── it should revert
+            └── when all validators are attested to
+                ├── it should set threshold
+                ├── it should store the validators
+                └── it should emit a ValidatorAdded event for each validator
+     
+
+MultiFactor::onUninstall
+├── it should increment the iterator
+└── it should set threshold to 0
+
+
+MultiFactor::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+MultiFactor::setThreshold
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when threshold is 0
+    │   └── it should revert
+    └── when threshold is not 0
+        └── it should set the threshold
+
+
+MultiFactor::setValidator
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should emit a ValidatorAdded event
+    └── it should set the validator data
+
+
+MultiFactor::removeValidator
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should emit a ValidatorRemoved event
+    └── it should remove the validator
+
+
+MultiFactor::isSubValidator
+├── when subvalidator is not installed
+│   └── it should return false
+└── when subvalidator is installed
+    └── it should return true
+
+
+MultiFactor::validateUserOp
+├── when validator length is zero
+│   └── it should return 1
+└── when validator length is not zero
+    ├── when any validator is not set
+    │   └── it should return 1
+    └── when all validators are set
+        ├── when valid signatures are less than threshold
+        │   └── it should return 1
+        └── when valid signatures are greater than threshold
+            └── it should return 0
+
+
+MultiFactor::isValidSignatureWithSender
+├── when validator length is zero
+│   └── it should return EIP1271_FAILED
+└── when validator length is not zero
+    ├── when any validator is not set
+    │   └── it should return EIP1271_FAILED
+    └── when all validators are set
+        ├── when valid signatures are less than threshold
+        │   └── it should return EIP1271_FAILED
+        └── when valid signatures are greater than threshold
+            └── it should return ERC1271_MAGIC_VALUE
+
+
+MultiFactor::name
+└── it should return MultiFactor
+
+
+MultiFactor::version
+└── it should return 1.0.0
+
+
+MultiFactor::isModuleType
+├── when typeID is 1
+│   └── it should return true
+└── when typeID is not 1
+    └── it should return false

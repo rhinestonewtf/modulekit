@@ -1,0 +1,114 @@
+SocialRecovery::onInstall
+├── when module is intialized
+│   └── it should revert
+└── when module is not intialized
+    ├── when threshold is 0
+    │   └── it should revert
+    └── when threshold is not 0
+        ├── it should set the threshold
+        ├── when guardians length is less than threshold
+        │   └── it should revert
+        └── when guardians length is not less than threshold
+            ├── when guardians length is more than max
+            │   └── it should revert
+            └── when guardians length is not more than max
+                ├── it should set guardian count
+                ├── when guardians include 0 address
+                │   └── it should revert
+                ├── when guardians include duplicates
+                │   └── it should revert
+                └── when guardians include no duplicates
+                    └── it should set all guardians
+
+
+SocialRecovery::onUninstall
+├── it should remove the threshold
+├── it should remove the guardians
+└── it should set guardian count to 0
+
+
+SocialRecovery::isInitialized
+├── when module is not intialized
+│   └── it should return false
+└── when module is intialized
+    └── it should return true
+
+
+SocialRecovery::setThreshold
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when threshold is 0
+    │   └── it should revert
+    └── when threshold is not 0
+        ├── when threshold is higher than guardians length
+        │   └── it should revert
+        └── when threshold is not higher than guardians length
+            └── it should set the threshold
+
+
+SocialRecovery::addGuardian
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── when guardian is 0 address
+    │   └── it should revert
+    └── when guardian is not 0 address
+        ├── when guardian count is more than max
+        │   └── it should revert
+        └── when guardian count is not more than max
+            ├── when guardian is already added
+            │   └── it should revert
+            └── when guardian is not added
+                ├── it should increment guardian count
+                └── it should add the guardian
+
+
+SocialRecovery::removeGuardian
+├── when module is not intialized
+│   └── it should revert
+└── when module is intialized
+    ├── it should decrement guardian count
+    └── it should remove the guardian
+
+
+SocialRecovery::getGuardians
+└── it should get all guardians
+
+
+SocialRecovery::validateUserOp
+├── when threshold is not set
+│   └── it should return 1
+└── when threshold is set
+    ├── when the signatures are not valid
+    │   └── it should return 1
+    └── when the signatures are valid
+        ├── when the unique signatures are less than threshold
+        │   └── it should return 1
+        └── when the unique signatures are greater than threshold
+            ├── when execution type is not CallType Single
+            │   └── it should return 1
+            └── when execution type is CallType Single
+                ├── when execution target is not an installed validator
+                │   └── it should return 1
+                └── when execution target is an installed validator
+                    └── it should return 0
+
+
+SocialRecovery::isValidSignatureWithSender
+└── it should revert
+
+
+SocialRecovery::name
+└── it should return SocialRecoveryValidator
+
+
+SocialRecovery::version
+└── it should return 1.0.0
+
+
+SocialRecovery::isModuleType
+├── when typeID is 1
+│   └── it should return true
+└── when typeID is not 1
+    └── it should return false
