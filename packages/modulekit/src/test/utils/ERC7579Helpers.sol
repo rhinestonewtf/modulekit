@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Execution, IERC7579Account, ERC7579BootstrapConfig} from "../../external/ERC7579.sol";
+import {Execution, IERC7579Account, ERC7579BootstrapConfig, IERC7579Validator} from "../../external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import {PackedUserOperation, IEntryPoint} from "../../external/ERC4337.sol";
@@ -83,7 +83,8 @@ library ERC7579Helpers {
             nonce: getNonce(
                 instance.account,
                 instance.aux.entrypoint,
-                txValidator
+                txValidator,
+                address(instance.defaultValidator)
             ),
             initCode: initCode,
             callData: configModule(
@@ -120,35 +121,14 @@ library ERC7579Helpers {
             initCode = instance.initCode;
         }
 
-        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
-
-        uint256 nonce;
-        if (
-            keccak256(abi.encodePacked(env)) ==
-            keccak256(abi.encodePacked("KERNEL7579"))
-        ) {
-            ValidationType vType;
-            if (txValidator == address(instance.defaultValidator)) {
-                vType = VALIDATION_TYPE_ROOT;
-            } else {
-                vType = VALIDATION_TYPE_VALIDATOR;
-            }
-            nonce = KernelHelpers.encodeNonce(
-                vType,
-                false,
-                instance.account,
-                address(instance.defaultValidator)
-            );
-        } else {
-            nonce = getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator
-            );
-        }
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: nonce,
+            nonce: getNonce(
+                instance.account,
+                instance.aux.entrypoint,
+                txValidator,
+                address(instance.defaultValidator)
+            ),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(
@@ -437,24 +417,30 @@ library ERC7579Helpers {
     function getNonce(
         address account,
         IEntryPoint entrypoint,
-        address validator
-    ) internal view returns (uint256 nonce) {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        nonce = entrypoint.getNonce(address(account), key);
-    }
-
-    function signatureInNonce(
-        address account,
-        IEntryPoint entrypoint,
-        PackedUserOperation memory userOp,
         address validator,
-        bytes memory signature
-    ) internal view returns (bytes32 userOpHash, PackedUserOperation memory) {
-        userOp.nonce = getNonce(account, entrypoint, validator);
-        userOp.signature = signature;
-
-        userOpHash = entrypoint.getUserOpHash(userOp);
-        return (userOpHash, userOp);
+        address defaultValidator
+    ) internal view returns (uint256 nonce) {
+        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
+        if (
+            keccak256(abi.encodePacked(env)) ==
+            keccak256(abi.encodePacked("KERNEL7579"))
+        ) {
+            ValidationType vType;
+            if (validator == defaultValidator) {
+                vType = VALIDATION_TYPE_ROOT;
+            } else {
+                vType = VALIDATION_TYPE_VALIDATOR;
+            }
+            nonce = KernelHelpers.encodeNonce(
+                vType,
+                false,
+                account,
+                defaultValidator
+            );
+        } else {
+            uint192 key = uint192(bytes24(bytes20(address(validator))));
+            nonce = entrypoint.getNonce(address(account), key);
+        }
     }
 }
 
