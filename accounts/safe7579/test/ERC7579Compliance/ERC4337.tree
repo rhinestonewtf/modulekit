@@ -1,0 +1,6 @@
+ERC4337Test
+├── When calling validate function
+│   ├── It should select the correct validator module
+│   └── It should use the return value set by the validator module
+└── When encoding an invalid validator module
+    └── It should fallback to safe signature checks

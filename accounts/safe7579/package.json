@@ -11,23 +11,23 @@
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
   "devDependencies": {
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "@openzeppelin/contracts": "5.0.1",
+    "@prb/math": "^4.0.2",
     "@rhinestone/modulekit": "workspace:*",
     "@rhinestone/sessionkeymanager": "workspace:*",
     "@safe-global/safe-contracts": "^1.4.1",
-    "@openzeppelin/contracts": "5.0.1",
-    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
-    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
-    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
-    "@prb/math": "^4.0.2",
-    "forge-std": "github:foundry-rs/forge-std",
     "ds-test": "github:dapphub/ds-test",
+    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "erc7579": "github:erc7579/erc7579-implementation",
     "sentinellist": "github:rhinestonewtf/sentinellist",
+    "forge-std": "github:foundry-rs/forge-std",
+    "prettier": "^2.8.8",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solmate": "github:transmissions11/solmate",
-    "solhint": "^4.1.1",
-    "prettier": "^2.8.8"
+    "solhint": "^4.5.4",
+    "solmate": "github:transmissions11/solmate"
   },
   "files": [
     "artifacts",

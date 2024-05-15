@@ -2,6 +2,18 @@
 pragma solidity ^0.8.0;
 
 interface ISafe {
+    function setup(
+        address[] calldata _owners,
+        uint256 _threshold,
+        address to,
+        bytes calldata data,
+        address fallbackHandler,
+        address paymentToken,
+        uint256 payment,
+        address payable paymentReceiver
+    )
+        external;
+
     /**
      * @dev Allows a Module to execute a Safe transaction without any further confirmations.
      * @param to Destination address of module transaction.
@@ -53,6 +65,8 @@ interface ISafe {
         external
         view;
 
+    function signedMessages(bytes32) external view returns (uint256);
+
     /**
      * @dev Returns the domain separator for this contract, as defined in the EIP-712 standard.
      * @return bytes32 The domain separator hash.
@@ -84,4 +98,6 @@ interface ISafe {
      * @param module Module to be enabled.
      */
     function enableModule(address module) external;
+
+    function simulateAndRevert(address targetContract, bytes memory calldataPayload) external;
 }

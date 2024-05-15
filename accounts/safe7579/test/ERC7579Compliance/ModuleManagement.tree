@@ -1,0 +1,4 @@
+ModuleManagementTest
+└── When installing modules // test all module types
+    ├── It should call onInstall on module
+    └── It should add it to module storage

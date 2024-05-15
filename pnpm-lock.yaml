@@ -72,7 +72,7 @@ importers:
         specifier: github:sablier-labs/solarray
         version: https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684
       solhint:
-        specifier: ^4.1.1
+        specifier: ^4.5.4
         version: 4.5.4(typescript@4.9.5)
       solmate:
         specifier: github:transmissions11/solmate

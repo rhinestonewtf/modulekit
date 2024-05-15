@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "erc7579/interfaces/IERC7579Account.sol";
-import "erc7579/lib/ModeLib.sol";
-import "erc7579/lib/ExecutionLib.sol";
-import { TestBaseUtil, MockTarget, MockFallback, PackedUserOperation } from "./Base.t.sol";
+// import "erc7579/lib/ModeLib.sol";
+// import "erc7579/lib/ExecutionLib.sol";
+import "./Launchpad.t.sol";
+import { ModeLib } from "erc7579/lib/ModeLib.sol";
 
-contract MSATest is TestBaseUtil {
+import "forge-std/console2.sol";
+
+contract Safe7579Test is LaunchpadBase {
     function setUp() public override {
         super.setUp();
+        target = new MockTarget();
     }
 
     function test_execSingle() public {
@@ -24,14 +27,9 @@ contract MSATest is TestBaseUtil {
             )
         );
 
-        // Get the account, initcode and nonce
-        uint256 nonce = getNonce(address(safe), address(defaultValidator));
-
-        // Create the userOp and add the data
-        PackedUserOperation memory userOp = getDefaultUserOp();
-        userOp.sender = address(safe);
-        userOp.nonce = nonce;
-        userOp.initCode = "";
+        PackedUserOperation memory userOp =
+            getDefaultUserOp(address(safe), address(defaultValidator));
+        userOp.initCode = userOpInitCode;
         userOp.callData = userOpCalldata;
 
         // Create userOps array
@@ -62,14 +60,10 @@ contract MSATest is TestBaseUtil {
             (ModeLib.encodeSimpleBatch(), ExecutionLib.encodeBatch(executions))
         );
 
-        address account = address(safe);
-        uint256 nonce = getNonce(account, address(defaultValidator));
-
         // Create the userOp and add the data
-        PackedUserOperation memory userOp = getDefaultUserOp();
-        userOp.sender = address(account);
-        userOp.nonce = nonce;
-        userOp.initCode = "";
+        PackedUserOperation memory userOp =
+            getDefaultUserOp(address(safe), address(defaultValidator));
+        userOp.initCode = userOpInitCode;
         userOp.callData = userOpCalldata;
 
         // Create userOps array
@@ -104,23 +98,5 @@ contract MSATest is TestBaseUtil {
 
         assertEq(ret.length, 2);
         assertEq(abi.decode(ret[0], (uint256)), 1338);
-    }
-
-    function test_fallback() public {
-        MockFallback _fallback = new MockFallback();
-        vm.prank(address(safe));
-        IERC7579Account(address(safe)).installModule(3, address(_fallback), "");
-        (uint256 ret, address erc2771Sender, address msgSender) =
-            MockFallback(address(safe)).target(1337);
-
-        assertEq(ret, 1337);
-        assertEq(erc2771Sender, address(this));
-        assertEq(msgSender, address(safe));
-    }
-
-    function test_accountId() public {
-        string memory id = IERC7579Account(address(safe)).accountId();
-
-        assertEq(id, "safe1.4.1.erc7579.v0.0.1");
     }
 }

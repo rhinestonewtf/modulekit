@@ -90,7 +90,7 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
     {
         if (env == AccountType.SAFE7579) {
             init = abi.encode(
-                address(bootstrapSafe),
+                address(bootstrapDefault),
                 abi.encodeCall(
                     ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallbacks)
                 )
@@ -98,7 +98,9 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
         } else {
             init = abi.encode(
                 address(bootstrapDefault),
-                abi.encodeCall(BootstrapSafe.initMSA, (_validators, _executors, _hook, _fallbacks))
+                abi.encodeCall(
+                    ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallbacks)
+                )
             );
         }
     }
