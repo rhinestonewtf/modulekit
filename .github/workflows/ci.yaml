@@ -4,7 +4,7 @@ on:
 
 jobs:
   lint-modulekit:
-    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-lint-workspaces.yaml@main"
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-lint.yaml@main"
 
   build-modulekit:
-    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-workspaces.yaml@main"
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test.yaml@main"
