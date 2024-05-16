@@ -8,8 +8,7 @@ import {ModuleKitUserOp, UserOpData} from "./ModuleKitUserOp.sol";
 import {ERC4337Helpers} from "./utils/ERC4337Helpers.sol";
 import {ModuleKitCache} from "./utils/ModuleKitCache.sol";
 import {writeExpectRevert, writeGasIdentifier} from "./utils/Log.sol";
-import {IERC7579Account} from "erc7579/interfaces/IERC7579Account.sol";
-import {MockFallback} from "../mocks/MockFallback.sol";
+import {KernelHelpers} from "./utils/KernelHelpers.sol";
 import "./utils/Vm.sol";
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
@@ -174,59 +173,14 @@ library ModuleKitHelpers {
             keccak256(abi.encodePacked("KERNEL7579"))
         ) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = abi.encodeWithSelector(
-                    IERC7579Account.installModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    abi.encodePacked(
-                        address(0),
-                        abi.encode(
-                            abi.encodePacked("executorData"),
-                            abi.encodePacked("")
-                        )
-                    )
-                );
+                data = KernelHelpers.getDefaultInstallExecutorData(module);
             } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = abi.encodeWithSelector(
-                    IERC7579Account.installModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    abi.encodePacked(
-                        address(0),
-                        abi.encode(
-                            abi.encodePacked("validatorData"),
-                            abi.encodePacked("")
-                        )
-                    )
-                );
+                data = KernelHelpers.getDefaultInstallValidatorData(module);
             } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = abi.encodeWithSelector(
-                    IERC7579Account.installModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    abi.encodePacked(
-                        MockFallback.fallbackFunction.selector,
-                        address(0),
-                        abi.encode(
-                            abi.encodePacked(hex"00", "fallbackData"),
-                            abi.encodePacked("")
-                        )
-                    )
-                );
+                data = KernelHelpers.getDefaultInstallFallbackData(module);
             } else {
-                //TODO fix hook data computation
-                data = abi.encodeWithSelector(
-                    IERC7579Account.installModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    abi.encodePacked(
-                        address(1),
-                        abi.encode(
-                            hex"ff",
-                            abi.encodePacked(bytes1(0xff), "hookData")
-                        )
-                    )
-                );
+                //TODO fix hook encoding impl in kernel helpers lib
+                data = KernelHelpers.getDefaultInstallHookData(module);
             }
         }
         return data;
@@ -243,26 +197,11 @@ library ModuleKitHelpers {
             keccak256(abi.encodePacked("KERNEL7579"))
         ) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = abi.encodeWithSelector(
-                    IERC7579Account.uninstallModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    hex""
-                );
+                data = KernelHelpers.getDefaultUninstallExecutorData(module);
             } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = abi.encodeWithSelector(
-                    IERC7579Account.uninstallModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    hex""
-                );
+                data = KernelHelpers.getDefaultUninstallValidatorData(module);
             } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = abi.encodeWithSelector(
-                    IERC7579Account.uninstallModule.selector,
-                    moduleTypeId,
-                    address(module),
-                    abi.encodePacked(MockFallback.fallbackFunction.selector)
-                );
+                data = KernelHelpers.getDefaultUninstallFallbackData(module);
             } else {
                 //TODO handle for hook
             }
