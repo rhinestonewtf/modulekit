@@ -2,7 +2,7 @@
   "name": "@rhinestone/modulekit",
   "description": "ModuleKit is a development toolkit to build Smart Account Modules",
   "license": "MIT",
-  "version": "0.3.7",
+  "version": "0.3.1",
   "author": {
     "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
@@ -10,26 +10,30 @@
   "bugs": {
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },
-  "workspaces": [
-    "packages/**",
-    "accounts/**",
-    "examples/"
-  ],
+  "dependencies": {},
   "devDependencies": {
-    "@rhinestone/modulekit": "workspace:*",
-    "@rhinestone/safe7579": "workspace:*",
-    "@rhinestone/sessionkeymanager": "workspace:*",
+    "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
+    "ds-test": "github:dapphub/ds-test",
+    "forge-std": "github:foundry-rs/forge-std",
+    "@openzeppelin/contracts": "5.0.1",
+    "@prb/math": "^4.0.2",
+    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "erc7579": "github:erc7579/erc7579-implementation",
+    "@safe-global/safe-contracts": "^1.4.1",
     "prettier": "^2.8.8",
-    "solhint": "^4.5.2"
+    "sentinellist": "github:rhinestonewtf/sentinellist",
+    "solady": "github:vectorized/solady",
+    "solarray": "github:sablier-labs/solarray",
+    "solhint": "^4.1.1"
   },
   "files": [
-    "accounts",
-    "packages",
-    "examples",
-    "package.json",
-    "pnpm-workspace.yaml",
+    "artifacts",
+    "src",
+    "test/utils",
     "CHANGELOG.md",
-    "LICENSE.md"
+    "LICENSE-GPL.md"
   ],
   "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
   "keywords": [
@@ -43,7 +47,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "repository": "github:rhinestonewtf/modulekit",
+  "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
     "build": "forge build",
     "fmt": "forge fmt",

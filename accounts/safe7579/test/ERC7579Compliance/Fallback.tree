@@ -1,3 +1,0 @@
-FallbackTest
-  When installing global fallbackhandler
-    It should be used with every execution
