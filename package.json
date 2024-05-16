@@ -1,53 +1,12 @@
 {
   "name": "@rhinestone/modulekit",
+  "version": "0.4.0",
   "description": "ModuleKit is a development toolkit to build Smart Account Modules",
-  "license": "MIT",
-  "version": "0.3.1",
+  "license": "GPL-3.0",
   "author": {
     "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
-  "bugs": {
-    "url": "https://github.com/rhinestonewtf/modulekit/issues"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
-    "ds-test": "github:dapphub/ds-test",
-    "forge-std": "github:foundry-rs/forge-std",
-    "@openzeppelin/contracts": "5.0.1",
-    "@prb/math": "^4.0.2",
-    "erc4337-validation": "github:rhinestonewtf/erc4337-validation",
-    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
-    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
-    "erc7579": "github:erc7579/erc7579-implementation",
-    "@safe-global/safe-contracts": "^1.4.1",
-    "prettier": "^2.8.8",
-    "sentinellist": "github:rhinestonewtf/sentinellist",
-    "solady": "github:vectorized/solady",
-    "solarray": "github:sablier-labs/solarray",
-    "solhint": "^4.1.1"
-  },
-  "files": [
-    "artifacts",
-    "src",
-    "test/utils",
-    "CHANGELOG.md",
-    "LICENSE-GPL.md"
-  ],
-  "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
-  "keywords": [
-    "blockchain",
-    "ethereum",
-    "foundry",
-    "smart-contracts",
-    "solidity",
-    "web3"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
     "build": "forge build",
     "fmt": "forge fmt",
@@ -66,5 +25,38 @@
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
+  },
+  "dependencies": {
+    "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
+    "@rhinestone/erc4337-validation": "github:rhinestonewtf/erc4337-validation",
+    "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
+    "ds-test": "github:dapphub/ds-test",
+    "forge-std": "github:foundry-rs/forge-std",
+    "@openzeppelin/contracts": "5.0.1",
+    "@prb/math": "^4.0.2",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "erc7579": "github:erc7579/erc7579-implementation",
+    "@safe-global/safe-contracts": "^1.4.1",
+    "prettier": "^2.8.8",
+    "solady": "github:vectorized/solady",
+    "solarray": "github:sablier-labs/solarray",
+    "solhint": "^4.1.1"
+  },
+  "files": [
+    "src",
+    "foundry.toml"
+  ],
+  "homepage": "https://docs.rhinestone.wtf/modulekit",
+  "repository": "github:rhinestonewtf/modulekit",
+  "bugs": {
+    "url": "https://github.com/rhinestonewtf/modulekit/issues"
+  },
+  "keywords": [
+    "account abstraction",
+    "smart account modules"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
