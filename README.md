@@ -29,12 +29,15 @@ pnpm install
 
 ```bash
 forge install rhinestonewtf/modulekit
+cd lib/modulekit
+pnpm install
 ```
 
 ### Using a package manager
 
 ```bash
 pnpm install @rhinestone/modulekit
+cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
 ```
 
 ## Updating
@@ -101,12 +104,8 @@ pnpm build
 To run tests, run:
 
 ```bash
-pnpm test -r
+pnpm test
 ```
-
-## Credits
-
-- [Safe{Core} Protocol](https://github.com/safe-global/safe-core-protocol/): ExecutorManager.sol is heavily insprired by Safe's SafeProtocolManager but is compatible across all supported accounts
 
 ## Authors ✨
 
