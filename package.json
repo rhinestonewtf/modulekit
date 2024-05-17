@@ -45,7 +45,8 @@
   },
   "files": [
     "src",
-    "foundry.toml"
+    "foundry.toml",
+    "remappings.txt"
   ],
   "homepage": "https://docs.rhinestone.wtf/modulekit",
   "repository": "github:rhinestonewtf/modulekit",
