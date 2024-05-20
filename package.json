@@ -36,6 +36,7 @@
     "@prb/math": "^4.0.2",
     "@rhinestone/erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
+    "@rhinestone/modulekit-modules": "github:rhinestonewtf/module-base",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",

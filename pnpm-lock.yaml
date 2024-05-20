@@ -23,9 +23,12 @@ importers:
       '@rhinestone/erc4337-validation':
         specifier: github:rhinestonewtf/erc4337-validation
         version: https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/657d41544cec8537d515cf82df7f4e82823680b6(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)
+      '@rhinestone/modulekit-modules':
+        specifier: github:rhinestonewtf/module-base
+        version: '@rhinestone/module-base@https://codeload.github.com/rhinestonewtf/module-base/tar.gz/e0c58c941f38b0013c98b5f48cb48e8acd7d8f42'
       '@rhinestone/safe7579':
         specifier: github:rhinestonewtf/safe7579
-        version: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3
+        version: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cca554e2ff1dcfecd600652b66b411083b0e08ce(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)
       '@rhinestone/sentinellist':
         specifier: github:rhinestonewtf/sentinellist
         version: sentinellist@https://codeload.github.com/rhinestonewtf/sentinellist/tar.gz/cbf62497dcfbfbd51475513069ce96a4e7a48db6
@@ -427,9 +430,13 @@ packages:
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/657d41544cec8537d515cf82df7f4e82823680b6}
     version: 0.0.1-alpha.1
 
-  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3':
-    resolution: {tarball: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3}
-    version: 1.0.0
+  '@rhinestone/module-base@https://codeload.github.com/rhinestonewtf/module-base/tar.gz/e0c58c941f38b0013c98b5f48cb48e8acd7d8f42':
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/module-base/tar.gz/e0c58c941f38b0013c98b5f48cb48e8acd7d8f42}
+    version: 0.0.1
+
+  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cca554e2ff1dcfecd600652b66b411083b0e08ce':
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cca554e2ff1dcfecd600652b66b411083b0e08ce}
+    version: 1.0.1
 
   '@safe-global/safe-contracts@1.4.1':
     resolution: {integrity: sha512-fP1jewywSwsIniM04NsqPyVRFKPMAuirC3ftA/TA4X3Zc5EnwQp/UCJUU2PL/37/z/jMo8UUaJ+pnFNWmMU7dQ==}
@@ -3266,7 +3273,33 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3': {}
+  '@rhinestone/module-base@https://codeload.github.com/rhinestonewtf/module-base/tar.gz/e0c58c941f38b0013c98b5f48cb48e8acd7d8f42':
+    dependencies:
+      solady: https://codeload.github.com/vectorized/solady/tar.gz/5e7497c2573576157f9ca23460adbbf3081d0176
+
+  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cca554e2ff1dcfecd600652b66b411083b0e08ce(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)':
+    dependencies:
+      '@ERC4337/account-abstraction': accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
+      '@rhinestone/module-base': https://codeload.github.com/rhinestonewtf/module-base/tar.gz/e0c58c941f38b0013c98b5f48cb48e8acd7d8f42
+      '@rhinestone/sentinellist': sentinellist@https://codeload.github.com/rhinestonewtf/sentinellist/tar.gz/cbf62497dcfbfbd51475513069ce96a4e7a48db6
+      '@safe-global/safe-contracts': 1.4.1(ethers@5.7.2)
+      ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
+      erc7579: erc7579-implementation@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/da454bd000a483b2081c1be475b212d8831c55d2(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+      prettier: 2.8.8
+      solady: https://codeload.github.com/vectorized/solady/tar.gz/5e7497c2573576157f9ca23460adbbf3081d0176
+      solarray: https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684
+      solhint: 4.5.4(typescript@4.9.5)
+    transitivePeerDependencies:
+      - bufferutil
+      - encoding
+      - ethers
+      - hardhat
+      - lodash
+      - supports-color
+      - typechain
+      - typescript
+      - utf-8-validate
 
   '@safe-global/safe-contracts@1.4.1(ethers@5.7.2)':
     dependencies:
@@ -3424,7 +3457,7 @@ snapshots:
   accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/62e1cf39220321a6e1c7bef51e974c3bf8a4e2e2(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5)):
     dependencies:
       '@nomiclabs/hardhat-etherscan': 2.1.8(hardhat@2.22.4(typescript@4.9.5))
-      '@openzeppelin/contracts': 5.0.1
+      '@openzeppelin/contracts': 5.0.2
       '@thehubbleproject/bls': 0.5.1
       '@typechain/hardhat': 2.3.1(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       '@types/debug': 4.1.12
@@ -5323,7 +5356,7 @@ snapshots:
 
   rimraf@2.7.1:
     dependencies:
-      glob: 7.2.0
+      glob: 7.2.3
 
   ripemd160@2.0.2:
     dependencies:
