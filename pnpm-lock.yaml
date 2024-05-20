@@ -16,7 +16,7 @@ importers:
         version: accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       '@changesets/cli':
         specifier: ^2.27.2
-        version: 2.27.2
+        version: 2.27.3
       '@prb/math':
         specifier: ^4.0.2
         version: 4.0.2
@@ -25,7 +25,7 @@ importers:
         version: https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/657d41544cec8537d515cf82df7f4e82823680b6(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)
       '@rhinestone/safe7579':
         specifier: github:rhinestonewtf/safe7579
-        version: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/22e79bc2eacf5ed52057b0da59da6b43a105c89a
+        version: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3
       '@rhinestone/sentinellist':
         specifier: github:rhinestonewtf/sentinellist
         version: sentinellist@https://codeload.github.com/rhinestonewtf/sentinellist/tar.gz/cbf62497dcfbfbd51475513069ce96a4e7a48db6
@@ -81,8 +81,8 @@ packages:
   '@changesets/changelog-git@0.2.0':
     resolution: {integrity: sha512-bHOx97iFI4OClIT35Lok3sJAwM31VbUM++gnMBV16fdbtBhgYu4dxsphBF/0AZZsyAHMrnM0yFcj5gZM1py6uQ==}
 
-  '@changesets/cli@2.27.2':
-    resolution: {integrity: sha512-6/kADjKMOrlLwNr/Y5HAq7T9oGOA2Lq5A59AGtwQCCiXuSGp4EgszzdJFeBiF8pdz7Wn1HaLzSUBhAaNToEJqg==}
+  '@changesets/cli@2.27.3':
+    resolution: {integrity: sha512-ve/VpWApILlSs8cr0okNx5C2LKRawI9XZgvfmf58S8sar2nhx5DPJREFXYZBahs0FeTfvH0rdVl+nGe8QF45Ig==}
     hasBin: true
 
   '@changesets/config@3.0.0':
@@ -427,8 +427,8 @@ packages:
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/erc4337-validation/tar.gz/657d41544cec8537d515cf82df7f4e82823680b6}
     version: 0.0.1-alpha.1
 
-  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/22e79bc2eacf5ed52057b0da59da6b43a105c89a':
-    resolution: {tarball: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/22e79bc2eacf5ed52057b0da59da6b43a105c89a}
+  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3':
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3}
     version: 1.0.0
 
   '@safe-global/safe-contracts@1.4.1':
@@ -2688,7 +2688,7 @@ snapshots:
     dependencies:
       '@changesets/types': 6.0.0
 
-  '@changesets/cli@2.27.2':
+  '@changesets/cli@2.27.3':
     dependencies:
       '@babel/runtime': 7.24.5
       '@changesets/apply-release-plan': 7.0.1
@@ -3266,7 +3266,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/22e79bc2eacf5ed52057b0da59da6b43a105c89a': {}
+  '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/cebd4f79b2f0e3f316a368a8dbcd8df07719cad3': {}
 
   '@safe-global/safe-contracts@1.4.1(ethers@5.7.2)':
     dependencies:
@@ -3424,7 +3424,7 @@ snapshots:
   accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/62e1cf39220321a6e1c7bef51e974c3bf8a4e2e2(ethers@5.7.2)(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5)):
     dependencies:
       '@nomiclabs/hardhat-etherscan': 2.1.8(hardhat@2.22.4(typescript@4.9.5))
-      '@openzeppelin/contracts': 5.0.2
+      '@openzeppelin/contracts': 5.0.1
       '@thehubbleproject/bls': 0.5.1
       '@typechain/hardhat': 2.3.1(hardhat@2.22.4(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       '@types/debug': 4.1.12
@@ -5323,7 +5323,7 @@ snapshots:
 
   rimraf@2.7.1:
     dependencies:
-      glob: 7.2.3
+      glob: 7.2.0
 
   ripemd160@2.0.2:
     dependencies:
