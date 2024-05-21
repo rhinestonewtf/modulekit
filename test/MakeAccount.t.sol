@@ -19,8 +19,8 @@ contract BaseTest is RhinestoneModuleKit, Test {
     function setUp() public virtual {
         instance = makeAccountInstance("1");
 
-        MockValidator defaultValidator = new MockValidator();
-        MockExecutor defaultExecutor = new MockExecutor();
+        // MockValidator defaultValidator = new MockValidator();
+        // MockExecutor defaultExecutor = new MockExecutor();
         vm.deal(instanceSafe.account, 1000 ether);
         vm.deal(instance.account, 2 ether);
 

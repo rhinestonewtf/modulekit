@@ -93,7 +93,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
         bytes memory callData = "";
-        bytes memory signature = "";
+        // bytes memory signature = "";
 
         // Create userOperation
         instance.getExecOps({

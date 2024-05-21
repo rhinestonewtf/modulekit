@@ -6,6 +6,7 @@ script = "script"
 libs = ["node_modules"]
 fs_permissions = [{ access = "read", path = "out-optimized" }, { access = "read-write", path = "gas_calculations" }]
 allow_paths = ["*", "/"]
+ignored_warnings_from = ["node_modules", "src/integrations"]
 
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}" 

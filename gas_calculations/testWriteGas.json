@@ -1,7 +1,7 @@
 {
   "Calldata": {
-    "Arbitrum": "6_176 gas",
-    "OP-Stack": "8_627 gas"
+    "Arbitrum": "6_200 gas",
+    "OP-Stack": "8_643 gas"
   },
   "Phases": {
     "Creation": "321_314 gas",

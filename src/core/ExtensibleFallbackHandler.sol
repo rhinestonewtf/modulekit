@@ -108,7 +108,7 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         return isType == TYPE_FALLBACK;
     }
 
-    function isInitialized(address smartAccount) external pure returns (bool) {
+    function isInitialized(address /* smartAccount */) external pure returns (bool) {
         return false;
     }
 }

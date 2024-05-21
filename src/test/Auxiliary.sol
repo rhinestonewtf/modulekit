@@ -39,6 +39,7 @@ contract UserOpGasLog {
 
     function getLog(bytes32 userOpHash)
         external
+        view
         returns (uint256 gasValidation, uint256 gasExecution)
     {
         GasLog memory log = _log[userOpHash];
@@ -48,8 +49,8 @@ contract UserOpGasLog {
     function calcValidationGas(
         PackedUserOperation memory userOp,
         bytes32 userOpHash,
-        address sender,
-        bytes memory initCode
+        address /* sender */,
+        bytes memory /* initCode */
     )
         external
         returns (uint256 gasValidation)
@@ -69,7 +70,7 @@ contract UserOpGasLog {
         bytes memory initCode
     )
         external
-        returns (uint256 gasValidation, uint256 gasExecution)
+        returns (uint256 gasExecution)
     {
         IEntryPointSimulations.ExecutionResult memory executionResult =
             simulation.simulateHandleOp(userOp, sender, initCode);
