@@ -53,7 +53,7 @@
   "homepage": "https://docs.rhinestone.wtf/modulekit",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rhinestonewtf/modulekit.git"
+    "url": "git+https://github.com/rhinestonewtf/modulekit.git"
   },
   "bugs": {
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
