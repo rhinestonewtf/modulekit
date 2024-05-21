@@ -128,8 +128,8 @@ library ModuleKitHelpers {
         }
     }
 
-    function expect4337Revert(AccountInstance memory) internal {
-        writeExpectRevert(1);
+    function expect4337Revert(AccountInstance memory, string memory error) internal {
+        writeExpectRevert(error);
     }
 
     /**

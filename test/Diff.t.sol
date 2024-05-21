@@ -112,7 +112,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
 
         // Create userOperation
-        instance.expect4337Revert();
+        instance.expect4337Revert("UserOperation execution failed");
         instance.exec({ target: address(mockTarget), callData: callData, value: 0 });
     }
 

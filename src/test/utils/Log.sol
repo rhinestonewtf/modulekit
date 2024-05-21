@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-function writeExpectRevert(uint256 value) {
+function writeExpectRevert(string memory error) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     // solhint-disable-next-line no-inline-assembly
     assembly {
-        sstore(slot, value)
+        sstore(slot, error)
     }
 }
 
-function getExpectRevert() view returns (uint256 value) {
+function getExpectRevert() view returns (string memory error) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     // solhint-disable-next-line no-inline-assembly
     assembly {
-        value := sload(slot)
+        error := sload(slot)
     }
 }
 
