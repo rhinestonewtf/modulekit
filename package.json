@@ -1,49 +1,12 @@
 {
   "name": "@rhinestone/modulekit",
-  "description": "ModuleKit is a development toolkit to build Smart Account Modules",
-  "license": "MIT",
-  "version": "0.3.7",
+  "version": "0.4.0",
+  "description": "A development kit for building and testing smart account modules.",
+  "license": "GPL-3.0",
   "author": {
-    "name": "zeroknots.eth",
+    "name": "Rhinestone",
     "url": "https://rhinestone.wtf"
   },
-  "bugs": {
-    "url": "https://github.com/rhinestonewtf/modulekit/issues"
-  },
-  "workspaces": [
-    "packages/**",
-    "accounts/**",
-    "examples/"
-  ],
-  "devDependencies": {
-    "@rhinestone/modulekit": "workspace:*",
-    "@rhinestone/safe7579": "workspace:*",
-    "@rhinestone/sessionkeymanager": "workspace:*",
-    "prettier": "^2.8.8",
-    "solhint": "^4.5.2"
-  },
-  "files": [
-    "accounts",
-    "packages",
-    "examples",
-    "package.json",
-    "pnpm-workspace.yaml",
-    "CHANGELOG.md",
-    "LICENSE.md"
-  ],
-  "homepage": "https://github.com/rhinestonewtf/modulekit/#readme",
-  "keywords": [
-    "blockchain",
-    "ethereum",
-    "foundry",
-    "smart-contracts",
-    "solidity",
-    "web3"
-  ],
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": "github.com/rhinestonewtf/modulekit",
   "scripts": {
     "build": "forge build",
     "fmt": "forge fmt",
@@ -54,13 +17,52 @@
     "gas:report": "forge test --gas-report --mp \"./test/integration/**/*.sol\" --nmt \"test(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "gas:snapshot": "forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "gas:snapshot:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fork)?(Fuzz)?_RevertWhen_\\w{1,}?\"",
-    "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
     "prepack": "pnpm install",
-    "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
-    "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
-    "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test"
+    "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
+    "changeset": "changeset",
+    "changeset:release": "pnpm build && changeset publish",
+    "changeset:version": "changeset version && pnpm install --lockfile-only"
+  },
+  "dependencies": {
+    "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
+    "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
+    "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
+    "@prb/math": "^4.0.2",
+    "@rhinestone/erc4337-validation": "^0.0.1-alpha.1",
+    "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
+    "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
+    "@safe-global/safe-contracts": "^1.4.1",
+    "ds-test": "github:dapphub/ds-test",
+    "erc7579": "github:erc7579/erc7579-implementation",
+    "forge-std": "github:foundry-rs/forge-std",
+    "solady": "github:vectorized/solady",
+    "solarray": "github:sablier-labs/solarray"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.2",
+    "solhint": "^5.0.1"
+  },
+  "files": [
+    "src",
+    "foundry.toml",
+    "remappings.txt"
+  ],
+  "homepage": "https://docs.rhinestone.wtf/modulekit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhinestonewtf/modulekit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rhinestonewtf/modulekit/issues"
+  },
+  "keywords": [
+    "account abstraction",
+    "smart account modules"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

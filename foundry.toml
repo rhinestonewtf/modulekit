@@ -1,0 +1,21 @@
+[profile.default]
+emv_version = "paris"
+src = "src"
+out = "out"
+script = "script"
+libs = ["node_modules"]
+fs_permissions = [{ access = "read", path = "out-optimized" }, { access = "read-write", path = "gas_calculations" }]
+allow_paths = ["*", "/"]
+
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}" 
+
+[fmt]
+bracket_spacing = true
+int_types = "long"
+line_length = 100
+multiline_func_header = "all"
+number_underscore = "thousands"
+quote_style = "double"
+tab_width = 4
+wrap_comments = true
