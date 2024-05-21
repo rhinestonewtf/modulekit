@@ -15,3 +15,4 @@ import {
     IERC7579Hook
 } from "./external/ERC7579.sol";
 import { ERC7484RegistryAdapter } from "module-bases/ERC7484RegistryAdapter.sol";
+import { ERC7579ModuleBase } from "module-bases/ERC7579ModuleBase.sol";
