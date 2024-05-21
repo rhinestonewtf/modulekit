@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "src/modules/ERC7579HookDestruct.sol";
+import { ERC7579HookDestruct } from "src/Modules.sol";
 import { IERC7579Account } from "src/external/ERC7579.sol";
-
+import {
+    ModeLib,
+    CallType,
+    ModeCode,
+    CALLTYPE_SINGLE,
+    CALLTYPE_BATCH,
+    CALLTYPE_DELEGATECALL
+} from "erc7579/lib/ModeLib.sol";
 import "forge-std/Test.sol";
 import { ExecutionLib, Execution } from "erc7579/lib/ExecutionLib.sol";
 

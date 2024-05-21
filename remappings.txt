@@ -3,7 +3,7 @@ sentinellist/=node_modules/@rhinestone/sentinellist/src/
 erc4337-validation/=node_modules/@rhinestone/erc4337-validation/src/
 safe7579/=node_modules/@rhinestone/safe7579/src/
 modulekit/=node_modules/@rhinestone/modulekit/src/
-modulekit-modules/=node_modules/@rhinestone/module-base/src/
+module-bases/=node_modules/@rhinestone/module-bases/src/
 
 @ERC4337/=node_modules/@ERC4337/
 account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/

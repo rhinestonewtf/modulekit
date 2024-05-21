@@ -17,11 +17,8 @@
     "gas:report": "forge test --gas-report --mp \"./test/integration/**/*.sol\" --nmt \"test(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "gas:snapshot": "forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "gas:snapshot:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fork)?(Fuzz)?_RevertWhen_\\w{1,}?\"",
-    "lint": "pnpm run lint:sol && bun run prettier:check",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
     "prepack": "pnpm install",
-    "prettier:check": "prettier --check \"**/*.{json,md,svg,yml}\"",
-    "prettier:write": "prettier --write \"**/*.{json,md,svg,yml}\"",
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
@@ -30,11 +27,11 @@
     "changeset:version": "changeset version && pnpm install --lockfile-only"
   },
   "dependencies": {
-    "@rhinestone/module-base": "github:rhinestonewtf/module-base",
+    "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@prb/math": "^4.0.2",
-    "@rhinestone/erc4337-validation": "github:rhinestonewtf/erc4337-validation",
+    "@rhinestone/erc4337-validation": "^0.0.1-alpha.1",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "@safe-global/safe-contracts": "^1.4.1",
@@ -46,7 +43,6 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.2",
-    "prettier": "^2.8.8",
     "solhint": "^5.0.1"
   },
   "files": [
@@ -55,7 +51,10 @@
     "remappings.txt"
   ],
   "homepage": "https://docs.rhinestone.wtf/modulekit",
-  "repository": "github:rhinestonewtf/modulekit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhinestonewtf/modulekit.git"
+  },
   "bugs": {
     "url": "https://github.com/rhinestonewtf/modulekit/issues"
   },

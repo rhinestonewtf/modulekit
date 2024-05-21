@@ -10,7 +10,7 @@ import { EntryPointSimulations } from
 import { IEntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/interfaces/IEntryPointSimulations.sol";
 import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
-import { MockRegistry } from "../mocks/MockRegistry.sol";
+import { MockRegistry } from "src/Mocks.sol";
 import { MockFactory } from "./predeploy/MockFactory.sol";
 
 /* solhint-disable no-global-import */
@@ -93,7 +93,7 @@ contract AuxiliaryFactory {
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();
         label(address(auxiliary.bootstrap), "ERC7579Bootstrap");
-        auxiliary.registry = new MockRegistry();
+        auxiliary.registry = IERC7484(address(new MockRegistry()));
         label(address(auxiliary.registry), "ERC7484Registry");
         auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");
         auxiliary.fallbackHandler = new ExtensibleFallbackHandler();

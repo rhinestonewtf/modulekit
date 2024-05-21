@@ -38,7 +38,7 @@ pnpm install
 #### Using a package manager
 
 ```bash
-pnpm install @rhinestone/modulekit
+pnpm install @rhinestone/modulekit --node-linker=hoisted
 cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
 ```
 

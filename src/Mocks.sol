@@ -5,15 +5,15 @@ pragma solidity ^0.8.23;
 /*//////////////////////////////////////////////////////////////
                              Aux
 //////////////////////////////////////////////////////////////*/
-import { MockRegistry } from "./mocks/MockRegistry.sol";
-import { MockTarget } from "./mocks/MockTarget.sol";
+import { MockRegistry } from "module-bases/mocks/MockRegistry.sol";
+import { MockTarget } from "module-bases/mocks/MockTarget.sol";
 
 /*//////////////////////////////////////////////////////////////
                              Modules
 //////////////////////////////////////////////////////////////*/
-import { MockValidator } from "./mocks/MockValidator.sol";
-import { MockExecutor } from "./mocks/MockExecutor.sol";
-import { MockHook } from "./mocks/MockHook.sol";
+import { MockValidator } from "module-bases/mocks/MockValidator.sol";
+import { MockExecutor } from "module-bases/mocks/MockExecutor.sol";
+import { MockHook } from "module-bases/mocks/MockHook.sol";
 // import { MockSessionKeyValidator } from "./mocks/MockSessionKeyValidator.sol";
 
 /*//////////////////////////////////////////////////////////////

@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 /* solhint-disable payable-fallback */
 /* solhint-disable no-complex-fallback */
 
-import { ERC7579FallbackBase } from "../modules/ERC7579FallbackBase.sol";
+import { ERC7579FallbackBase } from "src/Modules.sol";
 import { ERC2771Handler } from "./ERC2771Handler.sol";
 
 interface IFallbackMethod {
