@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
-import { IERC7484 } from "../interfaces/IERC7484.sol";
+import { IERC7484 } from "src/Interfaces.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { EntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
@@ -93,7 +93,7 @@ contract AuxiliaryFactory {
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();
         label(address(auxiliary.bootstrap), "ERC7579Bootstrap");
-        auxiliary.registry = IERC7484(address(new MockRegistry()));
+        auxiliary.registry = new MockRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
         auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");
         auxiliary.fallbackHandler = new ExtensibleFallbackHandler();

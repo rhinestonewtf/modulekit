@@ -3,20 +3,22 @@ pragma solidity ^0.8.23;
 
 /* solhint-disable no-unused-import */
 /*//////////////////////////////////////////////////////////////
-                             Aux
+                             ERCs
 //////////////////////////////////////////////////////////////*/
-import { MockRegistry } from "module-bases/mocks/MockRegistry.sol";
-import { MockTarget } from "module-bases/mocks/MockTarget.sol";
+import { IERC1271 } from "module-bases/interfaces/IERC1271.sol";
+import { IERC7484 } from "module-bases/interfaces/IERC7484.sol";
 
 /*//////////////////////////////////////////////////////////////
                              Modules
 //////////////////////////////////////////////////////////////*/
-import { MockValidator } from "module-bases/mocks/MockValidator.sol";
-import { MockExecutor } from "module-bases/mocks/MockExecutor.sol";
-import { MockHook } from "module-bases/mocks/MockHook.sol";
+import { IStatelessValidator } from "module-bases/interfaces/IStatelessValidator.sol";
 
 /*//////////////////////////////////////////////////////////////
-                             Tokens
+                             Misc
 //////////////////////////////////////////////////////////////*/
-import { MockERC20 } from "forge-std/mocks/MockERC20.sol";
-import { MockERC721 } from "forge-std/mocks/MockERC721.sol";
+import {
+    FlashLoanType,
+    IERC6682,
+    IERC3156FlashLender,
+    IERC3156FlashBorrower
+} from "module-bases/interfaces/Flashloan.sol";
