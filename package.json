@@ -30,13 +30,13 @@
     "changeset:version": "changeset version && pnpm install --lockfile-only"
   },
   "dependencies": {
+    "@rhinestone/module-base": "github:rhinestonewtf/module-base",
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@changesets/cli": "^2.27.2",
     "@prb/math": "^4.0.2",
     "@rhinestone/erc4337-validation": "github:rhinestonewtf/erc4337-validation",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
-    "@rhinestone/modulekit-modules": "github:rhinestonewtf/module-base",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
