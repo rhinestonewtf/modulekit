@@ -1,5 +1,5 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity ^0.8.21;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.21;
 
 // import "@rhinestone/safe7579/src/core/ModuleManager.sol";
 // import { IERC7579Validator, ERC7579BootstrapConfig } from "../../external/ERC7579.sol";

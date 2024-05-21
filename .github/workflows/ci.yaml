@@ -1,6 +1,9 @@
 on:
-  - push
-  - pull_request
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+  pull_request:
 
 jobs:
   lint:
@@ -9,11 +12,10 @@ jobs:
   build:
     uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-build.yaml@main"
 
-  test-unit:
+  test:
     needs: ["lint", "build"]
     uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test.yaml@main"
     with:
       foundry-fuzz-runs: 5000
       foundry-profile: "test"
       match-path: "test/**/*.sol"
-      name: "Modulekit Unit tests"

@@ -2,3 +2,4 @@ node_modules/
 lib/
 src/integrations/interfaces/
 src/core/Licensing/
+test/

@@ -1,6 +1,6 @@
 # ModuleKit
 
-**A development kit for building and testing smart account modules.**
+**A development kit for building and testing smart account modules**
 
 ModuleKit allows you to:
 
@@ -15,9 +15,11 @@ In-depth documentation is available at [docs.rhinestone.wtf](https://docs.rhines
 
 > The ModuleKit is in active development and is subject to breaking changes. If you spot a bug, please take out an issue and we will fix it as soon as we can.
 
-## Installation
+## Using the ModuleKit
 
-### Using our template
+### Installation
+
+#### Using our template
 
 Use the [module-template](https://github.com/rhinestonewtf/module-template) to create a new repo and install the dependencies:
 
@@ -25,7 +27,7 @@ Use the [module-template](https://github.com/rhinestonewtf/module-template) to c
 pnpm install
 ```
 
-### Using git submodules
+#### Using git submodules
 
 ```bash
 forge install rhinestonewtf/modulekit
@@ -33,14 +35,14 @@ cd lib/modulekit
 pnpm install
 ```
 
-### Using a package manager
+#### Using a package manager
 
 ```bash
 pnpm install @rhinestone/modulekit
 cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
 ```
 
-## Updating
+### Updating
 
 To update the ModuleKit, run:
 
@@ -54,15 +56,15 @@ or
 pnpm update @rhinestone/modulekit
 ```
 
-## Usage
+### Usage
 
 To learn more about using ModuleKit, visit the [modulekit section](https://docs.rhinestone.wtf/modulekit) of the docs. To get a better understanding of Modules generally, visit the [modules section](https://docs.rhinestone.wtf/overview/modules) and for hands-on tutorials on the entire lifecycle of modules, visit the [tutorials section](https://docs.rhinestone.wtf/modulekit/build-multi-owner-validator).
 
 ## Features
 
-- [ ] ERC-4337 integration tests
+- [x] ERC-4337 integration tests
   - [x] On-chain integration test (EntryPoint -> Account)
-  - [ ] Off-chain integration test (Bundler simulation and spec validation)
+  - [x] Off-chain integration test (Bundler simulation and spec validation)
 - [ ] Unit testing library
 - [x] Different Module types
   - [x] Validators
@@ -72,20 +74,14 @@ To learn more about using ModuleKit, visit the [modulekit section](https://docs.
 - [x] Different Modular Accounts
   - [x] ERC-7579
   - [x] Safe
-  - [x] Biconomy
-  - [x] Kernel
+  - [ ] Biconomy
+  - [ ] Kernel
 - [x] Deployment helper using Module Registry
 - [x] Gas calculation helper
 
 ## Examples
 
-For module examples, check out our [modulekit examples](./examples) and for module inspiration see our [module idea list](https://rhinestone.notion.site/Module-ideas-for-product-inspo-338100a2c99540f490472b8aa839da11). For general examples, check out the [awesome modular accounts repo](https://github.com/rhinestonewtf/awesome-modular-accounts).
-
-## Contributing
-
-For feature or change requests, feel free to open a PR, start a discussion or get in touch with us.
-
-For guidance on how to create PRs, see the [CONTRIBUTING](./CONTRIBUTING.md) guide.
+For module examples, check out our [core modules](https://github.com/rhinestonewtf/core-modules/) or our [experimental modules](https://github.com/rhinestonewtf/experimental-modules/) and for module inspiration see our [module idea list](https://rhinestone.notion.site/Module-ideas-for-product-inspo-338100a2c99540f490472b8aa839da11). For general examples, check out the [awesome modular accounts repo](https://github.com/rhinestonewtf/awesome-modular-accounts).
 
 ### Using this repo
 
@@ -107,15 +103,6 @@ To run tests, run:
 pnpm test
 ```
 
-## Authors ✨
+## Contributing
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tr>
-    <td align="center"><a href="http://twitter.com/zeroknotsETH/"><img src="https://pbs.twimg.com/profile_images/1639062011387715590/bNmZ5Gpf_400x400.jpg" width="100px;" alt=""/><br /><sub><b>zeroknots</b></sub></a><br /><a href="https://github.com/rhinestonewtf/registry/commits?author=zeroknots" title="Code">💻</a></td>
-    <td align="center"><a href="https://twitter.com/abstractooor"><img src="https://avatars.githubusercontent.com/u/26718079" width="100px;" alt=""/><br /><sub><b>Konrad</b></sub></a><br /><a href="https://github.com/rhinestonewtf/registry/commits?author=kopy-kat" title="Code">💻</a> </td>
-    
-  </tr>
-</table>
+For feature or change requests, feel free to open a PR, start a discussion or get in touch with us.
