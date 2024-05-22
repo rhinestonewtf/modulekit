@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
+[0.4.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.0
 [0.3.7]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.7
 [0.3.6]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.6
 [0.3.5]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.5
@@ -14,6 +15,29 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 [0.3.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
+
+## [0.4.0] - 21-05-2024
+
+### Changed
+
+- `instance.expect4337Revert` now catches reverts in both validation and execution
+- Gas calculations are now split by `_` on every thousand
+- General restructuring of the codebase and split into multiple repositories
+  - Moved module bases and mocks to `@rhinestone/module-bases`
+  - Moved core modules to `@rhinestone/core-modules`
+  - Moved the Safe ERC-7579 adapter to `@rhinestone/safe7579`
+
+### Added
+
+- ERC-7484 support with interface, mock registry and registry adapter base
+- Support for stateless validators
+- Under-the-hood support for multi-hooks
+- Base module for scheduling-based executors
+
+### Fixed
+
+- Bugs related to installation and uninstallation calldata
+- Various other bugs
 
 ## [0.3.7] - 09-03-2024
 
