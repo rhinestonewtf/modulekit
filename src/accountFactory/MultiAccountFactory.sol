@@ -8,11 +8,11 @@ import { ERC7579BootstrapConfig } from "../external/ERC7579.sol";
 
 enum AccountType {
     DEFAULT,
-    SAFE7579
+    SAFE
 }
 
 string constant DEFAULT = "DEFAULT";
-string constant SAFE7579 = "SAFE7579";
+string constant SAFE = "SAFE";
 
 contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
     AccountType public env;
@@ -20,10 +20,12 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
     constructor() {
         string memory _env = vm.envOr("ACCOUNT_TYPE", DEFAULT);
 
-        if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE7579))) {
-            env = AccountType.SAFE7579;
-        } else {
+        if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE))) {
+            env = AccountType.SAFE;
+        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
             env = AccountType.DEFAULT;
+        } else {
+            revert("Invalid account type");
         }
     }
 
@@ -34,7 +36,7 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
         public
         returns (address account)
     {
-        if (env == AccountType.SAFE7579) {
+        if (env == AccountType.SAFE) {
             return _makeSafe(salt, initCode);
         } else {
             return _makeDefault(salt, initCode);
@@ -42,7 +44,7 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
     }
 
     function _makeDefault(bytes32 salt, bytes calldata initCode) public returns (address) {
-        return _createUMSA(salt, initCode);
+        return _createERC7579(salt, initCode);
     }
 
     function _makeSafe(bytes32 salt, bytes calldata initCode) public returns (address) {
@@ -58,10 +60,10 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
         virtual
         returns (address)
     {
-        if (env == AccountType.SAFE7579) {
+        if (env == AccountType.SAFE) {
             return getAddressSafe(salt, initCode);
         } else {
-            return getAddressUMSA(salt, initCode);
+            return getAddressERC7579(salt, initCode);
         }
     }
 
@@ -78,30 +80,45 @@ contract MultiAccountFactory is TestBase, Safe7579Factory, RefImplFactory {
         salt = keccak256(abi.encodePacked(_salt, initCode));
     }
 
-    function getBootstrapCallData(
-        ERC7579BootstrapConfig[] calldata _validators,
-        ERC7579BootstrapConfig[] calldata _executors,
-        ERC7579BootstrapConfig calldata _hook,
-        ERC7579BootstrapConfig[] calldata _fallbacks
+    function getMinimalInitData(
+        address validator,
+        bytes memory initData
     )
         external
-        view
         returns (bytes memory init)
     {
-        if (env == AccountType.SAFE7579) {
-            init = abi.encode(
-                address(bootstrapDefault),
-                abi.encodeCall(
-                    ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallbacks)
-                )
-            );
+        if (env == AccountType.SAFE) {
+            init = getInitDataSafe(validator, initData);
         } else {
+            ERC7579BootstrapConfig[] memory _validators = generateConfig(validator, initData);
+            ERC7579BootstrapConfig[] memory _executors = _emptyConfigs();
+
+            ERC7579BootstrapConfig memory _hook = _emptyConfig();
+
+            ERC7579BootstrapConfig[] memory _fallBacks = _emptyConfigs();
             init = abi.encode(
                 address(bootstrapDefault),
                 abi.encodeCall(
-                    ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallbacks)
+                    ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallBacks)
                 )
             );
         }
     }
+
+    function generateConfig(
+        address module,
+        bytes memory data
+    )
+        private
+        pure
+        returns (ERC7579BootstrapConfig[] memory config)
+    {
+        config = new ERC7579BootstrapConfig[](1);
+        config[0].module = module;
+        config[0].data = data;
+    }
+
+    function _emptyConfig() private pure returns (ERC7579BootstrapConfig memory config) { }
+
+    function _emptyConfigs() private pure returns (ERC7579BootstrapConfig[] memory config) { }
 }

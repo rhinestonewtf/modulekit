@@ -101,64 +101,66 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);
     }
 
-    /**
-     * create new AccountInstance with ERC7579BootstrapConfig
-     *
-     * @param salt account salt / name
-     * @param validators ERC7579 validators to be installed on the account
-     * @param executors ERC7579 executors to be installed on the account
-     * @param hook ERC7579 hook to be installed on the account
-     * @param fallBacks ERC7579 array of fallbackHandlers to be installed on the account
-     */
-    function makeAccountInstance(
-        bytes32 salt,
-        ERC7579BootstrapConfig[] memory validators,
-        ERC7579BootstrapConfig[] memory executors,
-        ERC7579BootstrapConfig memory hook,
-        ERC7579BootstrapConfig[] memory fallBacks
-    )
-        internal
-        returns (AccountInstance memory instance)
-    {
-        init();
+    // /**
+    //  * create new AccountInstance with ERC7579BootstrapConfig
+    //  *
+    //  * @param salt account salt / name
+    //  * @param validators ERC7579 validators to be installed on the account
+    //  * @param executors ERC7579 executors to be installed on the account
+    //  * @param hook ERC7579 hook to be installed on the account
+    //  * @param fallBacks ERC7579 array of fallbackHandlers to be installed on the account
+    //  */
+    // function makeAccountInstance(
+    //     bytes32 salt,
+    //     ERC7579BootstrapConfig[] memory validators,
+    //     ERC7579BootstrapConfig[] memory executors,
+    //     ERC7579BootstrapConfig memory hook,
+    //     ERC7579BootstrapConfig[] memory fallBacks
+    // )
+    //     internal
+    //     returns (AccountInstance memory instance)
+    // {
+    //     init();
 
-        if (validators.length == 0) validators = new ERC7579BootstrapConfig[](1);
+    //     if (validators.length == 0) validators = new ERC7579BootstrapConfig[](1);
 
-        // inject the defaultValidator if it is not already in the list
-        // defaultValidator is used a lot in ModuleKit, to make it easier to use
-        // if defaultValidator isnt available on the account, a lot of ModuleKit Abstractions would
-        // break
-        if (
-            validators[0].module != address(0) && validators[0].module != address(_defaultValidator)
-        ) {
-            ERC7579BootstrapConfig[] memory _validators =
-                new ERC7579BootstrapConfig[](validators.length + 1);
-            _validators[0] =
-                ERC7579BootstrapConfig({ module: address(_defaultValidator), data: "" });
-            for (uint256 i = 0; i < validators.length; i++) {
-                _validators[i + 1] = validators[i];
-            }
-            validators = _validators;
-        }
+    //     // inject the defaultValidator if it is not already in the list
+    //     // defaultValidator is used a lot in ModuleKit, to make it easier to use
+    //     // if defaultValidator isnt available on the account, a lot of ModuleKit Abstractions
+    // would
+    //     // break
+    //     if (
+    //         validators[0].module != address(0) && validators[0].module !=
+    // address(_defaultValidator)
+    //     ) {
+    //         ERC7579BootstrapConfig[] memory _validators =
+    //             new ERC7579BootstrapConfig[](validators.length + 1);
+    //         _validators[0] =
+    //             ERC7579BootstrapConfig({ module: address(_defaultValidator), data: "" });
+    //         for (uint256 i = 0; i < validators.length; i++) {
+    //             _validators[i + 1] = validators[i];
+    //         }
+    //         validators = _validators;
+    //     }
 
-        // bytes memory bootstrapCalldata =
-        //     auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBacks);
-        bytes memory bootstrapCalldata =
-            accountFactory.getBootstrapCallData(validators, executors, hook, fallBacks);
-        address account = accountFactory.getAddress(salt, bootstrapCalldata);
+    //     // bytes memory bootstrapCalldata =
+    //     //     auxiliary.bootstrap._getInitMSACalldata(validators, executors, hook, fallBacks);
+    //     bytes memory bootstrapCalldata =
+    //         accountFactory.getBootstrapCallData(validators, executors, hook, fallBacks);
+    //     address account = accountFactory.getAddress(salt, bootstrapCalldata);
 
-        // using MSAFactory from ERC7579 repo.
-        bytes memory createAccountOnFactory =
-            abi.encodeCall(accountFactory.createAccount, (salt, bootstrapCalldata));
+    //     // using MSAFactory from ERC7579 repo.
+    //     bytes memory createAccountOnFactory =
+    //         abi.encodeCall(accountFactory.createAccount, (salt, bootstrapCalldata));
 
-        address factory = address(accountFactory);
-        // encode pack factory and account initCode to comply with SenderCreater (EntryPoint.sol)
-        bytes memory initCode4337 = abi.encodePacked(factory, createAccountOnFactory);
-        label(address(account), bytes32ToString(salt));
-        deal(account, 1 ether);
+    //     address factory = address(accountFactory);
+    //     // encode pack factory and account initCode to comply with SenderCreater (EntryPoint.sol)
+    //     bytes memory initCode4337 = abi.encodePacked(factory, createAccountOnFactory);
+    //     label(address(account), bytes32ToString(salt));
+    //     deal(account, 1 ether);
 
-        instance = makeAccountInstance(salt, account, initCode4337);
-    }
+    //     instance = makeAccountInstance(salt, account, initCode4337);
+    // }
 
     /**
      * create new AccountInstance with modulekit defaults
@@ -167,15 +169,27 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
      */
     function makeAccountInstance(bytes32 salt) internal returns (AccountInstance memory instance) {
         init();
-        ERC7579BootstrapConfig[] memory validators =
-            makeBootstrapConfig(address(_defaultValidator), "");
+        // ERC7579BootstrapConfig[] memory validators =
+        //     makeBootstrapConfig(address(_defaultValidator), "");
 
-        ERC7579BootstrapConfig[] memory executors = _emptyConfigs();
+        // ERC7579BootstrapConfig[] memory executors = _emptyConfigs();
 
-        ERC7579BootstrapConfig memory hook = _emptyConfig();
+        // ERC7579BootstrapConfig memory hook = _emptyConfig();
 
-        ERC7579BootstrapConfig[] memory fallBack = _emptyConfigs();
-        instance = makeAccountInstance(salt, validators, executors, hook, fallBack);
+        // ERC7579BootstrapConfig[] memory fallBack = _emptyConfigs();
+
+        bytes memory minimalInitData =
+            accountFactory.getMinimalInitData(address(_defaultValidator), "");
+        address account = accountFactory.getAddress(salt, minimalInitData);
+        bytes memory createAccountOnFactory =
+            abi.encodeCall(accountFactory.createAccount, (salt, minimalInitData));
+
+        address factory = address(accountFactory);
+        // encode pack factory and account initCode to comply with SenderCreater (EntryPoint.sol)
+        bytes memory initCode4337 = abi.encodePacked(factory, createAccountOnFactory);
+        label(address(account), bytes32ToString(salt));
+        deal(account, 1 ether);
+        instance = makeAccountInstance(salt, account, initCode4337);
     }
 
     function makeAccountInstance(

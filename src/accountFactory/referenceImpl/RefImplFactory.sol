@@ -17,14 +17,14 @@ abstract contract RefImplFactory {
         bootstrapDefault = new ERC7579Bootstrap();
     }
 
-    function _createUMSA(bytes32 salt, bytes memory initCode) public returns (address account) {
+    function _createERC7579(bytes32 salt, bytes memory initCode) public returns (address account) {
         bytes32 _salt = _getSalt(salt, initCode);
         account = LibClone.cloneDeterministic(0, address(implementation), initCode, _salt);
 
         IMSA(account).initializeAccount(initCode);
     }
 
-    function getAddressUMSA(
+    function getAddressERC7579(
         bytes32 salt,
         bytes memory initCode
     )
