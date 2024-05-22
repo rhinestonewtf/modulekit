@@ -3,11 +3,19 @@ pragma solidity ^0.8.23;
 
 import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
-import { IERC7579Account } from "../external/ERC7579.sol";
+import {
+    IERC7579Account,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_FALLBACK
+} from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
+import { KernelHelpers } from "./utils/KernelHelpers.sol";
+import "./utils/Vm.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
@@ -35,6 +43,7 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
+        data = getInstallModuleData(moduleTypeId, module, data);
         userOpData = instance.getInstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -53,6 +62,7 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
+        data = getUninstallModuleData(moduleTypeId, module, data);
         userOpData = instance.getUninstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -143,5 +153,54 @@ library ModuleKitHelpers {
      */
     function log4337Gas(AccountInstance memory instance, string memory id) internal {
         writeGasIdentifier(id);
+    }
+
+    function getInstallModuleData(
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
+        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
+        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("KERNEL7579"))) {
+            if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+                data = KernelHelpers.getDefaultInstallExecutorData(module);
+            } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+                data = KernelHelpers.getDefaultInstallValidatorData(module);
+            } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+                data = KernelHelpers.getDefaultInstallFallbackData(module);
+            } else {
+                //TODO fix hook encoding impl in kernel helpers lib
+                data = KernelHelpers.getDefaultInstallHookData(module);
+            }
+        }
+        return data;
+    }
+
+    function getUninstallModuleData(
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data
+    )
+        internal
+        view
+        returns (bytes memory)
+    {
+        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
+        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("KERNEL7579"))) {
+            if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
+                data = KernelHelpers.getDefaultUninstallExecutorData(module);
+            } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
+                data = KernelHelpers.getDefaultUninstallValidatorData(module);
+            } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
+                data = KernelHelpers.getDefaultUninstallFallbackData(module);
+            } else {
+                //TODO handle for hook
+            }
+        }
+        return data;
     }
 }

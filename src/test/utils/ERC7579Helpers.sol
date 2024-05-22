@@ -1,11 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Execution, IERC7579Account, ERC7579BootstrapConfig } from "../../external/ERC7579.sol";
+import {
+    Execution,
+    IERC7579Account,
+    ERC7579BootstrapConfig,
+    IERC7579Validator
+} from "../../external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
+import "./Vm.sol";
+import { ValidationType } from "kernel/types/Types.sol";
+import { VALIDATION_TYPE_ROOT, VALIDATION_TYPE_VALIDATOR } from "kernel/types/Constants.sol";
+import { KernelHelpers } from "./KernelHelpers.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -51,12 +60,16 @@ library ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory) internal  returns (bytes memory) fn
+        function(address, uint256, address, bytes memory)
+            internal
+            returns (address, uint256, bytes memory) fn
     )
         internal
         returns (bytes memory erc7579Tx)
     {
-        erc7579Tx = fn(account, moduleType, module, initData);
+        (address to, uint256 value, bytes memory callData) =
+            fn(account, moduleType, module, initData);
+        erc7579Tx = encode(to, value, callData);
     }
 
     function configModuleUserOp(
@@ -64,7 +77,9 @@ library ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory) internal  returns (bytes memory) fn,
+        function(address, uint256, address, bytes memory)
+            internal
+            returns (address, uint256, bytes memory) fn,
         address txValidator
     )
         internal
@@ -75,12 +90,22 @@ library ERC7579Helpers {
         if (notDeployedYet) {
             initCode = instance.initCode;
         }
-
+        {
+            string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
+            if (keccak256(abi.encodePacked(env)) != keccak256(abi.encodePacked("KERNEL7579"))) {
+                initData = configModule(instance.account, moduleType, module, initData, fn);
+            }
+        }
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
+            nonce: getNonce(
+                instance.account,
+                instance.aux.entrypoint,
+                txValidator,
+                address(instance.defaultValidator)
+            ),
             initCode: initCode,
-            callData: configModule(instance.account, moduleType, module, initData, fn),
+            callData: initData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
             gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
@@ -108,7 +133,12 @@ library ERC7579Helpers {
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
+            nonce: getNonce(
+                instance.account,
+                instance.aux.entrypoint,
+                txValidator,
+                address(instance.defaultValidator)
+            ),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -132,7 +162,7 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
             return installValidator(account, module, initData);
@@ -158,7 +188,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
             return uninstallValidator(account, module, initData);
@@ -183,8 +213,10 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
+        to = account;
+        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_VALIDATOR, validator, initData)
         );
@@ -200,7 +232,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
         // get previous validator in sentinel list
         address previous;
@@ -234,8 +266,10 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
+        to = account;
+        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_EXECUTOR, executor, initData)
         );
@@ -251,7 +285,7 @@ library ERC7579Helpers {
     )
         internal
         view
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
         // get previous executor in sentinel list
         address previous;
@@ -285,8 +319,10 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
+        to = account;
+        value = 0;
         callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
@@ -300,10 +336,14 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
-        callData =
-            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
+        hook = hook; // avoid solhint-no-unused-vars
+        to = account;
+        value = 0;
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
+        );
     }
 
     /**
@@ -316,8 +356,10 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
+        to = account;
+        value = 0;
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
@@ -333,10 +375,13 @@ library ERC7579Helpers {
     )
         internal
         pure
-        returns (bytes memory callData)
+        returns (address to, uint256 value, bytes memory callData)
     {
+        fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
+        to = account;
+        value = 0;
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
         );
     }
 
@@ -405,33 +450,41 @@ library ERC7579Helpers {
     function getNonce(
         address account,
         IEntryPoint entrypoint,
-        address validator
+        address validator,
+        address defaultValidator
     )
         internal
         view
         returns (uint256 nonce)
     {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        nonce = entrypoint.getNonce(address(account), key);
+        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
+        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("KERNEL7579"))) {
+            ValidationType vType;
+            if (validator == defaultValidator) {
+                vType = VALIDATION_TYPE_ROOT;
+            } else {
+                vType = VALIDATION_TYPE_VALIDATOR;
+            }
+            nonce = KernelHelpers.encodeNonce(vType, false, account, defaultValidator);
+        } else {
+            uint192 key = uint192(bytes24(bytes20(address(validator))));
+            nonce = entrypoint.getNonce(address(account), key);
+        }
     }
 
-    function signatureInNonce(
-        address account,
-        IEntryPoint entrypoint,
-        PackedUserOperation memory userOp,
-        address validator,
-        bytes memory signature
-    )
-        internal
-        view
-        returns (bytes32 userOpHash, PackedUserOperation memory)
-    {
-        userOp.nonce = getNonce(account, entrypoint, validator);
-        userOp.signature = signature;
+    // function signatureInNonce(
+    //     address account,
+    //     IEntryPoint entrypoint,
+    //     PackedUserOperation memory userOp,
+    //     address validator,
+    //     bytes memory signature
+    // ) internal view returns (bytes32 userOpHash, PackedUserOperation memory) {
+    //     userOp.nonce = getNonce(account, entrypoint, validator);
+    //     userOp.signature = signature;
 
-        userOpHash = entrypoint.getUserOpHash(userOp);
-        return (userOpHash, userOp);
-    }
+    //     userOpHash = entrypoint.getUserOpHash(userOp);
+    //     return (userOpHash, userOp);
+    // }
 }
 
 abstract contract BootstrapUtil {
@@ -532,7 +585,7 @@ library ArrayLib {
 
     function map(
         Execution[] memory self,
-        function(Execution memory) internal  returns (Execution memory) f
+        function(Execution memory) internal returns (Execution memory) f
     )
         internal
         returns (Execution[] memory result)
@@ -546,8 +599,9 @@ library ArrayLib {
 
     function reduce(
         Execution[] memory self,
-        function(Execution memory, Execution memory) 
-        internal  returns (Execution memory) f
+        function(Execution memory, Execution memory)
+            internal
+            returns (Execution memory) f
     )
         internal
         returns (Execution memory result)
