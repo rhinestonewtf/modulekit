@@ -19,3 +19,19 @@ jobs:
       foundry-fuzz-runs: 5000
       foundry-profile: "test"
       match-path: "test/**/*.sol"
+
+  test-simulate:
+    needs: ["lint", "build"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-simulate.yaml@main"
+    with:
+      foundry-fuzz-runs: 5000
+      foundry-profile: "test"
+      match-path: "test/**/*.sol"
+
+  test-multi-account:
+    needs: ["lint", "build"]
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-multi-account.yaml@main"
+    with:
+      foundry-fuzz-runs: 5000
+      foundry-profile: "test"
+      match-path: "test/**/*.sol"
