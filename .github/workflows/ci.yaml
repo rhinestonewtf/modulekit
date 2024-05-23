@@ -30,7 +30,8 @@ jobs:
 
   test-multi-account:
     needs: ["lint", "build"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: "Test account: Safe"
-        run: "ACCOUNT_TYPE=SAFE forge test --match-path test/**/*.sol"
+    uses: "rhinestonewtf/reusable-workflows/.github/workflows/forge-test-multi-account.yaml@main"
+    with:
+      foundry-fuzz-runs: 5000
+      foundry-profile: "test"
+      match-path: "test/**/*.sol"
