@@ -6,6 +6,10 @@ import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
+import { getAccountType, AccountType } from "./MultiAccountHelpers.sol";
+import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
+import { MultiAccountFactory } from "src/accountFactory/MultiAccountFactory.sol";
+import "forge-std/console2.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -23,6 +27,16 @@ interface IAccountModulesPaginated {
         external
         view
         returns (address[] memory, address);
+}
+
+interface ISafeFactory {
+    function getInitDataSafe(
+        address validator,
+        bytes memory initData
+    )
+        external
+        view
+        returns (bytes memory init);
 }
 
 library ERC7579Helpers {
@@ -76,11 +90,38 @@ library ERC7579Helpers {
             initCode = instance.initCode;
         }
 
+        bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
+
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            if (initCode.length != 0) {
+                // TODO: refactor this to decode the initcode
+                address factory;
+                assembly {
+                    factory := mload(add(initCode, 20))
+                }
+                Safe7579Launchpad.InitData memory initData = abi.decode(
+                    ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
+                    (Safe7579Launchpad.InitData)
+                );
+                // Safe7579Launchpad.InitData memory initData =
+                //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
+                initData.callData = callData;
+                initCode = abi.encodePacked(
+                    factory,
+                    abi.encodeCall(
+                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initData))
+                    )
+                );
+                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+            }
+        }
+
         userOp = PackedUserOperation({
             sender: instance.account,
             nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
             initCode: initCode,
-            callData: configModule(instance.account, moduleType, module, initData, fn),
+            callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
             gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
@@ -104,6 +145,31 @@ library ERC7579Helpers {
         bool notDeployedYet = instance.account.code.length == 0;
         if (notDeployedYet) {
             initCode = instance.initCode;
+        }
+
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            if (initCode.length != 0) {
+                // TODO: refactor this to decode the initcode
+                address factory;
+                assembly {
+                    factory := mload(add(initCode, 20))
+                }
+                Safe7579Launchpad.InitData memory initData = abi.decode(
+                    ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
+                    (Safe7579Launchpad.InitData)
+                );
+                // Safe7579Launchpad.InitData memory initData =
+                //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
+                initData.callData = callData;
+                initCode = abi.encodePacked(
+                    factory,
+                    abi.encodeCall(
+                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initData))
+                    )
+                );
+                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+            }
         }
 
         userOp = PackedUserOperation({

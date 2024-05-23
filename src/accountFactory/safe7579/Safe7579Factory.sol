@@ -81,7 +81,8 @@ abstract contract Safe7579Factory is TestBase {
         address validator,
         bytes memory initData
     )
-        internal
+        public
+        view
         returns (bytes memory init)
     {
         ModuleInit[] memory validators = new ModuleInit[](1);
