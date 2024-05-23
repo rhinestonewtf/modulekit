@@ -9,7 +9,7 @@ import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { getAccountType, AccountType } from "./MultiAccountHelpers.sol";
 import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
 import { MultiAccountFactory } from "src/accountFactory/MultiAccountFactory.sol";
-import "forge-std/console2.sol";
+import { HookType } from "safe7579/DataTypes.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -197,7 +197,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        pure
+        view
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -350,10 +350,19 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        pure
+        view
         returns (bytes memory callData)
     {
-        callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            callData = abi.encodeCall(
+                IERC7579Account.installModule,
+                (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
+            );
+        } else {
+            callData =
+                abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
+        }
     }
 
     /**
