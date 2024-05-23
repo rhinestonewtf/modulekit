@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { envOr } from "./Vm.sol";
+import { envOr } from "src/test/utils/Vm.sol";
 
 enum AccountType {
     DEFAULT,

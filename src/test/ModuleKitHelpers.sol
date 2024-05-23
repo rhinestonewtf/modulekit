@@ -8,7 +8,7 @@ import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
-import { getAccountType, AccountType } from "./utils/MultiAccountHelpers.sol";
+import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
 import { HookType } from "safe7579/DataTypes.sol";
 
 library ModuleKitHelpers {

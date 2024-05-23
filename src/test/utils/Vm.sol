@@ -153,6 +153,10 @@ function toString(bytes memory input) pure returns (string memory) {
     return Vm(VM_ADDR).toString(input);
 }
 
+function toString(bytes32 input) pure returns (string memory) {
+    return Vm(VM_ADDR).toString(input);
+}
+
 function parseJson(string memory json, string memory key) pure returns (bytes memory) {
     return Vm(VM_ADDR).parseJson(json, key);
 }

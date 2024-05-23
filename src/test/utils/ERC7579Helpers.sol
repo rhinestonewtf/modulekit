@@ -6,9 +6,9 @@ import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { getAccountType, AccountType } from "./MultiAccountHelpers.sol";
+import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
 import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
-import { MultiAccountFactory } from "src/accountFactory/MultiAccountFactory.sol";
+import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
 import { HookType } from "safe7579/DataTypes.sol";
 
 interface IAccountModulesPaginated {

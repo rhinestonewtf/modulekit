@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "forge-std/Base.sol";
 import { Safe7579, ISafe7579 } from "safe7579/Safe7579.sol";
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafeProxy.sol";
@@ -14,7 +13,7 @@ import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
 import { makeAddr } from "src/test/utils/Vm.sol";
 import { Solarray } from "solarray/Solarray.sol";
 
-abstract contract Safe7579Factory is TestBase {
+abstract contract SafeFactory {
     // singletons
     Safe7579 internal safe7579;
     Safe7579Launchpad internal launchpad;
@@ -29,21 +28,13 @@ abstract contract Safe7579Factory is TestBase {
         safeProxyFactory = new SafeProxyFactory();
     }
 
-    function _createSafe(bytes32 salt, bytes calldata initCode) internal returns (address safe) {
+    function createSafe(bytes32 salt, bytes calldata initCode) internal returns (address safe) {
         Safe7579Launchpad.InitData memory initData =
             abi.decode(initCode, (Safe7579Launchpad.InitData));
         bytes32 initHash = launchpad.hash(initData);
 
         bytes memory factoryInitializer =
             abi.encodeCall(Safe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
-
-        // safe = launchpad.predictSafeAddress({
-        //     singleton: address(launchpad),
-        //     safeProxyFactory: address(safeProxyFactory),
-        //     creationCode: type(SafeProxy).creationCode,
-        //     salt: salt,
-        //     factoryInitializer: factoryInitializer
-        // });
 
         safe = address(
             safeProxyFactory.createProxyWithNonce(
@@ -113,13 +104,4 @@ abstract contract Safe7579Factory is TestBase {
         });
         init = abi.encode(initData);
     }
-
-    function _getSalt(
-        bytes32 _salt,
-        bytes memory initCode
-    )
-        public
-        pure
-        virtual
-        returns (bytes32 salt);
 }
