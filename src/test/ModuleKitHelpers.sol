@@ -7,7 +7,12 @@ import { IERC7579Account } from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
-import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
+import {
+    writeExpectRevert,
+    writeExpectRevertBytes4,
+    writeExpectRevertBytes,
+    writeGasIdentifier
+} from "./utils/Log.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
@@ -128,8 +133,16 @@ library ModuleKitHelpers {
         }
     }
 
-    function expect4337Revert(AccountInstance memory, string memory error) internal {
-        writeExpectRevert(error);
+    function expect4337Revert(AccountInstance memory) internal {
+        writeExpectRevert(1);
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes4 message) internal {
+        writeExpectRevertBytes4(message);
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes calldata message) internal {
+        writeExpectRevertBytes(message);
     }
 
     /**

@@ -1,19 +1,51 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-function writeExpectRevert(string memory error) {
+function writeExpectRevert(uint256 value) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     // solhint-disable-next-line no-inline-assembly
     assembly {
-        sstore(slot, error)
+        sstore(slot, value)
     }
 }
 
-function getExpectRevert() view returns (string memory error) {
+function writeExpectRevertBytes4(bytes4 message) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     // solhint-disable-next-line no-inline-assembly
     assembly {
-        error := sload(slot)
+        sstore(slot, message)
+    }
+}
+
+function writeExpectRevertBytes(bytes memory message) {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+        sstore(slot, message)
+    }
+}
+
+function getExpectRevert() view returns (uint256 value) {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+        value := sload(slot)
+    }
+}
+
+function getExpectRevertBytes4() view returns (bytes4 message) {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+        message := sload(slot)
+    }
+}
+
+function getExpectRevertBytes() view returns (bytes memory message) {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    // solhint-disable-next-line no-inline-assembly
+    assembly {
+        message := sload(slot)
     }
 }
 
