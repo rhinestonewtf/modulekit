@@ -49,7 +49,7 @@ contract UserOpGasLog {
     function calcValidationGas(
         PackedUserOperation memory userOp,
         bytes32 userOpHash,
-        address /* sender */,
+        address, /* sender */
         bytes memory /* initCode */
     )
         external

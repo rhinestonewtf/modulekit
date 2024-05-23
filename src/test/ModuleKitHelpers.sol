@@ -142,7 +142,7 @@ library ModuleKitHelpers {
      *
      * @param id Identifier for the gas calculation, which will be used as the filename
      */
-    function log4337Gas(AccountInstance memory /* instance */, string memory id) internal {
+    function log4337Gas(AccountInstance memory, /* instance */ string memory id) internal {
         writeGasIdentifier(id);
     }
 }

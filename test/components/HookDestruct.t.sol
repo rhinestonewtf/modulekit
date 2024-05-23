@@ -118,7 +118,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecute(
-        address /* account */,
+        address, /* account */
         address msgSender,
         address target,
         uint256 value,
@@ -140,7 +140,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecuteBatch(
-        address /* account */,
+        address, /* account */
         address msgSender,
         Execution[] calldata executions
     )
@@ -162,7 +162,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecuteFromExecutor(
-        address /* account */,
+        address, /* account */
         address msgSender,
         address target,
         uint256 value,
@@ -184,7 +184,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onExecuteBatchFromExecutor(
-        address /* account */,
+        address, /* account */
         address msgSender,
         Execution[] calldata executions
     )
@@ -206,7 +206,7 @@ contract HookDestructTest is Test, ERC7579HookDestruct {
     }
 
     function onInstallModule(
-        address /* account */,
+        address, /* account */
         address msgSender,
         uint256 moduleType,
         address module,

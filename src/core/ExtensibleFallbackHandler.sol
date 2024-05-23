@@ -36,6 +36,9 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         Dynamic
     }
 
+    error InvalidMethod();
+    error InvalidMethodSelector();
+
     function onInstall(bytes calldata data) external override {
         if (data.length == 0) return;
         Params[] memory params = abi.decode(data, (Params[]));
@@ -82,10 +85,10 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
     }
 
     fallback(bytes calldata) external returns (bytes memory result) {
-        require(msg.data.length >= 24, "invalid method selector");
+        if (msg.data.length < 24) revert InvalidMethodSelector();
         FallbackConfig memory fallbackConfig = fallbackHandlers[msg.sender][msg.sig];
         address erc2771Sender = _msgSender();
-        if (fallbackConfig.handler == address(0)) revert("Invalid Method");
+        if (fallbackConfig.handler == address(0)) revert InvalidMethod();
 
         if (fallbackConfig.fallbackType == FallBackType.Static) {
             result = IStaticFallbackMethod(fallbackConfig.handler).handle(
@@ -108,7 +111,7 @@ contract ExtensibleFallbackHandler is ERC7579FallbackBase, ERC2771Handler {
         return isType == TYPE_FALLBACK;
     }
 
-    function isInitialized(address /* smartAccount */) external pure returns (bool) {
+    function isInitialized(address /* smartAccount */ ) external pure returns (bool) {
         return false;
     }
 }

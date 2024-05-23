@@ -177,7 +177,7 @@ library ERC7579Helpers {
      * get callData to install validator on ERC7579 Account
      */
     function installValidator(
-        address /* account */,
+        address, /* account */
         address validator,
         bytes memory initData
     )
@@ -228,7 +228,7 @@ library ERC7579Helpers {
      * get callData to install executor on ERC7579 Account
      */
     function installExecutor(
-        address /* account */,
+        address, /* account */
         address executor,
         bytes memory initData
     )
@@ -279,7 +279,7 @@ library ERC7579Helpers {
      * get callData to install hook on ERC7579 Account
      */
     function installHook(
-        address /* account */,
+        address, /* account */
         address hook,
         bytes memory initData
     )
@@ -294,7 +294,7 @@ library ERC7579Helpers {
      * get callData to uninstall hook on ERC7579 Account
      */
     function uninstallHook(
-        address /* account */,
+        address, /* account */
         address hook,
         bytes memory initData
     )
@@ -310,7 +310,7 @@ library ERC7579Helpers {
      * get callData to install fallback on ERC7579 Account
      */
     function installFallback(
-        address /* account */,
+        address, /* account */
         address fallbackHandler,
         bytes memory initData
     )
@@ -327,7 +327,7 @@ library ERC7579Helpers {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function uninstallFallback(
-        address /* account */,
+        address, /* account */
         address fallbackHandler,
         bytes memory initData
     )
