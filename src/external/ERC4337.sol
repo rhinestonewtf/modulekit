@@ -6,6 +6,8 @@ import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/interfaces/PackedUserOperation.sol";
 import { UserOperationLib } from "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { EntryPointSimulations } from
+    "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
 import { IEntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/interfaces/IEntryPointSimulations.sol";
 import {

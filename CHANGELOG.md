@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
+[0.4.1]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.1
 [0.4.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.0
 [0.3.7]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.7
 [0.3.6]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.6
@@ -15,6 +16,20 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 [0.3.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
+
+## [0.4.1] - 24-05-2024
+
+### Changed
+
+- Integrated `Safe7579Launchpad`
+- Cleaned up and standardized multi-account logic
+- Removed redundant components
+
+### Added
+
+- Account factory template to guide integration of new accounts
+- Multi-account ci
+- Dependency installation ci
 
 ## [0.4.0] - 21-05-2024
 
