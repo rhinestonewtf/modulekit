@@ -17,7 +17,7 @@ contract BaseTest is RhinestoneModuleKit, Test {
     address recipient;
 
     function setUp() public virtual {
-        instance = makeAccountInstance("1");
+        instance = makeAccountInstance("account1");
 
         MockValidator defaultValidator = new MockValidator();
         MockExecutor defaultExecutor = new MockExecutor();

@@ -82,7 +82,18 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return isModuleInstalled(instance, moduleTypeId, module, "");
+        bytes memory data;
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            if (moduleTypeId == MODULE_TYPE_HOOK) {
+                data = abi.encode(HookType.GLOBAL, bytes4(0x0), "");
+            }
+        } else if (env == AccountType.KERNEL) {
+            if (moduleTypeId == MODULE_TYPE_HOOK) {
+                return true;
+            }
+        }
+        return isModuleInstalled(instance, moduleTypeId, module, data);
     }
 
     function isModuleInstalled(
@@ -96,12 +107,15 @@ library ModuleKitHelpers {
     {
         AccountType env = getAccountType();
         if (env == AccountType.SAFE) {
-            return IERC7579Account(instance.account).isModuleInstalled(
-                moduleTypeId, module, abi.encode(HookType.GLOBAL, bytes4(0x0), data)
-            );
-        } else {
-            return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+            if (moduleTypeId == MODULE_TYPE_HOOK) {
+                data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
+            }
+        } else if (env == AccountType.KERNEL) {
+            if (moduleTypeId == MODULE_TYPE_HOOK) {
+                return true;
+            }
         }
+        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
     }
 
     function exec(
@@ -173,8 +187,8 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
-        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("KERNEL7579"))) {
+        AccountType env = getAccountType();
+        if (env == AccountType.KERNEL) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
                 data = KernelHelpers.getDefaultInstallExecutorData(module);
             } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
@@ -198,8 +212,8 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
-        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("KERNEL7579"))) {
+        AccountType env = getAccountType();
+        if (env == AccountType.KERNEL) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
                 data = KernelHelpers.getDefaultUninstallExecutorData(module);
             } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {

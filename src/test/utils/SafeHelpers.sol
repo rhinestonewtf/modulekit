@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
+import { Safe7579Launchpad } from "safe7579/Safe7579Launchpad.sol";
 import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
 
 interface ISafeFactory {

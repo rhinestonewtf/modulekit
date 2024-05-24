@@ -16,8 +16,6 @@ import { ValidationType } from "kernel/types/Types.sol";
 import { VALIDATION_TYPE_ROOT, VALIDATION_TYPE_VALIDATOR } from "kernel/types/Constants.sol";
 import { KernelHelpers } from "./KernelHelpers.sol";
 import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
-import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
-import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
 import { HookType } from "safe7579/DataTypes.sol";
 import { SafeHelpers } from "./SafeHelpers.sol";
 
@@ -246,25 +244,28 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        // get previous validator in sentinel list
-        address previous;
+        AccountType env = getAccountType();
+        if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
+            // get previous validator in sentinel list
+            address previous;
 
-        (address[] memory array,) =
-            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
+            (address[] memory array,) =
+                IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
 
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == validator) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
+            if (array.length == 1) {
+                previous = address(0x1);
+            } else if (array[0] == validator) {
+                previous = address(0x1);
+            } else {
+                for (uint256 i = 1; i < array.length; i++) {
+                    if (array[i] == validator) previous = array[i - 1];
+                }
             }
+            initData = abi.encode(previous, initData);
         }
 
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
-            (MODULE_TYPE_VALIDATOR, validator, abi.encode(previous, initData))
+            IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
         );
     }
 
@@ -297,25 +298,28 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        // get previous executor in sentinel list
-        address previous;
+        AccountType env = getAccountType();
+        if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
+            // get previous executor in sentinel list
+            address previous;
 
-        (address[] memory array,) =
-            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
+            (address[] memory array,) =
+                IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
 
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == executor) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == executor) previous = array[i - 1];
+            if (array.length == 1) {
+                previous = address(0x1);
+            } else if (array[0] == executor) {
+                previous = address(0x1);
+            } else {
+                for (uint256 i = 1; i < array.length; i++) {
+                    if (array[i] == executor) previous = array[i - 1];
+                }
             }
+            initData = abi.encode(previous, initData);
         }
 
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
-            (MODULE_TYPE_EXECUTOR, executor, abi.encode(previous, initData))
+            IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
         );
     }
 
@@ -467,8 +471,8 @@ library ERC7579Helpers {
         view
         returns (uint256 nonce)
     {
-        string memory env = envOr("ACCOUNT_TYPE", "DEFAULT");
-        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("KERNEL7579"))) {
+        AccountType env = getAccountType();
+        if (env == AccountType.KERNEL) {
             ValidationType vType;
             if (validator == defaultValidator) {
                 vType = VALIDATION_TYPE_ROOT;
@@ -481,18 +485,4 @@ library ERC7579Helpers {
             nonce = entrypoint.getNonce(address(account), key);
         }
     }
-
-    // function signatureInNonce(
-    //     address account,
-    //     IEntryPoint entrypoint,
-    //     PackedUserOperation memory userOp,
-    //     address validator,
-    //     bytes memory signature
-    // ) internal view returns (bytes32 userOpHash, PackedUserOperation memory) {
-    //     userOp.nonce = getNonce(account, entrypoint, validator);
-    //     userOp.signature = signature;
-
-    //     userOpHash = entrypoint.getUserOpHash(userOp);
-    //     return (userOpHash, userOp);
-    // }
 }

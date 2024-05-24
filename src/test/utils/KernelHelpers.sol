@@ -44,13 +44,8 @@ library KernelHelpers {
         pure
         returns (bytes memory data)
     {
-        data = abi.encodeWithSelector(
-            IERC7579Account.installModule.selector,
-            MODULE_TYPE_EXECUTOR,
-            address(module),
-            abi.encodePacked(
-                address(0), abi.encode(abi.encodePacked("executorData"), abi.encodePacked(""))
-            )
+        data = abi.encodePacked(
+            address(0), abi.encode(abi.encodePacked("executorData"), abi.encodePacked(""))
         );
     }
 
@@ -59,13 +54,8 @@ library KernelHelpers {
         pure
         returns (bytes memory data)
     {
-        data = abi.encodeWithSelector(
-            IERC7579Account.installModule.selector,
-            MODULE_TYPE_VALIDATOR,
-            address(module),
-            abi.encodePacked(
-                address(0), abi.encode(abi.encodePacked("validatorData"), abi.encodePacked(""))
-            )
+        data = abi.encodePacked(
+            address(0), abi.encode(abi.encodePacked("validatorData"), abi.encodePacked(""))
         );
     }
 
@@ -74,27 +64,17 @@ library KernelHelpers {
         pure
         returns (bytes memory data)
     {
-        data = abi.encodeWithSelector(
-            IERC7579Account.installModule.selector,
-            MODULE_TYPE_FALLBACK,
-            address(module),
-            abi.encodePacked(
-                MockFallback.fallbackFunction.selector,
-                address(0),
-                abi.encode(abi.encodePacked(hex"00", "fallbackData"), abi.encodePacked(""))
-            )
+        data = abi.encodePacked(
+            MockFallback.fallbackFunction.selector,
+            address(0),
+            abi.encode(abi.encodePacked(hex"00", "fallbackData"), abi.encodePacked(""))
         );
     }
 
     function getDefaultInstallHookData(address module) internal pure returns (bytes memory data) {
         //TODO fix hook data computation
-        data = abi.encodeWithSelector(
-            IERC7579Account.installModule.selector,
-            MODULE_TYPE_HOOK,
-            address(module),
-            abi.encodePacked(
-                address(1), abi.encode(hex"ff", abi.encodePacked(bytes1(0xff), "hookData"))
-            )
+        data = abi.encodePacked(
+            address(1), abi.encode(hex"ff", abi.encodePacked(bytes1(0xff), "hookData"))
         );
     }
 
@@ -102,32 +82,19 @@ library KernelHelpers {
         internal
         pure
         returns (bytes memory data)
-    {
-        data = abi.encodeWithSelector(
-            IERC7579Account.uninstallModule.selector, MODULE_TYPE_EXECUTOR, module, hex""
-        );
-    }
+    { }
 
     function getDefaultUninstallValidatorData(address module)
         internal
         pure
         returns (bytes memory data)
-    {
-        data = abi.encodeWithSelector(
-            IERC7579Account.uninstallModule.selector, MODULE_TYPE_VALIDATOR, module, hex""
-        );
-    }
+    { }
 
     function getDefaultUninstallFallbackData(address module)
         internal
         pure
         returns (bytes memory data)
     {
-        data = abi.encodeWithSelector(
-            IERC7579Account.uninstallModule.selector,
-            MODULE_TYPE_FALLBACK,
-            module,
-            abi.encodePacked(MockFallback.fallbackFunction.selector)
-        );
+        data = abi.encodePacked(MockFallback.fallbackFunction.selector);
     }
 }

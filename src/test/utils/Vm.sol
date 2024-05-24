@@ -154,7 +154,11 @@ function toString(bytes memory input) pure returns (string memory) {
 }
 
 function toString(bytes32 input) pure returns (string memory) {
-    return Vm(VM_ADDR).toString(input);
+    bytes memory _bytes = new bytes(32);
+    for (uint256 i = 0; i < 32; i++) {
+        _bytes[i] = input[i];
+    }
+    return string(_bytes);
 }
 
 function parseJson(string memory json, string memory key) pure returns (bytes memory) {
