@@ -11,10 +11,10 @@ function makeAddrAndKey(string memory name) returns (address addr, uint256 priva
     Vm(VM_ADDR).label(addr, name);
 }
 
-function makeAddr(string memory name) returns (address addr) {
+function makeAddr(string memory name) pure returns (address addr) {
     uint256 privateKey = uint256(keccak256(abi.encodePacked(name)));
     addr = Vm(VM_ADDR).addr(privateKey);
-    Vm(VM_ADDR).label(addr, name);
+    // Vm(VM_ADDR).label(addr, name);
 }
 
 function getAddr(uint256 pk) pure returns (address) {
@@ -97,6 +97,10 @@ function stopAndReturnStateDiff() returns (VmSafe.AccountAccess[] memory) {
     return Vm(VM_ADDR).stopAndReturnStateDiff();
 }
 
+function envOr(string memory name, string memory defaultValue) view returns (string memory value) {
+    return Vm(VM_ADDR).envOr(name, defaultValue);
+}
+
 function envOr(string memory name, bool defaultValue) view returns (bool value) {
     return Vm(VM_ADDR).envOr(name, defaultValue);
 }
@@ -147,6 +151,14 @@ function toString(int256 input) pure returns (string memory) {
 
 function toString(bytes memory input) pure returns (string memory) {
     return Vm(VM_ADDR).toString(input);
+}
+
+function toString(bytes32 input) pure returns (string memory) {
+    bytes memory _bytes = new bytes(32);
+    for (uint256 i = 0; i < 32; i++) {
+        _bytes[i] = input[i];
+    }
+    return string(_bytes);
 }
 
 function parseJson(string memory json, string memory key) pure returns (bytes memory) {

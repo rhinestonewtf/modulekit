@@ -8,7 +8,6 @@ import {
     IStakeManager
 } from "../../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
-/* solhint-disable no-global-import */
 import "./Vm.sol";
 import "./Log.sol";
 import "./GasCalculations.sol";

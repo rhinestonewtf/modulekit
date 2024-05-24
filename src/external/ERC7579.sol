@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import { MSAFactory as ERC7579AccountFactory } from "erc7579/MSAFactory.sol";
 import { MSAAdvanced as ERC7579Account } from "erc7579/MSAAdvanced.sol";
 import { Execution, IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
+import { IMSA } from "erc7579/interfaces/IMSA.sol";
 import {
     IModule as IERC7579Module,
     IValidator as IERC7579Validator,

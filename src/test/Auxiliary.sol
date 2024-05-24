@@ -9,78 +9,19 @@ import { EntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
 import { IEntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/interfaces/IEntryPointSimulations.sol";
-import { ExtensibleFallbackHandler } from "../core/ExtensibleFallbackHandler.sol";
-import { MockRegistry } from "src/Mocks.sol";
+import { etchRegistry } from "./predeploy/Registry.sol";
 import { MockFactory } from "./predeploy/MockFactory.sol";
-
-/* solhint-disable no-global-import */
+import { UserOpGasLog } from "./utils/UserOpGasLog.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 
 struct Auxiliary {
     IEntryPoint entrypoint;
     UserOpGasLog gasSimulation;
-    ExtensibleFallbackHandler fallbackHandler;
     ERC7579Bootstrap bootstrap;
     IERC7484 registry;
     address initialTrustedAttester;
     MockFactory mockFactory;
-}
-
-contract UserOpGasLog {
-    EntryPointSimulations public immutable simulation = new EntryPointSimulations();
-
-    struct GasLog {
-        uint256 gasValidation;
-        uint256 gasExecution;
-    }
-
-    mapping(bytes32 userOpHash => GasLog log) internal _log;
-
-    function getLog(bytes32 userOpHash)
-        external
-        view
-        returns (uint256 gasValidation, uint256 gasExecution)
-    {
-        GasLog memory log = _log[userOpHash];
-        return (log.gasValidation, log.gasExecution);
-    }
-
-    function calcValidationGas(
-        PackedUserOperation memory userOp,
-        bytes32 userOpHash,
-        address, /* sender */
-        bytes memory /* initCode */
-    )
-        external
-        returns (uint256 gasValidation)
-    {
-        IEntryPointSimulations.ValidationResult memory validationResult =
-            simulation.simulateValidation(userOp);
-
-        gasValidation = validationResult.returnInfo.preOpGas;
-
-        _log[userOpHash].gasValidation = gasValidation;
-    }
-
-    function calcExecutionGas(
-        PackedUserOperation memory userOp,
-        bytes32 userOpHash,
-        address sender,
-        bytes memory initCode
-    )
-        external
-        returns (uint256 gasExecution)
-    {
-        IEntryPointSimulations.ExecutionResult memory executionResult =
-            simulation.simulateHandleOp(userOp, sender, initCode);
-
-        gasExecution = executionResult.paid;
-        // gasValidation = executionResult.gasUsedInValidation;
-
-        // _log[userOpHash].gasValidation = executionResult.gasUsedInValidation;
-        _log[userOpHash].gasExecution = gasExecution;
-    }
 }
 
 contract AuxiliaryFactory {
@@ -94,10 +35,8 @@ contract AuxiliaryFactory {
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.bootstrap = new ERC7579Bootstrap();
         label(address(auxiliary.bootstrap), "ERC7579Bootstrap");
-        auxiliary.registry = new MockRegistry();
+        auxiliary.registry = etchRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
         auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");
-        auxiliary.fallbackHandler = new ExtensibleFallbackHandler();
-        label(address(auxiliary.fallbackHandler), "FallbackHandler");
     }
 }
