@@ -150,7 +150,7 @@ library ModuleKitHelpers {
         writeExpectRevertBytes4(message);
     }
 
-    function expect4337Revert(AccountInstance memory, bytes calldata message) internal {
+    function expect4337Revert(AccountInstance memory, bytes memory message) internal {
         writeExpectRevertBytes(message);
     }
 
