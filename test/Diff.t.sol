@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import "src/ModuleKit.sol";
 import "./MakeAccount.t.sol";
 import "src/Mocks.sol";
+import "src/test/utils/Log.sol";
 import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 import {
     MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK
@@ -320,5 +321,26 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     // function testSimulateUserOp() public {
     //     writeSimulateUserOp(true);
     //     testexec__Given__TwoInputs();
+    // }
+
+    function testExpect4337Revert() public {
+        bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
+        instance.expect4337Revert();
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 1);
+    }
+
+    // function testExpect4337RevertBytes4() public {
+    //     bytes4 message = bytes4(abi.encode("UserOperation execution failed"));
+    //     instance.expect4337Revert(message);
+    //     bytes4 isExpectRevert = getExpectRevertBytes4();
+    //     assertEq(isExpectRevert, message);
+    // }
+
+    // function testExpect4337RevertBytes() public {
+    //     bytes memory message = abi.encode("UserOperation execution failed");
+    //     instance.expect4337Revert(message);
+    //     bytes memory isExpectRevert = getExpectRevertBytes();
+    //     assertEq(isExpectRevert, message);
     // }
 }
