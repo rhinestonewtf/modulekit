@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-/* solhint-disable no-global-import */
 import "forge-std/Test.sol";
 import "src/ModuleKit.sol";
 import "src/Modules.sol";
@@ -10,7 +9,6 @@ import "src/Mocks.sol";
 import { LicenseValidator, LicenseCollector } from "src/core/Licensing/LicenseManager.sol";
 import { LicensedModule } from "src/core/Licensing/LicensedModule.sol";
 import { Solarray } from "solarray/Solarray.sol";
-/* solhint-enable no-global-import */
 
 contract LicenseManagerTest is RhinestoneModuleKit, Test {
     using RhinestoneModuleKitLib for AccountInstance;
