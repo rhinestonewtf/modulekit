@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 function writeExpectRevert(uint256 value) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
-    // solhint-disable-next-line no-inline-assembly
     assembly {
         sstore(slot, value)
     }
@@ -11,7 +10,6 @@ function writeExpectRevert(uint256 value) {
 
 function getExpectRevert() view returns (uint256 value) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
-    // solhint-disable-next-line no-inline-assembly
     assembly {
         value := sload(slot)
     }
