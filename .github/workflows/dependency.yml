@@ -1,0 +1,68 @@
+name: Check Dependency Installation of ModuleKit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.6
+
+      - name: Pack the package
+        id: npm-pack
+        run: echo "::set-output name=package::$(npm pack)"
+
+      - name: Run npm test
+        run: |
+          mkdir test-npm-install
+          cd test-npm-install
+          npm init -y
+          npm install "../${{ steps.npm-pack.outputs.package }}"
+          mkdir -p src
+          echo 'import "modulekit/ModuleKit.sol";' > src/TestImport.sol
+          echo '[profile.default]
+          src = "src"
+          out = "out"
+          libs = ["node_modules"]' > foundry.toml
+          cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
+          forge build
+
+      - name: Run pnpm test
+        run: |
+          mkdir test-pnpm-install
+          cd test-pnpm-install
+          pnpm init
+          pnpm install "../${{ steps.npm-pack.outputs.package }}" --shamefully-hoist
+          mkdir -p src
+          echo 'import "modulekit/ModuleKit.sol";' > src/TestImport.sol
+          echo '[profile.default]
+          src = "src"
+          out = "out"
+          libs = ["node_modules"]' > foundry.toml
+          cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
+          forge build
+
+      - name: Clean up
+        run: |
+          rm "${{ steps.npm-pack.outputs.package }}"
+          rm -rf test-npm-install
+          rm -rf test-pnpm-install

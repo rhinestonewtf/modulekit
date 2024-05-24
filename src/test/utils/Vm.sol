@@ -11,10 +11,10 @@ function makeAddrAndKey(string memory name) returns (address addr, uint256 priva
     Vm(VM_ADDR).label(addr, name);
 }
 
-function makeAddr(string memory name) returns (address addr) {
+function makeAddr(string memory name) view returns (address addr) {
     uint256 privateKey = uint256(keccak256(abi.encodePacked(name)));
     addr = Vm(VM_ADDR).addr(privateKey);
-    Vm(VM_ADDR).label(addr, name);
+    // Vm(VM_ADDR).label(addr, name);
 }
 
 function getAddr(uint256 pk) pure returns (address) {
@@ -150,6 +150,10 @@ function toString(int256 input) pure returns (string memory) {
 }
 
 function toString(bytes memory input) pure returns (string memory) {
+    return Vm(VM_ADDR).toString(input);
+}
+
+function toString(bytes32 input) pure returns (string memory) {
     return Vm(VM_ADDR).toString(input);
 }
 

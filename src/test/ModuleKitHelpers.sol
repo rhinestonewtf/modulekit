@@ -16,6 +16,8 @@ import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import { KernelHelpers } from "./utils/KernelHelpers.sol";
 import "./utils/Vm.sol";
+import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
+import { HookType } from "safe7579/DataTypes.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
@@ -92,7 +94,14 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            return IERC7579Account(instance.account).isModuleInstalled(
+                moduleTypeId, module, abi.encode(HookType.GLOBAL, bytes4(0x0), data)
+            );
+        } else {
+            return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+        }
     }
 
     function exec(
