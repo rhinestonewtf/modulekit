@@ -1,12 +1,12 @@
 {
   "Calldata": {
-    "Arbitrum": "6_176 gas",
-    "OP-Stack": "8_627 gas"
+    "Arbitrum": "5_476 gas",
+    "OP-Stack": "8_088 gas"
   },
   "Phases": {
-    "Creation": "321_314 gas",
-    "Execution": "37_113 gas",
-    "Validation": "36_016 gas"
+    "Creation": "267_439 gas",
+    "Execution": "37_089 gas",
+    "Validation": "35_930 gas"
   },
-  "Total": "2_685_131 gas"
+  "Total": "2_631_099 gas"
 }

@@ -91,6 +91,5 @@ library ModuleKitLogs {
     event ModuleKit_SetFallback(address account, bytes4 functionSig, address handler);
 
     event ModuleKit_SetCondition(address account, address executor);
-
     /* solhint-enable event-name-camelcase */
 }

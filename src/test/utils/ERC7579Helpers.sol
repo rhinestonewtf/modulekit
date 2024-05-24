@@ -6,6 +6,10 @@ import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
+import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
+import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
+import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
+import { HookType } from "safe7579/DataTypes.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -23,6 +27,16 @@ interface IAccountModulesPaginated {
         external
         view
         returns (address[] memory, address);
+}
+
+interface ISafeFactory {
+    function getInitDataSafe(
+        address validator,
+        bytes memory initData
+    )
+        external
+        view
+        returns (bytes memory init);
 }
 
 library ERC7579Helpers {
@@ -76,11 +90,38 @@ library ERC7579Helpers {
             initCode = instance.initCode;
         }
 
+        bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
+
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            if (initCode.length != 0) {
+                // TODO: refactor this to decode the initcode
+                address factory;
+                assembly {
+                    factory := mload(add(initCode, 20))
+                }
+                Safe7579Launchpad.InitData memory initData = abi.decode(
+                    ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
+                    (Safe7579Launchpad.InitData)
+                );
+                // Safe7579Launchpad.InitData memory initData =
+                //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
+                initData.callData = callData;
+                initCode = abi.encodePacked(
+                    factory,
+                    abi.encodeCall(
+                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initData))
+                    )
+                );
+                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+            }
+        }
+
         userOp = PackedUserOperation({
             sender: instance.account,
             nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
             initCode: initCode,
-            callData: configModule(instance.account, moduleType, module, initData, fn),
+            callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
             preVerificationGas: 2e6,
             gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
@@ -104,6 +145,31 @@ library ERC7579Helpers {
         bool notDeployedYet = instance.account.code.length == 0;
         if (notDeployedYet) {
             initCode = instance.initCode;
+        }
+
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            if (initCode.length != 0) {
+                // TODO: refactor this to decode the initcode
+                address factory;
+                assembly {
+                    factory := mload(add(initCode, 20))
+                }
+                Safe7579Launchpad.InitData memory initData = abi.decode(
+                    ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
+                    (Safe7579Launchpad.InitData)
+                );
+                // Safe7579Launchpad.InitData memory initData =
+                //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
+                initData.callData = callData;
+                initCode = abi.encodePacked(
+                    factory,
+                    abi.encodeCall(
+                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initData))
+                    )
+                );
+                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+            }
         }
 
         userOp = PackedUserOperation({
@@ -131,7 +197,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        pure
+        view
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -284,10 +350,19 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        pure
+        view
         returns (bytes memory callData)
     {
-        callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            callData = abi.encodeCall(
+                IERC7579Account.installModule,
+                (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
+            );
+        } else {
+            callData =
+                abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
+        }
     }
 
     /**
@@ -431,131 +506,5 @@ library ERC7579Helpers {
 
         userOpHash = entrypoint.getUserOpHash(userOp);
         return (userOpHash, userOp);
-    }
-}
-
-abstract contract BootstrapUtil {
-    function _emptyConfig() internal pure returns (ERC7579BootstrapConfig memory config) { }
-    function _emptyConfigs() internal pure returns (ERC7579BootstrapConfig[] memory config) { }
-
-    function _makeBootstrapConfig(
-        address module,
-        bytes memory data
-    )
-        public
-        pure
-        returns (ERC7579BootstrapConfig memory config)
-    {
-        config.module = module;
-        config.data = data;
-    }
-
-    function makeBootstrapConfig(
-        address module,
-        bytes memory data
-    )
-        public
-        pure
-        returns (ERC7579BootstrapConfig[] memory config)
-    {
-        config = new ERC7579BootstrapConfig[](1);
-        config[0].module = module;
-        config[0].data = data;
-    }
-
-    function makeBootstrapConfig(
-        address[] memory modules,
-        bytes[] memory datas
-    )
-        public
-        pure
-        returns (ERC7579BootstrapConfig[] memory configs)
-    {
-        configs = new ERC7579BootstrapConfig[](modules.length);
-
-        for (uint256 i; i < modules.length; i++) {
-            configs[i] = _makeBootstrapConfig(modules[i], datas[i]);
-        }
-    }
-}
-
-library ArrayLib {
-    function executions(Execution memory _1) internal pure returns (Execution[] memory array) {
-        array = new Execution[](1);
-        array[0] = _1;
-    }
-
-    function executions(
-        Execution memory _1,
-        Execution memory _2
-    )
-        internal
-        pure
-        returns (Execution[] memory array)
-    {
-        array = new Execution[](2);
-        array[0] = _1;
-        array[1] = _2;
-    }
-
-    function executions(
-        Execution memory _1,
-        Execution memory _2,
-        Execution memory _3
-    )
-        internal
-        pure
-        returns (Execution[] memory array)
-    {
-        array = new Execution[](3);
-        array[0] = _1;
-        array[1] = _2;
-        array[2] = _3;
-    }
-
-    function executions(
-        Execution memory _1,
-        Execution memory _2,
-        Execution memory _3,
-        Execution memory _4
-    )
-        internal
-        pure
-        returns (Execution[] memory array)
-    {
-        array = new Execution[](4);
-        array[0] = _1;
-        array[1] = _2;
-        array[2] = _3;
-        array[3] = _4;
-    }
-
-    function map(
-        Execution[] memory self,
-        function(Execution memory) internal  returns (Execution memory) f
-    )
-        internal
-        returns (Execution[] memory result)
-    {
-        result = new Execution[](self.length);
-        for (uint256 i; i < self.length; i++) {
-            result[i] = f(self[i]);
-        }
-        return result;
-    }
-
-    function reduce(
-        Execution[] memory self,
-        function(Execution memory, Execution memory) 
-        internal  returns (Execution memory) f
-    )
-        internal
-        returns (Execution memory result)
-    {
-        result = self[0];
-        for (uint256 i = 1; i < self.length; i++) {
-            result = f(result, self[i]);
-        }
-        return result;
     }
 }
