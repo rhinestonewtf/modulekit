@@ -11,6 +11,8 @@ enum AccountType {
 string constant DEFAULT = "DEFAULT";
 string constant SAFE = "SAFE";
 
+error InvalidAccountType();
+
 function getAccountType() view returns (AccountType env) {
     string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
 
@@ -19,6 +21,6 @@ function getAccountType() view returns (AccountType env) {
     } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
         env = AccountType.DEFAULT;
     } else {
-        revert("Invalid account type");
+        revert InvalidAccountType();
     }
 }

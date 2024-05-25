@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-/* solhint-disable no-global-import */
 import "src/ModuleKit.sol";
 import "./MakeAccount.t.sol";
 import "src/Mocks.sol";
@@ -10,7 +9,6 @@ import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 import {
     MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK
 } from "src/external/ERC7579.sol";
-/* solhint-enable no-global-import */
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -94,7 +92,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         address receiver = makeAddr("receiver");
         uint256 value = 10 gwei;
         bytes memory callData = "";
-        bytes memory signature = "";
+        // bytes memory signature = "";
 
         // Create userOperation
         instance.getExecOps({

@@ -39,6 +39,7 @@ contract MultiAccountFactory is SafeFactory, ERC7579Factory {
         bytes memory initData
     )
         external
+        view
         returns (bytes memory init)
     {
         if (env == AccountType.SAFE) {

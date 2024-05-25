@@ -67,7 +67,6 @@ library ERC4337Helpers {
         if (isExpectRevert != 0) {
             if (success) {
                 revert("UserOperation did not revert");
-                require(!success, "UserOperation execution did not fail as expected");
             } else {
                 require(!success, "UserOperation execution did not fail as expected");
             }
@@ -96,9 +95,10 @@ library ERC4337Helpers {
 
     function getUserOpRevertReason(
         VmSafe.Log[] memory logs,
-        bytes32 userOpHash
+        bytes32 /* userOpHash */
     )
         internal
+        pure
         returns (bytes memory revertReason)
     {
         for (uint256 i; i < logs.length; i++) {
