@@ -70,6 +70,7 @@ library ModuleKitHelpers {
         address module
     )
         internal
+        view
         returns (bool)
     {
         return isModuleInstalled(instance, moduleTypeId, module, "");
@@ -82,6 +83,7 @@ library ModuleKitHelpers {
         bytes memory data
     )
         internal
+        view
         returns (bool)
     {
         AccountType env = getAccountType();
@@ -147,10 +149,9 @@ library ModuleKitHelpers {
      * @dev the id needs to be unique across your tests, otherwise the gas calculations will
      * overwrite each other
      *
-     * @param instance AccountInstance
      * @param id Identifier for the gas calculation, which will be used as the filename
      */
-    function log4337Gas(AccountInstance memory instance, string memory id) internal {
+    function log4337Gas(AccountInstance memory, /* instance */ string memory id) internal {
         writeGasIdentifier(id);
     }
 }

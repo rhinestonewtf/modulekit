@@ -6,7 +6,6 @@ import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafeProxy.sol";
 import { SafeProxyFactory } from
     "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import { LibClone } from "solady/utils/LibClone.sol";
 import { Safe7579Launchpad, IERC7484, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
 import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
 import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
@@ -82,7 +81,7 @@ abstract contract SafeFactory {
         ModuleInit[] memory fallbacks = new ModuleInit[](0);
         ModuleInit[] memory hooks = new ModuleInit[](0);
 
-        Safe7579Launchpad.InitData memory initData = Safe7579Launchpad.InitData({
+        Safe7579Launchpad.InitData memory initDataSafe = Safe7579Launchpad.InitData({
             singleton: address(safeSingleton),
             owners: Solarray.addresses(makeAddr("owner1")),
             threshold: 1,
@@ -102,6 +101,6 @@ abstract contract SafeFactory {
             validators: validators,
             callData: ""
         });
-        init = abi.encode(initData);
+        init = abi.encode(initDataSafe);
     }
 }

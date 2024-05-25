@@ -2,7 +2,6 @@
 pragma solidity ^0.8.23;
 
 /* solhint-disable max-line-length */
-/* solhint-disable no-global-import */
 import "../utils/Vm.sol";
 import { IEntryPoint } from "../../external/ERC4337.sol";
 import { SenderCreator } from "@ERC4337/account-abstraction/contracts/core/EntryPoint.sol";

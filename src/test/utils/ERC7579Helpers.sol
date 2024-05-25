@@ -100,20 +100,20 @@ library ERC7579Helpers {
                 assembly {
                     factory := mload(add(initCode, 20))
                 }
-                Safe7579Launchpad.InitData memory initData = abi.decode(
+                Safe7579Launchpad.InitData memory initDataSafe = abi.decode(
                     ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
                     (Safe7579Launchpad.InitData)
                 );
-                // Safe7579Launchpad.InitData memory initData =
+                // Safe7579Launchpad.InitData memory initDataSafe =
                 //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
-                initData.callData = callData;
+                initDataSafe.callData = callData;
                 initCode = abi.encodePacked(
                     factory,
                     abi.encodeCall(
-                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initData))
+                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initDataSafe))
                     )
                 );
-                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initDataSafe));
             }
         }
 
@@ -243,7 +243,7 @@ library ERC7579Helpers {
      * get callData to install validator on ERC7579 Account
      */
     function installValidator(
-        address account,
+        address, /* account */
         address validator,
         bytes memory initData
     )
@@ -294,7 +294,7 @@ library ERC7579Helpers {
      * get callData to install executor on ERC7579 Account
      */
     function installExecutor(
-        address account,
+        address, /* account */
         address executor,
         bytes memory initData
     )
@@ -345,7 +345,7 @@ library ERC7579Helpers {
      * get callData to install hook on ERC7579 Account
      */
     function installHook(
-        address account,
+        address, /* account */
         address hook,
         bytes memory initData
     )
@@ -369,7 +369,7 @@ library ERC7579Helpers {
      * get callData to uninstall hook on ERC7579 Account
      */
     function uninstallHook(
-        address account,
+        address, /* account */
         address hook,
         bytes memory initData
     )
@@ -385,7 +385,7 @@ library ERC7579Helpers {
      * get callData to install fallback on ERC7579 Account
      */
     function installFallback(
-        address account,
+        address, /* account */
         address fallbackHandler,
         bytes memory initData
     )
@@ -402,7 +402,7 @@ library ERC7579Helpers {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function uninstallFallback(
-        address account,
+        address, /* account */
         address fallbackHandler,
         bytes memory initData
     )

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.23;
+
 import { IERC7484 } from "src/Interfaces.sol";
 import { MockRegistry } from "src/Mocks.sol";
 import { etch } from "../utils/Vm.sol";
