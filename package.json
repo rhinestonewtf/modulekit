@@ -39,7 +39,9 @@
     "erc7579": "github:erc7579/erc7579-implementation",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
-    "solarray": "github:sablier-labs/solarray"
+    "solarray": "github:sablier-labs/solarray",
+    "@zerodev/kernel": "github:zerodevapp/kernel",
+    "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.2",

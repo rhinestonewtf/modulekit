@@ -5,11 +5,13 @@ import { envOr } from "src/test/utils/Vm.sol";
 
 enum AccountType {
     DEFAULT,
-    SAFE
+    SAFE,
+    KERNEL
 }
 
 string constant DEFAULT = "DEFAULT";
 string constant SAFE = "SAFE";
+string constant KERNEL = "KERNEL";
 
 error InvalidAccountType();
 
@@ -20,6 +22,8 @@ function getAccountType() view returns (AccountType env) {
         env = AccountType.SAFE;
     } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
         env = AccountType.DEFAULT;
+    } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
+        env = AccountType.KERNEL;
     } else {
         revert InvalidAccountType();
     }
