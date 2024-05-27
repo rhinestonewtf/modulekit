@@ -191,14 +191,14 @@ library ModuleKitHelpers {
         AccountType env = getAccountType();
         if (env == AccountType.KERNEL) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = KernelHelpers.getDefaultInstallExecutorData(module);
+                data = KernelHelpers.getDefaultInstallExecutorData(module, data);
             } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = KernelHelpers.getDefaultInstallValidatorData(module);
+                data = KernelHelpers.getDefaultInstallValidatorData(module, data);
             } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = KernelHelpers.getDefaultInstallFallbackData(module);
+                data = KernelHelpers.getDefaultInstallFallbackData(module, data);
             } else {
                 //TODO fix hook encoding impl in kernel helpers lib
-                data = KernelHelpers.getDefaultInstallHookData(module);
+                data = KernelHelpers.getDefaultInstallHookData(module, data);
             }
         }
         return data;
@@ -216,11 +216,11 @@ library ModuleKitHelpers {
         AccountType env = getAccountType();
         if (env == AccountType.KERNEL) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = KernelHelpers.getDefaultUninstallExecutorData(module);
+                data = KernelHelpers.getDefaultUninstallExecutorData(module, data);
             } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = KernelHelpers.getDefaultUninstallValidatorData(module);
+                data = KernelHelpers.getDefaultUninstallValidatorData(module, data);
             } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = KernelHelpers.getDefaultUninstallFallbackData(module);
+                data = KernelHelpers.getDefaultUninstallFallbackData(module, data);
             } else {
                 //TODO handle for hook
             }

@@ -39,27 +39,44 @@ library KernelHelpers {
         return IEntryPoint(ENTRYPOINT_ADDR).getNonce(account, nonceKey);
     }
 
-    function getDefaultInstallExecutorData(address module)
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
+     */
+    function getDefaultInstallValidatorData(
+        address module,
+        bytes memory initData
+    )
         internal
         pure
         returns (bytes memory data)
     {
-        data = abi.encodePacked(
-            address(0), abi.encode(abi.encodePacked("executorData"), abi.encodePacked(""))
-        );
+        data = abi.encodePacked(address(0), abi.encode(initData, abi.encodePacked("")));
     }
 
-    function getDefaultInstallValidatorData(address module)
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L324-L334
+     */
+    function getDefaultInstallExecutorData(
+        address module,
+        bytes memory initData
+    )
         internal
         pure
         returns (bytes memory data)
     {
-        data = abi.encodePacked(
-            address(0), abi.encode(abi.encodePacked("validatorData"), abi.encodePacked(""))
-        );
+        data = abi.encodePacked(address(0), abi.encode(initData, abi.encodePacked("")));
     }
 
-    function getDefaultInstallFallbackData(address module)
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L336-L345
+     */
+    function getDefaultInstallFallbackData(
+        address module,
+        bytes memory initData
+    )
         internal
         pure
         returns (bytes memory data)
@@ -67,34 +84,63 @@ library KernelHelpers {
         data = abi.encodePacked(
             MockFallback.fallbackFunction.selector,
             address(0),
-            abi.encode(abi.encodePacked(hex"00", "fallbackData"), abi.encodePacked(""))
+            abi.encode(initData, abi.encodePacked(""))
         );
     }
 
-    function getDefaultInstallHookData(address module) internal pure returns (bytes memory data) {
-        //TODO fix hook data computation
-        data = abi.encodePacked(
-            address(1), abi.encode(hex"ff", abi.encodePacked(bytes1(0xff), "hookData"))
-        );
-    }
-
-    function getDefaultUninstallExecutorData(address module)
-        internal
-        pure
-        returns (bytes memory data)
-    { }
-
-    function getDefaultUninstallValidatorData(address module)
-        internal
-        pure
-        returns (bytes memory data)
-    { }
-
-    function getDefaultUninstallFallbackData(address module)
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
+     */
+    function getDefaultInstallHookData(
+        address module,
+        bytes memory initData
+    )
         internal
         pure
         returns (bytes memory data)
     {
-        data = abi.encodePacked(MockFallback.fallbackFunction.selector);
+        data = initData;
+    }
+
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L397-L398
+     */
+    function getDefaultUninstallValidatorData(
+        address module,
+        bytes memory deinitData
+    )
+        internal
+        pure
+        returns (bytes memory data)
+    { }
+
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L400
+     */
+    function getDefaultUninstallExecutorData(
+        address module,
+        bytes memory deinitData
+    )
+        internal
+        pure
+        returns (bytes memory data)
+    { }
+
+    /**
+     * @dev
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
+     */
+    function getDefaultUninstallFallbackData(
+        address module,
+        bytes memory deinitData
+    )
+        internal
+        pure
+        returns (bytes memory data)
+    {
+        data = abi.encodePacked(MockFallback.fallbackFunction.selector, deinitData);
     }
 }
