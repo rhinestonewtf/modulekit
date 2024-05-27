@@ -103,6 +103,12 @@ To run tests, run:
 pnpm test
 ```
 
+To run the linter, run:
+
+```bash
+pnpm lint:sol
+```
+
 ## Contributing
 
 For feature or change requests, feel free to open a PR, start a discussion or get in touch with us.

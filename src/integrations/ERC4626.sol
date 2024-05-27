@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
-import { IERC7579Account, Execution } from "../Accounts.sol";
+import { Execution } from "../Accounts.sol";
 
 library ERC4626Integration {
     function deposit(

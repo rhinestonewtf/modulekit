@@ -13,6 +13,7 @@
     "no-empty-blocks": "off",
     "not-rely-on-time": "off",
     "one-contract-per-file": "off",
-    "var-name-mixedcase": "off"
+    "var-name-mixedcase": "off",
+    "no-global-import": "off"
   }
 }

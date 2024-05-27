@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { IERC7579Account, Execution } from "../Accounts.sol";
+import { Execution } from "../Accounts.sol";
 
 library ERC20Integration {
     function approve(

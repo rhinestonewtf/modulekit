@@ -13,6 +13,8 @@ string constant DEFAULT = "DEFAULT";
 string constant SAFE = "SAFE";
 string constant KERNEL = "KERNEL";
 
+error InvalidAccountType();
+
 function getAccountType() view returns (AccountType env) {
     string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
 
@@ -23,6 +25,6 @@ function getAccountType() view returns (AccountType env) {
     } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
         env = AccountType.KERNEL;
     } else {
-        revert("Invalid account type");
+        revert InvalidAccountType();
     }
 }

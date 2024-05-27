@@ -32,6 +32,7 @@ abstract contract ERC7579Factory {
         bytes memory initData
     )
         public
+        view
         returns (bytes memory init)
     {
         ERC7579BootstrapConfig[] memory _validators = new ERC7579BootstrapConfig[](1);
