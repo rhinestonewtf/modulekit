@@ -17,4 +17,6 @@ forge-std/=node_modules/forge-std/src/
 solady/=node_modules/solady/src/
 solarray/=node_modules/solarray/src/
 @prb/math/=node_modules/@prb/math/src/
+kernel/=node_modules/@zerodev/kernel/src/
+ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
 

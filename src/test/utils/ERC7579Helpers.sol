@@ -1,15 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Execution, IERC7579Account, ERC7579BootstrapConfig } from "../../external/ERC7579.sol";
+import {
+    Execution,
+    IERC7579Account,
+    ERC7579BootstrapConfig,
+    IERC7579Validator
+} from "../../external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
+import "./Vm.sol";
+import { ValidationType } from "kernel/types/Types.sol";
+import { VALIDATION_TYPE_ROOT, VALIDATION_TYPE_VALIDATOR } from "kernel/types/Constants.sol";
+import { KernelHelpers } from "./KernelHelpers.sol";
 import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
-import { Safe7579Launchpad, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
-import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
 import { HookType } from "safe7579/DataTypes.sol";
+import { SafeHelpers } from "./SafeHelpers.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -27,16 +35,6 @@ interface IAccountModulesPaginated {
         external
         view
         returns (address[] memory, address);
-}
-
-interface ISafeFactory {
-    function getInitDataSafe(
-        address validator,
-        bytes memory initData
-    )
-        external
-        view
-        returns (bytes memory init);
 }
 
 library ERC7579Helpers {
@@ -65,7 +63,9 @@ library ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory) internal  returns (bytes memory) fn
+        function(address, uint256, address, bytes memory)
+            internal
+            returns (bytes memory) fn
     )
         internal
         returns (bytes memory erc7579Tx)
@@ -78,48 +78,36 @@ library ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory) internal  returns (bytes memory) fn,
+        function(address, uint256, address, bytes memory)
+            internal
+            returns (bytes memory) fn,
         address txValidator
     )
         internal
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
-        bool notDeployedYet = instance.account.code.length == 0;
-        if (notDeployedYet) {
+        if (instance.account.code.length == 0) {
             initCode = instance.initCode;
         }
 
         bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
 
-        AccountType env = getAccountType();
-        if (env == AccountType.SAFE) {
+        if (getAccountType() == AccountType.SAFE) {
             if (initCode.length != 0) {
-                // TODO: refactor this to decode the initcode
-                address factory;
-                assembly {
-                    factory := mload(add(initCode, 20))
-                }
-                Safe7579Launchpad.InitData memory initDataSafe = abi.decode(
-                    ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
-                    (Safe7579Launchpad.InitData)
-                );
-                // Safe7579Launchpad.InitData memory initDataSafe =
-                //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
-                initDataSafe.callData = callData;
-                initCode = abi.encodePacked(
-                    factory,
-                    abi.encodeCall(
-                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initDataSafe))
-                    )
-                );
-                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initDataSafe));
+                (initCode, callData) =
+                    SafeHelpers.getInitCallData(instance.salt, txValidator, initCode, callData);
             }
         }
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
+            nonce: getNonce(
+                instance.account,
+                instance.aux.entrypoint,
+                txValidator,
+                address(instance.defaultValidator)
+            ),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -150,31 +138,19 @@ library ERC7579Helpers {
         AccountType env = getAccountType();
         if (env == AccountType.SAFE) {
             if (initCode.length != 0) {
-                // TODO: refactor this to decode the initcode
-                address factory;
-                assembly {
-                    factory := mload(add(initCode, 20))
-                }
-                Safe7579Launchpad.InitData memory initData = abi.decode(
-                    ISafeFactory(factory).getInitDataSafe(address(txValidator), ""),
-                    (Safe7579Launchpad.InitData)
-                );
-                // Safe7579Launchpad.InitData memory initData =
-                //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
-                initData.callData = callData;
-                initCode = abi.encodePacked(
-                    factory,
-                    abi.encodeCall(
-                        MultiAccountFactory.createAccount, (instance.salt, abi.encode(initData))
-                    )
-                );
-                callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+                (initCode, callData) =
+                    SafeHelpers.getInitCallData(instance.salt, txValidator, initCode, callData);
             }
         }
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(instance.account, instance.aux.entrypoint, txValidator),
+            nonce: getNonce(
+                instance.account,
+                instance.aux.entrypoint,
+                txValidator,
+                address(instance.defaultValidator)
+            ),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -268,25 +244,28 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        // get previous validator in sentinel list
-        address previous;
+        AccountType env = getAccountType();
+        if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
+            // get previous validator in sentinel list
+            address previous;
 
-        (address[] memory array,) =
-            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
+            (address[] memory array,) =
+                IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
 
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == validator) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
+            if (array.length == 1) {
+                previous = address(0x1);
+            } else if (array[0] == validator) {
+                previous = address(0x1);
+            } else {
+                for (uint256 i = 1; i < array.length; i++) {
+                    if (array[i] == validator) previous = array[i - 1];
+                }
             }
+            initData = abi.encode(previous, initData);
         }
 
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
-            (MODULE_TYPE_VALIDATOR, validator, abi.encode(previous, initData))
+            IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
         );
     }
 
@@ -319,25 +298,28 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        // get previous executor in sentinel list
-        address previous;
+        AccountType env = getAccountType();
+        if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
+            // get previous executor in sentinel list
+            address previous;
 
-        (address[] memory array,) =
-            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
+            (address[] memory array,) =
+                IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
 
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == executor) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == executor) previous = array[i - 1];
+            if (array.length == 1) {
+                previous = address(0x1);
+            } else if (array[0] == executor) {
+                previous = address(0x1);
+            } else {
+                for (uint256 i = 1; i < array.length; i++) {
+                    if (array[i] == executor) previous = array[i - 1];
+                }
             }
+            initData = abi.encode(previous, initData);
         }
 
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
-            (MODULE_TYPE_EXECUTOR, executor, abi.encode(previous, initData))
+            IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
         );
     }
 
@@ -377,8 +359,9 @@ library ERC7579Helpers {
         pure
         returns (bytes memory callData)
     {
-        callData =
-            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
+        );
     }
 
     /**
@@ -410,8 +393,9 @@ library ERC7579Helpers {
         pure
         returns (bytes memory callData)
     {
+        fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
         );
     }
 
@@ -480,31 +464,25 @@ library ERC7579Helpers {
     function getNonce(
         address account,
         IEntryPoint entrypoint,
-        address validator
+        address validator,
+        address defaultValidator
     )
         internal
         view
         returns (uint256 nonce)
     {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        nonce = entrypoint.getNonce(address(account), key);
-    }
-
-    function signatureInNonce(
-        address account,
-        IEntryPoint entrypoint,
-        PackedUserOperation memory userOp,
-        address validator,
-        bytes memory signature
-    )
-        internal
-        view
-        returns (bytes32 userOpHash, PackedUserOperation memory)
-    {
-        userOp.nonce = getNonce(account, entrypoint, validator);
-        userOp.signature = signature;
-
-        userOpHash = entrypoint.getUserOpHash(userOp);
-        return (userOpHash, userOp);
+        AccountType env = getAccountType();
+        if (env == AccountType.KERNEL) {
+            ValidationType vType;
+            if (validator == defaultValidator) {
+                vType = VALIDATION_TYPE_ROOT;
+            } else {
+                vType = VALIDATION_TYPE_VALIDATOR;
+            }
+            nonce = KernelHelpers.encodeNonce(vType, false, account, defaultValidator);
+        } else {
+            uint192 key = uint192(bytes24(bytes20(address(validator))));
+            nonce = entrypoint.getNonce(address(account), key);
+        }
     }
 }
