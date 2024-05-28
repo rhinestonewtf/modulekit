@@ -19,7 +19,7 @@ abstract contract SafeFactory {
     Safe internal safeSingleton;
     SafeProxyFactory internal safeProxyFactory;
 
-    constructor() {
+    function initSafe() internal {
         // Set up MSA and Factory
         safe7579 = new Safe7579();
         launchpad = new Safe7579Launchpad(ENTRYPOINT_ADDR, IERC7484(address(REGISTRY_ADDR)));

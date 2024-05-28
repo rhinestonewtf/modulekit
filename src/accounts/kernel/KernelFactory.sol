@@ -12,7 +12,7 @@ abstract contract KernelFactory {
     KernelAccountFactory internal factory;
     Kernel internal kernalImpl;
 
-    constructor() {
+    function initKernel() internal {
         kernalImpl = new Kernel(IEntryPoint(ENTRYPOINT_ADDR));
         factory = new KernelAccountFactory(address(kernalImpl));
     }
