@@ -91,7 +91,7 @@ GAS=true forge test
 
 ### Deploying modules
 
-To deploy modules using the [Module Registry](), you can use the `RegistryDeployer` in a foundry script. You can then deploy your module using the following command:
+To deploy modules using the [Module Registry](https://github.com/rhinestonewtf/registry/), you can use the `RegistryDeployer` in a foundry script. You can then deploy your module using the following command:
 
 ```solidity
 address module = deployModule({
