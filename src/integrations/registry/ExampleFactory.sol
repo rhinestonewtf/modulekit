@@ -6,8 +6,8 @@ import { IMSA, ERC7579Bootstrap, IERC7579Module } from "src/external/ERC7579.sol
 import { FactoryBase } from "./FactoryBase.sol";
 
 contract ExampleFactory is FactoryBase {
-    address public immutable implementation;
-    address public immutable bootstrap;
+    address public immutable IMPLEMENTATION;
+    address public immutable BOOTSTRAP;
 
     constructor(
         address _msaImplementation,
@@ -18,8 +18,8 @@ contract ExampleFactory is FactoryBase {
     )
         FactoryBase(_registry, _trustedAttesters, _threshold)
     {
-        implementation = _msaImplementation;
-        bootstrap = _bootstrap;
+        IMPLEMENTATION = _msaImplementation;
+        BOOTSTRAP = _bootstrap;
     }
 
     function createAccount(
@@ -36,11 +36,11 @@ contract ExampleFactory is FactoryBase {
 
         bytes32 _salt = _getSalt(salt, validator, validatorInitData);
         (bool alreadyDeployed, address account) =
-            LibClone.createDeterministicERC1967(msg.value, implementation, _salt);
+            LibClone.createDeterministicERC1967(msg.value, IMPLEMENTATION, _salt);
 
         if (!alreadyDeployed) {
             bytes memory initData = abi.encode(
-                bootstrap,
+                BOOTSTRAP,
                 abi.encodeCall(
                     ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
                 )
@@ -61,7 +61,7 @@ contract ExampleFactory is FactoryBase {
         returns (address)
     {
         bytes32 _salt = _getSalt(salt, validator, validatorInitData);
-        return LibClone.predictDeterministicAddressERC1967(implementation, _salt, address(this));
+        return LibClone.predictDeterministicAddressERC1967(IMPLEMENTATION, _salt, address(this));
     }
 
     function getInitCode(
