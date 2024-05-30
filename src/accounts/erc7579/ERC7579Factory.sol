@@ -8,7 +8,7 @@ abstract contract ERC7579Factory {
     ERC7579Account internal implementation;
     ERC7579Bootstrap internal bootstrapDefault;
 
-    constructor() {
+    function initERC7579() internal {
         implementation = new ERC7579Account();
         bootstrapDefault = new ERC7579Bootstrap();
     }

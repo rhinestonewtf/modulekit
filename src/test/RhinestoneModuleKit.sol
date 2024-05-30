@@ -2,7 +2,11 @@
 pragma solidity ^0.8.23;
 
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
+import {
+    MultiAccountFactory,
+    AccountType,
+    MULTI_ACCOUNT_FACTORY_ADDRESS
+} from "src/accounts/MultiAccountFactory.sol";
 import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import {
@@ -44,7 +48,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             super.init();
             isInit = true;
 
-            accountFactory = new MultiAccountFactory();
+            address _accountFactory = address(new MultiAccountFactory());
+            etch(MULTI_ACCOUNT_FACTORY_ADDRESS, _accountFactory.code);
+            accountFactory = MultiAccountFactory(MULTI_ACCOUNT_FACTORY_ADDRESS);
+            accountFactory.init();
             label(address(accountFactory), "AccountFactory");
             _defaultValidator = new MockValidator();
             label(address(_defaultValidator), "DefaultValidator");
@@ -74,16 +81,11 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         // Create AccountInstance struct with counterFactualAddress and initCode
         // The initcode will be set to 0, once the account was created by EntryPoint.sol
-        instance = AccountInstance({
-            account: counterFactualAddress,
-            aux: auxiliary,
-            salt: salt,
-            defaultValidator: IERC7579Validator(address(_defaultValidator)),
-            initCode: initCode4337,
-            gasLog: false
-        });
+        instance = _makeAccountInstance(
+            salt, counterFactualAddress, initCode4337, address(_defaultValidator)
+        );
 
-        ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);
+        accountFactory.setAccountType(AccountType.CUSTOM);
     }
 
     /**
@@ -103,7 +105,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         );
         label(address(account), toString(salt));
         deal(account, 1 ether);
-        instance = makeAccountInstance(salt, account, initCode4337);
+        instance = _makeAccountInstance(salt, account, initCode4337, address(_defaultValidator));
     }
 
     function makeAccountInstance(
@@ -116,12 +118,24 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
+        instance = _makeAccountInstance(salt, account, initCode, defaultValidator);
+    }
+
+    function _makeAccountInstance(
+        bytes32 salt,
+        address account,
+        bytes memory initCode4337,
+        address validator
+    )
+        internal
+        returns (AccountInstance memory instance)
+    {
         instance = AccountInstance({
             account: account,
             aux: auxiliary,
             salt: salt,
-            defaultValidator: IERC7579Validator(address(defaultValidator)),
-            initCode: initCode,
+            defaultValidator: IERC7579Validator(validator),
+            initCode: initCode4337,
             gasLog: false
         });
 
