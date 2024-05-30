@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
+[0.4.3]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.3
 [0.4.2]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.2
 [0.4.1]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.1
 [0.4.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.0
@@ -17,6 +18,18 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 [0.3.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
+
+## [0.4.3] - 30-05-2024
+
+### Changed
+
+- Refactored multi-account handling
+- Clean up compiler warnings and linting issues
+
+### Added
+
+- Kernel v3 support
+- Factory base for accounts to use the Module Registry
 
 ## [0.4.2] - 24-05-2024
 
