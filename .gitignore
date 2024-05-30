@@ -15,3 +15,5 @@ docs/
 # Dotenv file
 .env
 node_modules
+
+gas_calculations/**.json
