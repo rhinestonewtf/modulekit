@@ -12,6 +12,7 @@ import "./Vm.sol";
 import "./Log.sol";
 import "./GasCalculations.sol";
 import { Simulator } from "erc4337-validation/Simulator.sol";
+import "forge-std/Test.sol";
 
 library ERC4337Helpers {
     using Simulator for PackedUserOperation;
@@ -33,7 +34,7 @@ library ERC4337Helpers {
         bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
         (bool success,) = address(onEntryPoint).call(userOpCalldata);
 
-        uint256 isExpectRevert = getExpectRevert();
+        uint256 isExpectRevert = getExpectRevertUint();
         if (isExpectRevert == 0) {
             require(success, "UserOperation execution failed");
         }
@@ -63,7 +64,7 @@ library ERC4337Helpers {
                 }
             }
         }
-        isExpectRevert = getExpectRevert();
+        isExpectRevert = getExpectRevertUint();
         if (isExpectRevert != 0) {
             if (success) {
                 revert("UserOperation did not revert");

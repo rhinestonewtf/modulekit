@@ -22,24 +22,17 @@ function writeExpectRevertBytes(bytes memory message) {
     }
 }
 
-function getExpectRevert() view returns (uint256 value) {
+function getExpectRevertUint() view returns (uint256 value) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
         value := sload(slot)
     }
 }
 
-function getExpectRevertBytes4() view returns (bytes4 message) {
+function getExpectRevertBytes() view returns (bytes memory data) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
-        message := sload(slot)
-    }
-}
-
-function getExpectRevertBytes() view returns (bytes memory message) {
-    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
-    assembly {
-        message := sload(slot)
+        data := sload(slot)
     }
 }
 
@@ -68,6 +61,20 @@ function getSimulateUserOp() view returns (bool value) {
     bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
     assembly {
         value := sload(slot)
+    }
+}
+
+function convertBytesToUint(bytes memory data) view returns (uint256 value) {
+    require(data.length == 32, "Invalid length for conversion to uint256");
+    assembly {
+        value := mload(add(data, 32))
+    }
+}
+
+function convertBytesToBytes4(bytes memory data) view returns (bytes4 selector) {
+    require(data.length == 4, "Invalid length for conversion to bytes4");
+    assembly {
+        selector := mload(add(data, 32))
     }
 }
 

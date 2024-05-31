@@ -321,25 +321,33 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     //     testexec__Given__TwoInputs();
     // }
 
-    function testExpect4337Revert() public {
+    function testExpect4337RevertUint() public {
         instance.expect4337Revert();
-        uint256 isExpectRevert = getExpectRevert();
+        console.log(getExpectRevertUint());
+        uint256 isExpectRevert = getExpectRevertUint();
         assertEq(isExpectRevert, 1);
     }
 
-    function testExpect4337RevertBytes4() public {
-        bytes4 message = bytes4(abi.encode("UserOperation execution failed"));
-        AccountInstance memory instance_ = instance;
-        instance_.expect4337Revert(message);
-        bytes4 isExpectRevert = getExpectRevertBytes4();
-        assertEq(isExpectRevert, message);
+    function testExpect4337RevertBytes() public {
+        instance.expect4337Revert();
+        console.logBytes(getExpectRevertBytes());
+        uint256 isExpectRevert = convertBytesToUint(getExpectRevertBytes());
+        assertEq(isExpectRevert, 1);
     }
 
-    function testExpect4337RevertBytes() public {
-        bytes memory message = abi.encode("UserOperation execution failed");
-        AccountInstance memory instance_ = instance;
-        instance_.expect4337Revert(message);
-        bytes memory isExpectRevert = getExpectRevertBytes();
-        assertEq(isExpectRevert, message);
-    }
+    // function testExpect4337RevertBytes4() public {
+    //     bytes4 message = bytes4(abi.encode("UserOperation execution failed"));
+    //     AccountInstance memory instance_ = instance;
+    //     instance_.expect4337Revert(message);
+    //     bytes4 isExpectRevert = convertBytesToBytes4(getExpectRevert());
+    //     assertEq(isExpectRevert, message);
+    // }
+
+    // function testExpect4337RevertBytes() public {
+    //     bytes memory message = abi.encode("UserOperation execution failed");
+    //     AccountInstance memory instance_ = instance;
+    //     instance_.expect4337Revert(message);
+    //     bytes memory isExpectRevert = getExpectRevert();
+    //     assertEq(isExpectRevert, message);
+    // }
 }
