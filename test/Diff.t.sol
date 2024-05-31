@@ -330,6 +330,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     function testExpect4337RevertBytes() public {
         instance.expect4337Revert();
+        console.log(getExpectRevertUint());
         console.logBytes(getExpectRevertBytes());
         uint256 isExpectRevert = convertBytesToUint(getExpectRevertBytes());
         assertEq(isExpectRevert, 1);
