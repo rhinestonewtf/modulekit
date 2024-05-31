@@ -50,7 +50,8 @@
   "files": [
     "src",
     "foundry.toml",
-    "remappings.txt"
+    "remappings.txt",
+    "remappings.user.txt"
   ],
   "homepage": "https://docs.rhinestone.wtf/modulekit",
   "repository": {
