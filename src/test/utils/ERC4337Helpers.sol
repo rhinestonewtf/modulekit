@@ -33,8 +33,8 @@ library ERC4337Helpers {
         bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
         (bool success,) = address(onEntryPoint).call(userOpCalldata);
 
-        uint256 isExpectRevert = getExpectRevertUint();
-        if (isExpectRevert == 0) {
+        bytes memory isExpectRevert = getExpectRevert();
+        if (keccak256(isExpectRevert) == keccak256(bytes("0"))) {
             require(success, "UserOperation execution failed");
         }
 
@@ -51,27 +51,27 @@ library ERC4337Helpers {
                     abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
                 totalUserOpGas = actualGasUsed;
                 if (!userOpSuccess) {
-                    if (isExpectRevert == 0) {
+                    if (keccak256(isExpectRevert) == keccak256(bytes("0"))) {
                         bytes32 userOpHash = logs[i].topics[1];
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
                         revert UserOperationReverted(
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
                     } else {
-                        writeExpectRevert(0);
+                        writeExpectRevert(bytes("0"));
                     }
                 }
             }
         }
-        isExpectRevert = getExpectRevertUint();
-        if (isExpectRevert != 0) {
+        isExpectRevert = getExpectRevert();
+        if (keccak256(isExpectRevert) != keccak256(bytes("0"))) {
             if (success) {
                 revert("UserOperation did not revert");
             } else {
                 require(!success, "UserOperation execution did not fail as expected");
             }
         }
-        writeExpectRevert(0);
+        writeExpectRevert(bytes("0"));
 
         // Calculate gas for userOp
         string memory gasIdentifier = getGasIdentifier();

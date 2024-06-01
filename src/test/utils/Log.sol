@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-function writeExpectRevert(uint256 value) {
+function writeExpectRevert(bytes memory message) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
-        sstore(slot, value)
+        sstore(slot, message)
     }
 }
 
@@ -15,21 +15,7 @@ function writeExpectRevertBytes4(bytes4 message) {
     }
 }
 
-function writeExpectRevertBytes(bytes memory message) {
-    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
-    assembly {
-        sstore(slot, message)
-    }
-}
-
-function getExpectRevertUint() view returns (uint256 value) {
-    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
-    assembly {
-        value := sload(slot)
-    }
-}
-
-function getExpectRevertBytes() view returns (bytes memory data) {
+function getExpectRevert() view returns (bytes memory data) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
         data := sload(slot)
@@ -64,17 +50,10 @@ function getSimulateUserOp() view returns (bool value) {
     }
 }
 
-function convertBytesToUint(bytes memory data) view returns (uint256 value) {
-    require(data.length == 32, "Invalid length for conversion to uint256");
-    assembly {
-        value := mload(add(data, 32))
-    }
-}
-
-function convertBytesToBytes4(bytes memory data) view returns (bytes4 selector) {
+function convertBytesToBytes4(bytes memory data) view returns (bytes4 result) {
     require(data.length == 4, "Invalid length for conversion to bytes4");
     assembly {
-        selector := mload(add(data, 32))
+        result := mload(add(data, 32))
     }
 }
 
