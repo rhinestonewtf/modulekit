@@ -8,13 +8,6 @@ function writeExpectRevert(bytes memory message) {
     }
 }
 
-function writeExpectRevertBytes4(bytes4 message) {
-    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
-    assembly {
-        sstore(slot, message)
-    }
-}
-
 function getExpectRevert() view returns (bytes memory data) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
@@ -47,13 +40,6 @@ function getSimulateUserOp() view returns (bool value) {
     bytes32 slot = keccak256("ModuleKit.SimulateUserOp");
     assembly {
         value := sload(slot)
-    }
-}
-
-function convertBytesToBytes4(bytes memory data) view returns (bytes4 result) {
-    require(data.length == 4, "Invalid length for conversion to bytes4");
-    assembly {
-        result := mload(add(data, 32))
     }
 }
 

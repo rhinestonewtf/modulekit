@@ -13,7 +13,7 @@ import {
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
-import { writeExpectRevert, writeExpectRevertBytes4, writeGasIdentifier } from "./utils/Log.sol";
+import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import { KernelHelpers } from "./utils/KernelHelpers.sol";
 import "./utils/Vm.sol";
 import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
@@ -164,7 +164,7 @@ library ModuleKitHelpers {
     }
 
     function expect4337Revert(AccountInstance memory) internal {
-        writeExpectRevert(bytes("1"));
+        writeExpectRevert(abi.encode("1"));
     }
 
     function expect4337Revert(AccountInstance memory, bytes memory message) internal {
@@ -172,7 +172,7 @@ library ModuleKitHelpers {
     }
 
     function expect4337Revert(AccountInstance memory, bytes4 message) internal {
-        writeExpectRevertBytes4(message);
+        writeExpectRevert(abi.encode(message));
     }
 
     /**
