@@ -47,6 +47,7 @@ jobs:
           pwd
           ls -la
           cat remappings.txt
+          ls node_modules
           forge build
 
       - name: Run pnpm test
