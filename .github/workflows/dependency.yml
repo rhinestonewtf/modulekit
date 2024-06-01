@@ -45,7 +45,7 @@ jobs:
           src = "src"
           out = "out"
           libs = ["node_modules"]' > foundry.toml
-          cp node_modules/@rhinestone/modulekit/remappings.user.txt remappings.txt
+          cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
           forge build
 
       - name: Run pnpm test
@@ -60,7 +60,7 @@ jobs:
           src = "src"
           out = "out"
           libs = ["node_modules"]' > foundry.toml
-          cp node_modules/@rhinestone/modulekit/remappings.user.txt remappings.txt
+          cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
           forge build
 
       - name: Clean up
