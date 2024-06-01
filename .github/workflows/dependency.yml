@@ -44,6 +44,9 @@ jobs:
           out = "out"
           libs = ["node_modules"]' > foundry.toml
           cp node_modules/@rhinestone/modulekit/remappings.user.txt remappings.txt
+          pwd
+          ls -la
+          cat remappings.txt
           forge build
 
       - name: Run pnpm test
