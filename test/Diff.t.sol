@@ -324,7 +324,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     function testExpect4337Revert__WhenNoErrorMsg() public {
         instance.expect4337Revert();
         bytes memory isExpectRevert = getExpectRevert();
-        assertEq(isExpectRevert, abi.encode("1"));
+        assertEq(isExpectRevert, abi.encode(1));
     }
 
     function testExpect4337Revert__WhenBytes4ErrorMsg() public {
