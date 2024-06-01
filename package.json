@@ -18,7 +18,6 @@
     "gas:snapshot": "forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "gas:snapshot:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge snapshot --mp \"./test/integration/**/*.sol\" --nmt \"test(Fork)?(Fuzz)?_RevertWhen_\\w{1,}?\"",
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
-    "prepack": "pnpm install",
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
@@ -48,6 +47,7 @@
     "solhint": "^5.0.1"
   },
   "files": [
+    "package-lock.json",
     "src",
     "foundry.toml",
     "remappings.txt",
