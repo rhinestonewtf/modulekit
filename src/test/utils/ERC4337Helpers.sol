@@ -33,9 +33,10 @@ library ERC4337Helpers {
         bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
         (bool success,) = address(onEntryPoint).call(userOpCalldata);
 
-        uint256 isExpectRevert = abi.decode(getExpectRevert(), (uint256));
-        if (isExpectRevert == 0) {
+        uint256 isExpectRevert = getExpectRevert();
+        if (isExpectRevert != 0) {
             require(success, "UserOperation execution failed");
+            // todo: check message
         }
 
         // Parse logs and determine if a revert happened
@@ -58,20 +59,18 @@ library ERC4337Helpers {
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
                     } else {
-                        writeExpectRevert(abi.encode(0));
+                        clearExpectRevert();
                     }
                 }
             }
         }
-        isExpectRevert = abi.decode(getExpectRevert(), (uint256));
+        isExpectRevert = getExpectRevert();
         if (isExpectRevert != 0) {
             if (success) {
                 revert("UserOperation did not revert");
-            } else {
-                require(!success, "UserOperation execution did not fail as expected");
             }
         }
-        writeExpectRevert(abi.encode(0));
+        clearExpectRevert();
 
         // Calculate gas for userOp
         string memory gasIdentifier = getGasIdentifier();

@@ -323,23 +323,32 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     function testExpect4337Revert__WhenNoErrorMsg() public {
         instance.expect4337Revert();
-        bytes memory isExpectRevert = getExpectRevert();
-        assertEq(isExpectRevert, abi.encode(1));
+
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 1);
     }
 
     function testExpect4337Revert__WhenBytes4ErrorMsg() public {
         bytes4 message = 0x12345678;
         AccountInstance memory instance_ = instance;
         instance_.expect4337Revert(message);
-        bytes4 isExpectRevert = abi.decode(getExpectRevert(), (bytes4));
-        assertEq(isExpectRevert, message);
+
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 2);
+
+        bytes4 expectRevertMessage = abi.decode(getExpectRevertMessage(), (bytes4));
+        assertEq(expectRevertMessage, message);
     }
 
     function testExpect4337Revert__WhenBytesErrorMsg() public {
         bytes memory message = abi.encode("UserOperation execution failed");
         AccountInstance memory instance_ = instance;
         instance_.expect4337Revert(message);
-        bytes memory isExpectRevert = getExpectRevert();
-        assertEq(isExpectRevert, message);
+
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 2);
+
+        bytes memory expectRevertMessage = getExpectRevertMessage();
+        assertEq(expectRevertMessage, message);
     }
 }
