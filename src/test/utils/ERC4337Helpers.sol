@@ -55,6 +55,7 @@ library ERC4337Helpers {
                     if (isExpectRevert == 0) {
                         bytes32 userOpHash = logs[i].topics[1];
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
+                        // todo: check message
                         revert UserOperationReverted(
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
