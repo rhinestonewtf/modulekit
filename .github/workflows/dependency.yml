@@ -29,14 +29,16 @@ jobs:
 
       - name: Pack the package
         id: npm-pack
-        run: echo "::set-output name=package::$(npm pack)"
+        run: |
+          PACKAGE_NAME=$(npm pack)
+          echo "package=$PACKAGE_NAME" >> $GITHUB_ENV
 
       - name: Run npm test
         run: |
           mkdir test-npm-install
           cd test-npm-install
           npm init -y
-          npm install "../${{ steps.npm-pack.outputs.package }}"
+          npm install "../${{ env.package }}"
           mkdir -p src
           echo 'import "modulekit/ModuleKit.sol";' > src/TestImport.sol
           echo '[profile.default]
@@ -51,7 +53,7 @@ jobs:
           mkdir test-pnpm-install
           cd test-pnpm-install
           pnpm init
-          pnpm install "../${{ steps.npm-pack.outputs.package }}" --shamefully-hoist
+          pnpm install "../${{ env.package }}" --shamefully-hoist
           mkdir -p src
           echo 'import "modulekit/ModuleKit.sol";' > src/TestImport.sol
           echo '[profile.default]
@@ -63,6 +65,6 @@ jobs:
 
       - name: Clean up
         run: |
-          rm "${{ steps.npm-pack.outputs.package }}"
+          rm "${{ env.package }}"
           rm -rf test-npm-install
           rm -rf test-pnpm-install
