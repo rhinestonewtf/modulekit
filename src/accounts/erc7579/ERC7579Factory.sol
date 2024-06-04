@@ -3,36 +3,38 @@ pragma solidity ^0.8.23;
 
 import "../../external/ERC7579.sol";
 import { LibClone } from "solady/utils/LibClone.sol";
+import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 
-abstract contract ERC7579Factory {
+contract ERC7579Factory {
     ERC7579Account internal implementation;
     ERC7579Bootstrap internal bootstrapDefault;
 
-    function initERC7579() internal {
+    function init() public override {
         implementation = new ERC7579Account();
         bootstrapDefault = new ERC7579Bootstrap();
     }
 
-    function createERC7579(bytes32 salt, bytes memory initCode) public returns (address account) {
+    function createAccount(bytes32 salt, bytes memory initCode) public override returns (address account) {
         bytes32 _salt = _getSalt(salt, initCode);
         account = LibClone.cloneDeterministic(0, address(implementation), initCode, _salt);
 
         IMSA(account).initializeAccount(initCode);
     }
 
-    function getAddressERC7579(bytes32 salt, bytes memory initCode) public view returns (address) {
+    function getAddress(bytes32 salt, bytes memory initCode) public view override returns (address) {
         bytes32 _salt = _getSalt(salt, initCode);
         return LibClone.predictDeterministicAddress(
             address(implementation), initCode, _salt, address(this)
         );
     }
 
-    function getInitDataERC7579(
+    function getInitData(
         address validator,
         bytes memory initData
     )
         public
         view
+        override
         returns (bytes memory init)
     {
         ERC7579BootstrapConfig[] memory _validators = new ERC7579BootstrapConfig[](1);

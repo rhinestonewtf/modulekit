@@ -11,15 +11,16 @@ import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
 import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
 import { makeAddr } from "src/test/utils/Vm.sol";
 import { Solarray } from "solarray/Solarray.sol";
+import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 
-abstract contract SafeFactory {
+contract SafeFactory is IAccountFactory {
     // singletons
     Safe7579 internal safe7579;
     Safe7579Launchpad internal launchpad;
     Safe internal safeSingleton;
     SafeProxyFactory internal safeProxyFactory;
 
-    function initSafe() internal {
+    function init() public override{
         // Set up MSA and Factory
         safe7579 = new Safe7579();
         launchpad = new Safe7579Launchpad(ENTRYPOINT_ADDR, IERC7484(address(REGISTRY_ADDR)));
@@ -27,7 +28,7 @@ abstract contract SafeFactory {
         safeProxyFactory = new SafeProxyFactory();
     }
 
-    function createSafe(bytes32 salt, bytes calldata initCode) internal returns (address safe) {
+    function createAccount(bytes32 salt, bytes calldata initCode) public override returns (address safe) {
         Safe7579Launchpad.InitData memory initData =
             abi.decode(initCode, (Safe7579Launchpad.InitData));
         bytes32 initHash = launchpad.hash(initData);
@@ -42,13 +43,13 @@ abstract contract SafeFactory {
         );
     }
 
-    function getAddressSafe(
+    function getAddress(
         bytes32 salt,
         bytes memory initCode
     )
         public
         view
-        virtual
+        override
         returns (address)
     {
         Safe7579Launchpad.InitData memory initData =
@@ -67,12 +68,13 @@ abstract contract SafeFactory {
         });
     }
 
-    function getInitDataSafe(
+    function getInitData(
         address validator,
         bytes memory initData
     )
         public
         view
+        override
         returns (bytes memory init)
     {
         ModuleInit[] memory validators = new ModuleInit[](1);

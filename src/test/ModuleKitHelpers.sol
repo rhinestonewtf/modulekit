@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
+import { AccountInstance, UserOpData, AccountType, getAccountType } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
 import {
     IERC7579Account,
@@ -16,7 +16,6 @@ import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import { KernelHelpers } from "./utils/KernelHelpers.sol";
 import "./utils/Vm.sol";
-import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
 import { HookType } from "safe7579/DataTypes.sol";
 
 library ModuleKitHelpers {

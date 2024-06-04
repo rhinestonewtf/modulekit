@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
+import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
+import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
+import { envOr } from "src/test/utils/Vm.sol";
+import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import {
-    MultiAccountFactory,
-    AccountType,
-    MULTI_ACCOUNT_FACTORY_ADDRESS
-} from "src/accounts/MultiAccountFactory.sol";
 import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import {
@@ -34,25 +34,55 @@ struct UserOpData {
     bytes32 userOpHash;
 }
 
+enum AccountType {
+    DEFAULT,
+    SAFE,
+    KERNEL,
+    CUSTOM
+}
+
 contract RhinestoneModuleKit is AuxiliaryFactory {
-    MultiAccountFactory public accountFactory;
     bool internal isInit;
     MockValidator public _defaultValidator;
+    IAccountFactory public accountFactory;
 
+    AccountType public env;
     /**
      * Initializes Auxiliary and /src/core
      * This function will run before any accounts can be created
      */
+
     modifier initializeModuleKit() {
         if (!isInit) {
             super.init();
             isInit = true;
 
-            address _accountFactory = address(new MultiAccountFactory());
-            etch(MULTI_ACCOUNT_FACTORY_ADDRESS, _accountFactory.code);
-            accountFactory = MultiAccountFactory(MULTI_ACCOUNT_FACTORY_ADDRESS);
+            string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
+
+            initSafe();
+            initERC7579();
+            initKernel();
+
+            if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
+                env = AccountType.DEFAULT;
+                accountFactory = IAccountFactory(new ERC7579Factory());
+            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE))) {
+                env = AccountType.SAFE;
+                accountFactory = IAccountFactory(new SafeFactory());
+            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
+                env = AccountType.KERNEL;
+                accountFactory = IAccountFactory(new KernelFactory());
+            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(CUSTOM))) {
+                env = AccountType.CUSTOM;
+                // TODO: What should happen in the custom case?
+                accountFactory = IAccountFactory(new ERC7579Factory());
+            } else {
+                revert InvalidAccountType();
+            }
+
             accountFactory.init();
             label(address(accountFactory), "AccountFactory");
+
             _defaultValidator = new MockValidator();
             label(address(_defaultValidator), "DefaultValidator");
 
@@ -140,5 +170,13 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         });
 
         ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);
+    }
+
+    function setAccountType(AccountType _env) public {
+        env = _env;
+    }
+
+    function getAccountType() public view returns (AccountType) {
+        return env;
     }
 }

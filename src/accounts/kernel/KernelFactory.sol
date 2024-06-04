@@ -7,38 +7,32 @@ import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
 import { ValidatorLib } from "kernel/utils/ValidationTypeLib.sol";
 import { ValidationId } from "kernel/types/Types.sol";
 import { IValidator, IHook } from "kernel/interfaces/IERC7579Modules.sol";
+import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 
-abstract contract KernelFactory {
+contract KernelFactory is IAccountFactory {
     KernelAccountFactory internal factory;
     Kernel internal kernalImpl;
 
-    function initKernel() internal {
+    function init() public override{
         kernalImpl = new Kernel(IEntryPoint(ENTRYPOINT_ADDR));
         factory = new KernelAccountFactory(address(kernalImpl));
     }
 
-    function createKernel(bytes memory data, bytes32 salt) public returns (address account) {
+    function createAccount(bytes32 salt, bytes memory data) public override returns (address account) {
         account = factory.createAccount(data, salt);
     }
 
-    function getAddressKernel(
-        bytes memory data,
-        bytes32 salt
-    )
-        public
-        view
-        virtual
-        returns (address)
-    {
+    function getAddress(bytes memory data, bytes32 salt) public view override returns (address) {
         return factory.getAddress(data, salt);
     }
 
-    function getInitDataKernel(
+    function getInitData(
         address validator,
         bytes memory initData
     )
         public
         view
+        override
         returns (bytes memory init)
     {
         ValidationId rootValidator = ValidatorLib.validatorToIdentifier(IValidator(validator));

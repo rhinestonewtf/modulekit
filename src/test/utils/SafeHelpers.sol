@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import { Safe7579Launchpad } from "safe7579/Safe7579Launchpad.sol";
-import { MultiAccountFactory } from "src/accounts/MultiAccountFactory.sol";
+import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
 
 interface ISafeFactory {
     function getInitDataSafe(
@@ -37,7 +37,7 @@ library SafeHelpers {
         //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
         initData.callData = erc4337CallData;
         initCode = abi.encodePacked(
-            factory, abi.encodeCall(MultiAccountFactory.createAccount, (salt, abi.encode(initData)))
+            factory, abi.encodeCall(SafeFactory.createAccount, (salt, abi.encode(initData)))
         );
         callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
     }

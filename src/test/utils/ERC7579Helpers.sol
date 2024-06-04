@@ -10,12 +10,11 @@ import {
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
-import { AccountInstance } from "../RhinestoneModuleKit.sol";
+import { AccountInstance, AccountType, getAccountType } from "../RhinestoneModuleKit.sol";
 import "./Vm.sol";
 import { ValidationType } from "kernel/types/Types.sol";
 import { VALIDATION_TYPE_ROOT, VALIDATION_TYPE_VALIDATOR } from "kernel/types/Constants.sol";
 import { KernelHelpers } from "./KernelHelpers.sol";
-import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
 import { HookType } from "safe7579/DataTypes.sol";
 import { SafeHelpers } from "./SafeHelpers.sol";
 
