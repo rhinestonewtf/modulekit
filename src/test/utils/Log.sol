@@ -3,16 +3,16 @@ pragma solidity ^0.8.23;
 
 function writeExpectRevert(bytes memory message) {
     uint256 value = 1;
+    bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
 
     if (message.length > 0) {
         value = 2;
-        bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
         assembly {
             sstore(slot, message)
         }
     }
 
-    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
         sstore(slot, value)
     }

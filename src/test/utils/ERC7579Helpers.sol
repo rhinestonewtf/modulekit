@@ -352,7 +352,7 @@ library ERC7579Helpers {
      */
     function uninstallHook(
         address, /* account */
-        address hook,
+        address, /* hook */
         bytes memory initData
     )
         internal

@@ -16,6 +16,6 @@ abstract contract FactoryBase {
     }
 
     function _checkRegistry(address module, uint256 moduleType) internal {
-        REGISTRY.check(module, moduleType, trustedAttesters, threshold);
+        REGISTRY.checkN(module, moduleType, trustedAttesters, threshold);
     }
 }
