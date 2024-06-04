@@ -33,10 +33,10 @@ contract KernelFactory is IAccountFactory {
         public
         view
         override
-        returns (bytes memory init)
+        returns (bytes memory _init)
     {
         ValidationId rootValidator = ValidatorLib.validatorToIdentifier(IValidator(validator));
 
-        init = abi.encodeCall(Kernel.initialize, (rootValidator, IHook(address(0)), initData, ""));
+        _init = abi.encodeCall(Kernel.initialize, (rootValidator, IHook(address(0)), initData, ""));
     }
 }

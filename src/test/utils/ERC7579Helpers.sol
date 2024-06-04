@@ -10,7 +10,7 @@ import {
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
-import { AccountInstance, AccountType, getAccountType } from "../RhinestoneModuleKit.sol";
+import { AccountInstance, AccountType } from "../RhinestoneModuleKit.sol";
 import "./Vm.sol";
 import { ValidationType } from "kernel/types/Types.sol";
 import { VALIDATION_TYPE_ROOT, VALIDATION_TYPE_VALIDATOR } from "kernel/types/Constants.sol";
@@ -92,7 +92,7 @@ library ERC7579Helpers {
 
         bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
 
-        if (getAccountType() == AccountType.SAFE) {
+        if (instance.accountType == AccountType.SAFE) {
             if (initCode.length != 0) {
                 (initCode, callData) =
                     SafeHelpers.getInitCallData(instance.salt, txValidator, initCode, callData);
@@ -134,7 +134,7 @@ library ERC7579Helpers {
             initCode = instance.initCode;
         }
 
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.SAFE) {
             if (initCode.length != 0) {
                 (initCode, callData) =
@@ -234,6 +234,7 @@ library ERC7579Helpers {
     /**
      * get callData to uninstall validator on ERC7579 Account
      */
+     // TODO: What is the reason we don't pass instance here? 
     function uninstallValidator(
         address account,
         address validator,
@@ -243,7 +244,7 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
             // get previous validator in sentinel list
             address previous;
@@ -297,7 +298,7 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
             // get previous executor in sentinel list
             address previous;
@@ -334,7 +335,7 @@ library ERC7579Helpers {
         view
         returns (bytes memory callData)
     {
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.SAFE) {
             callData = abi.encodeCall(
                 IERC7579Account.installModule,
@@ -470,7 +471,7 @@ library ERC7579Helpers {
         view
         returns (uint256 nonce)
     {
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.KERNEL) {
             ValidationType vType;
             if (validator == defaultValidator) {

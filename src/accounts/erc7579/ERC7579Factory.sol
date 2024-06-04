@@ -35,7 +35,7 @@ contract ERC7579Factory {
         public
         view
         override
-        returns (bytes memory init)
+        returns (bytes memory _init)
     {
         ERC7579BootstrapConfig[] memory _validators = new ERC7579BootstrapConfig[](1);
         _validators[0].module = validator;
@@ -45,7 +45,7 @@ contract ERC7579Factory {
         ERC7579BootstrapConfig memory _hook;
 
         ERC7579BootstrapConfig[] memory _fallBacks = new ERC7579BootstrapConfig[](0);
-        init = abi.encode(
+        _init = abi.encode(
             address(bootstrapDefault),
             abi.encodeCall(ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallBacks))
         );

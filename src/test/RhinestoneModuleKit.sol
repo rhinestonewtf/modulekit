@@ -20,8 +20,17 @@ import { MockValidator } from "../Mocks.sol";
 import "./utils/Vm.sol";
 import "./utils/ModuleKitCache.sol";
 
+enum AccountType {
+    DEFAULT,
+    SAFE,
+    KERNEL,
+    CUSTOM
+}
+
 struct AccountInstance {
+    AccountType accountType;
     address account;
+    address accountHelper;
     Auxiliary aux;
     IERC7579Validator defaultValidator;
     bytes32 salt;
@@ -34,12 +43,11 @@ struct UserOpData {
     bytes32 userOpHash;
 }
 
-enum AccountType {
-    DEFAULT,
-    SAFE,
-    KERNEL,
-    CUSTOM
-}
+string constant DEFAULT = "DEFAULT";
+string constant SAFE = "SAFE";
+string constant KERNEL = "KERNEL";
+string constant CUSTOM = "CUSTOM";
+
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
     bool internal isInit;
@@ -47,6 +55,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     IAccountFactory public accountFactory;
 
     AccountType public env;
+
+    error InvalidAccountType();
+    
     /**
      * Initializes Auxiliary and /src/core
      * This function will run before any accounts can be created
@@ -58,10 +69,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             isInit = true;
 
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
-
-            initSafe();
-            initERC7579();
-            initKernel();
 
             if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
                 env = AccountType.DEFAULT;
@@ -93,6 +100,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         }
         _;
     }
+    // TODO: create makeAccountInstance function which only requires account address.
 
     /**
      * create new AccountInstance with initCode
@@ -112,7 +120,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         // Create AccountInstance struct with counterFactualAddress and initCode
         // The initcode will be set to 0, once the account was created by EntryPoint.sol
         instance = _makeAccountInstance(
-            salt, counterFactualAddress, initCode4337, address(_defaultValidator)
+            salt, env, counterFactualAddress, initCode4337, address(_defaultValidator)
         );
 
         accountFactory.setAccountType(AccountType.CUSTOM);
@@ -135,7 +143,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         );
         label(address(account), toString(salt));
         deal(account, 1 ether);
-        instance = _makeAccountInstance(salt, account, initCode4337, address(_defaultValidator));
+        instance = _makeAccountInstance(salt,env,  account, initCode4337, address(_defaultValidator));
     }
 
     function makeAccountInstance(
@@ -148,11 +156,12 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        instance = _makeAccountInstance(salt, account, initCode, defaultValidator);
+        instance = _makeAccountInstance(salt, env, account, initCode, defaultValidator);
     }
 
     function _makeAccountInstance(
         bytes32 salt,
+        AccountType accountType,
         address account,
         bytes memory initCode4337,
         address validator
@@ -161,6 +170,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         returns (AccountInstance memory instance)
     {
         instance = AccountInstance({
+            accountType: accountType,
             account: account,
             aux: auxiliary,
             salt: salt,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { AccountInstance, UserOpData, AccountType, getAccountType } from "./RhinestoneModuleKit.sol";
+import { AccountInstance, UserOpData, AccountType } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
 import {
     IERC7579Account,
@@ -44,7 +44,7 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
-        data = getInstallModuleData(moduleTypeId, module, data);
+        data = getInstallModuleData(instance, moduleTypeId, module, data);
         userOpData = instance.getInstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -83,7 +83,8 @@ library ModuleKitHelpers {
         returns (bool)
     {
         bytes memory data;
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
+        // Each library should have isModuleInstalledData function
         if (env == AccountType.SAFE) {
             if (moduleTypeId == MODULE_TYPE_HOOK) {
                 data = abi.encode(HookType.GLOBAL, bytes4(0x0), "");
@@ -106,7 +107,7 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.SAFE) {
             if (moduleTypeId == MODULE_TYPE_HOOK) {
                 data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
@@ -179,6 +180,7 @@ library ModuleKitHelpers {
     }
 
     function getInstallModuleData(
+                AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -187,7 +189,7 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        AccountType env = getAccountType();
+          AccountType env = instance.accountType;
         if (env == AccountType.KERNEL) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
                 data = KernelHelpers.getDefaultInstallExecutorData(module, data);
@@ -212,7 +214,7 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        AccountType env = getAccountType();
+        AccountType env = instance.accountType;
         if (env == AccountType.KERNEL) {
             if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
                 data = KernelHelpers.getDefaultUninstallExecutorData(module, data);

@@ -75,7 +75,7 @@ contract SafeFactory is IAccountFactory {
         public
         view
         override
-        returns (bytes memory init)
+        returns (bytes memory _init)
     {
         ModuleInit[] memory validators = new ModuleInit[](1);
         validators[0] = ModuleInit({ module: address(validator), initData: initData });
@@ -103,6 +103,6 @@ contract SafeFactory is IAccountFactory {
             validators: validators,
             callData: ""
         });
-        init = abi.encode(initDataSafe);
+        _init = abi.encode(initDataSafe);
     }
 }
