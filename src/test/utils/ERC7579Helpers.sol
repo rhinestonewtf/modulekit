@@ -393,8 +393,9 @@ library ERC7579Helpers {
         returns (bytes memory callData)
     {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
-        callData =
-            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, hook, initData));
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+        );
     }
 
     /**
