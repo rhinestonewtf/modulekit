@@ -2,14 +2,43 @@
 pragma solidity ^0.8.23;
 
 function writeExpectRevert(bytes memory message) {
+    uint256 value = 1;
+
+    if (message.length > 0) {
+        value = 2;
+        bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
+        assembly {
+            sstore(slot, message)
+        }
+    }
+
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
-        sstore(slot, message)
+        sstore(slot, value)
     }
 }
 
-function getExpectRevert() view returns (bytes memory data) {
+function clearExpectRevert() {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    assembly {
+        sstore(slot, 0)
+    }
+
+    slot = keccak256("ModuleKit.ExpectMessageSlot");
+    assembly {
+        sstore(slot, 0)
+    }
+}
+
+function getExpectRevert() view returns (uint256 value) {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    assembly {
+        value := sload(slot)
+    }
+}
+
+function getExpectRevertMessage() view returns (bytes memory data) {
+    bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
     assembly {
         data := sload(slot)
     }
