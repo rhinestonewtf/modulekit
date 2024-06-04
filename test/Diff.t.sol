@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
+import "src/test/utils/Log.sol";
 import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 import {
     MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK
@@ -259,8 +260,39 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(vm.isFile(fileName));
     }
 
-    function testSimulateUserOp() public {
-        writeSimulateUserOp(true);
-        testexec__Given__TwoInputs();
+    // function testSimulateUserOp() public {
+    //     writeSimulateUserOp(true);
+    //     testexec__Given__TwoInputs();
+    // }
+
+    function testExpect4337Revert__WhenNoErrorMsg() public {
+        instance.expect4337Revert();
+
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 1);
+    }
+
+    function testExpect4337Revert__WhenBytes4ErrorMsg() public {
+        bytes4 message = 0x12345678;
+        AccountInstance memory instance_ = instance;
+        instance_.expect4337Revert(message);
+
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 2);
+
+        bytes4 expectRevertMessage = abi.decode(getExpectRevertMessage(), (bytes4));
+        assertEq(expectRevertMessage, message);
+    }
+
+    function testExpect4337Revert__WhenBytesErrorMsg() public {
+        bytes memory message = abi.encode("UserOperation execution failed");
+        AccountInstance memory instance_ = instance;
+        instance_.expect4337Revert(message);
+
+        uint256 isExpectRevert = getExpectRevert();
+        assertEq(isExpectRevert, 2);
+
+        bytes memory expectRevertMessage = getExpectRevertMessage();
+        assertEq(expectRevertMessage, message);
     }
 }

@@ -34,8 +34,9 @@ library ERC4337Helpers {
         (bool success,) = address(onEntryPoint).call(userOpCalldata);
 
         uint256 isExpectRevert = getExpectRevert();
-        if (isExpectRevert == 0) {
+        if (isExpectRevert != 0) {
             require(success, "UserOperation execution failed");
+            // todo: check message
         }
 
         // Parse logs and determine if a revert happened
@@ -54,11 +55,12 @@ library ERC4337Helpers {
                     if (isExpectRevert == 0) {
                         bytes32 userOpHash = logs[i].topics[1];
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
+                        // todo: check message
                         revert UserOperationReverted(
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
                     } else {
-                        writeExpectRevert(0);
+                        clearExpectRevert();
                     }
                 }
             }
@@ -67,11 +69,9 @@ library ERC4337Helpers {
         if (isExpectRevert != 0) {
             if (success) {
                 revert("UserOperation did not revert");
-            } else {
-                require(!success, "UserOperation execution did not fail as expected");
             }
         }
-        writeExpectRevert(0);
+        clearExpectRevert();
 
         // Calculate gas for userOp
         string memory gasIdentifier = getGasIdentifier();

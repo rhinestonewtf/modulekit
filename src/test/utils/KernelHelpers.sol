@@ -44,7 +44,7 @@ library KernelHelpers {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
      */
     function getDefaultInstallValidatorData(
-        address module,
+        address, /* module */
         bytes memory initData
     )
         internal
@@ -59,7 +59,7 @@ library KernelHelpers {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L324-L334
      */
     function getDefaultInstallExecutorData(
-        address module,
+        address, /* module */
         bytes memory initData
     )
         internal
@@ -74,7 +74,7 @@ library KernelHelpers {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L336-L345
      */
     function getDefaultInstallFallbackData(
-        address module,
+        address, /* module */
         bytes memory initData
     )
         internal
@@ -93,7 +93,7 @@ library KernelHelpers {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
      */
     function getDefaultInstallHookData(
-        address module,
+        address, /* module */
         bytes memory initData
     )
         internal
@@ -134,7 +134,7 @@ library KernelHelpers {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
      */
     function getDefaultUninstallFallbackData(
-        address module,
+        address, /* module */
         bytes memory deinitData
     )
         internal

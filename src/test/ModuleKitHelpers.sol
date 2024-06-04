@@ -164,7 +164,15 @@ library ModuleKitHelpers {
     }
 
     function expect4337Revert(AccountInstance memory) internal {
-        writeExpectRevert(1);
+        writeExpectRevert("");
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes memory message) internal {
+        writeExpectRevert(message);
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes4 message) internal {
+        writeExpectRevert(abi.encode(message));
     }
 
     /**

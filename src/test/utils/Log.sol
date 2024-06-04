@@ -1,10 +1,32 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-function writeExpectRevert(uint256 value) {
-    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+function writeExpectRevert(bytes memory message) {
+    uint256 value = 1;
+    bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
+
+    if (message.length > 0) {
+        value = 2;
+        assembly {
+            sstore(slot, message)
+        }
+    }
+
+    slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
         sstore(slot, value)
+    }
+}
+
+function clearExpectRevert() {
+    bytes32 slot = keccak256("ModuleKit.ExpectSlot");
+    assembly {
+        sstore(slot, 0)
+    }
+
+    slot = keccak256("ModuleKit.ExpectMessageSlot");
+    assembly {
+        sstore(slot, 0)
     }
 }
 
@@ -12,6 +34,13 @@ function getExpectRevert() view returns (uint256 value) {
     bytes32 slot = keccak256("ModuleKit.ExpectSlot");
     assembly {
         value := sload(slot)
+    }
+}
+
+function getExpectRevertMessage() view returns (bytes memory data) {
+    bytes32 slot = keccak256("ModuleKit.ExpectMessageSlot");
+    assembly {
+        data := sload(slot)
     }
 }
 

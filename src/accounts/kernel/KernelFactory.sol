@@ -38,7 +38,7 @@ abstract contract KernelFactory {
         bytes memory initData
     )
         public
-        view
+        pure
         returns (bytes memory init)
     {
         ValidationId rootValidator = ValidatorLib.validatorToIdentifier(IValidator(validator));

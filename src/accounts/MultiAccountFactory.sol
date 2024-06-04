@@ -75,14 +75,14 @@ contract MultiAccountFactory is SafeFactory, ERC7579Factory, KernelFactory {
     )
         external
         view
-        returns (bytes memory init)
+        returns (bytes memory data)
     {
         if (env == AccountType.SAFE) {
-            init = getInitDataSafe(validator, initData);
+            data = getInitDataSafe(validator, initData);
         } else if (env == AccountType.KERNEL) {
-            init = getInitDataKernel(validator, initData);
+            data = getInitDataKernel(validator, initData);
         } else {
-            init = getInitDataERC7579(validator, initData);
+            data = getInitDataERC7579(validator, initData);
         }
     }
 
