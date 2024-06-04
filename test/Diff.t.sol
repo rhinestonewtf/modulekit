@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "src/ModuleKit.sol";
-import "./MakeAccount.t.sol";
+import "./BaseTest.t.sol";
 import "src/Mocks.sol";
 import "src/test/utils/Log.sol";
 import { writeSimulateUserOp } from "src/test/utils/Log.sol";
@@ -129,8 +129,6 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             module: newValidator,
             data: ""
         });
-        // instance.log4337Gas("testAddValidator()");
-        // instance.enableGasLog();
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: newValidator1,
@@ -162,50 +160,6 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertFalse(validatorEnabled);
     }
 
-    function testAddSessionKey() public {
-        // NOT IMPLEMENTED
-        // uint256 validUntil = block.timestamp + 1 days;
-        // uint256 validAfter = block.timestamp;
-        // address sessionValidationModule = address(validator);
-        // bytes memory sessionKeyData = "";
-        //
-        // instance.addSessionKey({
-        //     validUntil: validUntil,
-        //     validAfter: validAfter,
-        //     sessionValidationModule: sessionValidationModule,
-        //     sessionKeyData: sessionKeyData
-        // });
-        //
-        // // Validate proof
-        // Merkle m = new Merkle();
-        //
-        // bytes32 leaf = instance.aux.sessionKeyManager._sessionMerkelLeaf({
-        //     validUntil: validUntil,
-        //     validAfter: validAfter,
-        //     sessionValidationModule: sessionValidationModule,
-        //     sessionKeyData: sessionKeyData
-        // });
-        //
-        // bytes32[] memory leaves = new bytes32[](2);
-        // leaves[0] = leaf;
-        // leaves[1] = leaf;
-        //
-        // bytes32 root =
-        // instance.aux.sessionKeyManager.getSessionKeys(instance.account).merkleRoot;
-        // bytes32[] memory proof = m.getProof(leaves, 1);
-        //
-        // bool isValidProof = m.verifyProof(root, proof, leaf);
-        //
-        // assertTrue(isValidProof);
-    }
-
-    function testAddHook() public {
-        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
-
-        bool hookEnabled = instance.isModuleInstalled(MODULE_TYPE_HOOK, address(hook));
-        assertTrue(hookEnabled);
-    }
-
     function testAddExecutor() public {
         address newExecutor = address(new MockExecutor());
 
@@ -230,25 +184,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertFalse(executorEnabled);
     }
 
-    // function testSetCondition() public {
-    //     address newExecutor = address(new MockExecutor());
-    //     instance.addExecutor(newExecutor);
-    //
-    //     address mockCondition = address(new MockCondition());
-    //     ConditionConfig[] memory conditions = new ConditionConfig[](1);
-    //     conditions[0] = ConditionConfig({ condition: ICondition(mockCondition),
-    // conditionData: ""
-    // });
-    //
-    //     bytes32 digest =
-    // instance.aux.compConditionManager._conditionDigest(conditions);
-    //
-    //     instance.setCondition(newExecutor, conditions);
-    //
-    //     bytes32 digestOnManager =
-    //         instance.aux.compConditionManager.getHash(instance.account, newExecutor);
-    //     assertEq(digest, digestOnManager);
-    // }
+    function testAddHook() public {
+        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
+
+        bool hookEnabled = instance.isModuleInstalled(MODULE_TYPE_HOOK, address(hook));
+        assertTrue(hookEnabled);
+    }
+
+    // Todo: remove hook, add and remove fallback
 
     // function testAddFallback() public {
     //     TokenReceiver handler = new TokenReceiver();
@@ -273,21 +216,22 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     //////////////////////////////////////////////////////////////////////////*/
 
     function testGetUserOpHash() public {
-        // // Create userOperation fields
-        // address receiver = makeAddr("receiver");
-        // uint256 value = 10 gwei;
-        // bytes memory callData = abi.encode(true);
-        //
-        // // Create userOperation hash using lib
-        // bytes32 userOpHash =
-        //     instance.getUserOpHash({ target: receiver, value: value, callData: callData });
-        //
-        // UserOperation memory userOp =
-        //     instance.getFormattedUserOp({ target: receiver, value: value, callData: callData });
-        // bytes32 entryPointUserOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-        //
-        // // Validate userOperation
-        // assertEq(userOpHash, entryPointUserOpHash);
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = abi.encode(true);
+
+        // Create userOperation hash using lib
+        UserOpData memory userOpData = instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: address(instance.defaultValidator)
+        });
+        bytes32 entryPointUserOpHash = instance.aux.entrypoint.getUserOpHash(userOpData.userOp);
+
+        // Validate userOperation
+        assertEq(userOpData.userOpHash, entryPointUserOpHash);
     }
 
     function testDeployAccount() public {
