@@ -172,7 +172,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         returns (AccountInstance memory instance)
     {
         label(address(counterFactualAddress), toString(salt));
-        deal(counterFactualAddress, 1 ether);
+        deal(counterFactualAddress, 10 ether);
         instance = _makeAccountInstance(
             salt,
             env,
@@ -199,7 +199,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             address(accountFactory), abi.encodeCall(accountFactory.createAccount, (salt, initData))
         );
         label(address(account), toString(salt));
-        deal(account, 1 ether);
+        deal(account, 10 ether);
         instance = _makeAccountInstance(
             salt, env, address(accountHelper), account, initCode4337, address(_defaultValidator)
         );

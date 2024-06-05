@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
+import { Execution } from "../../external/ERC7579.sol";
 
 interface IAccountHelpers {
     function isModuleInstalled(
@@ -62,4 +63,15 @@ interface IAccountHelpers {
     )
         external
         returns (PackedUserOperation memory userOp, bytes32 userOpHash);
+
+    function encode(
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        external
+        pure
+        returns (bytes memory erc7579Tx);
+
+    function encode(Execution[] memory executions) external pure returns (bytes memory erc7579Tx);
 }

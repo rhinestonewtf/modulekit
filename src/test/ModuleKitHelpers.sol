@@ -17,7 +17,6 @@ library ModuleKitHelpers {
 
     function execUserOps(UserOpData memory userOpData) internal {
         // send userOp to entrypoint
-
         IEntryPoint entrypoint = ModuleKitCache.getEntrypoint(userOpData.userOp.sender);
         ERC4337Helpers.exec4337(userOpData.userOp, entrypoint);
     }

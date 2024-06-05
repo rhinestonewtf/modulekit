@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IAccountHelpers } from "./helpers/IAccountHelpers.sol";
-import { Execution, ERC7579ExecutionLib } from "../external/ERC7579.sol";
+import { Execution } from "../external/ERC7579.sol";
 import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 
 library ModuleKitUserOp {
@@ -61,7 +61,8 @@ library ModuleKitUserOp {
         internal
         returns (UserOpData memory userOpData)
     {
-        bytes memory erc7579ExecCall = ERC7579ExecutionLib.encodeSingle(target, value, callData);
+        bytes memory erc7579ExecCall =
+            IAccountHelpers(instance.accountHelper).encode(target, value, callData);
         (userOpData.userOp, userOpData.userOpHash) = IAccountHelpers(instance.accountHelper)
             .execUserOp({ instance: instance, callData: erc7579ExecCall, txValidator: txValidator });
     }
@@ -74,7 +75,7 @@ library ModuleKitUserOp {
         internal
         returns (UserOpData memory userOpData)
     {
-        bytes memory erc7579ExecCall = ERC7579ExecutionLib.encodeBatch(executions);
+        bytes memory erc7579ExecCall = IAccountHelpers(instance.accountHelper).encode(executions);
         (userOpData.userOp, userOpData.userOpHash) = IAccountHelpers(instance.accountHelper)
             .execUserOp({ instance: instance, callData: erc7579ExecCall, txValidator: txValidator });
     }
