@@ -135,6 +135,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     /**
      * create new AccountInstance with initCode
      * @param salt account salt / name
+     * @param helper address of the account helper, follows the IAccountHelpers interface
      * @param counterFactualAddress of the account
      * @param initCode4337 to be added to userOp:initCode
      */
