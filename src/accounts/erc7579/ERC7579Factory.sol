@@ -5,7 +5,7 @@ import "../../external/ERC7579.sol";
 import { LibClone } from "solady/utils/LibClone.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 
-contract ERC7579Factory is IAccountFactory{
+contract ERC7579Factory is IAccountFactory {
     ERC7579Account internal implementation;
     ERC7579Bootstrap internal bootstrapDefault;
 

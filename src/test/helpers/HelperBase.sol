@@ -8,24 +8,7 @@ import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
 import { IAccountHelpers } from "./IAccountHelpers.sol";
-
-interface IAccountModulesPaginated {
-    function getValidatorPaginated(
-        address,
-        uint256
-    )
-        external
-        view
-        returns (address[] memory, address);
-
-    function getExecutorsPaginated(
-        address,
-        uint256
-    )
-        external
-        view
-        returns (address[] memory, address);
-}
+import { IAccountModulesPaginated } from "./IAccountModulesPaginated.sol";
 
 contract HelperBase is IAccountHelpers {
     function configModuleUserOp(
@@ -453,7 +436,7 @@ contract HelperBase is IAccountHelpers {
     }
 
     function getInstallModuleData(
-        AccountInstance memory ,
+        AccountInstance memory,
         uint256,
         address,
         bytes memory data

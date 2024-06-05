@@ -262,11 +262,10 @@ contract KernelHelpers is HelperBase {
         override
         returns (bool)
     {
-        bytes memory data;
-
         if (moduleTypeId == MODULE_TYPE_HOOK) {
             return true;
         }
+        bytes memory data;
 
         return isModuleInstalled(instance, moduleTypeId, module, data);
     }

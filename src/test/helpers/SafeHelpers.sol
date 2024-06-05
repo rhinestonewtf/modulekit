@@ -100,6 +100,7 @@ contract SafeHelpers is HelperBase {
                 initData: initData
             });
         }
+
         if (initCode.length != 0) {
             (initCode, callData) = getInitCallData(instance.salt, txValidator, initCode, callData);
         }
@@ -134,8 +135,7 @@ contract SafeHelpers is HelperBase {
             factory := mload(add(originalInitCode, 20))
         }
         Safe7579Launchpad.InitData memory initData = abi.decode(
-            IAccountFactory(factory).getInitData(txValidator, ""),
-            (Safe7579Launchpad.InitData)
+            IAccountFactory(factory).getInitData(txValidator, ""), (Safe7579Launchpad.InitData)
         );
         // Safe7579Launchpad.InitData memory initData =
         //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
