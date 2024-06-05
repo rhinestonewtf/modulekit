@@ -348,8 +348,16 @@ library ERC7579Helpers {
         pure
         returns (bytes memory callData)
     {
-        callData =
-            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
+        AccountType env = getAccountType();
+        if (env == AccountType.SAFE) {
+            callData = abi.encodeCall(
+                IERC7579Account.uninstallModule,
+                (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
+            );
+        } else {
+            callData =
+                abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
+        }
     }
 
     /**
