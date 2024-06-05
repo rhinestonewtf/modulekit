@@ -162,6 +162,32 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
      *
      * @param salt account salt / name
      */
+    function makeAccountInstance(
+        bytes32 salt,
+        address counterFactualAddress,
+        bytes memory initCode4337
+    )
+        internal
+        initializeModuleKit
+        returns (AccountInstance memory instance)
+    {
+        label(address(counterFactualAddress), toString(salt));
+        deal(counterFactualAddress, 1 ether);
+        instance = _makeAccountInstance(
+            salt,
+            env,
+            address(accountHelper),
+            counterFactualAddress,
+            initCode4337,
+            address(_defaultValidator)
+        );
+    }
+
+    /**
+     * create new AccountInstance with modulekit defaults
+     *
+     * @param salt account salt / name
+     */
     function makeAccountInstance(bytes32 salt)
         internal
         initializeModuleKit
