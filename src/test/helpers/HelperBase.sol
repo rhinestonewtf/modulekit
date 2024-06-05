@@ -7,7 +7,7 @@ import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
-import { HelperBase } from "./HelperBase.sol";
+import { IAccountHelpers } from "./IAccountHelpers.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -27,7 +27,7 @@ interface IAccountModulesPaginated {
         returns (address[] memory, address);
 }
 
-contract ERC7579Helpers is HelperBase {
+contract HelperBase is IAccountHelpers {
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -38,7 +38,6 @@ contract ERC7579Helpers is HelperBase {
     )
         public
         virtual
-        override
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
@@ -84,9 +83,7 @@ contract ERC7579Helpers is HelperBase {
         address txValidator
     )
         public
-        view
         virtual
-        override
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
@@ -122,7 +119,6 @@ contract ERC7579Helpers is HelperBase {
         public
         view
         virtual
-        override
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -150,7 +146,6 @@ contract ERC7579Helpers is HelperBase {
         public
         view
         virtual
-        override
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -177,7 +172,6 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -197,7 +191,6 @@ contract ERC7579Helpers is HelperBase {
         public
         view
         virtual
-        override
         returns (bytes memory callData)
     {
         // get previous validator in sentinel list
@@ -233,7 +226,6 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -253,7 +245,6 @@ contract ERC7579Helpers is HelperBase {
         public
         view
         virtual
-        override
         returns (bytes memory callData)
     {
         // get previous executor in sentinel list
@@ -289,7 +280,6 @@ contract ERC7579Helpers is HelperBase {
         public
         view
         virtual
-        override
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
@@ -306,11 +296,11 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory callData)
     {
-        callData =
-            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
+        );
     }
 
     /**
@@ -324,7 +314,6 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -343,12 +332,11 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory callData)
     {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
         );
     }
 
@@ -366,7 +354,6 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory erc7579Tx)
     {
         ModeCode mode = ModeLib.encode({
@@ -387,7 +374,6 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (bytes memory erc7579Tx)
     {
         ModeCode mode = ModeLib.encode({
@@ -410,7 +396,6 @@ contract ERC7579Helpers is HelperBase {
         public
         pure
         virtual
-        override
         returns (Execution[] memory executions)
     {
         executions = new Execution[](targets.length);
@@ -432,7 +417,6 @@ contract ERC7579Helpers is HelperBase {
         public
         view
         virtual
-        override
         returns (uint256 nonce)
     {
         uint192 key = uint192(bytes24(bytes20(address(txValidator))));

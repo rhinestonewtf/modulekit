@@ -8,9 +8,9 @@ import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
 import { IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
 import { MockFallback } from "kernel/mock/MockFallback.sol";
-import { ERC7579Helpers } from "./ERC7579Helpers.sol";
+import { HelperBase } from "./HelperBase.sol";
 
-contract KernelHelpers is ERC7579Helpers {
+contract KernelHelpers is HelperBase {
     function getNonce(
         address account,
         IEntryPoint entrypoint,

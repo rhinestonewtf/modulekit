@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC7579Helpers } from "./ERC7579Helpers.sol";
+import { HelperBase } from "./HelperBase.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { Safe7579Launchpad } from "safe7579/Safe7579Launchpad.sol";
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
-
-
 import { PackedUserOperation } from "../../external/ERC4337.sol";
-import {
-    IERC7579Account,
-    MODULE_TYPE_HOOK
-} from "../../external/ERC7579.sol";
+import { IERC7579Account, MODULE_TYPE_HOOK } from "../../external/ERC7579.sol";
 import { HookType } from "safe7579/DataTypes.sol";
+import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 
-contract SafeHelpers is ERC7579Helpers {
+contract SafeHelpers is HelperBase {
     /**
      * get callData to install hook on ERC7579 Account
      */
@@ -41,7 +37,6 @@ contract SafeHelpers is ERC7579Helpers {
         address txValidator
     )
         public
-        view
         virtual
         override
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
@@ -58,12 +53,7 @@ contract SafeHelpers is ERC7579Helpers {
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -81,9 +71,7 @@ contract SafeHelpers is ERC7579Helpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory)
-            internal
-            returns (bytes memory) fn,
+        bool isInstall,
         address txValidator
     )
         public
@@ -96,20 +84,29 @@ contract SafeHelpers is ERC7579Helpers {
             initCode = instance.initCode;
         }
 
-        bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
-
+        bytes memory callData;
+        if (isInstall) {
+            callData = installModule({
+                account: instance.account,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        } else {
+            callData = uninstallModule({
+                account: instance.account,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        }
         if (initCode.length != 0) {
             (initCode, callData) = getInitCallData(instance.salt, txValidator, initCode, callData);
         }
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -129,7 +126,6 @@ contract SafeHelpers is ERC7579Helpers {
         bytes memory erc4337CallData
     )
         public
-        view
         returns (bytes memory initCode, bytes memory callData)
     {
         // TODO: refactor this to decode the initcode

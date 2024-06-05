@@ -7,15 +7,13 @@ import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
 import { envOr } from "src/test/utils/Vm.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IAccountHelpers } from "./helpers/IAccountHelpers.sol";
+import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { SafeHelpers } from "./helpers/SafeHelpers.sol";
 import { KernelHelpers } from "./helpers/KernelHelpers.sol";
-import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
-import {
-    IERC7579Validator
-} from "../external/ERC7579.sol";
+import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
 import "./utils/Vm.sol";
 import "./utils/ModuleKitCache.sol";
@@ -80,9 +78,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             kernelFactory = new KernelFactory();
             erc7579Factory = new ERC7579Factory();
 
+            erc7579Helper = new ERC7579Helpers();
             safeHelper = new SafeHelpers();
             kernelHelper = new KernelHelpers();
-            erc7579Helper = new ERC7579Helpers();
 
             safeFactory.init();
             kernelFactory.init();
@@ -156,7 +154,33 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             salt, env, helper, counterFactualAddress, initCode4337, address(_defaultValidator)
         );
 
-        accountFactory.setAccountType(AccountType.CUSTOM);
+        setAccountType(AccountType.CUSTOM);
+    }
+
+    /**
+     * create new AccountInstance with modulekit defaults
+     *
+     * @param salt account salt / name
+     */
+    function makeAccountInstance(
+        bytes32 salt,
+        address counterFactualAddress,
+        bytes memory initCode4337
+    )
+        internal
+        initializeModuleKit
+        returns (AccountInstance memory instance)
+    {
+        label(address(counterFactualAddress), toString(salt));
+        deal(counterFactualAddress, 10 ether);
+        instance = _makeAccountInstance(
+            salt,
+            env,
+            address(accountHelper),
+            counterFactualAddress,
+            initCode4337,
+            address(_defaultValidator)
+        );
     }
 
     /**
@@ -175,7 +199,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             address(accountFactory), abi.encodeCall(accountFactory.createAccount, (salt, initData))
         );
         label(address(account), toString(salt));
-        deal(account, 1 ether);
+        deal(account, 10 ether);
         instance = _makeAccountInstance(
             salt, env, address(accountHelper), account, initCode4337, address(_defaultValidator)
         );
@@ -194,7 +218,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         instance = _makeAccountInstance(salt, env, helper, account, initCode, defaultValidator);
 
-        accountFactory.setAccountType(AccountType.CUSTOM);
+        setAccountType(AccountType.CUSTOM);
     }
 
     function _makeAccountInstance(
