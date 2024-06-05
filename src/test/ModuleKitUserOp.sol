@@ -24,7 +24,7 @@ library ModuleKitUserOp {
             moduleType: moduleType,
             module: module,
             initData: initData,
-            fn: ERC7579Helpers.installModule,
+            isInstall: true,
             txValidator: txValidator
         });
     }
@@ -46,7 +46,7 @@ library ModuleKitUserOp {
             moduleType: moduleType,
             module: module,
             initData: initData,
-            fn: ERC7579Helpers.uninstallModule,
+            isInstall: false,
             txValidator: txValidator
         });
     }
@@ -59,7 +59,6 @@ library ModuleKitUserOp {
         address txValidator
     )
         internal
-        view
         returns (UserOpData memory userOpData)
     {
         bytes memory erc7579ExecCall = ERC7579ExecutionLib.encodeSingle(target, value, callData);
@@ -73,7 +72,6 @@ library ModuleKitUserOp {
         address txValidator
     )
         internal
-        view
         returns (UserOpData memory userOpData)
     {
         bytes memory erc7579ExecCall = ERC7579ExecutionLib.encodeBatch(executions);

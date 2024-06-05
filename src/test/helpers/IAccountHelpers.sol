@@ -49,9 +49,7 @@ interface IAccountHelpers {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory)
-            external
-            returns (bytes memory) fn,
+        bool isInstall,
         address txValidator
     )
         external
@@ -63,6 +61,5 @@ interface IAccountHelpers {
         address txValidator
     )
         external
-        view
         returns (PackedUserOperation memory userOp, bytes32 userOpHash);
 }

@@ -28,51 +28,12 @@ interface IAccountModulesPaginated {
 }
 
 contract ERC7579Helpers is HelperBase {
-    /**
-     * @dev install/uninstall a module on an ERC7579 account
-     *
-     * @param account IERC7579Account address
-     * @param module IERC7579Module address
-     * @param initData bytes encoded initialization data.
-     *               initData will be passed to fn
-     * @param fn function parameter that will yield the initData
-     *
-     * @return erc7579Tx bytes encoded single ERC7579Execution
-     *
-     *
-     *
-     *   can be used like so:
-     *   bytes memory installCallData = configModule(
-     *                        validator,
-     *                        initData,
-     *                        ERC7579Helpers.installValidator);
-     *
-     */
-    function configModule(
-        address account,
-        uint256 moduleType,
-        address module,
-        bytes memory initData,
-        function(address, uint256, address, bytes memory)
-            external
-            returns (bytes memory) fn
-    )
-        public
-        virtual
-        override
-        returns (bytes memory erc7579Tx)
-    {
-        erc7579Tx = fn(account, moduleType, module, initData);
-    }
-
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory)
-            external
-            returns (bytes memory) fn,
+        bool isInstall,
         address txValidator
     )
         public
@@ -85,16 +46,26 @@ contract ERC7579Helpers is HelperBase {
             initCode = instance.initCode;
         }
 
-        bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
+        bytes memory callData;
+        if (isInstall) {
+            callData = installModule({
+                account: instance.account,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        } else {
+            callData = uninstallModule({
+                account: instance.account,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        }
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -126,12 +97,7 @@ contract ERC7579Helpers is HelperBase {
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -460,10 +426,9 @@ contract ERC7579Helpers is HelperBase {
     }
 
     function getNonce(
-        address account,
-        IEntryPoint entrypoint,
-        address validator,
-        address defaultValidator
+        AccountInstance memory instance,
+        bytes memory callData,
+        address txValidator
     )
         public
         view
@@ -471,8 +436,8 @@ contract ERC7579Helpers is HelperBase {
         override
         returns (uint256 nonce)
     {
-        uint192 key = uint192(bytes24(bytes20(address(validator))));
-        nonce = entrypoint.getNonce(address(account), key);
+        uint192 key = uint192(bytes24(bytes20(address(txValidator))));
+        nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
     }
 
     function isModuleInstalled(

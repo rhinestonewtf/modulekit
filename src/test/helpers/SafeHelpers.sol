@@ -37,7 +37,6 @@ contract SafeHelpers is HelperBase {
         address txValidator
     )
         public
-        view
         virtual
         override
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
@@ -54,12 +53,7 @@ contract SafeHelpers is HelperBase {
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -77,9 +71,7 @@ contract SafeHelpers is HelperBase {
         uint256 moduleType,
         address module,
         bytes memory initData,
-        function(address, uint256, address, bytes memory)
-            external
-            returns (bytes memory) fn,
+        bool isInstall,
         address txValidator
     )
         public
@@ -92,20 +84,29 @@ contract SafeHelpers is HelperBase {
             initCode = instance.initCode;
         }
 
-        bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
-
+        bytes memory callData;
+        if (isInstall) {
+            callData = installModule({
+                account: instance.account,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        } else {
+            callData = uninstallModule({
+                account: instance.account,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        }
         if (initCode.length != 0) {
             (initCode, callData) = getInitCallData(instance.salt, txValidator, initCode, callData);
         }
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -125,7 +126,6 @@ contract SafeHelpers is HelperBase {
         bytes memory erc4337CallData
     )
         public
-        view
         returns (bytes memory initCode, bytes memory callData)
     {
         // TODO: refactor this to decode the initcode
