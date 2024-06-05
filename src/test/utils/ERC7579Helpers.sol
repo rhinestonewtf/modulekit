@@ -102,12 +102,7 @@ library ERC7579Helpers {
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -126,7 +121,6 @@ library ERC7579Helpers {
         address txValidator
     )
         internal
-        view
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
@@ -145,12 +139,7 @@ library ERC7579Helpers {
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(
-                instance.account,
-                instance.aux.entrypoint,
-                txValidator,
-                address(instance.defaultValidator)
-            ),
+            nonce: getNonce(instance, callData, txValidator),
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
@@ -461,27 +450,26 @@ library ERC7579Helpers {
     }
 
     function getNonce(
-        address account,
-        IEntryPoint entrypoint,
-        address validator,
-        address defaultValidator
+        AccountInstance memory instance,
+        bytes memory callData,
+        address txValidator
     )
         internal
-        view
         returns (uint256 nonce)
     {
         AccountType env = getAccountType();
         if (env == AccountType.KERNEL) {
             ValidationType vType;
-            if (validator == defaultValidator) {
+            if (txValidator == address(instance.defaultValidator)) {
                 vType = VALIDATION_TYPE_ROOT;
             } else {
+                KernelHelpers.enableValidator(instance, callData, txValidator);
                 vType = VALIDATION_TYPE_VALIDATOR;
             }
-            nonce = KernelHelpers.encodeNonce(vType, false, account, defaultValidator);
+            nonce = KernelHelpers.encodeNonce(vType, false, instance.account, txValidator);
         } else {
-            uint192 key = uint192(bytes24(bytes20(address(validator))));
-            nonce = entrypoint.getNonce(address(account), key);
+            uint192 key = uint192(bytes24(bytes20(address(txValidator))));
+            nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
         }
     }
 }

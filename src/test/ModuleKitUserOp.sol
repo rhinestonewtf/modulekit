@@ -56,7 +56,6 @@ library ModuleKitUserOp {
         address txValidator
     )
         internal
-        view
         returns (UserOpData memory userOpData)
     {
         bytes memory erc7579ExecCall = ERC7579Helpers.encode(target, value, callData);
@@ -73,7 +72,6 @@ library ModuleKitUserOp {
         address txValidator
     )
         internal
-        view
         returns (UserOpData memory userOpData)
     {
         bytes memory erc7579ExecCall = ERC7579Helpers.encode(executions);
@@ -92,7 +90,6 @@ library ModuleKitUserOp {
         address txValidator
     )
         internal
-        view
         returns (UserOpData memory userOpData)
     {
         Execution[] memory executions = ERC7579Helpers.toExecutions(targets, values, callDatas);
