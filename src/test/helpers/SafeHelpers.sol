@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { ERC7579Helpers } from "./ERC7579Helpers.sol";
+import { HelperBase } from "./HelperBase.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { Safe7579Launchpad } from "safe7579/Safe7579Launchpad.sol";
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
-
-
 import { PackedUserOperation } from "../../external/ERC4337.sol";
-import {
-    IERC7579Account,
-    MODULE_TYPE_HOOK
-} from "../../external/ERC7579.sol";
+import { IERC7579Account, MODULE_TYPE_HOOK } from "../../external/ERC7579.sol";
 import { HookType } from "safe7579/DataTypes.sol";
+import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 
-contract SafeHelpers is ERC7579Helpers {
+contract SafeHelpers is HelperBase {
     /**
      * get callData to install hook on ERC7579 Account
      */
@@ -82,7 +78,7 @@ contract SafeHelpers is ERC7579Helpers {
         address module,
         bytes memory initData,
         function(address, uint256, address, bytes memory)
-            internal
+            external
             returns (bytes memory) fn,
         address txValidator
     )

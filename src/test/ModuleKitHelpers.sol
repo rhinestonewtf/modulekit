@@ -8,6 +8,7 @@ import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import "./utils/Vm.sol";
+import { IAccountHelpers } from "./helpers/IAccountHelpers.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
@@ -73,8 +74,9 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        return
-            IAccountHelpers(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
+        return IAccountHelpers(instance.accountHelper).isModuleInstalled(
+            instance, moduleTypeId, module
+        );
     }
 
     function isModuleInstalled(

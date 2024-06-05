@@ -30,7 +30,7 @@ contract SafeFactory is IAccountFactory {
 
     function createAccount(
         bytes32 salt,
-        bytes calldata initCode
+        bytes memory initCode
     )
         public
         override

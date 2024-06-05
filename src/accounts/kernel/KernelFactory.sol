@@ -29,7 +29,7 @@ contract KernelFactory is IAccountFactory {
         account = factory.createAccount(data, salt);
     }
 
-    function getAddress(bytes memory data, bytes32 salt) public view override returns (address) {
+    function getAddress(bytes32 salt, bytes memory data) public view override returns (address) {
         return factory.getAddress(data, salt);
     }
 

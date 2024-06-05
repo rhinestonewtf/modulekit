@@ -2,16 +2,21 @@
 pragma solidity ^0.8.23;
 
 interface IAccountFactory {
-    function init() public;
+    function init() external;
 
-    function createAccount(bytes32 salt, bytes memory initCode) public returns (address account);
+    function createAccount(
+        bytes32 salt,
+        bytes memory initCode
+    )
+        external
+        returns (address account);
 
-    function getAddress(bytes32 salt, bytes memory initCode) public view returns (address);
+    function getAddress(bytes32 salt, bytes memory initCode) external view returns (address);
 
     function getInitData(
         address validator,
         bytes memory initData
     )
-        public
+        external
         returns (bytes memory init);
 }
