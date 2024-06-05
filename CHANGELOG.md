@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
+[0.4.5]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.5
+[0.4.4]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.4
 [0.4.3]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.3
 [0.4.2]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.2
 [0.4.1]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.1
@@ -18,6 +20,19 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 [0.3.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.3.0
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
+
+## [0.4.4] - 04-06-2024
+
+### Fixed
+
+- Bugs in uninstall module functions
+
+## [0.4.4] - 04-06-2024
+
+### Fixed
+
+- Specify correct Kernel version
+- Dependency based CI
 
 ## [0.4.3] - 30-05-2024
 

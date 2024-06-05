@@ -309,9 +309,8 @@ contract ERC7579Helpers is HelperBase {
         override
         returns (bytes memory callData)
     {
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
-        );
+        callData =
+            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -349,7 +348,7 @@ contract ERC7579Helpers is HelperBase {
     {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
     }
 
