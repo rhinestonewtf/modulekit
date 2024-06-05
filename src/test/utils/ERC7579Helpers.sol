@@ -345,7 +345,7 @@ library ERC7579Helpers {
         bytes memory initData
     )
         internal
-        pure
+        view
         returns (bytes memory callData)
     {
         AccountType env = getAccountType();
