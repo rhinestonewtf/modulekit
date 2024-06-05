@@ -134,7 +134,6 @@ contract SafeHelpers is HelperBase {
             factory := mload(add(originalInitCode, 20))
         }
         Safe7579Launchpad.InitData memory initData = abi.decode(
-            // TODO: What is this decode used for, is it fine if the name is changed?
             IAccountFactory(factory).getInitData(txValidator, ""),
             (Safe7579Launchpad.InitData)
         );

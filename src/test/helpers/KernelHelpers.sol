@@ -13,7 +13,7 @@ import { HelperBase } from "./HelperBase.sol";
 contract KernelHelpers is HelperBase {
     function getNonce(
         address account,
-        IEntryPoint entrypoint,
+        IEntryPoint,
         address validator,
         address defaultValidator
     )
@@ -35,7 +35,7 @@ contract KernelHelpers is HelperBase {
      * get callData to uninstall executor on ERC7579 Account
      */
     function uninstallExecutor(
-        address account,
+        address,
         address executor,
         bytes memory initData
     )
@@ -51,7 +51,7 @@ contract KernelHelpers is HelperBase {
     }
 
     function uninstallValidator(
-        address account,
+        address,
         address validator,
         bytes memory initData
     )
@@ -101,7 +101,7 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
      */
     function getDefaultInstallValidatorData(
-        address module,
+        address,
         bytes memory initData
     )
         public
@@ -116,7 +116,7 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L324-L334
      */
     function getDefaultInstallExecutorData(
-        address module,
+        address,
         bytes memory initData
     )
         public
@@ -131,7 +131,7 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L336-L345
      */
     function getDefaultInstallFallbackData(
-        address module,
+        address,
         bytes memory initData
     )
         public
@@ -150,7 +150,7 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
      */
     function getDefaultInstallHookData(
-        address module,
+        address,
         bytes memory initData
     )
         public
@@ -191,7 +191,7 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
      */
     function getDefaultUninstallFallbackData(
-        address module,
+        address,
         bytes memory deinitData
     )
         public
@@ -202,7 +202,7 @@ contract KernelHelpers is HelperBase {
     }
 
     function getInstallModuleData(
-        AccountInstance memory instance,
+        AccountInstance memory,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -228,7 +228,7 @@ contract KernelHelpers is HelperBase {
     }
 
     function getUninstallModuleData(
-        AccountInstance memory instance,
+        AccountInstance memory,
         uint256 moduleTypeId,
         address module,
         bytes memory data

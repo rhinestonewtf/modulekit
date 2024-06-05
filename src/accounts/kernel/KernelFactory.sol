@@ -38,7 +38,7 @@ contract KernelFactory is IAccountFactory {
         bytes memory initData
     )
         public
-        view
+        pure
         override
         returns (bytes memory _init)
     {

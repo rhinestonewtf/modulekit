@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { Execution, IERC7579Account } from "../../external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
-import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
+import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
 import { HelperBase } from "./HelperBase.sol";
@@ -188,7 +188,6 @@ contract ERC7579Helpers is HelperBase {
     /**
      * get callData to uninstall validator on ERC7579 Account
      */
-    // TODO: What is the reason we don't pass instance here? Pass instance here
     function uninstallValidator(
         address account,
         address validator,
@@ -244,7 +243,6 @@ contract ERC7579Helpers is HelperBase {
     /**
      * get callData to uninstall executor on ERC7579 Account
      */
-    // TODO:
     function uninstallExecutor(
         address account,
         address executor,
@@ -426,7 +424,7 @@ contract ERC7579Helpers is HelperBase {
 
     function getNonce(
         AccountInstance memory instance,
-        bytes memory callData,
+        bytes memory,
         address txValidator
     )
         public
@@ -471,9 +469,9 @@ contract ERC7579Helpers is HelperBase {
     }
 
     function getInstallModuleData(
-        AccountInstance memory instance,
-        uint256 moduleTypeId,
-        address module,
+        AccountInstance memory ,
+        uint256 ,
+        address ,
         bytes memory data
     )
         public
@@ -486,9 +484,9 @@ contract ERC7579Helpers is HelperBase {
     }
 
     function getUninstallModuleData(
-        AccountInstance memory instance,
-        uint256 moduleTypeId,
-        address module,
+        AccountInstance memory ,
+        uint256 ,
+        address ,
         bytes memory data
     )
         public
