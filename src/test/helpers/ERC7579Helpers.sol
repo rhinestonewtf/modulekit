@@ -3,20 +3,14 @@ pragma solidity ^0.8.23;
 
 import {
     Execution,
-    IERC7579Account,
-    ERC7579BootstrapConfig,
-    IERC7579Validator
+    IERC7579Account
 } from "../../external/ERC7579.sol";
 import "erc7579/lib/ModeLib.sol";
 import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation, IEntryPoint } from "../../external/ERC4337.sol";
-import { AccountInstance, AccountType } from "../RhinestoneModuleKit.sol";
-import "./Vm.sol";
-import { ValidationType } from "kernel/types/Types.sol";
-import { VALIDATION_TYPE_ROOT, VALIDATION_TYPE_VALIDATOR } from "kernel/types/Constants.sol";
-import { KernelHelpers } from "./KernelHelpers.sol";
-import { HookType } from "safe7579/DataTypes.sol";
-import { SafeHelpers } from "./SafeHelpers.sol";
+import { AccountInstance } from "../RhinestoneModuleKit.sol";
+import "../utils/Vm.sol";
+import { IAccountHelpers } from "./IAccountHelpers.sol";
 
 interface IAccountModulesPaginated {
     function getValidatorPaginated(
@@ -36,7 +30,7 @@ interface IAccountModulesPaginated {
         returns (address[] memory, address);
 }
 
-library ERC7579Helpers {
+contract ERC7579Helpers is IAccountHelpers {
     /**
      * @dev install/uninstall a module on an ERC7579 account
      *
@@ -66,7 +60,8 @@ library ERC7579Helpers {
             internal
             returns (bytes memory) fn
     )
-        internal
+        public
+        virtual
         returns (bytes memory erc7579Tx)
     {
         erc7579Tx = fn(account, moduleType, module, initData);
@@ -82,7 +77,8 @@ library ERC7579Helpers {
             returns (bytes memory) fn,
         address txValidator
     )
-        internal
+        public
+        virtual
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
@@ -91,13 +87,6 @@ library ERC7579Helpers {
         }
 
         bytes memory callData = configModule(instance.account, moduleType, module, initData, fn);
-
-        if (instance.accountType == AccountType.SAFE) {
-            if (initCode.length != 0) {
-                (initCode, callData) =
-                    SafeHelpers.getInitCallData(instance.salt, txValidator, initCode, callData);
-            }
-        }
 
         userOp = PackedUserOperation({
             sender: instance.account,
@@ -124,22 +113,15 @@ library ERC7579Helpers {
         bytes memory callData,
         address txValidator
     )
-        internal
+        public
         view
+        virtual
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
         bytes memory initCode;
         bool notDeployedYet = instance.account.code.length == 0;
         if (notDeployedYet) {
             initCode = instance.initCode;
-        }
-
-        AccountType env = instance.accountType;
-        if (env == AccountType.SAFE) {
-            if (initCode.length != 0) {
-                (initCode, callData) =
-                    SafeHelpers.getInitCallData(instance.salt, txValidator, initCode, callData);
-            }
         }
 
         userOp = PackedUserOperation({
@@ -171,8 +153,9 @@ library ERC7579Helpers {
         address module,
         bytes memory initData
     )
-        internal
+        public
         view
+        virtual
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -197,8 +180,9 @@ library ERC7579Helpers {
         address module,
         bytes memory initData
     )
-        internal
+        public
         view
+        virtual
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
@@ -222,8 +206,9 @@ library ERC7579Helpers {
         address validator,
         bytes memory initData
     )
-        internal
+        public
         pure
+        virtual
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -234,35 +219,33 @@ library ERC7579Helpers {
     /**
      * get callData to uninstall validator on ERC7579 Account
      */
-     // TODO: What is the reason we don't pass instance here? 
+    // TODO: What is the reason we don't pass instance here? Pass instance here
     function uninstallValidator(
         address account,
         address validator,
         bytes memory initData
     )
-        internal
+        public
         view
+        virtual
         returns (bytes memory callData)
     {
-        AccountType env = instance.accountType;
-        if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
-            // get previous validator in sentinel list
-            address previous;
+        // get previous validator in sentinel list
+        address previous;
 
-            (address[] memory array,) =
-                IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
+        (address[] memory array,) =
+            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
 
-            if (array.length == 1) {
-                previous = address(0x1);
-            } else if (array[0] == validator) {
-                previous = address(0x1);
-            } else {
-                for (uint256 i = 1; i < array.length; i++) {
-                    if (array[i] == validator) previous = array[i - 1];
-                }
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == validator) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == validator) previous = array[i - 1];
             }
-            initData = abi.encode(previous, initData);
         }
+        initData = abi.encode(previous, initData);
 
         callData = abi.encodeCall(
             IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
@@ -277,8 +260,9 @@ library ERC7579Helpers {
         address executor,
         bytes memory initData
     )
-        internal
+        public
         pure
+        virtual
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -289,34 +273,33 @@ library ERC7579Helpers {
     /**
      * get callData to uninstall executor on ERC7579 Account
      */
+    // TODO:
     function uninstallExecutor(
         address account,
         address executor,
         bytes memory initData
     )
-        internal
+        public
         view
+        virtual
         returns (bytes memory callData)
     {
-        AccountType env = instance.accountType;
-        if (env == AccountType.DEFAULT || env == AccountType.SAFE) {
-            // get previous executor in sentinel list
-            address previous;
+        // get previous executor in sentinel list
+        address previous;
 
-            (address[] memory array,) =
-                IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
+        (address[] memory array,) =
+            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
 
-            if (array.length == 1) {
-                previous = address(0x1);
-            } else if (array[0] == executor) {
-                previous = address(0x1);
-            } else {
-                for (uint256 i = 1; i < array.length; i++) {
-                    if (array[i] == executor) previous = array[i - 1];
-                }
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == executor) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == executor) previous = array[i - 1];
             }
-            initData = abi.encode(previous, initData);
         }
+        initData = abi.encode(previous, initData);
 
         callData = abi.encodeCall(
             IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
@@ -331,20 +314,12 @@ library ERC7579Helpers {
         address hook,
         bytes memory initData
     )
-        internal
+        public
         view
+        virtual
         returns (bytes memory callData)
     {
-        AccountType env = instance.accountType;
-        if (env == AccountType.SAFE) {
-            callData = abi.encodeCall(
-                IERC7579Account.installModule,
-                (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
-            );
-        } else {
-            callData =
-                abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
-        }
+        callData = abi.encodeCall(IERC7579Account.installModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -355,8 +330,9 @@ library ERC7579Helpers {
         address hook,
         bytes memory initData
     )
-        internal
+        public
         pure
+        virtual
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -372,8 +348,9 @@ library ERC7579Helpers {
         address fallbackHandler,
         bytes memory initData
     )
-        internal
+        public
         pure
+        virtual
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
@@ -389,8 +366,9 @@ library ERC7579Helpers {
         address fallbackHandler,
         bytes memory initData
     )
-        internal
+        public
         pure
+        virtual
         returns (bytes memory callData)
     {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
@@ -410,8 +388,9 @@ library ERC7579Helpers {
         uint256 value,
         bytes memory callData
     )
-        internal
+        public
         pure
+        virtual
         returns (bytes memory erc7579Tx)
     {
         ModeCode mode = ModeLib.encode({
@@ -428,7 +407,12 @@ library ERC7579Helpers {
      * Encode a batched ERC7579 Execution Transaction
      * @param executions ERC7579 batched executions
      */
-    function encode(Execution[] memory executions) internal pure returns (bytes memory erc7579Tx) {
+    function encode(Execution[] memory executions)
+        public
+        pure
+        virtual
+        returns (bytes memory erc7579Tx)
+    {
         ModeCode mode = ModeLib.encode({
             callType: CALLTYPE_BATCH,
             execType: EXECTYPE_DEFAULT,
@@ -446,8 +430,9 @@ library ERC7579Helpers {
         uint256[] memory values,
         bytes[] memory callDatas
     )
-        internal
+        public
         pure
+        virtual
         returns (Execution[] memory executions)
     {
         executions = new Execution[](targets.length);
@@ -467,22 +452,73 @@ library ERC7579Helpers {
         address validator,
         address defaultValidator
     )
-        internal
+        public
         view
+        virtual
         returns (uint256 nonce)
     {
-        AccountType env = instance.accountType;
-        if (env == AccountType.KERNEL) {
-            ValidationType vType;
-            if (validator == defaultValidator) {
-                vType = VALIDATION_TYPE_ROOT;
-            } else {
-                vType = VALIDATION_TYPE_VALIDATOR;
-            }
-            nonce = KernelHelpers.encodeNonce(vType, false, account, defaultValidator);
-        } else {
-            uint192 key = uint192(bytes24(bytes20(address(validator))));
-            nonce = entrypoint.getNonce(address(account), key);
-        }
+        uint192 key = uint192(bytes24(bytes20(address(validator))));
+        nonce = entrypoint.getNonce(address(account), key);
+    }
+
+    function isModuleInstalled(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
+        address module
+    )
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        bytes memory data;
+
+        return isModuleInstalled(instance, moduleTypeId, module, data);
+    }
+
+    function isModuleInstalled(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data
+    )
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+    }
+
+    function getInstallModuleData(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory)
+    {
+        return data;
+    }
+
+    function getUninstallModuleData(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory)
+    {
+        return data;
     }
 }

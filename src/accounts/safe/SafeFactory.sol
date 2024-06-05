@@ -20,7 +20,7 @@ contract SafeFactory is IAccountFactory {
     Safe internal safeSingleton;
     SafeProxyFactory internal safeProxyFactory;
 
-    function init() public override{
+    function init() public override {
         // Set up MSA and Factory
         safe7579 = new Safe7579();
         launchpad = new Safe7579Launchpad(ENTRYPOINT_ADDR, IERC7484(address(REGISTRY_ADDR)));
@@ -28,7 +28,14 @@ contract SafeFactory is IAccountFactory {
         safeProxyFactory = new SafeProxyFactory();
     }
 
-    function createAccount(bytes32 salt, bytes calldata initCode) public override returns (address safe) {
+    function createAccount(
+        bytes32 salt,
+        bytes calldata initCode
+    )
+        public
+        override
+        returns (address safe)
+    {
         Safe7579Launchpad.InitData memory initData =
             abi.decode(initCode, (Safe7579Launchpad.InitData));
         bytes32 initHash = launchpad.hash(initData);

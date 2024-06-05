@@ -13,12 +13,19 @@ contract KernelFactory is IAccountFactory {
     KernelAccountFactory internal factory;
     Kernel internal kernalImpl;
 
-    function init() public override{
+    function init() public override {
         kernalImpl = new Kernel(IEntryPoint(ENTRYPOINT_ADDR));
         factory = new KernelAccountFactory(address(kernalImpl));
     }
 
-    function createAccount(bytes32 salt, bytes memory data) public override returns (address account) {
+    function createAccount(
+        bytes32 salt,
+        bytes memory data
+    )
+        public
+        override
+        returns (address account)
+    {
         account = factory.createAccount(data, salt);
     }
 

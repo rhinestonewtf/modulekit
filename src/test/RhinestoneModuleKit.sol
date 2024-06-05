@@ -6,14 +6,14 @@ import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
 import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
 import { envOr } from "src/test/utils/Vm.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
+import { IAccountHelpers } from "./helpers/IAccountHelpers.sol";
+import { SafeHelpers } from "./helpers/SafeHelpers.sol";
+import { KernelHelpers } from "./helpers/KernelHelpers.sol";
+import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import {
-    ERC7579BootstrapConfig,
-    IERC7579Account,
-    ERC7579Account,
-    ERC7579AccountFactory,
     IERC7579Validator
 } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
@@ -48,59 +48,91 @@ string constant SAFE = "SAFE";
 string constant KERNEL = "KERNEL";
 string constant CUSTOM = "CUSTOM";
 
-
 contract RhinestoneModuleKit is AuxiliaryFactory {
     bool internal isInit;
     MockValidator public _defaultValidator;
+
     IAccountFactory public accountFactory;
+    IAccountHelpers public accountHelper;
+
+    IAccountFactory public safeFactory;
+    IAccountFactory public kernelFactory;
+    IAccountFactory public erc7579Factory;
+
+    IAccountHelpers public safeHelper;
+    IAccountHelpers public kernelHelper;
+    IAccountHelpers public erc7579Helper;
 
     AccountType public env;
 
     error InvalidAccountType();
-    
+
     /**
      * Initializes Auxiliary and /src/core
      * This function will run before any accounts can be created
      */
-
     modifier initializeModuleKit() {
         if (!isInit) {
             super.init();
             isInit = true;
 
+            safeFactory = new SafeFactory();
+            kernelFactory = new KernelFactory();
+            erc7579Factory = new ERC7579Factory();
+
+            safeHelper = new SafeHelpers();
+            kernelHelper = new KernelHelpers();
+            erc7579Helper = new ERC7579Helpers();
+
+            safeFactory.init();
+            kernelFactory.init();
+            erc7579Factory.init();
+
+            label(address(safeFactory), "SafeFactory");
+            label(address(kernelFactory), "KernelFactory");
+            label(address(erc7579Factory), "ERC7579Factory");
+
+            // Stake factory on EntryPoint
+            deal(address(safeFactory), 10 ether);
+            deal(address(kernelFactory), 10 ether);
+            deal(address(erc7579Factory), 10 ether);
+
+            prank(address(safeFactory));
+            IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
+            prank(address(kernelFactory));
+            IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
+            prank(address(erc7579Factory));
+            IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
+
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
 
             if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
                 env = AccountType.DEFAULT;
-                accountFactory = IAccountFactory(new ERC7579Factory());
+                accountFactory = erc7579Factory;
+                accountHelper = erc7579Helper;
             } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE))) {
                 env = AccountType.SAFE;
-                accountFactory = IAccountFactory(new SafeFactory());
+                accountFactory = safeFactory;
+                accountHelper = safeHelper;
             } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
                 env = AccountType.KERNEL;
-                accountFactory = IAccountFactory(new KernelFactory());
+                accountFactory = kernelFactory;
+                accountHelper = kernelHelper;
             } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(CUSTOM))) {
                 env = AccountType.CUSTOM;
-                // TODO: What should happen in the custom case?
-                accountFactory = IAccountFactory(new ERC7579Factory());
+                accountFactory = erc7579Factory;
+                accountHelper = erc7579Helper;
             } else {
                 revert InvalidAccountType();
             }
 
-            accountFactory.init();
             label(address(accountFactory), "AccountFactory");
 
             _defaultValidator = new MockValidator();
             label(address(_defaultValidator), "DefaultValidator");
-
-            // Stake factory on EntryPoint
-            deal(address(accountFactory), 10 ether);
-            prank(address(accountFactory));
-            IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
         }
         _;
     }
-    // TODO: create makeAccountInstance function which only requires account address.
 
     /**
      * create new AccountInstance with initCode
@@ -110,6 +142,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
      */
     function makeAccountInstance(
         bytes32 salt,
+        address helper,
         address counterFactualAddress,
         bytes memory initCode4337
     )
@@ -120,7 +153,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         // Create AccountInstance struct with counterFactualAddress and initCode
         // The initcode will be set to 0, once the account was created by EntryPoint.sol
         instance = _makeAccountInstance(
-            salt, env, counterFactualAddress, initCode4337, address(_defaultValidator)
+            salt, env, helper, counterFactualAddress, initCode4337, address(_defaultValidator)
         );
 
         accountFactory.setAccountType(AccountType.CUSTOM);
@@ -143,12 +176,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         );
         label(address(account), toString(salt));
         deal(account, 1 ether);
-        instance = _makeAccountInstance(salt,env,  account, initCode4337, address(_defaultValidator));
+        instance = _makeAccountInstance(
+            salt, env, address(accountHelper), account, initCode4337, address(_defaultValidator)
+        );
     }
 
     function makeAccountInstance(
         bytes32 salt,
         address account,
+        address helper,
         address defaultValidator,
         bytes memory initCode
     )
@@ -156,12 +192,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        instance = _makeAccountInstance(salt, env, account, initCode, defaultValidator);
+        instance = _makeAccountInstance(salt, env, helper, account, initCode, defaultValidator);
+
+        accountFactory.setAccountType(AccountType.CUSTOM);
     }
 
     function _makeAccountInstance(
         bytes32 salt,
         AccountType accountType,
+        address helper,
         address account,
         bytes memory initCode4337,
         address validator
@@ -171,6 +210,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         instance = AccountInstance({
             accountType: accountType,
+            accountHelper: helper,
             account: account,
             aux: auxiliary,
             salt: salt,

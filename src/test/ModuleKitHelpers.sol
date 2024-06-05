@@ -1,22 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { AccountInstance, UserOpData, AccountType } from "./RhinestoneModuleKit.sol";
+import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
-import {
-    IERC7579Account,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_HOOK,
-    MODULE_TYPE_FALLBACK
-} from "../external/ERC7579.sol";
 import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
-import { KernelHelpers } from "./utils/KernelHelpers.sol";
 import "./utils/Vm.sol";
-import { HookType } from "safe7579/DataTypes.sol";
 
 library ModuleKitHelpers {
     using ModuleKitUserOp for AccountInstance;
@@ -63,7 +54,7 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
-        data = getUninstallModuleData(moduleTypeId, module, data);
+        data = getUninstallModuleData(instance, moduleTypeId, module, data);
         userOpData = instance.getUninstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -82,19 +73,8 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        bytes memory data;
-        AccountType env = instance.accountType;
-        // Each library should have isModuleInstalledData function
-        if (env == AccountType.SAFE) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                data = abi.encode(HookType.GLOBAL, bytes4(0x0), "");
-            }
-        } else if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                return true;
-            }
-        }
-        return isModuleInstalled(instance, moduleTypeId, module, data);
+        return
+            IAccountHelpers(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
     }
 
     function isModuleInstalled(
@@ -107,17 +87,9 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        AccountType env = instance.accountType;
-        if (env == AccountType.SAFE) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
-            }
-        } else if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                return true;
-            }
-        }
-        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+        return IAccountHelpers(instance.accountHelper).isModuleInstalled(
+            instance, moduleTypeId, module, data
+        );
     }
 
     function exec(
@@ -180,7 +152,7 @@ library ModuleKitHelpers {
     }
 
     function getInstallModuleData(
-                AccountInstance memory instance,
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -189,23 +161,13 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-          AccountType env = instance.accountType;
-        if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = KernelHelpers.getDefaultInstallExecutorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = KernelHelpers.getDefaultInstallValidatorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = KernelHelpers.getDefaultInstallFallbackData(module, data);
-            } else {
-                //TODO fix hook encoding impl in kernel helpers lib
-                data = KernelHelpers.getDefaultInstallHookData(module, data);
-            }
-        }
-        return data;
+        return IAccountHelpers(instance.accountHelper).getInstallModuleData(
+            instance, moduleTypeId, module, data
+        );
     }
 
     function getUninstallModuleData(
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -214,18 +176,8 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        AccountType env = instance.accountType;
-        if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = KernelHelpers.getDefaultUninstallExecutorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = KernelHelpers.getDefaultUninstallValidatorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = KernelHelpers.getDefaultUninstallFallbackData(module, data);
-            } else {
-                //TODO handle for hook
-            }
-        }
-        return data;
+        return IAccountHelpers(instance.accountHelper).getUninstallModuleData(
+            instance, moduleTypeId, module, data
+        );
     }
 }
