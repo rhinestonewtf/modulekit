@@ -395,9 +395,9 @@ abstract contract HelperBase {
     }
 
     function getInstallModuleData(
-        AccountInstance memory,
-        uint256,
-        address,
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
         bytes memory data
     )
         public
@@ -405,13 +405,23 @@ abstract contract HelperBase {
         virtual
         returns (bytes memory)
     {
-        return data;
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            return installValidator(instance.account, module, data);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            return installExecutor(instance.account, module, data);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            return installHook(instance.account, module, data);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            return installFallback(instance.account, module, data);
+        } else {
+            revert("Invalid module type");
+        }
     }
 
     function getUninstallModuleData(
-        AccountInstance memory,
-        uint256,
-        address,
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
         bytes memory data
     )
         public
@@ -419,6 +429,16 @@ abstract contract HelperBase {
         virtual
         returns (bytes memory)
     {
-        return data;
+        if (moduleType == MODULE_TYPE_VALIDATOR) {
+            return uninstallValidator(instance.account, module, data);
+        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
+            return uninstallExecutor(instance.account, module, data);
+        } else if (moduleType == MODULE_TYPE_HOOK) {
+            return uninstallHook(instance.account, module, data);
+        } else if (moduleType == MODULE_TYPE_FALLBACK) {
+            return uninstallFallback(instance.account, module, data);
+        } else {
+            revert("Invalid module type");
+        }
     }
 }
