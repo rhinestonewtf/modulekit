@@ -18,9 +18,7 @@ import "./utils/Log.sol";
 struct Auxiliary {
     IEntryPoint entrypoint;
     UserOpGasLog gasSimulation;
-    ERC7579Bootstrap bootstrap;
     IERC7484 registry;
-    address initialTrustedAttester;
     MockFactory mockFactory;
 }
 
@@ -33,10 +31,7 @@ contract AuxiliaryFactory {
         auxiliary.gasSimulation = new UserOpGasLog();
         auxiliary.entrypoint = etchEntrypoint();
         label(address(auxiliary.entrypoint), "EntryPoint");
-        auxiliary.bootstrap = new ERC7579Bootstrap();
-        label(address(auxiliary.bootstrap), "ERC7579Bootstrap");
         auxiliary.registry = etchRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
-        auxiliary.initialTrustedAttester = makeAddr("Trusted Attester");
     }
 }

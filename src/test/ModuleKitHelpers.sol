@@ -3,32 +3,20 @@ pragma solidity ^0.8.23;
 
 import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
-import {
-    IERC7579Account,
-    MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_HOOK,
-    MODULE_TYPE_FALLBACK
-} from "../external/ERC7579.sol";
-import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
+import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
-import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
-import { KernelHelpers } from "./utils/KernelHelpers.sol";
 import "./utils/Vm.sol";
-import { getAccountType, AccountType } from "src/accounts/MultiAccountHelpers.sol";
-import { HookType } from "safe7579/DataTypes.sol";
+import { HelperBase } from "./helpers/HelperBase.sol";
+import { Execution } from "../external/ERC7579.sol";
 
 library ModuleKitHelpers {
-    using ModuleKitUserOp for AccountInstance;
     using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
 
     function execUserOps(UserOpData memory userOpData) internal {
         // send userOp to entrypoint
-
-        IEntryPoint entrypoint = ModuleKitCache.getEntrypoint(userOpData.userOp.sender);
-        ERC4337Helpers.exec4337(userOpData.userOp, entrypoint);
+        ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
     }
 
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
@@ -45,12 +33,13 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
-        data = getInstallModuleData(moduleTypeId, module, data);
+        data = getInstallModuleData(instance, moduleTypeId, module, data);
         userOpData = instance.getInstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
+        userOpData.entrypoint = instance.aux.entrypoint;
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
@@ -64,12 +53,14 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
-        data = getUninstallModuleData(moduleTypeId, module, data);
+        data = getUninstallModuleData(instance, moduleTypeId, module, data);
         userOpData = instance.getUninstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
+        userOpData.entrypoint = instance.aux.entrypoint;
+
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
@@ -83,18 +74,7 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        bytes memory data;
-        AccountType env = getAccountType();
-        if (env == AccountType.SAFE) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                data = abi.encode(HookType.GLOBAL, bytes4(0x0), "");
-            }
-        } else if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                return true;
-            }
-        }
-        return isModuleInstalled(instance, moduleTypeId, module, data);
+        return HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
     }
 
     function isModuleInstalled(
@@ -107,17 +87,9 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        AccountType env = getAccountType();
-        if (env == AccountType.SAFE) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
-            }
-        } else if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_HOOK) {
-                return true;
-            }
-        }
-        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+        return HelperBase(instance.accountHelper).isModuleInstalled(
+            instance, moduleTypeId, module, data
+        );
     }
 
     function exec(
@@ -133,6 +105,7 @@ library ModuleKitHelpers {
             instance.getExecOps(target, value, callData, address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
+        userOpData.entrypoint = instance.aux.entrypoint;
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
@@ -180,6 +153,7 @@ library ModuleKitHelpers {
     }
 
     function getInstallModuleData(
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -188,23 +162,13 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        AccountType env = getAccountType();
-        if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = KernelHelpers.getDefaultInstallExecutorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = KernelHelpers.getDefaultInstallValidatorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = KernelHelpers.getDefaultInstallFallbackData(module, data);
-            } else {
-                //TODO fix hook encoding impl in kernel helpers lib
-                data = KernelHelpers.getDefaultInstallHookData(module, data);
-            }
-        }
-        return data;
+        return HelperBase(instance.accountHelper).getInstallModuleData(
+            instance, moduleTypeId, module, data
+        );
     }
 
     function getUninstallModuleData(
+        AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
         bytes memory data
@@ -213,18 +177,107 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        AccountType env = getAccountType();
-        if (env == AccountType.KERNEL) {
-            if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-                data = KernelHelpers.getDefaultUninstallExecutorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-                data = KernelHelpers.getDefaultUninstallValidatorData(module, data);
-            } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-                data = KernelHelpers.getDefaultUninstallFallbackData(module, data);
-            } else {
-                //TODO handle for hook
-            }
-        }
-        return data;
+        return HelperBase(instance.accountHelper).getUninstallModuleData(
+            instance, moduleTypeId, module, data
+        );
     }
+
+    function getInstallModuleOps(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        // get userOp with correct nonce for selected txValidator
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper)
+            .configModuleUserOp({
+            instance: instance,
+            moduleType: moduleType,
+            module: module,
+            initData: initData,
+            isInstall: true,
+            txValidator: txValidator
+        });
+        userOpData.entrypoint = instance.aux.entrypoint;
+    }
+
+    function getUninstallModuleOps(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        // get userOp with correct nonce for selected txValidator
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper)
+            .configModuleUserOp({
+            instance: instance,
+            moduleType: moduleType,
+            module: module,
+            initData: initData,
+            isInstall: false,
+            txValidator: txValidator
+        });
+        userOpData.entrypoint = instance.aux.entrypoint;
+    }
+
+    function getExecOps(
+        AccountInstance memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        bytes memory erc7579ExecCall =
+            HelperBase(instance.accountHelper).encode(target, value, callData);
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp({
+            instance: instance,
+            callData: erc7579ExecCall,
+            txValidator: txValidator
+        });
+        userOpData.entrypoint = instance.aux.entrypoint;
+    }
+
+    function getExecOps(
+        AccountInstance memory instance,
+        Execution[] memory executions,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        bytes memory erc7579ExecCall = HelperBase(instance.accountHelper).encode(executions);
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp({
+            instance: instance,
+            callData: erc7579ExecCall,
+            txValidator: txValidator
+        });
+        userOpData.entrypoint = instance.aux.entrypoint;
+    }
+
+    // function getExecOps(
+    //     AccountInstance memory instance,
+    //     address[] memory targets,
+    //     uint256[] memory values,
+    //     bytes[] memory callDatas,
+    //     address txValidator
+    // )
+    //     internal
+    //     view
+    //     returns (UserOpData memory userOpData)
+    // {
+    //     Execution[] memory executions =
+    //         HelperBase(instance.accountHelper).toExecutions(targets, values, callDatas);
+    //     return getExecOps(instance, executions, txValidator);
+    // }
 }
