@@ -50,10 +50,9 @@ contract ExampleFactoryTest is BaseTest {
     }
 
     function test_userOpFlow() public {
-        bytes32 salt = keccak256("newAccount");
+        bytes32 salt = bytes32(bytes("newAccount"));
         address account = factory.getAddress(salt, address(instance.defaultValidator), "");
         bytes memory initCode = factory.getInitCode(salt, address(instance.defaultValidator), "");
-        vm.deal(account, 10 ether);
 
         instance = makeAccountInstance(salt, account, initCode);
 
