@@ -33,7 +33,6 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
-        data = getInstallModuleData(instance, moduleTypeId, module, data);
         userOpData = instance.getInstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -53,7 +52,6 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
-        data = getUninstallModuleData(instance, moduleTypeId, module, data);
         userOpData = instance.getUninstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
