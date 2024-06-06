@@ -10,11 +10,13 @@ import {
     IERC7579Account,
     MODULE_TYPE_HOOK,
     MODULE_TYPE_VALIDATOR,
-    MODULE_TYPE_EXECUTOR
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_FALLBACK
 } from "../../external/ERC7579.sol";
 import { HookType } from "safe7579/DataTypes.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
+import { CALLTYPE_STATIC } from "safe7579/lib/ModeLib.sol";
 
 contract SafeHelpers is HelperBase {
     /**
@@ -106,6 +108,67 @@ contract SafeHelpers is HelperBase {
         callData = abi.encodeCall(
             IERC7579Account.installModule,
             (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
+        );
+    }
+
+    /**
+     * get callData to uninstall hook on ERC7579 Account
+     */
+    function uninstallHook(
+        address, /* account */
+        address hook,
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule,
+            (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
+        );
+    }
+
+    function installFallback(
+        address, /* account */
+        address fallbackHandler,
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule,
+            (
+                MODULE_TYPE_FALLBACK,
+                fallbackHandler,
+                abi.encode(bytes4(0x0), CALLTYPE_STATIC, initData)
+            )
+        );
+    }
+
+    /**
+     * get callData to uninstall fallback on ERC7579 Account
+     */
+    function uninstallFallback(
+        address, /* account */
+        address fallbackHandler,
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule,
+            (MODULE_TYPE_FALLBACK, fallbackHandler, abi.encode(bytes4(0x0), initData))
         );
     }
 

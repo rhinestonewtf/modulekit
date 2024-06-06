@@ -1,23 +1,34 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { ValidatorLib } from "kernel/utils/ValidationTypeLib.sol";
-import { ValidationType, ValidationMode } from "kernel/types/Types.sol";
+import { ValidationType, ValidationMode, ValidationId } from "kernel/types/Types.sol";
 import "kernel/types/Constants.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
 import { IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
 import { MockFallback } from "kernel/mock/MockFallback.sol";
 import { HelperBase } from "./HelperBase.sol";
+import { Kernel } from "kernel/Kernel.sol";
+import { etch } from "../utils/Vm.sol";
+import { IValidator } from "kernel/interfaces/IERC7579Modules.sol";
+
+contract SetSelector is Kernel {
+    constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
+
+    function setSelector(ValidationId vId, bytes4 selector, bool allowed) external {
+        _setSelector(vId, selector, allowed);
+    }
+}
 
 contract KernelHelpers is HelperBase {
     function getNonce(
         AccountInstance memory instance,
-        bytes memory,
+        bytes memory callData,
         address txValidator
     )
         public
-        view
         virtual
         override
         returns (uint256 nonce)
@@ -26,6 +37,7 @@ contract KernelHelpers is HelperBase {
         if (txValidator == address(instance.defaultValidator)) {
             vType = VALIDATION_TYPE_ROOT;
         } else {
+            enableValidator(instance, callData, txValidator);
             vType = VALIDATION_TYPE_VALIDATOR;
         }
         nonce = encodeNonce(vType, false, instance.account, txValidator);
@@ -94,6 +106,28 @@ contract KernelHelpers is HelperBase {
             revert("Invalid validation type");
         }
         return IEntryPoint(ENTRYPOINT_ADDR).getNonce(account, nonceKey);
+    }
+
+    function enableValidator(
+        AccountInstance memory instance,
+        bytes memory callData,
+        address txValidator
+    )
+        internal
+    {
+        ValidationId vId = ValidatorLib.validatorToIdentifier(IValidator(txValidator));
+        bytes4 selector;
+        assembly {
+            selector := mload(add(callData, 32))
+        }
+        bool isAllowedSelector = Kernel(payable(instance.account)).isAllowedSelector(vId, selector);
+        if (!isAllowedSelector) {
+            bytes memory accountCode = instance.account.code;
+            address _setSelector = address(new SetSelector(IEntryPoint(ENTRYPOINT_ADDR)));
+            etch(instance.account, _setSelector.code);
+            SetSelector(payable(instance.account)).setSelector(vId, selector, true);
+            etch(instance.account, accountCode);
+        }
     }
 
     /**

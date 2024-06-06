@@ -243,16 +243,8 @@ abstract contract HelperBase {
         virtual
         returns (bytes memory callData)
     {
-        AccountType env = getAccountType();
-        if (env == AccountType.SAFE) {
-            callData = abi.encodeCall(
-                IERC7579Account.uninstallModule,
-                (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
-            );
-        } else {
-            callData =
-                abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
-        }
+        callData =
+            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -268,21 +260,6 @@ abstract contract HelperBase {
         virtual
         returns (bytes memory callData)
     {
-        AccountType env = getAccountType();
-        if (env == AccountType.SAFE) {
-            callData = abi.encodeCall(
-                IERC7579Account.uninstallModule,
-                (
-                    MODULE_TYPE_FALLBACK,
-                    fallbackHandler,
-                    abi.encode(bytes4(0x0), CALLTYPE_STATIC, initData)
-                )
-            );
-        } else {
-            callData = abi.encodeCall(
-                IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
-            );
-        }
         callData = abi.encodeCall(
             IERC7579Account.installModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
@@ -301,17 +278,10 @@ abstract contract HelperBase {
         virtual
         returns (bytes memory callData)
     {
-        AccountType env = getAccountType();
-        if (env == AccountType.SAFE) {
-            callData = abi.encodeCall(
-                IERC7579Account.uninstallModule,
-                (MODULE_TYPE_FALLBACK, fallbackHandler, abi.encode(bytes4(0x0), initData))
-            );
-        } else {
-            callData = abi.encodeCall(
-                IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
-            );
-        }
+        fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+        );
     }
 
     /**
@@ -389,7 +359,6 @@ abstract contract HelperBase {
         address txValidator
     )
         public
-        view
         virtual
         returns (uint256 nonce)
     {
