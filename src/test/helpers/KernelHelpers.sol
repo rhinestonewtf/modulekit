@@ -43,41 +43,6 @@ contract KernelHelpers is HelperBase {
         nonce = encodeNonce(vType, false, instance.account, txValidator);
     }
 
-    /**
-     * get callData to uninstall executor on ERC7579 Account
-     */
-    function uninstallExecutor(
-        address,
-        address executor,
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory callData)
-    {
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
-        );
-    }
-
-    function uninstallValidator(
-        address,
-        address validator,
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory callData)
-    {
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
-        );
-    }
-
     function encodeNonce(
         ValidationType vType,
         bool enable,

@@ -14,7 +14,7 @@ contract ERC7579Helpers is HelperBase {
     /**
      * get callData to uninstall validator on ERC7579 Account
      */
-    function uninstallValidator(
+    function getUninstallValidatorData(
         address account,
         address validator,
         bytes memory initData
@@ -23,7 +23,7 @@ contract ERC7579Helpers is HelperBase {
         view
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
         // get previous validator in sentinel list
         address previous;
@@ -40,17 +40,13 @@ contract ERC7579Helpers is HelperBase {
                 if (array[i] == validator) previous = array[i - 1];
             }
         }
-        initData = abi.encode(previous, initData);
-
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
-        );
+        data = abi.encode(previous, initData);
     }
 
     /**
      * get callData to uninstall executor on ERC7579 Account
      */
-    function uninstallExecutor(
+    function getUninstallExecutorData(
         address account,
         address executor,
         bytes memory initData
@@ -59,7 +55,7 @@ contract ERC7579Helpers is HelperBase {
         view
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
         // get previous executor in sentinel list
         address previous;
@@ -76,10 +72,6 @@ contract ERC7579Helpers is HelperBase {
                 if (array[i] == executor) previous = array[i - 1];
             }
         }
-        initData = abi.encode(previous, initData);
-
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
-        );
+        data = abi.encode(previous, initData);
     }
 }

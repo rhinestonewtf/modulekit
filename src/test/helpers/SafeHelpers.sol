@@ -22,7 +22,7 @@ contract SafeHelpers is HelperBase {
     /**
      * get callData to uninstall validator on ERC7579 Account
      */
-    function uninstallValidator(
+    function getUninstallValidatorData(
         address account,
         address validator,
         bytes memory initData
@@ -31,7 +31,7 @@ contract SafeHelpers is HelperBase {
         view
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
         // get previous validator in sentinel list
         address previous;
@@ -48,17 +48,13 @@ contract SafeHelpers is HelperBase {
                 if (array[i] == validator) previous = array[i - 1];
             }
         }
-        initData = abi.encode(previous, initData);
-
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
-        );
+        data = abi.encode(previous, initData);
     }
 
     /**
      * get callData to uninstall executor on ERC7579 Account
      */
-    function uninstallExecutor(
+    function getUninstallExecutorData(
         address account,
         address executor,
         bytes memory initData
@@ -67,7 +63,7 @@ contract SafeHelpers is HelperBase {
         view
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
         // get previous executor in sentinel list
         address previous;
@@ -84,17 +80,13 @@ contract SafeHelpers is HelperBase {
                 if (array[i] == executor) previous = array[i - 1];
             }
         }
-        initData = abi.encode(previous, initData);
-
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
-        );
+        data = abi.encode(previous, initData);
     }
 
     /**
      * get callData to install hook on ERC7579 Account
      */
-    function installHook(
+    function getInstallHookData(
         address, /* account */
         address hook,
         bytes memory initData
@@ -103,18 +95,15 @@ contract SafeHelpers is HelperBase {
         view
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
-        callData = abi.encodeCall(
-            IERC7579Account.installModule,
-            (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
-        );
+        data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
     }
 
     /**
      * get callData to uninstall hook on ERC7579 Account
      */
-    function uninstallHook(
+    function getUninstallHookData(
         address, /* account */
         address hook,
         bytes memory initData
@@ -123,15 +112,12 @@ contract SafeHelpers is HelperBase {
         pure
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
-            (MODULE_TYPE_HOOK, hook, abi.encode(HookType.GLOBAL, bytes4(0x0), initData))
-        );
+        data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
     }
 
-    function installFallback(
+    function getInstallFallbackData(
         address, /* account */
         address fallbackHandler,
         bytes memory initData
@@ -140,22 +126,15 @@ contract SafeHelpers is HelperBase {
         pure
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
-        callData = abi.encodeCall(
-            IERC7579Account.installModule,
-            (
-                MODULE_TYPE_FALLBACK,
-                fallbackHandler,
-                abi.encode(bytes4(0x0), CALLTYPE_STATIC, initData)
-            )
-        );
+        data = abi.encode(bytes4(0x0), CALLTYPE_STATIC, initData);
     }
 
     /**
      * get callData to uninstall fallback on ERC7579 Account
      */
-    function uninstallFallback(
+    function getUninstallFallbackData(
         address, /* account */
         address fallbackHandler,
         bytes memory initData
@@ -164,12 +143,9 @@ contract SafeHelpers is HelperBase {
         pure
         virtual
         override
-        returns (bytes memory callData)
+        returns (bytes memory data)
     {
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
-            (MODULE_TYPE_FALLBACK, fallbackHandler, abi.encode(bytes4(0x0), initData))
-        );
+        data = abi.encode(bytes4(0x0), initData);
     }
 
     function execUserOp(
