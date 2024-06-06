@@ -99,12 +99,15 @@ contract KernelHelpers is HelperBase {
      * @dev
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
      */
-    function getDefaultInstallValidatorData(
-        address,
+    function getInstallValidatorData(
+        address, /* account */
+        address, /* module */
         bytes memory initData
     )
         public
         pure
+        virtual
+        override
         returns (bytes memory data)
     {
         data = abi.encodePacked(address(0), abi.encode(initData, abi.encodePacked("")));
@@ -114,12 +117,15 @@ contract KernelHelpers is HelperBase {
      * @dev
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L324-L334
      */
-    function getDefaultInstallExecutorData(
-        address,
+    function getInstallExecutorData(
+        address, /* account */
+        address, /* module */
         bytes memory initData
     )
         public
         pure
+        virtual
+        override
         returns (bytes memory data)
     {
         data = abi.encodePacked(address(0), abi.encode(initData, abi.encodePacked("")));
@@ -129,12 +135,15 @@ contract KernelHelpers is HelperBase {
      * @dev
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L336-L345
      */
-    function getDefaultInstallFallbackData(
-        address,
+    function getInstallFallbackData(
+        address, /* account */
+        address, /* module */
         bytes memory initData
     )
         public
         pure
+        virtual
+        override
         returns (bytes memory data)
     {
         data = abi.encodePacked(
@@ -146,108 +155,20 @@ contract KernelHelpers is HelperBase {
 
     /**
      * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
-     */
-    function getDefaultInstallHookData(
-        address,
-        bytes memory initData
-    )
-        public
-        pure
-        returns (bytes memory data)
-    {
-        data = initData;
-    }
-
-    /**
-     * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L397-L398
-     */
-    function getDefaultUninstallValidatorData(
-        address module,
-        bytes memory deinitData
-    )
-        public
-        pure
-        returns (bytes memory data)
-    { }
-
-    /**
-     * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L400
-     */
-    function getDefaultUninstallExecutorData(
-        address module,
-        bytes memory deinitData
-    )
-        public
-        pure
-        returns (bytes memory data)
-    { }
-
-    /**
-     * @dev
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
      */
-    function getDefaultUninstallFallbackData(
-        address,
+    function getUninstallFallbackData(
+        address, /* account */
+        address, /* module */
         bytes memory deinitData
     )
         public
         pure
+        virtual
+        override
         returns (bytes memory data)
     {
         data = abi.encodePacked(MockFallback.fallbackFunction.selector, deinitData);
-    }
-
-    function getInstallModuleData(
-        AccountInstance memory,
-        uint256 moduleTypeId,
-        address module,
-        bytes memory data
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory)
-    {
-        if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            data = KernelHelpers.getDefaultInstallExecutorData(module, data);
-        } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            data = KernelHelpers.getDefaultInstallValidatorData(module, data);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            data = KernelHelpers.getDefaultInstallFallbackData(module, data);
-        } else {
-            //TODO fix hook encoding impl in kernel helpers lib
-            data = KernelHelpers.getDefaultInstallHookData(module, data);
-        }
-
-        return data;
-    }
-
-    function getUninstallModuleData(
-        AccountInstance memory,
-        uint256 moduleTypeId,
-        address module,
-        bytes memory data
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory)
-    {
-        if (moduleTypeId == MODULE_TYPE_EXECUTOR) {
-            data = KernelHelpers.getDefaultUninstallExecutorData(module, data);
-        } else if (moduleTypeId == MODULE_TYPE_VALIDATOR) {
-            data = KernelHelpers.getDefaultUninstallValidatorData(module, data);
-        } else if (moduleTypeId == MODULE_TYPE_FALLBACK) {
-            data = KernelHelpers.getDefaultUninstallFallbackData(module, data);
-        } else {
-            //TODO handle for hook
-        }
-        return data;
     }
 
     function isModuleInstalled(
