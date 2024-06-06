@@ -37,6 +37,7 @@ struct AccountInstance {
 struct UserOpData {
     PackedUserOperation userOp;
     bytes32 userOpHash;
+    IEntryPoint entrypoint;
 }
 
 string constant DEFAULT = "DEFAULT";
