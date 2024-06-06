@@ -6,7 +6,7 @@ import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
 import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
 import { envOr } from "src/test/utils/Vm.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
-import { IAccountHelpers } from "./helpers/IAccountHelpers.sol";
+import { HelperBase } from "./helpers/HelperBase.sol";
 import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { SafeHelpers } from "./helpers/SafeHelpers.sol";
 import { KernelHelpers } from "./helpers/KernelHelpers.sol";
@@ -26,14 +26,13 @@ enum AccountType {
 }
 
 struct AccountInstance {
-    AccountType accountType;
     address account;
+    AccountType accountType;
     address accountHelper;
     Auxiliary aux;
     IERC7579Validator defaultValidator;
     bytes32 salt;
     bytes initCode;
-    bool gasLog;
 }
 
 struct UserOpData {
@@ -51,15 +50,15 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     MockValidator public _defaultValidator;
 
     IAccountFactory public accountFactory;
-    IAccountHelpers public accountHelper;
+    HelperBase public accountHelper;
 
     IAccountFactory public safeFactory;
     IAccountFactory public kernelFactory;
     IAccountFactory public erc7579Factory;
 
-    IAccountHelpers public safeHelper;
-    IAccountHelpers public kernelHelper;
-    IAccountHelpers public erc7579Helper;
+    HelperBase public safeHelper;
+    HelperBase public kernelHelper;
+    HelperBase public erc7579Helper;
 
     AccountType public env;
 
@@ -132,31 +131,27 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         _;
     }
 
-    /**
-     * create new AccountInstance with initCode
-     * @param salt account salt / name
-     * @param helper address of the account helper, follows the IAccountHelpers interface
-     * @param counterFactualAddress of the account
-     * @param initCode4337 to be added to userOp:initCode
-     */
     function makeAccountInstance(
         bytes32 salt,
-        address helper,
-        address counterFactualAddress,
-        bytes memory initCode4337
+        address account,
+        bytes memory initCode,
+        address helper
     )
         internal
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        label(address(counterFactualAddress), toString(salt));
-        deal(counterFactualAddress, 10 ether);
-        // Create AccountInstance struct with counterFactualAddress and initCode
-        // The initcode will be set to 0, once the account was created by EntryPoint.sol
-        instance = _makeAccountInstance(
-            salt, env, helper, counterFactualAddress, initCode4337, address(_defaultValidator)
-        );
+        label(address(account), toString(salt));
+        deal(account, 10 ether);
 
+        instance = _makeAccountInstance({
+            salt: salt,
+            accountType: env,
+            helper: helper,
+            account: account,
+            initCode: initCode,
+            validator: address(_defaultValidator)
+        });
         setAccountType(AccountType.CUSTOM);
     }
 
@@ -167,14 +162,19 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
      */
     function makeAccountInstance(
         bytes32 salt,
-        address counterFactualAddress,
-        bytes memory initCode4337
+        address account,
+        bytes memory initCode
     )
         internal
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        makeAccountInstance(salt, address(accountHelper), counterFactualAddress, initCode4337);
+        makeAccountInstance({
+            salt: salt,
+            helper: address(accountHelper),
+            account: account,
+            initCode: initCode
+        });
     }
 
     /**
@@ -189,39 +189,54 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     {
         bytes memory initData = accountFactory.getInitData(address(_defaultValidator), "");
         address account = accountFactory.getAddress(salt, initData);
-        bytes memory initCode4337 = abi.encodePacked(
+        bytes memory initCode = abi.encodePacked(
             address(accountFactory), abi.encodeCall(accountFactory.createAccount, (salt, initData))
         );
+
         label(address(account), toString(salt));
         deal(account, 10 ether);
-        instance = _makeAccountInstance(
-            salt, env, address(accountHelper), account, initCode4337, address(_defaultValidator)
-        );
+        instance = _makeAccountInstance({
+            salt: salt,
+            accountType: env,
+            helper: address(accountHelper),
+            account: account,
+            initCode: initCode,
+            validator: address(_defaultValidator)
+        });
     }
 
     function makeAccountInstance(
         bytes32 salt,
         address account,
+        bytes memory initCode,
         address helper,
-        address defaultValidator,
-        bytes memory initCode
+        address defaultValidator
     )
         internal
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        instance = _makeAccountInstance(salt, env, helper, account, initCode, defaultValidator);
+        label(address(account), toString(salt));
+        deal(account, 10 ether);
 
+        instance = _makeAccountInstance({
+            salt: salt,
+            accountType: env,
+            helper: helper,
+            account: account,
+            initCode: initCode,
+            validator: defaultValidator
+        });
         setAccountType(AccountType.CUSTOM);
     }
 
     function _makeAccountInstance(
         bytes32 salt,
-        AccountType accountType,
-        address helper,
         address account,
-        bytes memory initCode4337,
-        address validator
+        bytes memory initCode,
+        address validator,
+        AccountType accountType,
+        address helper
     )
         internal
         returns (AccountInstance memory instance)
@@ -233,8 +248,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             aux: auxiliary,
             salt: salt,
             defaultValidator: IERC7579Validator(validator),
-            initCode: initCode4337,
-            gasLog: false
+            initCode: initCode
         });
 
         ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);

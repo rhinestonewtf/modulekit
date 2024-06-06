@@ -7,10 +7,8 @@ import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
-import { IAccountHelpers } from "./IAccountHelpers.sol";
-import { IAccountModulesPaginated } from "./IAccountModulesPaginated.sol";
 
-contract HelperBase is IAccountHelpers {
+abstract contract HelperBase {
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -175,23 +173,6 @@ contract HelperBase is IAccountHelpers {
         virtual
         returns (bytes memory callData)
     {
-        // get previous validator in sentinel list
-        address previous;
-
-        (address[] memory array,) =
-            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == validator) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
-            }
-        }
-        initData = abi.encode(previous, initData);
-
         callData = abi.encodeCall(
             IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
         );
@@ -228,23 +209,6 @@ contract HelperBase is IAccountHelpers {
         virtual
         returns (bytes memory callData)
     {
-        // get previous executor in sentinel list
-        address previous;
-
-        (address[] memory array,) =
-            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == executor) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == executor) previous = array[i - 1];
-            }
-        }
-        initData = abi.encode(previous, initData);
-
         callData = abi.encodeCall(
             IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
         );
@@ -271,7 +235,7 @@ contract HelperBase is IAccountHelpers {
      */
     function uninstallHook(
         address, /* account */
-        address, /*hook*/
+        address hook,
         bytes memory initData
     )
         public
@@ -279,9 +243,8 @@ contract HelperBase is IAccountHelpers {
         virtual
         returns (bytes memory callData)
     {
-        callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, address(0), initData)
-        );
+        callData =
+            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
     }
 
     /**
@@ -317,7 +280,7 @@ contract HelperBase is IAccountHelpers {
     {
         fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, address(0), initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
         );
     }
 
@@ -412,27 +375,25 @@ contract HelperBase is IAccountHelpers {
         public
         view
         virtual
-        override
         returns (bool)
     {
-        bytes memory data;
-
-        return isModuleInstalled(instance, moduleTypeId, module, data);
+        return isModuleInstalled(instance, moduleTypeId, module, "");
     }
 
     function isModuleInstalled(
         AccountInstance memory instance,
         uint256 moduleTypeId,
         address module,
-        bytes memory data
+        bytes memory additionalContext
     )
         public
         view
         virtual
-        override
         returns (bool)
     {
-        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+        return IERC7579Account(instance.account).isModuleInstalled(
+            moduleTypeId, module, additionalContext
+        );
     }
 
     function getInstallModuleData(
@@ -444,7 +405,6 @@ contract HelperBase is IAccountHelpers {
         public
         view
         virtual
-        override
         returns (bytes memory)
     {
         return data;
@@ -459,7 +419,6 @@ contract HelperBase is IAccountHelpers {
         public
         view
         virtual
-        override
         returns (bytes memory)
     {
         return data;

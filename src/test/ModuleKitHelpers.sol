@@ -3,15 +3,15 @@ pragma solidity ^0.8.23;
 
 import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
-import { ModuleKitUserOp, UserOpData } from "./ModuleKitUserOp.sol";
+import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import "./utils/Vm.sol";
-import { IAccountHelpers } from "./helpers/IAccountHelpers.sol";
+import { HelperBase } from "./helpers/HelperBase.sol";
+import { Execution } from "../external/ERC7579.sol";
 
 library ModuleKitHelpers {
-    using ModuleKitUserOp for AccountInstance;
     using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
 
@@ -73,9 +73,7 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        return IAccountHelpers(instance.accountHelper).isModuleInstalled(
-            instance, moduleTypeId, module
-        );
+        return HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
     }
 
     function isModuleInstalled(
@@ -88,7 +86,7 @@ library ModuleKitHelpers {
         view
         returns (bool)
     {
-        return IAccountHelpers(instance.accountHelper).isModuleInstalled(
+        return HelperBase(instance.accountHelper).isModuleInstalled(
             instance, moduleTypeId, module, data
         );
     }
@@ -162,7 +160,7 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        return IAccountHelpers(instance.accountHelper).getInstallModuleData(
+        return HelperBase(instance.accountHelper).getInstallModuleData(
             instance, moduleTypeId, module, data
         );
     }
@@ -177,8 +175,103 @@ library ModuleKitHelpers {
         view
         returns (bytes memory)
     {
-        return IAccountHelpers(instance.accountHelper).getUninstallModuleData(
+        return HelperBase(instance.accountHelper).getUninstallModuleData(
             instance, moduleTypeId, module, data
         );
     }
+
+    function getInstallModuleOps(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        // get userOp with correct nonce for selected txValidator
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper)
+            .configModuleUserOp({
+            instance: instance,
+            moduleType: moduleType,
+            module: module,
+            initData: initData,
+            isInstall: true,
+            txValidator: txValidator
+        });
+    }
+
+    function getUninstallModuleOps(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        // get userOp with correct nonce for selected txValidator
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper)
+            .configModuleUserOp({
+            instance: instance,
+            moduleType: moduleType,
+            module: module,
+            initData: initData,
+            isInstall: false,
+            txValidator: txValidator
+        });
+    }
+
+    function getExecOps(
+        AccountInstance memory instance,
+        address target,
+        uint256 value,
+        bytes memory callData,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        bytes memory erc7579ExecCall =
+            HelperBase(instance.accountHelper).encode(target, value, callData);
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp({
+            instance: instance,
+            callData: erc7579ExecCall,
+            txValidator: txValidator
+        });
+    }
+
+    function getExecOps(
+        AccountInstance memory instance,
+        Execution[] memory executions,
+        address txValidator
+    )
+        internal
+        returns (UserOpData memory userOpData)
+    {
+        bytes memory erc7579ExecCall = HelperBase(instance.accountHelper).encode(executions);
+        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp({
+            instance: instance,
+            callData: erc7579ExecCall,
+            txValidator: txValidator
+        });
+    }
+
+    // function getExecOps(
+    //     AccountInstance memory instance,
+    //     address[] memory targets,
+    //     uint256[] memory values,
+    //     bytes[] memory callDatas,
+    //     address txValidator
+    // )
+    //     internal
+    //     view
+    //     returns (UserOpData memory userOpData)
+    // {
+    //     Execution[] memory executions =
+    //         HelperBase(instance.accountHelper).toExecutions(targets, values, callDatas);
+    //     return getExecOps(instance, executions, txValidator);
+    // }
 }

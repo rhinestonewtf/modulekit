@@ -54,7 +54,12 @@ contract ExampleFactoryTest is BaseTest {
         address account = factory.getAddress(salt, address(instance.defaultValidator), "");
         bytes memory initCode = factory.getInitCode(salt, address(instance.defaultValidator), "");
 
-        instance = makeAccountInstance(salt, address(erc7579Helper), account, initCode);
+        instance = makeAccountInstance({
+            salt: salt,
+            helper: address(erc7579Helper),
+            account: account,
+            initCode: initCode
+        });
 
         address target = makeAddr("target");
         uint256 value = 1 ether;

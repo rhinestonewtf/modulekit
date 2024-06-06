@@ -8,44 +8,78 @@ import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
 import { HelperBase } from "./HelperBase.sol";
-import { IAccountModulesPaginated } from "./IAccountModulesPaginated.sol";
+import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 
 contract ERC7579Helpers is HelperBase {
     /**
-     * get callData to uninstall hook on ERC7579 Account
+     * get callData to uninstall validator on ERC7579 Account
      */
-    function uninstallHook(
-        address, /* account */
-        address hook,
+    function uninstallValidator(
+        address account,
+        address validator,
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         override
         returns (bytes memory callData)
     {
-        callData =
-            abi.encodeCall(IERC7579Account.uninstallModule, (MODULE_TYPE_HOOK, hook, initData));
+        // get previous validator in sentinel list
+        address previous;
+
+        (address[] memory array,) =
+            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == validator) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == validator) previous = array[i - 1];
+            }
+        }
+        initData = abi.encode(previous, initData);
+
+        callData = abi.encodeCall(
+            IERC7579Account.uninstallModule, (MODULE_TYPE_VALIDATOR, validator, initData)
+        );
     }
 
     /**
-     * get callData to uninstall fallback on ERC7579 Account
+     * get callData to uninstall executor on ERC7579 Account
      */
-    function uninstallFallback(
-        address, /* account */
-        address fallbackHandler,
+    function uninstallExecutor(
+        address account,
+        address executor,
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         override
         returns (bytes memory callData)
     {
-        fallbackHandler = fallbackHandler; //avoid solhint-no-unused-vars
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array,) =
+            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == executor) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == executor) previous = array[i - 1];
+            }
+        }
+        initData = abi.encode(previous, initData);
+
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule, (MODULE_TYPE_FALLBACK, fallbackHandler, initData)
+            IERC7579Account.uninstallModule, (MODULE_TYPE_EXECUTOR, executor, initData)
         );
     }
 }
