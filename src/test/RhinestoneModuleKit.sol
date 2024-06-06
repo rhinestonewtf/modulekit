@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
 import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
 import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
-import { envOr } from "src/test/utils/Vm.sol";
+import { envOr, prank, label, deal, toString } from "src/test/utils/Vm.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
@@ -15,7 +15,6 @@ import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
-import "./utils/Vm.sol";
 import "./utils/ModuleKitCache.sol";
 
 enum AccountType {
