@@ -55,6 +55,13 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     //     }
     // }
 
+    function test_transfer() public {
+        UserOpData memory data = instance.exec({ target: recipient, value: 1 ether, callData: "" });
+        assertTrue(data.userOpHash != "");
+        assertTrue(recipient.balance == 1 ether);
+        assertTrue(data.userOp.sender == instance.account);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 exec
     //////////////////////////////////////////////////////////////////////////*/

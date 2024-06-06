@@ -12,23 +12,23 @@ import { HelperBase } from "./HelperBase.sol";
 
 contract KernelHelpers is HelperBase {
     function getNonce(
-        address account,
-        IEntryPoint,
-        address validator,
-        address defaultValidator
+        AccountInstance memory instance,
+        bytes memory,
+        address txValidator
     )
         public
         view
         virtual
+        override
         returns (uint256 nonce)
     {
         ValidationType vType;
-        if (validator == defaultValidator) {
+        if (txValidator == address(instance.defaultValidator)) {
             vType = VALIDATION_TYPE_ROOT;
         } else {
             vType = VALIDATION_TYPE_VALIDATOR;
         }
-        nonce = encodeNonce(vType, false, account, defaultValidator);
+        nonce = encodeNonce(vType, false, instance.account, txValidator);
     }
 
     /**

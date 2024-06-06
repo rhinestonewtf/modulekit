@@ -149,6 +149,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
+        label(address(counterFactualAddress), toString(salt));
+        deal(counterFactualAddress, 10 ether);
         // Create AccountInstance struct with counterFactualAddress and initCode
         // The initcode will be set to 0, once the account was created by EntryPoint.sol
         instance = _makeAccountInstance(
@@ -172,16 +174,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        label(address(counterFactualAddress), toString(salt));
-        deal(counterFactualAddress, 10 ether);
-        instance = _makeAccountInstance(
-            salt,
-            env,
-            address(accountHelper),
-            counterFactualAddress,
-            initCode4337,
-            address(_defaultValidator)
-        );
+        makeAccountInstance(salt, address(accountHelper), counterFactualAddress, initCode4337);
     }
 
     /**
