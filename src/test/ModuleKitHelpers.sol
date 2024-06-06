@@ -5,7 +5,6 @@ import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
 import { IEntryPoint } from "../external/ERC4337.sol";
 import { ModuleKitUserOp } from "./ModuleKitUserOp.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
-import { ModuleKitCache } from "./utils/ModuleKitCache.sol";
 import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import "./utils/Vm.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
@@ -17,8 +16,7 @@ library ModuleKitHelpers {
 
     function execUserOps(UserOpData memory userOpData) internal {
         // send userOp to entrypoint
-        IEntryPoint entrypoint = ModuleKitCache.getEntrypoint(userOpData.userOp.sender);
-        ERC4337Helpers.exec4337(userOpData.userOp, entrypoint);
+        ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
     }
 
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
@@ -41,6 +39,7 @@ library ModuleKitHelpers {
         );
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
+        userOpData.entrypoint = instance.aux.entrypoint;
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
@@ -60,6 +59,8 @@ library ModuleKitHelpers {
         );
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
+        userOpData.entrypoint = instance.aux.entrypoint;
+
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
@@ -104,6 +105,7 @@ library ModuleKitHelpers {
             instance.getExecOps(target, value, callData, address(instance.defaultValidator));
         // sign userOp with default signature
         userOpData = userOpData.signDefault();
+        userOpData.entrypoint = instance.aux.entrypoint;
         // send userOp to entrypoint
         userOpData.execUserOps();
     }
@@ -200,6 +202,7 @@ library ModuleKitHelpers {
             isInstall: true,
             txValidator: txValidator
         });
+        userOpData.entrypoint = instance.aux.entrypoint;
     }
 
     function getUninstallModuleOps(
@@ -222,6 +225,7 @@ library ModuleKitHelpers {
             isInstall: false,
             txValidator: txValidator
         });
+        userOpData.entrypoint = instance.aux.entrypoint;
     }
 
     function getExecOps(
@@ -241,6 +245,7 @@ library ModuleKitHelpers {
             callData: erc7579ExecCall,
             txValidator: txValidator
         });
+        userOpData.entrypoint = instance.aux.entrypoint;
     }
 
     function getExecOps(
@@ -257,6 +262,7 @@ library ModuleKitHelpers {
             callData: erc7579ExecCall,
             txValidator: txValidator
         });
+        userOpData.entrypoint = instance.aux.entrypoint;
     }
 
     // function getExecOps(

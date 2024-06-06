@@ -15,7 +15,7 @@ import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
-import "./utils/ModuleKitCache.sol";
+import { IEntryPoint } from "../external/ERC4337.sol";
 
 enum AccountType {
     DEFAULT,
@@ -250,8 +250,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             defaultValidator: IERC7579Validator(validator),
             initCode: initCode
         });
-
-        ModuleKitCache.logEntrypoint(instance.account, auxiliary.entrypoint);
     }
 
     function setAccountType(AccountType _env) public {
