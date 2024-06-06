@@ -143,7 +143,7 @@ contract SafeHelpers is HelperBase {
         returns (bytes memory callData)
     {
         callData = abi.encodeCall(
-            IERC7579Account.uninstallModule,
+            IERC7579Account.installModule,
             (
                 MODULE_TYPE_FALLBACK,
                 fallbackHandler,
