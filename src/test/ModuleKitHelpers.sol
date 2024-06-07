@@ -86,21 +86,6 @@ library ModuleKitHelpers {
         return exec(instance, target, 0, callData);
     }
 
-    function deployAccount(AccountInstance memory instance) internal {
-        if (instance.account.code.length == 0) {
-            if (instance.initCode.length == 0) {
-                revert("deployAccount: no initCode provided");
-            } else {
-                bytes memory initCode = instance.initCode;
-                assembly {
-                    let factory := mload(add(initCode, 20))
-                    let success := call(gas(), factory, 0, add(initCode, 52), mload(initCode), 0, 0)
-                    if iszero(success) { revert(0, 0) }
-                }
-            }
-        }
-    }
-
     /*//////////////////////////////////////////////////////////////////////////
                                 MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
@@ -268,8 +253,33 @@ library ModuleKitHelpers {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                     UTILS
+                                ACCOUNT UTILS
     //////////////////////////////////////////////////////////////////////////*/
+
+    function deployAccount(AccountInstance memory instance) internal {
+        HelperBase(instance.accountHelper).deployAccount(instance);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                SIGNATURE UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function isValidSignature(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash,
+        bytes memory signature
+    )
+        internal
+        returns (bool)
+    {
+        return HelperBase(instance.accountHelper).isValidSignature({
+            instance: instance,
+            validator: validator,
+            hash: hash,
+            signature: signature
+        });
+    }
 
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
         userOpData.userOp.signature = "DEFAULT SIGNATURE";

@@ -5,7 +5,7 @@ pragma solidity ^0.8.23;
 /*//////////////////////////////////////////////////////////////
                              ERCs
 //////////////////////////////////////////////////////////////*/
-import { IERC1271 } from "module-bases/interfaces/IERC1271.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "module-bases/interfaces/IERC1271.sol";
 import { IERC7484 } from "module-bases/interfaces/IERC7484.sol";
 
 /*//////////////////////////////////////////////////////////////

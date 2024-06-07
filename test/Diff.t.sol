@@ -38,23 +38,6 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         vm.deal(instance.account, 1000 ether);
     }
 
-    // function fund() internal {
-    //     for (uint256 i; i < diffAccounts.length; i++) {
-    //         instance = diffAccounts[i];
-    //         deal(address(token), instance.account, 100 ether);
-    //         vm.deal(instance.account, 1000 ether);
-    //     }
-    // }
-    //
-    // modifier () {
-    //     uint256 snapshot = vm.snapshot(); // saves the state
-    //     for (uint256 i; i < diffAccounts.length; i++) {
-    //         instance = diffAccounts[i];
-    //         _;
-    //         vm.revertTo(snapshot);
-    //     }
-    // }
-
     function test_transfer() public {
         UserOpData memory data = instance.exec({ target: recipient, value: 1 ether, callData: "" });
         assertTrue(data.userOpHash != "");
@@ -269,5 +252,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     function testSimulateUserOp() public {
         writeSimulateUserOp(true);
         testexec__Given__TwoInputs();
+    }
+
+    function testERC1271() public {
+        bool isValid = instance.isValidSignature({
+            validator: address(instance.defaultValidator),
+            hash: keccak256("test"),
+            signature: bytes("test")
+        });
+        assertTrue(isValid);
     }
 }

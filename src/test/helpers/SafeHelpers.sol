@@ -17,6 +17,8 @@ import { HookType } from "safe7579/DataTypes.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { CALLTYPE_STATIC } from "safe7579/lib/ModeLib.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
+import { startPrank, stopPrank } from "../utils/Vm.sol";
 
 contract SafeHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -265,6 +267,77 @@ contract SafeHelpers is HelperBase {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
+                                SIGNATURE UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function isValidSignature(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash,
+        bytes memory signature
+    )
+        public
+        virtual
+        override
+        deployAccountForAction(instance)
+        returns (bool isValid)
+    {
+        isValid = IERC1271(instance.account).isValidSignature(
+            hash, abi.encodePacked(validator, signature)
+        ) == EIP1271_MAGIC_VALUE;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                ACCOUNT UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function deployAccount(AccountInstance memory instance) public virtual override {
+        if (instance.account.code.length == 0) {
+            if (instance.initCode.length == 0) {
+                revert("deployAccount: no initCode provided");
+            } else {
+                (bytes memory initCode, bytes memory callData) = _getInitCallData(
+                    instance.salt,
+                    address(instance.defaultValidator),
+                    instance.initCode,
+                    encode({ target: address(1), value: 1 wei, callData: "" })
+                );
+                assembly {
+                    let factory := mload(add(initCode, 20))
+                    let success := call(gas(), factory, 0, add(initCode, 52), mload(initCode), 0, 0)
+                    if iszero(success) { revert(0, 0) }
+                }
+                PackedUserOperation memory userOp = PackedUserOperation({
+                    sender: instance.account,
+                    nonce: getNonce(instance, callData, address(instance.defaultValidator)),
+                    initCode: "",
+                    callData: callData,
+                    accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+                    preVerificationGas: 2e6,
+                    gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
+                    paymasterAndData: bytes(""),
+                    signature: bytes("")
+                });
+                bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+                bytes memory userOpValidationCallData =
+                    abi.encodeCall(Safe7579Launchpad.validateUserOp, (userOp, userOpHash, 0));
+                startPrank(address(instance.aux.entrypoint));
+                (bool success,) = instance.account.call(userOpValidationCallData);
+                if (!success) {
+                    revert("deployAccount: failed to call account");
+                }
+
+                (success,) = instance.account.call(callData);
+
+                if (!success) {
+                    revert("deployAccount: failed to call account");
+                }
+                stopPrank();
+            }
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                                     INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -285,8 +358,6 @@ contract SafeHelpers is HelperBase {
         Safe7579Launchpad.InitData memory initData = abi.decode(
             IAccountFactory(factory).getInitData(txValidator, ""), (Safe7579Launchpad.InitData)
         );
-        // Safe7579Launchpad.InitData memory initData =
-        //     abi.decode(_initCode, (Safe7579Launchpad.InitData));
         initData.callData = erc4337CallData;
         initCode = abi.encodePacked(
             factory, abi.encodeCall(SafeFactory.createAccount, (salt, abi.encode(initData)))

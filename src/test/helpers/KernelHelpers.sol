@@ -22,6 +22,7 @@ import { HelperBase } from "./HelperBase.sol";
 import { Kernel } from "kernel/Kernel.sol";
 import { etch } from "../utils/Vm.sol";
 import { IValidator } from "kernel/interfaces/IERC7579Modules.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -224,5 +225,27 @@ contract KernelHelpers is HelperBase {
         }
 
         return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                SIGNATURE UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function isValidSignature(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash,
+        bytes memory signature
+    )
+        public
+        virtual
+        override
+        deployAccountForAction(instance)
+        returns (bool isValid)
+    {
+        isValid = IERC1271(instance.account).isValidSignature(
+            hash,
+            abi.encodePacked(ValidatorLib.validatorToIdentifier(IValidator(validator)), signature)
+        ) == EIP1271_MAGIC_VALUE;
     }
 }
