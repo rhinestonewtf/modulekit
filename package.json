@@ -21,6 +21,7 @@
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
+    "test:accounts": "forge test && ACCOUNT_TYPE=SAFE forge test && ACCOUNT_TYPE=KERNEL forge test",
     "changeset": "changeset",
     "changeset:release": "pnpm build && changeset publish",
     "changeset:version": "changeset version && pnpm install --lockfile-only"
