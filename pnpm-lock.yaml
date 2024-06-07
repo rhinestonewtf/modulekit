@@ -22,7 +22,7 @@ importers:
         version: 0.0.1-alpha.2(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)
       '@rhinestone/module-bases':
         specifier: github:rhinestonewtf/module-bases
-        version: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/ff1811e1b5fe009221a9340d4eee40e8d5cbf5a5(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
+        version: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/94ee72d4fdc002adf2e67574351f21830b61fcba(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       '@rhinestone/safe7579':
         specifier: github:rhinestonewtf/safe7579
         version: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/90dd3637f26352158a2aa4562d75d47dada9fcbe(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
@@ -436,8 +436,8 @@ packages:
   '@rhinestone/erc4337-validation@0.0.1-alpha.2':
     resolution: {integrity: sha512-sxBSHoR0hV0rN2bv5HfINHR3RyBChfd0OWH0TP8nlA9FolJ1EezLByxcyrvAgi2QLQ2Zf2zVcNky1qYdfF4NjQ==}
 
-  '@rhinestone/module-bases@https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/ff1811e1b5fe009221a9340d4eee40e8d5cbf5a5':
-    resolution: {tarball: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/ff1811e1b5fe009221a9340d4eee40e8d5cbf5a5}
+  '@rhinestone/module-bases@https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/94ee72d4fdc002adf2e67574351f21830b61fcba':
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/94ee72d4fdc002adf2e67574351f21830b61fcba}
     version: 0.0.1
 
   '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/90dd3637f26352158a2aa4562d75d47dada9fcbe':
@@ -3311,7 +3311,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@rhinestone/module-bases@https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/ff1811e1b5fe009221a9340d4eee40e8d5cbf5a5(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))':
+  '@rhinestone/module-bases@https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/94ee72d4fdc002adf2e67574351f21830b61fcba(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))':
     dependencies:
       '@ERC4337/account-abstraction': accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       erc7579: erc7579-implementation@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/338bf8af011aa1588b5e1b2a19d1d7ead33bf779(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
@@ -3329,7 +3329,7 @@ snapshots:
   '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/90dd3637f26352158a2aa4562d75d47dada9fcbe(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))':
     dependencies:
       '@ERC4337/account-abstraction': accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
-      '@rhinestone/module-bases': https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/ff1811e1b5fe009221a9340d4eee40e8d5cbf5a5(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
+      '@rhinestone/module-bases': https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/94ee72d4fdc002adf2e67574351f21830b61fcba(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       '@rhinestone/sentinellist': https://codeload.github.com/rhinestonewtf/sentinellist/tar.gz/446b16c3ec5ba1d0acd730ecf2bebd2ac48f915f
       '@safe-global/safe-contracts': 1.4.1(ethers@5.7.2)
       ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
