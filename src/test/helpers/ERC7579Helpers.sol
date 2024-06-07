@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { Execution, IERC7579Account } from "../../external/ERC7579.sol";
-import "erc7579/lib/ModeLib.sol";
-import "erc7579/interfaces/IERC7579Module.sol";
-import { PackedUserOperation } from "../../external/ERC4337.sol";
+// note: removing the first import will cause a build error
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import "../utils/Vm.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 
 contract ERC7579Helpers is HelperBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                    MODULE CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
     /**
      * get callData to uninstall validator on ERC7579 Account
      */

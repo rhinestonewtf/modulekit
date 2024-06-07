@@ -11,7 +11,7 @@ import { IEntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/interfaces/IEntryPointSimulations.sol";
 import { etchRegistry } from "./predeploy/Registry.sol";
 import { MockFactory } from "./predeploy/MockFactory.sol";
-import { UserOpGasLog } from "./utils/UserOpGasLog.sol";
+import { UserOpGasLog } from "./utils/gas/UserOpGasLog.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 

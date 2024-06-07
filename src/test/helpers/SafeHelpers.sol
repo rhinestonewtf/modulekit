@@ -19,6 +19,49 @@ import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.
 import { CALLTYPE_STATIC } from "safe7579/lib/ModeLib.sol";
 
 contract SafeHelpers is HelperBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                    EXECUTIONS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function execUserOp(
+        AccountInstance memory instance,
+        bytes memory callData,
+        address txValidator
+    )
+        public
+        virtual
+        override
+        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
+    {
+        bytes memory initCode;
+        bool notDeployedYet = instance.account.code.length == 0;
+        if (notDeployedYet) {
+            initCode = instance.initCode;
+        }
+
+        if (initCode.length != 0) {
+            (initCode, callData) = _getInitCallData(instance.salt, txValidator, initCode, callData);
+        }
+
+        userOp = PackedUserOperation({
+            sender: instance.account,
+            nonce: getNonce(instance, callData, txValidator),
+            initCode: initCode,
+            callData: callData,
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    MODULE CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
     /**
      * get callData to uninstall validator on ERC7579 Account
      */
@@ -148,41 +191,6 @@ contract SafeHelpers is HelperBase {
         data = abi.encode(bytes4(0x0), initData);
     }
 
-    function execUserOp(
-        AccountInstance memory instance,
-        bytes memory callData,
-        address txValidator
-    )
-        public
-        virtual
-        override
-        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
-    {
-        bytes memory initCode;
-        bool notDeployedYet = instance.account.code.length == 0;
-        if (notDeployedYet) {
-            initCode = instance.initCode;
-        }
-
-        if (initCode.length != 0) {
-            (initCode, callData) = getInitCallData(instance.salt, txValidator, initCode, callData);
-        }
-
-        userOp = PackedUserOperation({
-            sender: instance.account,
-            nonce: getNonce(instance, callData, txValidator),
-            initCode: initCode,
-            callData: callData,
-            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
-            preVerificationGas: 2e6,
-            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-
-        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-    }
-
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -219,7 +227,7 @@ contract SafeHelpers is HelperBase {
         }
 
         if (initCode.length != 0) {
-            (initCode, callData) = getInitCallData(instance.salt, txValidator, initCode, callData);
+            (initCode, callData) = _getInitCallData(instance.salt, txValidator, initCode, callData);
         }
 
         userOp = PackedUserOperation({
@@ -237,7 +245,30 @@ contract SafeHelpers is HelperBase {
         userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
     }
 
-    function getInitCallData(
+    function isModuleInstalled(
+        AccountInstance memory instance,
+        uint256 moduleTypeId,
+        address module,
+        bytes memory data
+    )
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        if (moduleTypeId == MODULE_TYPE_HOOK) {
+            data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
+        }
+
+        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function _getInitCallData(
         bytes32 salt,
         address txValidator,
         bytes memory originalInitCode,
@@ -261,24 +292,5 @@ contract SafeHelpers is HelperBase {
             factory, abi.encodeCall(SafeFactory.createAccount, (salt, abi.encode(initData)))
         );
         callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
-    }
-
-    function isModuleInstalled(
-        AccountInstance memory instance,
-        uint256 moduleTypeId,
-        address module,
-        bytes memory data
-    )
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
-        if (moduleTypeId == MODULE_TYPE_HOOK) {
-            data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
-        }
-
-        return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
     }
 }
