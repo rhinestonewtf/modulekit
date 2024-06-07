@@ -31,12 +31,13 @@ library ERC4337Helpers {
         // Execute userOps
         address payable beneficiary = payable(address(0x69));
         bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
-        (bool success,) = address(onEntryPoint).call(userOpCalldata);
+        (bool success, bytes memory data) = address(onEntryPoint).call(userOpCalldata);
 
         uint256 isExpectRevert = getExpectRevert();
         if (isExpectRevert != 0) {
             require(success, "UserOperation execution failed");
-            // todo: check message
+            bytes memory revertMessage = getExpectRevertMessage();
+            checkRevertMessage(revertMessage, data);
         }
 
         // Parse logs and determine if a revert happened
@@ -52,14 +53,15 @@ library ERC4337Helpers {
                     abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
                 totalUserOpGas = actualGasUsed;
                 if (!userOpSuccess) {
+                    bytes32 userOpHash = logs[i].topics[1];
+                    bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
                     if (isExpectRevert == 0) {
-                        bytes32 userOpHash = logs[i].topics[1];
-                        bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
-                        // todo: check message
                         revert UserOperationReverted(
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
                     } else {
+                        bytes memory revertMessage = getExpectRevertMessage();
+                        checkRevertMessage(revertMessage, revertReason);
                         clearExpectRevert();
                     }
                 }
@@ -84,6 +86,16 @@ library ERC4337Helpers {
 
         for (uint256 i; i < userOps.length; i++) {
             emit ModuleKitLogs.ModuleKit_Exec4337(userOps[i].sender);
+        }
+    }
+
+    function checkRevertMessage(bytes memory revertMessage, bytes memory revertReason) internal {
+        if (revertMessage.length == 4) {
+            bytes4 expected = abi.decode(getExpectRevertMessage(), (bytes4));
+            bytes4 reason = abi.decode(revertReason, (bytes4));
+            require(expected == reason, "Invalid revert message");
+        } else {
+            require(keccak256(revertMessage) == keccak256(revertReason), "Invalid revert message");
         }
     }
 
