@@ -36,6 +36,6 @@ contract AuxiliaryFactory {
         auxiliary.registry = etchRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
         auxiliary.hookMultiPlexer = new MockHookMultiPlexer();
-        label(address(auxiliary.hookMultiPlexer), "Hook MultiPlexer");
+        label(address(auxiliary.hookMultiPlexer), "HookMultiPlexer");
     }
 }
