@@ -23,8 +23,9 @@ import { Kernel } from "kernel/Kernel.sol";
 import { etch } from "../utils/Vm.sol";
 import { IValidator } from "kernel/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType } from "src/external/ERC7579.sol";
+import { CallType, Execution } from "src/external/ERC7579.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
+import { TrustedForwarder } from "src/Modules.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -213,11 +214,20 @@ contract KernelHelpers is HelperBase {
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_HOOK) {
-            callData = encode({
+            Execution[] memory executions = new Execution[](2);
+            executions[0] = Execution({
                 target: address(instance.aux.hookMultiPlexer),
                 value: 0,
                 callData: abi.encodeCall(MockHookMultiPlexer.addHook, (module))
             });
+            executions[1] = Execution({
+                target: module,
+                value: 0,
+                callData: abi.encodeCall(
+                    TrustedForwarder.setTrustedForwarder, (address(instance.aux.hookMultiPlexer))
+                )
+            });
+            callData = encode({ executions: executions });
         } else {
             callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
         }
