@@ -5,8 +5,10 @@ pragma solidity ^0.8.23;
 /*//////////////////////////////////////////////////////////////
                              Aux
 //////////////////////////////////////////////////////////////*/
+
 import { MockRegistry } from "module-bases/mocks/MockRegistry.sol";
 import { MockTarget } from "module-bases/mocks/MockTarget.sol";
+import { MockHookMultiPlexer } from "module-bases/mocks/MockHookMultiPlexer.sol";
 
 /*//////////////////////////////////////////////////////////////
                              Modules

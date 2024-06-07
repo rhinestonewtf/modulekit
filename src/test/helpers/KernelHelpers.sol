@@ -24,6 +24,7 @@ import { etch } from "../utils/Vm.sol";
 import { IValidator } from "kernel/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { CallType } from "src/external/ERC7579.sol";
+import { MockHookMultiPlexer } from "src/Mocks.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -119,8 +120,8 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
      */
     function getInstallValidatorData(
-        address, /* account */
-        address, /* module */
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -129,7 +130,10 @@ contract KernelHelpers is HelperBase {
         override
         returns (bytes memory data)
     {
-        data = abi.encodePacked(address(0), abi.encode(initData, abi.encodePacked("")));
+        data = abi.encodePacked(
+            address(instance.aux.hookMultiPlexer),
+            abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
+        );
     }
 
     /**
@@ -137,8 +141,8 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L324-L334
      */
     function getInstallExecutorData(
-        address, /* account */
-        address, /* module */
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -147,7 +151,10 @@ contract KernelHelpers is HelperBase {
         override
         returns (bytes memory data)
     {
-        data = abi.encodePacked(address(0), abi.encode(initData, abi.encodePacked("")));
+        data = abi.encodePacked(
+            address(instance.aux.hookMultiPlexer),
+            abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
+        );
     }
 
     /**
@@ -155,8 +162,8 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L336-L345
      */
     function getInstallFallbackData(
-        address, /* account */
-        address, /* module */
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -169,8 +176,8 @@ contract KernelHelpers is HelperBase {
             abi.decode(initData, (bytes4, CallType, bytes));
         data = abi.encodePacked(
             selector,
-            address(0),
-            abi.encode(abi.encodePacked(callType, _initData), abi.encodePacked(""))
+            address(instance.aux.hookMultiPlexer),
+            abi.encode(abi.encodePacked(callType, _initData), abi.encodePacked(bytes1(0x00), ""))
         );
     }
 
@@ -179,8 +186,8 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
      */
     function getUninstallFallbackData(
-        address, /* account */
-        address, /* module */
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -193,23 +200,51 @@ contract KernelHelpers is HelperBase {
         data = abi.encodePacked(selector, _initData);
     }
 
-    function isModuleInstalled(
+    function getInstallModuleCallData(
         AccountInstance memory instance,
-        uint256 moduleTypeId,
-        address module
+        uint256 moduleType,
+        address module,
+        bytes memory initData
     )
         public
         view
         virtual
         override
-        returns (bool)
+        returns (bytes memory callData)
     {
-        if (moduleTypeId == MODULE_TYPE_HOOK) {
-            return true;
+        if (moduleType == MODULE_TYPE_HOOK) {
+            callData = encode({
+                target: address(instance.aux.hookMultiPlexer),
+                value: 0,
+                callData: abi.encodeCall(MockHookMultiPlexer.addHook, (module))
+            });
+        } else {
+            callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
         }
-        bytes memory data;
+    }
 
-        return isModuleInstalled(instance, moduleTypeId, module, data);
+    function getUninstallModuleCallData(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory callData)
+    {
+        if (moduleType == MODULE_TYPE_HOOK) {
+            callData = encode({
+                target: address(instance.aux.hookMultiPlexer),
+                value: 0,
+                callData: abi.encodeCall(MockHookMultiPlexer.removeHook, (module))
+            });
+        } else {
+            callData =
+                abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
+        }
     }
 
     function isModuleInstalled(
@@ -225,7 +260,7 @@ contract KernelHelpers is HelperBase {
         returns (bool)
     {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
-            return true;
+            return instance.aux.hookMultiPlexer.isHookInstalled(instance.account, module);
         }
 
         return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);

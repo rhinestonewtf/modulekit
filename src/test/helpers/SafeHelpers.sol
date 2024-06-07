@@ -69,8 +69,8 @@ contract SafeHelpers is HelperBase {
      * get callData to uninstall validator on ERC7579 Account
      */
     function getUninstallValidatorData(
-        address account,
-        address validator,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -83,15 +83,15 @@ contract SafeHelpers is HelperBase {
         address previous;
 
         (address[] memory array,) =
-            IAccountModulesPaginated(account).getValidatorPaginated(address(0x1), 100);
+            IAccountModulesPaginated(instance.account).getValidatorPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
-        } else if (array[0] == validator) {
+        } else if (array[0] == module) {
             previous = address(0x1);
         } else {
             for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == validator) previous = array[i - 1];
+                if (array[i] == module) previous = array[i - 1];
             }
         }
         data = abi.encode(previous, initData);
@@ -101,8 +101,8 @@ contract SafeHelpers is HelperBase {
      * get callData to uninstall executor on ERC7579 Account
      */
     function getUninstallExecutorData(
-        address account,
-        address executor,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -115,15 +115,15 @@ contract SafeHelpers is HelperBase {
         address previous;
 
         (address[] memory array,) =
-            IAccountModulesPaginated(account).getExecutorsPaginated(address(0x1), 100);
+            IAccountModulesPaginated(instance.account).getExecutorsPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
-        } else if (array[0] == executor) {
+        } else if (array[0] == module) {
             previous = address(0x1);
         } else {
             for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == executor) previous = array[i - 1];
+                if (array[i] == module) previous = array[i - 1];
             }
         }
         data = abi.encode(previous, initData);
@@ -133,8 +133,8 @@ contract SafeHelpers is HelperBase {
      * get callData to install hook on ERC7579 Account
      */
     function getInstallHookData(
-        address, /* account */
-        address hook,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -150,8 +150,8 @@ contract SafeHelpers is HelperBase {
      * get callData to uninstall hook on ERC7579 Account
      */
     function getUninstallHookData(
-        address, /* account */
-        address hook,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -167,8 +167,8 @@ contract SafeHelpers is HelperBase {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function getUninstallFallbackData(
-        address, /* account */
-        address fallbackHandler,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public

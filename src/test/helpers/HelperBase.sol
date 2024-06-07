@@ -72,7 +72,12 @@ abstract contract HelperBase {
                 module: module,
                 initData: initData
             });
-            callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
+            callData = getInstallModuleCallData({
+                instance: instance,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
         } else {
             initData = getUninstallModuleData({
                 instance: instance,
@@ -80,8 +85,12 @@ abstract contract HelperBase {
                 module: module,
                 initData: initData
             });
-            callData =
-                abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
+            callData = getUninstallModuleCallData({
+                instance: instance,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
         }
 
         userOp = PackedUserOperation({
@@ -99,12 +108,40 @@ abstract contract HelperBase {
         userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
     }
 
+    function getInstallModuleCallData(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
+    }
+
+    function getUninstallModuleCallData(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (bytes memory callData)
+    {
+        callData = abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
+    }
+
     /**
      * get callData to install validator on ERC7579 Account
      */
     function getInstallValidatorData(
-        address, /* account */
-        address validator,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -119,8 +156,8 @@ abstract contract HelperBase {
      * get callData to uninstall validator on ERC7579 Account
      */
     function getUninstallValidatorData(
-        address account,
-        address validator,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -135,8 +172,8 @@ abstract contract HelperBase {
      * get callData to install executor on ERC7579 Account
      */
     function getInstallExecutorData(
-        address, /* account */
-        address executor,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -151,8 +188,8 @@ abstract contract HelperBase {
      * get callData to uninstall executor on ERC7579 Account
      */
     function getUninstallExecutorData(
-        address account,
-        address executor,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -167,8 +204,8 @@ abstract contract HelperBase {
      * get callData to install hook on ERC7579 Account
      */
     function getInstallHookData(
-        address, /* account */
-        address hook,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -183,8 +220,8 @@ abstract contract HelperBase {
      * get callData to uninstall hook on ERC7579 Account
      */
     function getUninstallHookData(
-        address, /* account */
-        address hook,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -199,8 +236,8 @@ abstract contract HelperBase {
      * get callData to install fallback on ERC7579 Account
      */
     function getInstallFallbackData(
-        address, /* account */
-        address fallbackHandler,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -215,8 +252,8 @@ abstract contract HelperBase {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function getUninstallFallbackData(
-        address, /* account */
-        address fallbackHandler,
+        AccountInstance memory instance,
+        address module,
         bytes memory initData
     )
         public
@@ -268,13 +305,16 @@ abstract contract HelperBase {
         returns (bytes memory)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
-            return getInstallValidatorData(instance.account, module, initData);
+            return
+                getInstallValidatorData({ instance: instance, module: module, initData: initData });
         } else if (moduleType == MODULE_TYPE_EXECUTOR) {
-            return getInstallExecutorData(instance.account, module, initData);
+            return
+                getInstallExecutorData({ instance: instance, module: module, initData: initData });
         } else if (moduleType == MODULE_TYPE_HOOK) {
-            return getInstallHookData(instance.account, module, initData);
+            return getInstallHookData({ instance: instance, module: module, initData: initData });
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
-            return getInstallFallbackData(instance.account, module, initData);
+            return
+                getInstallFallbackData({ instance: instance, module: module, initData: initData });
         } else {
             revert("Invalid module type");
         }
@@ -292,13 +332,19 @@ abstract contract HelperBase {
         returns (bytes memory)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
-            return getUninstallValidatorData(instance.account, module, initData);
+            return getUninstallValidatorData({
+                instance: instance,
+                module: module,
+                initData: initData
+            });
         } else if (moduleType == MODULE_TYPE_EXECUTOR) {
-            return getUninstallExecutorData(instance.account, module, initData);
+            return
+                getUninstallExecutorData({ instance: instance, module: module, initData: initData });
         } else if (moduleType == MODULE_TYPE_HOOK) {
-            return getUninstallHookData(instance.account, module, initData);
+            return getUninstallHookData({ instance: instance, module: module, initData: initData });
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
-            return getUninstallFallbackData(instance.account, module, initData);
+            return
+                getUninstallFallbackData({ instance: instance, module: module, initData: initData });
         } else {
             revert("Invalid module type");
         }
