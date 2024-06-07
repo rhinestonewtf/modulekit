@@ -19,6 +19,7 @@ import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.
 import { CALLTYPE_STATIC } from "safe7579/lib/ModeLib.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { startPrank, stopPrank } from "../utils/Vm.sol";
+import { CallType } from "src/external/ERC7579.sol";
 
 contract SafeHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -162,20 +163,6 @@ contract SafeHelpers is HelperBase {
         data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
     }
 
-    function getInstallFallbackData(
-        address, /* account */
-        address fallbackHandler,
-        bytes memory initData
-    )
-        public
-        pure
-        virtual
-        override
-        returns (bytes memory data)
-    {
-        data = abi.encode(bytes4(0x0), CALLTYPE_STATIC, initData);
-    }
-
     /**
      * get callData to uninstall fallback on ERC7579 Account
      */
@@ -190,7 +177,8 @@ contract SafeHelpers is HelperBase {
         override
         returns (bytes memory data)
     {
-        data = abi.encode(bytes4(0x0), initData);
+        (bytes4 selector,, bytes memory _initData) = abi.decode(initData, (bytes4, CallType, bytes));
+        data = abi.encode(selector, _initData);
     }
 
     function configModuleUserOp(
@@ -213,19 +201,22 @@ contract SafeHelpers is HelperBase {
 
         bytes memory callData;
         if (isInstall) {
-            callData = installModule({
-                account: instance.account,
+            initData = getInstallModuleData({
+                instance: instance,
                 moduleType: moduleType,
                 module: module,
                 initData: initData
             });
+            callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
         } else {
-            callData = uninstallModule({
-                account: instance.account,
+            initData = getUninstallModuleData({
+                instance: instance,
                 moduleType: moduleType,
                 module: module,
                 initData: initData
             });
+            callData =
+                abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
         }
 
         if (initCode.length != 0) {

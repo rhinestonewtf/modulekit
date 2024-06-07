@@ -14,6 +14,7 @@ import { MockTarget } from "module-bases/mocks/MockTarget.sol";
 import { MockValidator } from "module-bases/mocks/MockValidator.sol";
 import { MockExecutor } from "module-bases/mocks/MockExecutor.sol";
 import { MockHook } from "module-bases/mocks/MockHook.sol";
+import { MockFallback } from "module-bases/mocks/MockFallback.sol";
 
 /*//////////////////////////////////////////////////////////////
                              Tokens

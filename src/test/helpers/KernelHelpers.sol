@@ -23,6 +23,7 @@ import { Kernel } from "kernel/Kernel.sol";
 import { etch } from "../utils/Vm.sol";
 import { IValidator } from "kernel/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
+import { CallType } from "src/external/ERC7579.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -164,10 +165,12 @@ contract KernelHelpers is HelperBase {
         override
         returns (bytes memory data)
     {
+        (bytes4 selector, CallType callType, bytes memory _initData) =
+            abi.decode(initData, (bytes4, CallType, bytes));
         data = abi.encodePacked(
-            MockFallback.fallbackFunction.selector,
+            selector,
             address(0),
-            abi.encode(initData, abi.encodePacked(""))
+            abi.encode(abi.encodePacked(callType, _initData), abi.encodePacked(""))
         );
     }
 
@@ -178,7 +181,7 @@ contract KernelHelpers is HelperBase {
     function getUninstallFallbackData(
         address, /* account */
         address, /* module */
-        bytes memory deinitData
+        bytes memory initData
     )
         public
         pure
@@ -186,7 +189,8 @@ contract KernelHelpers is HelperBase {
         override
         returns (bytes memory data)
     {
-        data = abi.encodePacked(MockFallback.fallbackFunction.selector, deinitData);
+        (bytes4 selector,, bytes memory _initData) = abi.decode(initData, (bytes4, CallType, bytes));
+        data = abi.encodePacked(selector, _initData);
     }
 
     function isModuleInstalled(

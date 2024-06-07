@@ -6,7 +6,11 @@ import "./BaseTest.t.sol";
 import "src/Mocks.sol";
 import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 import {
-    MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR, MODULE_TYPE_HOOK
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_FALLBACK,
+    CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
@@ -14,8 +18,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitUserOp for *;
 
     MockValidator internal validator;
-    MockHook internal hook;
     MockExecutor internal executor;
+    MockFallback internal fallbackHandler;
+    MockHook internal hook;
     MockTarget internal mockTarget;
 
     MockERC20 internal token;
@@ -29,6 +34,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         validator = new MockValidator();
         hook = new MockHook();
         executor = new MockExecutor();
+        fallbackHandler = new MockFallback();
         mockTarget = new MockTarget();
 
         // Setup aux
@@ -180,25 +186,53 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(hookEnabled);
     }
 
-    // Todo: remove hook, add and remove fallback
+    function testRemoveHook() public {
+        instance.installModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
 
-    // function testAddFallback() public {
-    //     TokenReceiver handler = new TokenReceiver();
-    //     bytes4 functionSig = IERC721TokenReceiver.onERC721Received.selector;
-    //
-    //     bytes memory callData = abi.encodeWithSelector(
-    //         functionSig, makeAddr("foo"), makeAddr("foo"), uint256(1), bytes("foo")
-    //     );
-    //
-    //     instance.addFallback({
-    //         handleFunctionSig: functionSig,
-    //         isStatic: true,
-    //         handler: address(handler)
-    //     });
-    //
-    //     (bool success,) = instance.account.call(callData);
-    //     assertTrue(success);
-    // }
+        bool hookEnabled = instance.isModuleInstalled(MODULE_TYPE_HOOK, address(hook));
+        assertTrue(hookEnabled);
+
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_HOOK, module: address(hook), data: "" });
+        hookEnabled = instance.isModuleInstalled(MODULE_TYPE_HOOK, address(hook));
+        assertFalse(hookEnabled);
+    }
+
+    function testAddFallback() public {
+        bytes memory fallbackData = abi.encode(bytes4(keccak256("foo()")), CALLTYPE_SINGLE, "");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_FALLBACK,
+            module: address(fallbackHandler),
+            data: fallbackData
+        });
+
+        bool fallbackEnabled =
+            instance.isModuleInstalled(MODULE_TYPE_FALLBACK, address(fallbackHandler), fallbackData);
+        assertTrue(fallbackEnabled);
+    }
+
+    function testRemoveFallback() public {
+        bytes memory fallbackData = abi.encode(bytes4(keccak256("foo()")), CALLTYPE_SINGLE, "");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_FALLBACK,
+            module: address(fallbackHandler),
+            data: fallbackData
+        });
+
+        bool fallbackEnabled =
+            instance.isModuleInstalled(MODULE_TYPE_FALLBACK, address(fallbackHandler), fallbackData);
+        assertTrue(fallbackEnabled);
+
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_FALLBACK,
+            module: address(fallbackHandler),
+            data: fallbackData
+        });
+        fallbackEnabled =
+            instance.isModuleInstalled(MODULE_TYPE_FALLBACK, address(fallbackHandler), fallbackData);
+        assertFalse(fallbackEnabled);
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 UTILS
