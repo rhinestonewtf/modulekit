@@ -6,7 +6,7 @@ import {
     EntryPointSimulations,
     IEntryPointSimulations
 } from "src/external/ERC4337.sol";
-import "./Log.sol";
+import "../Log.sol";
 
 contract UserOpGasLog {
     EntryPointSimulations public immutable simulation = new EntryPointSimulations();

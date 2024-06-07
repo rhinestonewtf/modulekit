@@ -11,11 +11,10 @@ import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { SafeHelpers } from "./helpers/SafeHelpers.sol";
 import { KernelHelpers } from "./helpers/KernelHelpers.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
-import { PackedUserOperation, IStakeManager } from "../external/ERC4337.sol";
+import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
-import { IEntryPoint } from "../external/ERC4337.sol";
 
 enum AccountType {
     DEFAULT,
@@ -46,6 +45,10 @@ string constant KERNEL = "KERNEL";
 string constant CUSTOM = "CUSTOM";
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
+    /*//////////////////////////////////////////////////////////////////////////
+                            CONSTANTS & STORAGE
+    //////////////////////////////////////////////////////////////////////////*/
+
     bool internal isInit;
     MockValidator public _defaultValidator;
 
@@ -63,6 +66,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     AccountType public env;
 
     error InvalidAccountType();
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     SETUP
+    //////////////////////////////////////////////////////////////////////////*/
 
     /**
      * Initializes Auxiliary and /src/core
@@ -131,6 +138,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         _;
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                MAKE INSTANCE
+    //////////////////////////////////////////////////////////////////////////*/
+
     function makeAccountInstance(
         bytes32 salt,
         address account,
@@ -155,11 +166,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         setAccountType(AccountType.CUSTOM);
     }
 
-    /**
-     * create new AccountInstance with modulekit defaults
-     *
-     * @param salt account salt / name
-     */
     function makeAccountInstance(
         bytes32 salt,
         address account,
@@ -177,11 +183,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         });
     }
 
-    /**
-     * create new AccountInstance with modulekit defaults
-     *
-     * @param salt account salt / name
-     */
     function makeAccountInstance(bytes32 salt)
         internal
         initializeModuleKit
@@ -230,6 +231,22 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         setAccountType(AccountType.CUSTOM);
     }
 
+    /*//////////////////////////////////////////////////////////////////////////
+                                ACCOUNT TYPE
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function setAccountType(AccountType _env) public {
+        env = _env;
+    }
+
+    function getAccountType() public view returns (AccountType) {
+        return env;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
     function _makeAccountInstance(
         bytes32 salt,
         address account,
@@ -250,13 +267,5 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             defaultValidator: IERC7579Validator(validator),
             initCode: initCode
         });
-    }
-
-    function setAccountType(AccountType _env) public {
-        env = _env;
-    }
-
-    function getAccountType() public view returns (AccountType) {
-        return env;
     }
 }

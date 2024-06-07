@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import { UD60x18, ud, intoUint256 } from "@prb/math/UD60x18.sol";
 import { PRBMathCastingUint256 } from "@prb/math/casting/Uint256.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
-import { parseJson, toString } from "./Vm.sol";
+import { parseJson, toString } from "../Vm.sol";
 
 /// @title GasCalculations
 /// @dev This contract is used for calculating gas consumption in different phases of a transaction.

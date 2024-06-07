@@ -9,6 +9,44 @@ import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
 
 abstract contract HelperBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                    EXECUTIONS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function execUserOp(
+        AccountInstance memory instance,
+        bytes memory callData,
+        address txValidator
+    )
+        public
+        virtual
+        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
+    {
+        bytes memory initCode;
+        bool notDeployedYet = instance.account.code.length == 0;
+        if (notDeployedYet) {
+            initCode = instance.initCode;
+        }
+
+        userOp = PackedUserOperation({
+            sender: instance.account,
+            nonce: getNonce(instance, callData, txValidator),
+            initCode: initCode,
+            callData: callData,
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    MODULE CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
+
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -41,36 +79,6 @@ abstract contract HelperBase {
                 module: module,
                 initData: initData
             });
-        }
-
-        userOp = PackedUserOperation({
-            sender: instance.account,
-            nonce: getNonce(instance, callData, txValidator),
-            initCode: initCode,
-            callData: callData,
-            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
-            preVerificationGas: 2e6,
-            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
-            paymasterAndData: bytes(""),
-            signature: bytes("")
-        });
-
-        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-    }
-
-    function execUserOp(
-        AccountInstance memory instance,
-        bytes memory callData,
-        address txValidator
-    )
-        public
-        virtual
-        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
-    {
-        bytes memory initCode;
-        bool notDeployedYet = instance.account.code.length == 0;
-        if (notDeployedYet) {
-            initCode = instance.initCode;
         }
 
         userOp = PackedUserOperation({
@@ -272,88 +280,6 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /**
-     * Encode a single ERC7579 Execution Transaction
-     * @param target target of the call
-     * @param value the value of the call
-     * @param callData the calldata of the call
-     */
-    function encode(
-        address target,
-        uint256 value,
-        bytes memory callData
-    )
-        public
-        pure
-        virtual
-        returns (bytes memory erc7579Tx)
-    {
-        ModeCode mode = ModeLib.encode({
-            callType: CALLTYPE_SINGLE,
-            execType: EXECTYPE_DEFAULT,
-            mode: MODE_DEFAULT,
-            payload: ModePayload.wrap(bytes22(0))
-        });
-        bytes memory data = abi.encodePacked(target, value, callData);
-        return abi.encodeCall(IERC7579Account.execute, (mode, data));
-    }
-
-    /**
-     * Encode a batched ERC7579 Execution Transaction
-     * @param executions ERC7579 batched executions
-     */
-    function encode(Execution[] memory executions)
-        public
-        pure
-        virtual
-        returns (bytes memory erc7579Tx)
-    {
-        ModeCode mode = ModeLib.encode({
-            callType: CALLTYPE_BATCH,
-            execType: EXECTYPE_DEFAULT,
-            mode: MODE_DEFAULT,
-            payload: ModePayload.wrap(bytes22(0))
-        });
-        return abi.encodeCall(IERC7579Account.execute, (mode, abi.encode(executions)));
-    }
-
-    /**
-     * convert arrays to batched IERC7579Account
-     */
-    function toExecutions(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory callDatas
-    )
-        public
-        pure
-        virtual
-        returns (Execution[] memory executions)
-    {
-        executions = new Execution[](targets.length);
-        if (targets.length != values.length && values.length != callDatas.length) {
-            revert("Length Mismatch");
-        }
-
-        for (uint256 i; i < targets.length; i++) {
-            executions[i] =
-                Execution({ target: targets[i], value: values[i], callData: callDatas[i] });
-        }
-    }
-
-    function getNonce(
-        AccountInstance memory instance,
-        bytes memory,
-        address txValidator
-    )
-        public
-        virtual
-        returns (uint256 nonce)
-    {
-        uint192 key = uint192(bytes24(bytes20(address(txValidator))));
-        nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
-    }
-
     function isModuleInstalled(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -429,5 +355,95 @@ abstract contract HelperBase {
         } else {
             revert("Invalid module type");
         }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /**
+     * Encode a single ERC7579 Execution Transaction
+     * @param target target of the call
+     * @param value the value of the call
+     * @param callData the calldata of the call
+     */
+    function encode(
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        public
+        pure
+        virtual
+        returns (bytes memory erc7579Tx)
+    {
+        ModeCode mode = ModeLib.encode({
+            callType: CALLTYPE_SINGLE,
+            execType: EXECTYPE_DEFAULT,
+            mode: MODE_DEFAULT,
+            payload: ModePayload.wrap(bytes22(0))
+        });
+        bytes memory data = abi.encodePacked(target, value, callData);
+        return abi.encodeCall(IERC7579Account.execute, (mode, data));
+    }
+
+    /**
+     * Encode a batched ERC7579 Execution Transaction
+     * @param executions ERC7579 batched executions
+     */
+    function encode(Execution[] memory executions)
+        public
+        pure
+        virtual
+        returns (bytes memory erc7579Tx)
+    {
+        ModeCode mode = ModeLib.encode({
+            callType: CALLTYPE_BATCH,
+            execType: EXECTYPE_DEFAULT,
+            mode: MODE_DEFAULT,
+            payload: ModePayload.wrap(bytes22(0))
+        });
+        return abi.encodeCall(IERC7579Account.execute, (mode, abi.encode(executions)));
+    }
+
+    /**
+     * convert arrays to batched IERC7579Account
+     */
+    function toExecutions(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory callDatas
+    )
+        public
+        pure
+        virtual
+        returns (Execution[] memory executions)
+    {
+        executions = new Execution[](targets.length);
+        if (targets.length != values.length && values.length != callDatas.length) {
+            revert("Length Mismatch");
+        }
+
+        for (uint256 i; i < targets.length; i++) {
+            executions[i] =
+                Execution({ target: targets[i], value: values[i], callData: callDatas[i] });
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     NONCE
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function getNonce(
+        AccountInstance memory instance,
+        bytes memory,
+        address txValidator
+    )
+        public
+        virtual
+        returns (uint256 nonce)
+    {
+        uint192 key = uint192(bytes24(bytes20(address(txValidator))));
+        nonce = instance.aux.entrypoint.getNonce(address(instance.account), key);
     }
 }

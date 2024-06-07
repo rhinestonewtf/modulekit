@@ -4,7 +4,16 @@ pragma solidity ^0.8.23;
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { ValidatorLib } from "kernel/utils/ValidationTypeLib.sol";
 import { ValidationType, ValidationMode, ValidationId } from "kernel/types/Types.sol";
-import "kernel/types/Constants.sol";
+import {
+    VALIDATION_TYPE_PERMISSION,
+    VALIDATION_TYPE_ROOT,
+    VALIDATION_TYPE_VALIDATOR,
+    VALIDATION_MODE_DEFAULT,
+    VALIDATION_MODE_ENABLE,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_VALIDATOR
+} from "kernel/types/Constants.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
 import { IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
@@ -23,6 +32,10 @@ contract SetSelector is Kernel {
 }
 
 contract KernelHelpers is HelperBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                        NONCE
+    //////////////////////////////////////////////////////////////////////////*/
+
     function getNonce(
         AccountInstance memory instance,
         bytes memory callData,
@@ -72,6 +85,10 @@ contract KernelHelpers is HelperBase {
         }
         return IEntryPoint(ENTRYPOINT_ADDR).getNonce(account, nonceKey);
     }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    MODULE CONFIG
+    //////////////////////////////////////////////////////////////////////////*/
 
     function enableValidator(
         AccountInstance memory instance,
