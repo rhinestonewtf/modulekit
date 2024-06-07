@@ -7,6 +7,7 @@ import "erc7579/interfaces/IERC7579Module.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 
 abstract contract HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -354,6 +355,59 @@ abstract contract HelperBase {
             return getUninstallFallbackData(instance.account, module, data);
         } else {
             revert("Invalid module type");
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                SIGNATURE UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function isValidSignature(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash,
+        bytes memory signature
+    )
+        public
+        virtual
+        deployAccountForAction(instance)
+        returns (bool isValid)
+    {
+        isValid =
+            IERC1271(instance.account).isValidSignature(hash, signature) == EIP1271_MAGIC_VALUE;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                ACCOUNT UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function deployAccount(AccountInstance memory instance) public virtual {
+        if (instance.account.code.length == 0) {
+            if (instance.initCode.length == 0) {
+                revert("deployAccount: no initCode provided");
+            } else {
+                bytes memory initCode = instance.initCode;
+                assembly {
+                    let factory := mload(add(initCode, 20))
+                    let success := call(gas(), factory, 0, add(initCode, 52), mload(initCode), 0, 0)
+                    if iszero(success) { revert(0, 0) }
+                }
+            }
+        }
+    }
+
+    modifier deployAccountForAction(AccountInstance memory instance) {
+        bool isAccountDeployed = instance.account.code.length != 0;
+        uint256 snapShotId;
+        if (!isAccountDeployed) {
+            snapShotId = snapshot();
+            deployAccount(instance);
+        }
+
+        _;
+
+        if (!isAccountDeployed) {
+            revertTo(snapShotId);
         }
     }
 

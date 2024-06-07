@@ -5,6 +5,7 @@ pragma solidity ^0.8.23;
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 
 contract ERC7579Helpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -73,5 +74,26 @@ contract ERC7579Helpers is HelperBase {
             }
         }
         data = abi.encode(previous, initData);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                SIGNATURE UTILS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function isValidSignature(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash,
+        bytes memory signature
+    )
+        public
+        virtual
+        override
+        deployAccountForAction(instance)
+        returns (bool isValid)
+    {
+        isValid = IERC1271(instance.account).isValidSignature(
+            hash, abi.encodePacked(validator, signature)
+        ) == EIP1271_MAGIC_VALUE;
     }
 }

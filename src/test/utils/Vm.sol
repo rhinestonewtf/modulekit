@@ -65,6 +65,14 @@ function prank(address _addr) {
     Vm(VM_ADDR).prank(_addr);
 }
 
+function startPrank(address _addr) {
+    Vm(VM_ADDR).startPrank(_addr);
+}
+
+function stopPrank() {
+    Vm(VM_ADDR).stopPrank();
+}
+
 function accesses(address _addr) returns (bytes32[] memory, bytes32[] memory) {
     return Vm(VM_ADDR).accesses(_addr);
 }

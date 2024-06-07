@@ -71,10 +71,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                                      SETUP
     //////////////////////////////////////////////////////////////////////////*/
 
-    /**
-     * Initializes Auxiliary and /src/core
-     * This function will run before any accounts can be created
-     */
     modifier initializeModuleKit() {
         if (!isInit) {
             super.init();
