@@ -28,7 +28,8 @@ import {
     CALLTYPE_BATCH,
     CALLTYPE_DELEGATECALL,
     EXECTYPE_DEFAULT,
-    MODE_DEFAULT
+    MODE_DEFAULT,
+    CALLTYPE_STATIC
 } from "erc7579/lib/ModeLib.sol";
 import { Execution, ExecutionLib as ERC7579ExecutionLib } from "erc7579/lib/ExecutionLib.sol";
 

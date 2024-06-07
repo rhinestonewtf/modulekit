@@ -64,22 +64,24 @@ abstract contract HelperBase {
         if (instance.account.code.length == 0) {
             initCode = instance.initCode;
         }
-
         bytes memory callData;
         if (isInstall) {
-            callData = installModule({
-                account: instance.account,
+            initData = getInstallModuleData({
+                instance: instance,
                 moduleType: moduleType,
                 module: module,
                 initData: initData
             });
+            callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
         } else {
-            callData = uninstallModule({
-                account: instance.account,
+            initData = getUninstallModuleData({
+                instance: instance,
                 moduleType: moduleType,
                 module: module,
                 initData: initData
             });
+            callData =
+                abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
         }
 
         userOp = PackedUserOperation({
@@ -95,62 +97,6 @@ abstract contract HelperBase {
         });
 
         userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
-    }
-
-    /**
-     * Router function to install a module on an ERC7579 account
-     */
-    function installModule(
-        address account,
-        uint256 moduleType,
-        address module,
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        returns (bytes memory callData)
-    {
-        if (moduleType == MODULE_TYPE_VALIDATOR) {
-            initData = getInstallValidatorData(account, module, initData);
-        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
-            initData = getInstallExecutorData(account, module, initData);
-        } else if (moduleType == MODULE_TYPE_HOOK) {
-            initData = getInstallHookData(account, module, initData);
-        } else if (moduleType == MODULE_TYPE_FALLBACK) {
-            initData = getInstallFallbackData(account, module, initData);
-        } else {
-            revert("Invalid module type");
-        }
-        callData = abi.encodeCall(IERC7579Account.installModule, (moduleType, module, initData));
-    }
-
-    /**
-     * Router function to uninstall a module on an ERC7579 account
-     */
-    function uninstallModule(
-        address account,
-        uint256 moduleType,
-        address module,
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        returns (bytes memory callData)
-    {
-        if (moduleType == MODULE_TYPE_VALIDATOR) {
-            initData = getUninstallValidatorData(account, module, initData);
-        } else if (moduleType == MODULE_TYPE_EXECUTOR) {
-            initData = getUninstallExecutorData(account, module, initData);
-        } else if (moduleType == MODULE_TYPE_HOOK) {
-            initData = getUninstallHookData(account, module, initData);
-        } else if (moduleType == MODULE_TYPE_FALLBACK) {
-            initData = getUninstallFallbackData(account, module, initData);
-        } else {
-            revert("Invalid module type");
-        }
-        callData = abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
     }
 
     /**
@@ -314,7 +260,7 @@ abstract contract HelperBase {
         AccountInstance memory instance,
         uint256 moduleType,
         address module,
-        bytes memory data
+        bytes memory initData
     )
         public
         view
@@ -322,13 +268,13 @@ abstract contract HelperBase {
         returns (bytes memory)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
-            return getInstallValidatorData(instance.account, module, data);
+            return getInstallValidatorData(instance.account, module, initData);
         } else if (moduleType == MODULE_TYPE_EXECUTOR) {
-            return getInstallExecutorData(instance.account, module, data);
+            return getInstallExecutorData(instance.account, module, initData);
         } else if (moduleType == MODULE_TYPE_HOOK) {
-            return getInstallHookData(instance.account, module, data);
+            return getInstallHookData(instance.account, module, initData);
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
-            return getInstallFallbackData(instance.account, module, data);
+            return getInstallFallbackData(instance.account, module, initData);
         } else {
             revert("Invalid module type");
         }
@@ -338,7 +284,7 @@ abstract contract HelperBase {
         AccountInstance memory instance,
         uint256 moduleType,
         address module,
-        bytes memory data
+        bytes memory initData
     )
         public
         view
@@ -346,13 +292,13 @@ abstract contract HelperBase {
         returns (bytes memory)
     {
         if (moduleType == MODULE_TYPE_VALIDATOR) {
-            return getUninstallValidatorData(instance.account, module, data);
+            return getUninstallValidatorData(instance.account, module, initData);
         } else if (moduleType == MODULE_TYPE_EXECUTOR) {
-            return getUninstallExecutorData(instance.account, module, data);
+            return getUninstallExecutorData(instance.account, module, initData);
         } else if (moduleType == MODULE_TYPE_HOOK) {
-            return getUninstallHookData(instance.account, module, data);
+            return getUninstallHookData(instance.account, module, initData);
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
-            return getUninstallFallbackData(instance.account, module, data);
+            return getUninstallFallbackData(instance.account, module, initData);
         } else {
             revert("Invalid module type");
         }

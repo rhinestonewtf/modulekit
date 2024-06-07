@@ -6,6 +6,7 @@ import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
+import { CallType } from "src/external/ERC7579.sol";
 
 contract ERC7579Helpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -74,6 +75,43 @@ contract ERC7579Helpers is HelperBase {
             }
         }
         data = abi.encode(previous, initData);
+    }
+
+    /**
+     * get callData to install fallback on ERC7579 Account
+     */
+    function getInstallFallbackData(
+        address, /* account */
+        address fallbackHandler,
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        (bytes4 selector, CallType callType, bytes memory _initData) =
+            abi.decode(initData, (bytes4, CallType, bytes));
+        data = abi.encodePacked(selector, callType, _initData);
+    }
+
+    /**
+     * get callData to uninstall fallback on ERC7579 Account
+     */
+    function getUninstallFallbackData(
+        address, /* account */
+        address fallbackHandler,
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        (bytes4 selector,, bytes memory _initData) = abi.decode(initData, (bytes4, CallType, bytes));
+        data = abi.encodePacked(selector, _initData);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
