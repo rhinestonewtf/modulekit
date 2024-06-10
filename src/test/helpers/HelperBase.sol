@@ -145,7 +145,7 @@ abstract contract HelperBase {
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         returns (bytes memory data)
     {
@@ -177,7 +177,7 @@ abstract contract HelperBase {
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         returns (bytes memory data)
     {
@@ -241,7 +241,7 @@ abstract contract HelperBase {
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         returns (bytes memory data)
     {

@@ -28,6 +28,7 @@ import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { TrustedForwarder } from "src/Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
 import { ValidationManager } from "kernel/core/ValidationManager.sol";
+import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -57,11 +58,9 @@ contract KernelHelpers is HelperBase {
         if (notDeployedYet) {
             initCode = instance.initCode;
         }
-
-        address execHook = getExecHook(instance, txValidator);
-
         uint256 nonce = getNonce(instance, callData, txValidator);
 
+        address execHook = getExecHook(instance, txValidator);
         if (execHook != address(0) && execHook != address(1)) {
             callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
         }
@@ -139,6 +138,74 @@ contract KernelHelpers is HelperBase {
                                     MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
+    function configModuleUserOp(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address module,
+        bytes memory initData,
+        bool isInstall,
+        address txValidator
+    )
+        public
+        virtual
+        override
+        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
+    {
+        bytes memory initCode;
+        if (instance.account.code.length == 0) {
+            initCode = instance.initCode;
+        }
+        bytes memory callData;
+        if (isInstall) {
+            initData = getInstallModuleData({
+                instance: instance,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+            callData = getInstallModuleCallData({
+                instance: instance,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        } else {
+            initData = getUninstallModuleData({
+                instance: instance,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+            callData = getUninstallModuleCallData({
+                instance: instance,
+                moduleType: moduleType,
+                module: module,
+                initData: initData
+            });
+        }
+
+        uint256 nonce = getNonce(instance, callData, txValidator);
+
+        address execHook = getExecHook(instance, txValidator);
+        if (execHook != address(0) && execHook != address(1)) {
+            callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
+        }
+
+        userOp = PackedUserOperation({
+            sender: instance.account,
+            nonce: getNonce(instance, callData, txValidator),
+            initCode: initCode,
+            callData: callData,
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
     function enableValidator(
         AccountInstance memory instance,
         bytes memory callData,
@@ -171,14 +238,13 @@ contract KernelHelpers is HelperBase {
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         override
         returns (bytes memory data)
     {
         data = abi.encodePacked(
-            address(instance.aux.hookMultiPlexer),
-            abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
+            getHookMultiPlexer(instance), abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
         );
     }
 
@@ -192,14 +258,13 @@ contract KernelHelpers is HelperBase {
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         override
         returns (bytes memory data)
     {
         data = abi.encodePacked(
-            address(instance.aux.hookMultiPlexer),
-            abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
+            getHookMultiPlexer(instance), abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
         );
     }
 
@@ -213,7 +278,7 @@ contract KernelHelpers is HelperBase {
         bytes memory initData
     )
         public
-        pure
+        view
         virtual
         override
         returns (bytes memory data)
@@ -222,7 +287,7 @@ contract KernelHelpers is HelperBase {
             abi.decode(initData, (bytes4, CallType, bytes));
         data = abi.encodePacked(
             selector,
-            address(instance.aux.hookMultiPlexer),
+            getHookMultiPlexer(instance),
             abi.encode(abi.encodePacked(callType, _initData), abi.encodePacked(bytes1(0x00), ""))
         );
     }
@@ -261,7 +326,7 @@ contract KernelHelpers is HelperBase {
         if (moduleType == MODULE_TYPE_HOOK) {
             Execution[] memory executions = new Execution[](3);
             executions[0] = Execution({
-                target: address(instance.aux.hookMultiPlexer),
+                target: getHookMultiPlexer(instance),
                 value: 0,
                 callData: abi.encodeCall(MockHookMultiPlexer.addHook, (module))
             });
@@ -274,7 +339,7 @@ contract KernelHelpers is HelperBase {
                 target: module,
                 value: 0,
                 callData: abi.encodeCall(
-                    TrustedForwarder.setTrustedForwarder, (address(instance.aux.hookMultiPlexer))
+                    TrustedForwarder.setTrustedForwarder, (getHookMultiPlexer(instance))
                 )
             });
             callData = encode({ executions: executions });
@@ -298,7 +363,7 @@ contract KernelHelpers is HelperBase {
         if (moduleType == MODULE_TYPE_HOOK) {
             Execution[] memory executions = new Execution[](3);
             executions[0] = Execution({
-                target: address(instance.aux.hookMultiPlexer),
+                target: getHookMultiPlexer(instance),
                 value: 0,
                 callData: abi.encodeCall(MockHookMultiPlexer.removeHook, (module))
             });
@@ -332,7 +397,9 @@ contract KernelHelpers is HelperBase {
         returns (bool)
     {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
-            return instance.aux.hookMultiPlexer.isHookInstalled(instance.account, module);
+            return MockHookMultiPlexer(getHookMultiPlexer(instance)).isHookInstalled(
+                instance.account, module
+            );
         }
 
         return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
@@ -376,5 +443,9 @@ contract KernelHelpers is HelperBase {
         ValidationManager.ValidationConfig memory validationConfig =
             Kernel(payable(instance.account)).validationConfig(vId);
         return address(validationConfig.hook);
+    }
+
+    function getHookMultiPlexer(AccountInstance memory instance) internal view returns (address) {
+        return address(KernelFactory(instance.accountFactory).hookMultiPlexer());
     }
 }

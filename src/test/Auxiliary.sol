@@ -14,14 +14,12 @@ import { MockFactory } from "./predeploy/MockFactory.sol";
 import { UserOpGasLog } from "./utils/gas/UserOpGasLog.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
-import { MockHookMultiPlexer } from "src/Mocks.sol";
 
 struct Auxiliary {
     IEntryPoint entrypoint;
     UserOpGasLog gasSimulation;
     IERC7484 registry;
     MockFactory mockFactory;
-    MockHookMultiPlexer hookMultiPlexer;
 }
 
 contract AuxiliaryFactory {
@@ -35,7 +33,5 @@ contract AuxiliaryFactory {
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.registry = etchRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
-        auxiliary.hookMultiPlexer = new MockHookMultiPlexer();
-        label(address(auxiliary.hookMultiPlexer), "HookMultiPlexer");
     }
 }
