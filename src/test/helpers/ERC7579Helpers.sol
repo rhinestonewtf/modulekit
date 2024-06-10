@@ -134,4 +134,17 @@ contract ERC7579Helpers is HelperBase {
             hash, abi.encodePacked(validator, signature)
         ) == EIP1271_MAGIC_VALUE;
     }
+
+    function formatERC1271Signature(
+        AccountInstance memory instance,
+        address validator,
+        bytes memory signature
+    )
+        public
+        virtual
+        override
+        returns (bytes memory)
+    {
+        return abi.encodePacked(validator, signature);
+    }
 }
