@@ -26,6 +26,8 @@ import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { CallType, Execution } from "src/external/ERC7579.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { TrustedForwarder } from "src/Modules.sol";
+import { PackedUserOperation } from "src/external/ERC4337.sol";
+import { ValidationManager } from "kernel/core/ValidationManager.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -36,6 +38,47 @@ contract SetSelector is Kernel {
 }
 
 contract KernelHelpers is HelperBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                    EXECUTIONS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function execUserOp(
+        AccountInstance memory instance,
+        bytes memory callData,
+        address txValidator
+    )
+        public
+        virtual
+        override
+        returns (PackedUserOperation memory userOp, bytes32 userOpHash)
+    {
+        bytes memory initCode;
+        bool notDeployedYet = instance.account.code.length == 0;
+        if (notDeployedYet) {
+            initCode = instance.initCode;
+        }
+
+        address execHook = getExecHook(instance, txValidator);
+
+        if (execHook != address(0) && execHook != address(1)) {
+            callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
+        }
+
+        userOp = PackedUserOperation({
+            sender: instance.account,
+            nonce: getNonce(instance, callData, txValidator),
+            initCode: initCode,
+            callData: callData,
+            accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
+            preVerificationGas: 2e6,
+            gasFees: bytes32(abi.encodePacked(uint128(1), uint128(1))),
+            paymasterAndData: bytes(""),
+            signature: bytes("")
+        });
+
+        userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                         NONCE
     //////////////////////////////////////////////////////////////////////////*/
@@ -313,5 +356,23 @@ contract KernelHelpers is HelperBase {
             hash,
             abi.encodePacked(ValidatorLib.validatorToIdentifier(IValidator(validator)), signature)
         ) == EIP1271_MAGIC_VALUE;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function getExecHook(
+        AccountInstance memory instance,
+        address txValidator
+    )
+        internal
+        deployAccountForAction(instance)
+        returns (address)
+    {
+        ValidationId vId = ValidatorLib.validatorToIdentifier(IValidator(txValidator));
+        ValidationManager.ValidationConfig memory validationConfig =
+            Kernel(payable(instance.account)).validationConfig(vId);
+        return address(validationConfig.hook);
     }
 }
