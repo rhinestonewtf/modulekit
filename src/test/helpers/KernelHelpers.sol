@@ -427,6 +427,34 @@ contract KernelHelpers is HelperBase {
         ) == EIP1271_MAGIC_VALUE;
     }
 
+    function formatERC1271Hash(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash
+    )
+        public
+        virtual
+        override
+        returns (bytes32)
+    {
+        // todo
+        return hash;
+    }
+
+    function formatERC1271Signature(
+        AccountInstance memory instance,
+        address validator,
+        bytes memory signature
+    )
+        public
+        virtual
+        override
+        returns (bytes memory)
+    {
+        return
+            abi.encodePacked(ValidatorLib.validatorToIdentifier(IValidator(validator)), signature);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                     INTERNAL
     //////////////////////////////////////////////////////////////////////////*/

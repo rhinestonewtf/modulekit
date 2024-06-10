@@ -381,6 +381,18 @@ abstract contract HelperBase {
         return hash;
     }
 
+    function formatERC1271Signature(
+        AccountInstance memory instance,
+        address validator,
+        bytes memory signature
+    )
+        public
+        virtual
+        returns (bytes memory)
+    {
+        return signature;
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 ACCOUNT UTILS
     //////////////////////////////////////////////////////////////////////////*/

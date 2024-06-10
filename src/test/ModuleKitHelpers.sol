@@ -296,6 +296,21 @@ library ModuleKitHelpers {
         });
     }
 
+    function formatERC1271Signature(
+        AccountInstance memory instance,
+        address validator,
+        bytes memory signature
+    )
+        internal
+        returns (bytes memory)
+    {
+        return HelperBase(instance.accountHelper).formatERC1271Signature({
+            instance: instance,
+            validator: validator,
+            signature: signature
+        });
+    }
+
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
         userOpData.userOp.signature = "DEFAULT SIGNATURE";
         return userOpData;
