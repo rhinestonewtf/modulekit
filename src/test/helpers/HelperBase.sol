@@ -369,6 +369,18 @@ abstract contract HelperBase {
             IERC1271(instance.account).isValidSignature(hash, signature) == EIP1271_MAGIC_VALUE;
     }
 
+    function formatERC1271Hash(
+        AccountInstance memory instance,
+        address validator,
+        bytes32 hash
+    )
+        public
+        virtual
+        returns (bytes32)
+    {
+        return hash;
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 ACCOUNT UTILS
     //////////////////////////////////////////////////////////////////////////*/
