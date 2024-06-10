@@ -60,13 +60,15 @@ contract KernelHelpers is HelperBase {
 
         address execHook = getExecHook(instance, txValidator);
 
+        uint256 nonce = getNonce(instance, callData, txValidator);
+
         if (execHook != address(0) && execHook != address(1)) {
             callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
         }
 
         userOp = PackedUserOperation({
             sender: instance.account,
-            nonce: getNonce(instance, callData, txValidator),
+            nonce: nonce,
             initCode: initCode,
             callData: callData,
             accountGasLimits: bytes32(abi.encodePacked(uint128(2e6), uint128(2e6))),
