@@ -46,7 +46,7 @@ importers:
         version: '@nomad-xyz/excessively-safe-call@https://codeload.github.com/nomad-xyz/ExcessivelySafeCall/tar.gz/81cd99ce3e69117d665d7601c330ea03b97acce0'
       forge-std:
         specifier: github:foundry-rs/forge-std
-        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+        version: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3
       solady:
         specifier: github:vectorized/solady
         version: https://codeload.github.com/vectorized/solady/tar.gz/29d61c504425519c6deddc3e12c2e039ad43e8e3
@@ -1198,8 +1198,8 @@ packages:
   for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5:
-    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3}
     version: 1.8.2
 
   form-data-encoder@2.1.4:
@@ -2472,8 +2472,8 @@ packages:
   typical@2.6.1:
     resolution: {integrity: sha512-ofhi8kjIje6npGozTip9Fr8iecmYfEbS06i0JnIg+rh51KakryWF4+jX8lLKZVhy6N+ID45WYSFCxPOdTWCzNg==}
 
-  uglify-js@3.17.4:
-    resolution: {integrity: sha512-T9q82TJI9e/C1TAxYvfb16xO120tMVFZrGA3f9/P4424DNu6ypK103y0GPFVa17yotwSyZW5iYXgjYHkGrJW/g==}
+  uglify-js@3.18.0:
+    resolution: {integrity: sha512-SyVVbcNBCk0dzr9XL/R/ySrmYf0s372K6/hFklzgcp2lBFyXtw4I7BOdDjlLhE1aVqaI/SHWXWmYdlZxuyF38A==}
     engines: {node: '>=0.8.0'}
     hasBin: true
 
@@ -3252,7 +3252,7 @@ snapshots:
       account-abstraction: accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       account-abstraction-v0.6: accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3
       prettier: 2.8.8
       solady: https://codeload.github.com/vectorized/solady/tar.gz/29d61c504425519c6deddc3e12c2e039ad43e8e3
       solhint: 4.5.4(typescript@4.9.5)
@@ -3271,7 +3271,7 @@ snapshots:
     dependencies:
       '@ERC4337/account-abstraction': accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       erc7579: erc7579-implementation@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/338bf8af011aa1588b5e1b2a19d1d7ead33bf779(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3
     transitivePeerDependencies:
       - bufferutil
       - encoding
@@ -3290,7 +3290,7 @@ snapshots:
       '@safe-global/safe-contracts': 1.4.1(ethers@5.7.2)
       ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
       erc7579: erc7579-implementation@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/338bf8af011aa1588b5e1b2a19d1d7ead33bf779(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3
       solady: https://codeload.github.com/vectorized/solady/tar.gz/29d61c504425519c6deddc3e12c2e039ad43e8e3
       solarray: https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684
     transitivePeerDependencies:
@@ -3305,7 +3305,7 @@ snapshots:
 
   '@rhinestone/sentinellist@https://codeload.github.com/rhinestonewtf/sentinellist/tar.gz/446b16c3ec5ba1d0acd730ecf2bebd2ac48f915f':
     dependencies:
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3
 
   '@safe-global/safe-contracts@1.4.1(ethers@5.7.2)':
     dependencies:
@@ -4053,7 +4053,7 @@ snapshots:
       '@rhinestone/sentinellist': https://codeload.github.com/rhinestonewtf/sentinellist/tar.gz/446b16c3ec5ba1d0acd730ecf2bebd2ac48f915f
       account-abstraction: accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/f1c5c11b273b7ddae26bb20809419b33ccb8f043(ethers@5.7.2)(hardhat@2.22.5(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       ds-test: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3
       solady: https://codeload.github.com/vectorized/solady/tar.gz/29d61c504425519c6deddc3e12c2e039ad43e8e3
     transitivePeerDependencies:
       - bufferutil
@@ -4358,7 +4358,7 @@ snapshots:
     dependencies:
       is-callable: 1.2.7
 
-  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/52715a217dc51d0de15877878ab8213f6cbbbab5: {}
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/6e05729b76f1ae0d437e74951aef1ca987788ab3: {}
 
   form-data-encoder@2.1.4: {}
 
@@ -4546,7 +4546,7 @@ snapshots:
       source-map: 0.6.1
       wordwrap: 1.0.0
     optionalDependencies:
-      uglify-js: 3.17.4
+      uglify-js: 3.18.0
 
   hard-rejection@2.1.0: {}
 
@@ -5816,7 +5816,7 @@ snapshots:
 
   typical@2.6.1: {}
 
-  uglify-js@3.17.4:
+  uglify-js@3.18.0:
     optional: true
 
   unbox-primitive@1.0.2:

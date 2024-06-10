@@ -244,7 +244,7 @@ contract KernelHelpers is HelperBase {
         returns (bytes memory data)
     {
         data = abi.encodePacked(
-            getHookMultiPlexer(instance), abi.encode(initData, abi.encodePacked(bytes1(0x00), ""))
+            getHookMultiPlexer(instance), abi.encode(initData, hex"00", bytes(hex"00000001"))
         );
     }
 
