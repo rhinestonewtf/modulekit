@@ -21,7 +21,7 @@ import { MockFallback } from "kernel/mock/MockFallback.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { Kernel } from "kernel/Kernel.sol";
 import { etch } from "../utils/Vm.sol";
-import { IValidator } from "kernel/interfaces/IERC7579Modules.sol";
+import { IValidator, IModule } from "kernel/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { CallType, Execution } from "src/external/ERC7579.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
@@ -214,13 +214,18 @@ contract KernelHelpers is HelperBase {
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_HOOK) {
-            Execution[] memory executions = new Execution[](2);
+            Execution[] memory executions = new Execution[](3);
             executions[0] = Execution({
                 target: address(instance.aux.hookMultiPlexer),
                 value: 0,
                 callData: abi.encodeCall(MockHookMultiPlexer.addHook, (module))
             });
             executions[1] = Execution({
+                target: module,
+                value: 0,
+                callData: abi.encodeCall(IModule.onInstall, (initData))
+            });
+            executions[2] = Execution({
                 target: module,
                 value: 0,
                 callData: abi.encodeCall(
