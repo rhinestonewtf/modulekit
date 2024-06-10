@@ -251,11 +251,23 @@ contract KernelHelpers is HelperBase {
         returns (bytes memory callData)
     {
         if (moduleType == MODULE_TYPE_HOOK) {
-            callData = encode({
+            Execution[] memory executions = new Execution[](3);
+            executions[0] = Execution({
                 target: address(instance.aux.hookMultiPlexer),
                 value: 0,
                 callData: abi.encodeCall(MockHookMultiPlexer.removeHook, (module))
             });
+            executions[1] = Execution({
+                target: module,
+                value: 0,
+                callData: abi.encodeCall(IModule.onUninstall, (initData))
+            });
+            executions[2] = Execution({
+                target: module,
+                value: 0,
+                callData: abi.encodeCall(TrustedForwarder.clearTrustedForwarder, ())
+            });
+            callData = encode({ executions: executions });
         } else {
             callData =
                 abi.encodeCall(IERC7579Account.uninstallModule, (moduleType, module, initData));
