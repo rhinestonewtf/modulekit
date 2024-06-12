@@ -12,7 +12,8 @@ import {
     VALIDATION_MODE_ENABLE,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_HOOK,
-    MODULE_TYPE_VALIDATOR
+    MODULE_TYPE_VALIDATOR,
+    KERNEL_WRAPPER_TYPE_HASH
 } from "kernel/types/Constants.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
@@ -29,6 +30,7 @@ import { TrustedForwarder } from "src/Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
 import { ValidationManager } from "kernel/core/ValidationManager.sol";
 import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
+import { EIP712 } from "solady/utils/EIP712.sol";
 
 contract SetSelector is Kernel {
     constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
@@ -38,7 +40,7 @@ contract SetSelector is Kernel {
     }
 }
 
-contract KernelHelpers is HelperBase {
+contract KernelHelpers is HelperBase, EIP712 {
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -437,8 +439,7 @@ contract KernelHelpers is HelperBase {
         override
         returns (bytes32)
     {
-        // todo
-        return hash;
+        return _hashTypedData(keccak256(abi.encode(KERNEL_WRAPPER_TYPE_HASH, hash)));
     }
 
     function formatERC1271Signature(
@@ -475,5 +476,15 @@ contract KernelHelpers is HelperBase {
 
     function getHookMultiPlexer(AccountInstance memory instance) internal view returns (address) {
         return address(KernelFactory(instance.accountFactory).hookMultiPlexer());
+    }
+
+    function _domainNameAndVersion()
+        internal
+        pure
+        override
+        returns (string memory name, string memory version)
+    {
+        name = "Kernel";
+        version = "0.3.1-beta";
     }
 }
