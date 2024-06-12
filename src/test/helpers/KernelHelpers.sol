@@ -40,7 +40,7 @@ contract SetSelector is Kernel {
     }
 }
 
-contract KernelHelpers is HelperBase, EIP712 {
+contract KernelHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -437,9 +437,10 @@ contract KernelHelpers is HelperBase, EIP712 {
         public
         virtual
         override
+        deployAccountForAction(instance)
         returns (bytes32)
     {
-        return _hashTypedData(keccak256(abi.encode(KERNEL_WRAPPER_TYPE_HASH, hash)));
+        return Kernel(payable(instance.account))._toWrappedHash(hash);
     }
 
     function formatERC1271Signature(
@@ -476,15 +477,5 @@ contract KernelHelpers is HelperBase, EIP712 {
 
     function getHookMultiPlexer(AccountInstance memory instance) internal view returns (address) {
         return address(KernelFactory(instance.accountFactory).hookMultiPlexer());
-    }
-
-    function _domainNameAndVersion()
-        internal
-        pure
-        override
-        returns (string memory name, string memory version)
-    {
-        name = "Kernel";
-        version = "0.3.1-beta";
     }
 }
