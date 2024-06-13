@@ -19,6 +19,8 @@ library ERC4337Helpers {
     error UserOperationReverted(
         bytes32 userOpHash, address sender, uint256 nonce, bytes revertReason
     );
+    error InvalidRevertMessage(bytes4 expected, bytes4 reason);
+    error InvalidRevertMessageBytes(bytes expected, bytes reason);
 
     function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
         // ERC-4337 specs validation
@@ -35,9 +37,13 @@ library ERC4337Helpers {
 
         uint256 isExpectRevert = getExpectRevert();
         if (isExpectRevert != 0) {
-            require(success, "UserOperation execution failed");
-            bytes memory revertMessage = getExpectRevertMessage();
-            checkRevertMessage(revertMessage, data);
+            if (!success) {
+                if (isExpectRevert == 2) {
+                    bytes memory revertMessage = getExpectRevertMessage();
+                    checkRevertMessage(revertMessage, data);
+                }
+                clearExpectRevert();
+            }
         }
 
         // Parse logs and determine if a revert happened
@@ -60,8 +66,10 @@ library ERC4337Helpers {
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
                     } else {
-                        bytes memory revertMessage = getExpectRevertMessage();
-                        checkRevertMessage(revertMessage, revertReason);
+                        if (isExpectRevert == 2) {
+                            bytes memory revertMessage = getExpectRevertMessage();
+                            checkRevertMessage(revertMessage, revertReason);
+                        }
                         clearExpectRevert();
                     }
                 }
@@ -70,7 +78,7 @@ library ERC4337Helpers {
         isExpectRevert = getExpectRevert();
         if (isExpectRevert != 0) {
             if (success) {
-                revert("UserOperation did not revert");
+                revert("UserOperation did not revert as expected");
             }
         }
         clearExpectRevert();
@@ -89,13 +97,23 @@ library ERC4337Helpers {
         }
     }
 
-    function checkRevertMessage(bytes memory revertMessage, bytes memory revertReason) internal {
+    function checkRevertMessage(
+        bytes memory revertMessage,
+        bytes memory revertReason
+    )
+        internal
+        view
+    {
         if (revertMessage.length == 4) {
             bytes4 expected = abi.decode(getExpectRevertMessage(), (bytes4));
             bytes4 reason = abi.decode(revertReason, (bytes4));
-            require(expected == reason, "Invalid revert message");
+            if (expected != reason) {
+                revert InvalidRevertMessage(expected, reason);
+            }
         } else {
-            require(keccak256(revertMessage) == keccak256(revertReason), "Invalid revert message");
+            if (revertMessage.length != revertReason.length) {
+                revert InvalidRevertMessageBytes(revertMessage, revertReason);
+            }
         }
     }
 
