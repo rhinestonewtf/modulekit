@@ -5,6 +5,27 @@ import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Execution } from "../Accounts.sol";
 
 library ERC20Integration {
+    function safeApprove(
+        IERC20 token,
+        address spender,
+        uint256 amount
+    )
+        internal
+        pure
+        returns (Execution memory exec0, Execution memory exec1)
+    {
+        exec0 = Execution({
+            target: address(token),
+            value: 0,
+            callData: abi.encodeCall(IERC20.approve, (spender, 0))
+        });
+        exec1 = Execution({
+            target: address(token),
+            value: 0,
+            callData: abi.encodeCall(IERC20.approve, (spender, amount))
+        });
+    }
+
     function approve(
         IERC20 token,
         address spender,
