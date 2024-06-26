@@ -57,9 +57,8 @@ library ERC20Integration {
             value: 0,
             data: abi.encodeCall(IERC20.transfer, (to, amount))
         });
-        bytes[] memory retValues = abi.decode(ret, (bytes[]));
-        if (retValues[0].length != 0) {
-            bool success = abi.decode(retValues[0], (bool));
+        if (ret.length != 0) {
+            bool success = abi.decode(ret, (bool));
             if (!success) revert SafeERC20TransferFailed();
         }
     }
