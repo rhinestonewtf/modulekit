@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Common Changelog](https://common-changelog.org/).
 
+[0.4.6]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.6
 [0.4.5]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.5
 [0.4.4]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.4
 [0.4.3]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.4.3
@@ -21,7 +22,7 @@ The format is based on [Common Changelog](https://common-changelog.org/).
 [0.2.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.2.0
 [0.1.0]: https://github.com/rhinestonewtf/modulekit/releases/tag/v0.1.0
 
-## [0.4.4] - 04-06-2024
+## [0.4.5] - 04-06-2024
 
 ### Fixed
 
