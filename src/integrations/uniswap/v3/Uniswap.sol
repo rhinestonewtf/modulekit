@@ -24,7 +24,7 @@ library UniswapV3Integration {
     {
         exec = new Execution[](3);
         (exec[0], exec[1]) = ERC20Integration.safeApprove(tokenIn, SWAPROUTER_ADDRESS, amountIn);
-        exec[3] = swapExactInputSingle(smartAccount, tokenIn, tokenOut, amountIn, sqrtPriceLimitX96);
+        exec[2] = swapExactInputSingle(smartAccount, tokenIn, tokenOut, amountIn, sqrtPriceLimitX96);
     }
 
     function swapExactInputSingle(

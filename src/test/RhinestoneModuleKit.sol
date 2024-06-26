@@ -31,6 +31,7 @@ struct AccountInstance {
     IERC7579Validator defaultValidator;
     bytes32 salt;
     bytes initCode;
+    address accountFactory;
 }
 
 struct UserOpData {
@@ -138,47 +139,6 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                                 MAKE INSTANCE
     //////////////////////////////////////////////////////////////////////////*/
 
-    function makeAccountInstance(
-        bytes32 salt,
-        address account,
-        bytes memory initCode,
-        address helper
-    )
-        internal
-        initializeModuleKit
-        returns (AccountInstance memory instance)
-    {
-        label(address(account), toString(salt));
-        deal(account, 10 ether);
-
-        instance = _makeAccountInstance({
-            salt: salt,
-            accountType: env,
-            helper: helper,
-            account: account,
-            initCode: initCode,
-            validator: address(_defaultValidator)
-        });
-        setAccountType(AccountType.CUSTOM);
-    }
-
-    function makeAccountInstance(
-        bytes32 salt,
-        address account,
-        bytes memory initCode
-    )
-        internal
-        initializeModuleKit
-        returns (AccountInstance memory instance)
-    {
-        makeAccountInstance({
-            salt: salt,
-            helper: address(accountHelper),
-            account: account,
-            initCode: initCode
-        });
-    }
-
     function makeAccountInstance(bytes32 salt)
         internal
         initializeModuleKit
@@ -198,8 +158,56 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             helper: address(accountHelper),
             account: account,
             initCode: initCode,
-            validator: address(_defaultValidator)
+            validator: address(_defaultValidator),
+            accountFactory: address(accountFactory)
         });
+    }
+
+    function makeAccountInstance(
+        bytes32 salt,
+        address account,
+        bytes memory initCode
+    )
+        internal
+        initializeModuleKit
+        returns (AccountInstance memory instance)
+    {
+        makeAccountInstance({
+            salt: salt,
+            helper: address(accountHelper),
+            account: account,
+            initCode: initCode
+        });
+    }
+
+    function makeAccountInstance(
+        bytes32 salt,
+        address account,
+        bytes memory initCode,
+        address helper
+    )
+        internal
+        initializeModuleKit
+        returns (AccountInstance memory instance)
+    {
+        label(address(account), toString(salt));
+        deal(account, 10 ether);
+
+        address _factory;
+        assembly {
+            _factory := mload(add(initCode, 20))
+        }
+
+        instance = _makeAccountInstance({
+            salt: salt,
+            accountType: env,
+            helper: helper,
+            account: account,
+            initCode: initCode,
+            validator: address(_defaultValidator),
+            accountFactory: _factory
+        });
+        setAccountType(AccountType.CUSTOM);
     }
 
     function makeAccountInstance(
@@ -216,13 +224,19 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         label(address(account), toString(salt));
         deal(account, 10 ether);
 
+        address _factory;
+        assembly {
+            _factory := mload(add(initCode, 20))
+        }
+
         instance = _makeAccountInstance({
             salt: salt,
             accountType: env,
             helper: helper,
             account: account,
             initCode: initCode,
-            validator: defaultValidator
+            validator: defaultValidator,
+            accountFactory: _factory
         });
         setAccountType(AccountType.CUSTOM);
     }
@@ -247,6 +261,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         bytes32 salt,
         address account,
         bytes memory initCode,
+        address accountFactory,
         address validator,
         AccountType accountType,
         address helper
@@ -261,7 +276,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             aux: auxiliary,
             salt: salt,
             defaultValidator: IERC7579Validator(validator),
-            initCode: initCode
+            initCode: initCode,
+            accountFactory: accountFactory
         });
     }
 }

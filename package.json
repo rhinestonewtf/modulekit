@@ -40,7 +40,7 @@
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "@zerodev/kernel": "github:zerodevapp/kernel#256f1f441ebcfdfccb0cbf22d1e0444e4a39eb3d",
+    "@zerodev/kernel": "github:kopy-kat/kernel#patch",
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall"
   },
   "devDependencies": {

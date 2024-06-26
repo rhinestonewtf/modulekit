@@ -9,8 +9,6 @@ out/
 
 packages/modulekit/gas_calculations/*.json
 
-# Docs
-docs/
 
 # Dotenv file
 .env
