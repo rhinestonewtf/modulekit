@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 interface IAccountModulesPaginated {
-    function getValidatorPaginated(
+    function getValidatorsPaginated(
         address,
         uint256
     )
