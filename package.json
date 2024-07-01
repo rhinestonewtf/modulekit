@@ -32,7 +32,7 @@
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@prb/math": "^4.0.2",
     "@rhinestone/erc4337-validation": "^0.0.1-alpha.1",
-    "@rhinestone/safe7579": "github:rhinestonewtf/safe7579",
+    "@rhinestone/safe7579": "github:rhinestonewtf/safe7579#feature/4337-compliance",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
