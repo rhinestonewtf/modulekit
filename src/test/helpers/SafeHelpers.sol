@@ -83,7 +83,7 @@ contract SafeHelpers is HelperBase {
         address previous;
 
         (address[] memory array,) =
-            IAccountModulesPaginated(instance.account).getValidatorPaginated(address(0x1), 100);
+            IAccountModulesPaginated(instance.account).getValidatorsPaginated(address(0x1), 100);
 
         if (array.length == 1) {
             previous = address(0x1);
