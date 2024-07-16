@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE} from "../helpers/MainnetAddresses.sol";
+import {SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE, QUOTER_ADDRESS} from "../helpers/MainnetAddresses.sol";
 import {ISwapRouter} from "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {ERC20Integration} from "../../ERC20.sol";
@@ -87,6 +87,32 @@ library UniswapV3Integration {
                 )
             )
         });
+    }
+
+    function getQuote(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        uint256 amountIn,
+        uint160 sqrtPriceLimitX96
+    ) external view returns (uint256) {
+        IUniswapV3Quoter quoter = IUniswapV3Quoter(quoterAddress);
+
+        (bool success, bytes memory data) = address(quoter).staticcall(
+            abi.encodeWithSelector(
+                quoter.quoteExactInputSingle.selector,
+                tokenIn,
+                tokenOut,
+                fee,
+                amountIn,
+                sqrtPriceLimitX96
+            )
+        );
+
+        require(success, "Static call failed");
+
+        uint256 amountOut = abi.decode(data, (uint256));
+        return amountOut;
     }
 
     // Babylonian method for square root calculation
