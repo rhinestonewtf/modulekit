@@ -222,28 +222,3 @@ function getMappingSlotAt(
 ) returns (bytes32) {
     return Vm(VM_ADDR).getMappingSlotAt(target, slot, idx);
 }
-
-// Babylonian method for square root calculation
-function sqrt(uint256 y) returns (uint256 z) {
-    if (y > 3) {
-        z = y;
-        uint256 x = y / 2 + 1;
-        while (x < z) {
-            z = x;
-            x = (y / x + x) / 2;
-        }
-    } else if (y != 0) {
-        z = 1;
-    }
-}
-
-// Helper function to calculate sqrtPriceLimitX96
-function calculateSqrtPriceLimitX96(uint256 priceRatio) returns (uint160) {
-    // Step 1: Calculate the square root of the price ratio
-    uint256 sqrtPriceRatio = sqrt(priceRatio * 1e18); // Scale priceRatio to 18 decimals for precision
-
-    // Step 2: Scale the result by 2^96
-    uint256 sqrtPriceLimitX96 = (sqrtPriceRatio * 2 ** 96) / 1e9; // Adjust back from the scaling
-
-    return uint160(sqrtPriceLimitX96);
-}
