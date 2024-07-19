@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE, QUOTER_ADDRESS} from "../helpers/MainnetAddresses.sol";
+import {SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE} from "../helpers/MainnetAddresses.sol";
 import {ISwapRouter} from "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {ERC20Integration} from "../../ERC20.sol";
 import {Execution} from "../../../Accounts.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 /// @author zeroknots
 library UniswapV3Integration {
@@ -89,34 +90,15 @@ library UniswapV3Integration {
         });
     }
 
-    function getQuote(
-        address tokenIn,
-        address tokenOut,
-        uint24 fee,
-        uint256 amountIn,
-        uint160 sqrtPriceLimitX96
-    ) external view returns (uint256) {
-        IUniswapV3Quoter quoter = IUniswapV3Quoter(quoterAddress);
-
-        (bool success, bytes memory data) = address(quoter).staticcall(
-            abi.encodeWithSelector(
-                quoter.quoteExactInputSingle.selector,
-                tokenIn,
-                tokenOut,
-                fee,
-                amountIn,
-                sqrtPriceLimitX96
-            )
-        );
-
-        require(success, "Static call failed");
-
-        uint256 amountOut = abi.decode(data, (uint256));
-        return amountOut;
+    // Function to get the latest price from a Chainlink oracle
+    function getLatestPrice(address _priceFeed) internal view returns (int) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(_priceFeed);
+        (, int price, , , ) = priceFeed.latestRoundData();
+        return price;
     }
 
     // Babylonian method for square root calculation
-    function sqrt(uint256 y) returns (uint256 z) {
+    function sqrt(uint256 y) internal pure returns (uint256 z) {
         if (y > 3) {
             z = y;
             uint256 x = y / 2 + 1;
@@ -130,7 +112,9 @@ library UniswapV3Integration {
     }
 
     // Helper function to calculate sqrtPriceLimitX96
-    function calculateSqrtPriceLimitX96(uint256 priceRatio) returns (uint160) {
+    function calculateSqrtPriceLimitX96(
+        uint256 priceRatio
+    ) internal pure returns (uint160) {
         // Step 1: Calculate the square root of the price ratio
         uint256 sqrtPriceRatio = sqrt(priceRatio * 1e18); // Scale priceRatio to 18 decimals for precision
 
