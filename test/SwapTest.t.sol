@@ -16,10 +16,8 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
     IERC20 tokenA;
     IERC20 tokenB;
 
-    // Chainlink price feed for WETH/USDC
     AggregatorV3Interface internal priceFeed;
 
-    // Amount to be used in the test
     uint256 amountIn = 100000000; // Example: 100 tokens of tokenA
     uint32 slippage = 1; // 0.1% slippage
 
@@ -35,16 +33,12 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
         instance = makeAccountInstance("account1");
         assertTrue(instance.account != address(0));
 
-        // Initialize mock ERC20 tokens
         tokenA = IERC20(address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48)); // USDC
         tokenB = IERC20(address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)); // WETH
 
         priceFeed = AggregatorV3Interface(CHAINLINK_PRICE_FEED_ADDRESS);
 
-        // Fund the smart account with tokenA
         fundAccountWithTokenA(amountIn);
-
-        // Fund the smart account with Ether for gas
         vm.deal(instance.account, 1 ether);
         assertTrue(instance.account.balance == 1 ether);
     }
@@ -59,11 +53,10 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
     }
 
     function testApproveAndSwap() public {
-        // Get the latest price from Chainlink
         int latestPrice = UniswapV3Integration.getOraclePrice(
             CHAINLINK_PRICE_FEED_ADDRESS
         );
-        emit log_named_int("Latest Price from Chainlink", latestPrice);
+        emit log_named_int("Price from Chainlink", latestPrice);
 
         address poolAddress = UniswapV3Integration.getPoolAddress(
             address(tokenA),
@@ -72,7 +65,7 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
         uint160 sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(
             poolAddress
         );
-        emit log_named_uint("Latest Square Root Price X96", sqrtPriceX96);
+        emit log_named_uint("Square Root Price X96", sqrtPriceX96);
 
         uint256 priceRatio = UniswapV3Integration.sqrtPriceX96toPriceRatio(
             sqrtPriceX96
@@ -80,14 +73,13 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
         emit log_named_uint("Price Ratio", priceRatio);
 
-        bool isToken0 = UniswapV3Integration.checkTokenOrder(
+        bool swapToken0to1 = UniswapV3Integration.checkTokenOrder(
             address(tokenA),
-            address(tokenB),
             poolAddress
         );
 
         uint256 priceRatioLimit;
-        if (isToken0) {
+        if (swapToken0to1) {
             priceRatioLimit = (priceRatio * (1000 - slippage)) / 1000;
         } else {
             priceRatioLimit = (priceRatio * (1000 + slippage)) / 1000;

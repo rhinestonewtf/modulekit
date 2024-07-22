@@ -141,14 +141,13 @@ library UniswapV3Integration {
     }
 
     function checkTokenOrder(
-        address token0,
-        address token1,
+        address tokenSwappedFrom,
         address poolAddress
-    ) internal view returns (bool isToken0) {
+    ) internal view returns (bool swapToken0to1) {
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         address poolToken0 = IUniswapV3Pool(poolAddress).token0();
-        bool isToken0 = (token0 == poolToken0);
-        return isToken0;
+        bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
+        return swapToken0to1;
     }
 
     function sqrt256(uint256 y) internal pure returns (uint256 z) {
