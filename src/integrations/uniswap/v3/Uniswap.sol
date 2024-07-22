@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE} from "../helpers/MainnetAddresses.sol";
+import {SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE, FACTORY_ADDRESS} from "../helpers/MainnetAddresses.sol";
 import {ISwapRouter} from "../../interfaces/uniswap/v3/ISwapRouter.sol";
+import {IUniswapV3Factory} from "../../interfaces/uniswap/v3/IUniswapV3Factory.sol";
+import {IUniswapV3Pool} from "../../interfaces/uniswap/v3/IUniswapV3Pool.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {ERC20Integration} from "../../ERC20.sol";
 import {Execution} from "../../../Accounts.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import "forge-std/console.sol"; // Import console for logging
 
 /// @author zeroknots
 library UniswapV3Integration {
@@ -97,8 +100,51 @@ library UniswapV3Integration {
         return price;
     }
 
-    // Babylonian method for square root calculation
-    function sqrt(uint256 y) internal pure returns (uint256 z) {
+    function getSqrtPriceX96(
+        address token0,
+        address token1
+    ) public view returns (uint160 sqrtPriceX96) {
+        IUniswapV3Factory factory = IUniswapV3Factory(FACTORY_ADDRESS);
+        address poolAddress = factory.getPool(
+            token0,
+            token1,
+            SWAPROUTER_DEFAULTFEE
+        );
+        require(poolAddress != address(0), "Pool does not exist");
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        IUniswapV3Pool.Slot0 memory slot0 = pool.slot0();
+        uint160 sqrtPriceX96 = slot0.sqrtPriceX96;
+
+        return sqrtPriceX96; // Added return statement
+    }
+
+    function getAdjustedSqrtPriceX96(
+        address token0,
+        address token1
+    ) external view returns (uint160 newSqrtPriceX96) {
+        uint160 sqrtPriceX96 = getSqrtPriceX96(token0, token1);
+
+        console.log("Raw sqrtPriceX96:", sqrtPriceX96);
+
+        uint256 decodedSqrtPrice = sqrtPriceX96 / (2 ** 96);
+
+        uint256 price = decodedSqrtPrice * decodedSqrtPrice;
+
+        console.log("Converted Price:", price);
+
+        // Correctly calculate the new price with a 0.1% decrease
+        uint256 decreasedPrice = (price * 999) / 1000; // Corrected calculation
+
+        console.log("Decreased Price:", decreasedPrice);
+
+        newSqrtPriceX96 = calculateSqrtPriceX96(decreasedPrice); // Assuming calculateSqrtPriceX96 is correctly implemented elsewhere
+
+        console.log("New sqrtPriceX96:", newSqrtPriceX96);
+
+        return newSqrtPriceX96;
+    }
+
+    function sqrt256(uint256 y) internal pure returns (uint256 z) {
         if (y > 3) {
             z = y;
             uint256 x = y / 2 + 1;
@@ -111,16 +157,13 @@ library UniswapV3Integration {
         }
     }
 
-    // Helper function to calculate sqrtPriceLimitX96
-    function calculateSqrtPriceLimitX96(
+    function calculateSqrtPriceX96(
         uint256 priceRatio
     ) internal pure returns (uint160) {
-        // Step 1: Calculate the square root of the price ratio
-        uint256 sqrtPriceRatio = sqrt(priceRatio * 1e18); // Scale priceRatio to 18 decimals for precision
+        uint256 sqrtPriceRatio = sqrt256(priceRatio * 1e18); // Scale priceRatio to 18 decimals for precision
 
-        // Step 2: Scale the result by 2^96
-        uint256 sqrtPriceLimitX96 = (sqrtPriceRatio * 2 ** 96) / 1e9; // Adjust back from the scaling
+        uint256 sqrtPriceX96 = (sqrtPriceRatio * 2 ** 96) / 1e9; // Adjust back from the scaling
 
-        return uint160(sqrtPriceLimitX96);
+        return uint160(sqrtPriceX96);
     }
 }
