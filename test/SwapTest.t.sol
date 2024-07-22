@@ -21,6 +21,7 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
     // Amount to be used in the test
     uint256 amountIn = 100000000; // Example: 100 tokens of tokenA
+    uint32 slippage = 1; // 0.1% slippage
 
     address internal constant TOKEN_A_HOLDER =
         0x4B16c5dE96EB2117bBE5fd171E4d203624B014aa; // account with USDC holdings
@@ -59,14 +60,45 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
     function testApproveAndSwap() public {
         // Get the latest price from Chainlink
-        int latestPrice = UniswapV3Integration.getLatestPrice(
+        int latestPrice = UniswapV3Integration.getOraclePrice(
             CHAINLINK_PRICE_FEED_ADDRESS
         );
         emit log_named_int("Latest Price from Chainlink", latestPrice);
 
+        address poolAddress = UniswapV3Integration.getPoolAddress(
+            address(tokenA),
+            address(tokenB)
+        );
+        uint160 sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(
+            poolAddress
+        );
+        emit log_named_uint("Latest Square Root Price X96", sqrtPriceX96);
+
+        uint256 priceRatio = UniswapV3Integration.sqrtPriceX96toPriceRatio(
+            sqrtPriceX96
+        );
+
+        emit log_named_uint("Price Ratio", priceRatio);
+
+        bool isToken0 = UniswapV3Integration.checkTokenOrder(
+            address(tokenA),
+            address(tokenB),
+            poolAddress
+        );
+
+        uint256 priceRatioLimit;
+        if (isToken0) {
+            priceRatioLimit = (priceRatio * (1000 - slippage)) / 1000;
+        } else {
+            priceRatioLimit = (priceRatio * (1000 + slippage)) / 1000;
+        }
+
+        emit log_named_uint("Price Ratio Limit:", priceRatioLimit);
+
         uint160 sqrtPriceLimitX96 = UniswapV3Integration
-            .getAdjustedSqrtPriceX96(address(tokenA), address(tokenB));
-        emit log_named_uint("Calculated sqrtPriceLimitX96", sqrtPriceLimitX96);
+            .priceRatioToSqrtPriceX96(priceRatioLimit);
+
+        emit log_named_uint("sqrtPriceLimitX96", sqrtPriceLimitX96);
 
         uint256 initialAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 initialAccountBalanceB = tokenB.balanceOf(instance.account);
@@ -96,11 +128,8 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
             });
         }
 
-        uint160 latestSqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(
-            address(tokenA),
-            address(tokenB)
-        );
-        emit log_named_uint("Latest Square Root Price X96", latestSqrtPriceX96);
+        sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(poolAddress);
+        emit log_named_uint("Post Swap Square Root Price X96", sqrtPriceX96);
 
         uint256 finalAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 finalAccountBalanceB = tokenB.balanceOf(instance.account);
