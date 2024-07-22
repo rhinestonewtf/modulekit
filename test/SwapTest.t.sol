@@ -41,18 +41,15 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
         priceFeed = AggregatorV3Interface(CHAINLINK_PRICE_FEED_ADDRESS);
 
         // Fund the smart account with tokenA
-        fundContractWithTokenA(amountIn);
+        fundAccountWithTokenA(amountIn);
 
         // Fund the smart account with Ether for gas
         vm.deal(instance.account, 1 ether);
         assertTrue(instance.account.balance == 1 ether);
     }
 
-    function fundContractWithTokenA(uint256 amount) internal {
+    function fundAccountWithTokenA(uint256 amount) internal {
         vm.startPrank(TOKEN_A_HOLDER);
-
-        // bool success = tokenA.transfer(address(this), amount);
-        // require(success, "Failed to transfer tokenA");
 
         bool success = tokenA.transfer(instance.account, amount);
         require(success, "Failed to transfer tokenA to smart account");
@@ -71,20 +68,9 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
             .getAdjustedSqrtPriceX96(address(tokenA), address(tokenB));
         emit log_named_uint("Calculated sqrtPriceLimitX96", sqrtPriceLimitX96);
 
-        // Record initial balances
-        uint256 initialBalanceA = tokenA.balanceOf(address(this));
-        uint256 initialBalanceB = tokenB.balanceOf(address(this));
         uint256 initialAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 initialAccountBalanceB = tokenB.balanceOf(instance.account);
 
-        emit log_named_uint(
-            "Initial Balance of Token A (contract)",
-            initialBalanceA
-        );
-        emit log_named_uint(
-            "Initial Balance of Token B (contract)",
-            initialBalanceB
-        );
         emit log_named_uint(
             "Initial Balance of Token A (account)",
             initialAccountBalanceA
@@ -116,19 +102,9 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
         );
         emit log_named_uint("Latest Square Root Price X96", latestSqrtPriceX96);
 
-        uint256 finalBalanceA = tokenA.balanceOf(address(this));
-        uint256 finalBalanceB = tokenB.balanceOf(address(this));
         uint256 finalAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 finalAccountBalanceB = tokenB.balanceOf(instance.account);
 
-        emit log_named_uint(
-            "Final Balance of Token A (contract)",
-            finalBalanceA
-        );
-        emit log_named_uint(
-            "Final Balance of Token B (contract)",
-            finalBalanceB
-        );
         emit log_named_uint(
             "Final Balance of Token A (account)",
             finalAccountBalanceA

@@ -115,7 +115,7 @@ library UniswapV3Integration {
         IUniswapV3Pool.Slot0 memory slot0 = pool.slot0();
         uint160 sqrtPriceX96 = slot0.sqrtPriceX96;
 
-        return sqrtPriceX96; // Added return statement
+        return sqrtPriceX96;
     }
 
     function getAdjustedSqrtPriceX96(
