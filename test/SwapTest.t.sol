@@ -128,9 +128,6 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
             });
         }
 
-        sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(poolAddress);
-        emit log_named_uint("Post Swap Square Root Price X96", sqrtPriceX96);
-
         uint256 finalAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 finalAccountBalanceB = tokenB.balanceOf(instance.account);
 
@@ -143,7 +140,9 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
             finalAccountBalanceB
         );
 
-        // Check that the balances have changed as expected
+        sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(poolAddress);
+        emit log_named_uint("Post Swap Square Root Price X96", sqrtPriceX96);
+
         require(
             finalAccountBalanceA < initialAccountBalanceA,
             "Token A balance in account did not decrease"
