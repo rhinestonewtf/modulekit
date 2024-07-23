@@ -4,7 +4,6 @@ pragma solidity ^0.8.25;
 import "test/BaseTest.t.sol";
 import "src/ModuleKit.sol";
 import {ERC7579ExecutorBase} from "src/Modules.sol";
-
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {UniswapV3Integration} from "../src/integrations/uniswap/v3/Uniswap.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
@@ -15,6 +14,8 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
     IERC20 tokenA;
     IERC20 tokenB;
+    MockERC20 mockTokenA;
+    MockERC20 mockTokenB;
 
     AggregatorV3Interface internal priceFeed;
 
@@ -30,12 +31,14 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
         0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 
     function setUp() public override {
+        string memory MAINNET_RPC_URL = vm.envString("MAINNET_RPC_URL");
+        uint256 forkId = vm.createSelectFork(MAINNET_RPC_URL);
+
         instance = makeAccountInstance("account1");
         assertTrue(instance.account != address(0));
 
-        tokenA = IERC20(address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48)); // USDC
-        tokenB = IERC20(address(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2)); // WETH
-
+        tokenA = IERC20(USDC_ADDRESS);
+        tokenB = IERC20(WETH_ADDRESS);
         priceFeed = AggregatorV3Interface(CHAINLINK_PRICE_FEED_ADDRESS);
 
         fundAccountWithTokenA(amountIn);
@@ -45,16 +48,14 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
     function fundAccountWithTokenA(uint256 amount) internal {
         vm.startPrank(TOKEN_A_HOLDER);
-
         bool success = tokenA.transfer(instance.account, amount);
         require(success, "Failed to transfer tokenA to smart account");
-
         vm.stopPrank();
     }
 
     function testApproveAndSwap() public {
-        int latestPrice = UniswapV3Integration.getOraclePrice(
-            CHAINLINK_PRICE_FEED_ADDRESS
+        int256 latestPrice = UniswapV3Integration.getOraclePrice(
+            address(priceFeed)
         );
         emit log_named_int("Price from Chainlink", latestPrice);
 
