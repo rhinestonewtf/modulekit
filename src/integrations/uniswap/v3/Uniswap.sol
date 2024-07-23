@@ -130,6 +130,26 @@ library UniswapV3Integration {
         return priceRatio;
     }
 
+    function priceRatioToPrice(
+        uint256 priceRatio,
+        address poolAddress,
+        address tokenSwappedFrom
+    ) internal view returns (uint256 price) {
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        address poolToken0 = pool.token0();
+        address poolToken1 = pool.token1();
+        uint256 token0Decimals = IERC20(poolToken0).decimals();
+        uint256 token1Decimals = IERC20(poolToken1).decimals();
+
+        bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
+        if (swapToken0to1) {
+            price = 10 ** token1Decimals / priceRatio;
+        } else {
+            price = priceRatio * 10 ** token0Decimals;
+        }
+        return price;
+    }
+
     function priceRatioToSqrtPriceX96(
         uint256 priceRatio
     ) internal pure returns (uint160) {

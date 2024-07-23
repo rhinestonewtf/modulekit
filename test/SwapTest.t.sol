@@ -22,8 +22,10 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
     uint256 amountIn = 100000000; // Example: 100 tokens of tokenA
     uint32 slippage = 1; // 0.1% slippage
 
-    address internal constant TOKEN_A_HOLDER =
+    address internal constant USDC_HOLDER =
         0x4B16c5dE96EB2117bBE5fd171E4d203624B014aa; // account with USDC holdings
+    address internal constant WETH_HOLDER =
+        0x57757E3D981446D585Af0D9Ae4d7DF6D64647806; // account with WETH holdings
 
     address constant USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -32,7 +34,7 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
     function setUp() public override {
         string memory MAINNET_RPC_URL = vm.envString("MAINNET_RPC_URL");
-        uint256 forkId = vm.createSelectFork(MAINNET_RPC_URL);
+        vm.createSelectFork(MAINNET_RPC_URL);
 
         instance = makeAccountInstance("account1");
         assertTrue(instance.account != address(0));
@@ -47,7 +49,7 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
     }
 
     function fundAccountWithTokenA(uint256 amount) internal {
-        vm.startPrank(TOKEN_A_HOLDER);
+        vm.startPrank(USDC_HOLDER);
         bool success = tokenA.transfer(instance.account, amount);
         require(success, "Failed to transfer tokenA to smart account");
         vm.stopPrank();
@@ -74,6 +76,14 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
         emit log_named_uint("Price Ratio", priceRatio);
 
+        uint256 price = UniswapV3Integration.priceRatioToPrice(
+            priceRatio,
+            poolAddress,
+            address(tokenA)
+        );
+
+        emit log_named_uint("Price", price);
+
         bool swapToken0to1 = UniswapV3Integration.checkTokenOrder(
             address(tokenA),
             poolAddress
@@ -86,7 +96,15 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
             priceRatioLimit = (priceRatio * (1000 + slippage)) / 1000;
         }
 
-        emit log_named_uint("Price Ratio Limit:", priceRatioLimit);
+        emit log_named_uint("Price Ratio Limit", priceRatioLimit);
+
+        uint256 priceLimit = UniswapV3Integration.priceRatioToPrice(
+            priceRatioLimit,
+            poolAddress,
+            address(tokenA)
+        );
+
+        emit log_named_uint("Price Limit", priceLimit);
 
         uint160 sqrtPriceLimitX96 = UniswapV3Integration
             .priceRatioToSqrtPriceX96(priceRatioLimit);
