@@ -289,12 +289,13 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testERC1271() public {
+        bytes32 unformattedHash = keccak256("test");
         bytes32 hash =
-            instance.formatERC1271Hash(address(instance.defaultValidator), keccak256("test"));
+            instance.formatERC1271Hash(address(instance.defaultValidator), unformattedHash);
 
         bool isValid = instance.isValidSignature({
             validator: address(instance.defaultValidator),
-            hash: hash,
+            hash: unformattedHash,
             signature: bytes("test")
         });
         assertTrue(isValid);
