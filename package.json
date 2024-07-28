@@ -34,6 +34,7 @@
     "@rhinestone/erc4337-validation": "^0.0.1-alpha.1",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579#v1.0.0",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
+    "@rhinestone/registry": "github:rhinestonewtf/registry#v1.0",
     "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
     "erc7579": "github:erc7579/erc7579-implementation",

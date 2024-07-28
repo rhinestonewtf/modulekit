@@ -23,6 +23,9 @@ importers:
       '@rhinestone/module-bases':
         specifier: github:rhinestonewtf/module-bases
         version: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/7d7dbe629e6620dcc3e0e7f9dce8aa305964ae5a(ethers@5.7.2)(hardhat@2.22.6(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
+      '@rhinestone/registry':
+        specifier: github:rhinestonewtf/registry#v1.0
+        version: https://codeload.github.com/rhinestonewtf/registry/tar.gz/1371979a97293e0c6188afcd923784f6a718ae7d
       '@rhinestone/safe7579':
         specifier: github:rhinestonewtf/safe7579#v1.0.0
         version: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/33f110f08ed5fcab75c29d7cfb93f7f3e4da76a7(ethers@5.7.2)(hardhat@2.22.6(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)
@@ -411,6 +414,10 @@ packages:
   '@rhinestone/module-bases@https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/7d7dbe629e6620dcc3e0e7f9dce8aa305964ae5a':
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/7d7dbe629e6620dcc3e0e7f9dce8aa305964ae5a}
     version: 0.0.1
+
+  '@rhinestone/registry@https://codeload.github.com/rhinestonewtf/registry/tar.gz/1371979a97293e0c6188afcd923784f6a718ae7d':
+    resolution: {tarball: https://codeload.github.com/rhinestonewtf/registry/tar.gz/1371979a97293e0c6188afcd923784f6a718ae7d}
+    version: 1.0.0
 
   '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/33f110f08ed5fcab75c29d7cfb93f7f3e4da76a7':
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/33f110f08ed5fcab75c29d7cfb93f7f3e4da76a7}
@@ -1079,6 +1086,10 @@ packages:
   forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/07263d193d621c4b2b0ce8b4d54af58f6957d97d:
     resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/07263d193d621c4b2b0ce8b4d54af58f6957d97d}
     version: 1.9.1
+
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/ae570fec082bfe1c1f45b0acca4a2b4f84d345ce:
+    resolution: {tarball: https://codeload.github.com/foundry-rs/forge-std/tar.gz/ae570fec082bfe1c1f45b0acca4a2b4f84d345ce}
+    version: 1.7.6
 
   form-data-encoder@2.1.4:
     resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
@@ -1915,6 +1926,10 @@ packages:
   solady@https://codeload.github.com/vectorized/solady/tar.gz/8200a70e8dc2a77ecb074fc2e99a2a0d36547522:
     resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/8200a70e8dc2a77ecb074fc2e99a2a0d36547522}
     version: 0.0.218
+
+  solady@https://codeload.github.com/vectorized/solady/tar.gz/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e}
+    version: 0.0.168
 
   solarray@https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684:
     resolution: {tarball: https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684}
@@ -2860,6 +2875,12 @@ snapshots:
       - typechain
       - utf-8-validate
 
+  '@rhinestone/registry@https://codeload.github.com/rhinestonewtf/registry/tar.gz/1371979a97293e0c6188afcd923784f6a718ae7d':
+    dependencies:
+      '@openzeppelin/contracts': 5.0.1
+      forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/ae570fec082bfe1c1f45b0acca4a2b4f84d345ce
+      solady: https://codeload.github.com/vectorized/solady/tar.gz/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e
+
   '@rhinestone/safe7579@https://codeload.github.com/rhinestonewtf/safe7579/tar.gz/33f110f08ed5fcab75c29d7cfb93f7f3e4da76a7(ethers@5.7.2)(hardhat@2.22.6(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)':
     dependencies:
       '@ERC4337/account-abstraction': accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.6(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
@@ -3743,6 +3764,8 @@ snapshots:
       debug: 4.3.5(supports-color@8.1.1)
 
   forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/07263d193d621c4b2b0ce8b4d54af58f6957d97d: {}
+
+  forge-std@https://codeload.github.com/foundry-rs/forge-std/tar.gz/ae570fec082bfe1c1f45b0acca4a2b4f84d345ce: {}
 
   form-data-encoder@2.1.4: {}
 
@@ -4654,6 +4677,8 @@ snapshots:
       is-fullwidth-code-point: 3.0.0
 
   solady@https://codeload.github.com/vectorized/solady/tar.gz/8200a70e8dc2a77ecb074fc2e99a2a0d36547522: {}
+
+  solady@https://codeload.github.com/vectorized/solady/tar.gz/9deb9ed36a27261a8745db5b7cd7f4cdc3b1cd4e: {}
 
   solarray@https://codeload.github.com/sablier-labs/solarray/tar.gz/6bf10cb34cdace52a3ba5fe437e78cc82df92684: {}
 
