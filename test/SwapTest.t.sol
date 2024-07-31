@@ -6,7 +6,6 @@ import "src/ModuleKit.sol";
 import {ERC7579ExecutorBase} from "src/Modules.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {UniswapV3Integration} from "../src/integrations/uniswap/v3/Uniswap.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 contract TestUniswap is RhinestoneModuleKit, BaseTest {
     using ModuleKitHelpers for AccountInstance;
@@ -16,8 +15,6 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
     IERC20 tokenB;
     MockERC20 mockTokenA;
     MockERC20 mockTokenB;
-
-    AggregatorV3Interface internal priceFeed;
 
     uint256 amountIn = 100000000; // Example: 100 tokens of tokenA
     uint32 slippage = 1; // 0.1% slippage
@@ -29,8 +26,6 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
     address constant USDC_ADDRESS = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant CHAINLINK_PRICE_FEED_ADDRESS =
-        0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
 
     function setUp() public override {
         string memory MAINNET_RPC_URL = vm.envString("MAINNET_RPC_URL");
@@ -41,26 +36,20 @@ contract TestUniswap is RhinestoneModuleKit, BaseTest {
 
         tokenA = IERC20(USDC_ADDRESS);
         tokenB = IERC20(WETH_ADDRESS);
-        priceFeed = AggregatorV3Interface(CHAINLINK_PRICE_FEED_ADDRESS);
 
-        fundAccountWithTokenA(amountIn);
+        _fundAccountWithTokenA(amountIn);
         vm.deal(instance.account, 1 ether);
         assertTrue(instance.account.balance == 1 ether);
     }
 
-    function fundAccountWithTokenA(uint256 amount) internal {
+    function _fundAccountWithTokenA(uint256 amount) internal {
         vm.startPrank(USDC_HOLDER);
         bool success = tokenA.transfer(instance.account, amount);
-        require(success, "Failed to transfer tokenA to smart account");
+        require(success, "Failed to transfer tokenA to account");
         vm.stopPrank();
     }
 
     function testApproveAndSwap() public {
-        int256 latestPrice = UniswapV3Integration.getOraclePrice(
-            address(priceFeed)
-        );
-        emit log_named_int("Price from Chainlink", latestPrice);
-
         address poolAddress = UniswapV3Integration.getPoolAddress(
             address(tokenA),
             address(tokenB)

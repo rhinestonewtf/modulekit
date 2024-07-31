@@ -8,7 +8,6 @@ import {IUniswapV3Pool} from "../../interfaces/uniswap/v3/IUniswapV3Pool.sol";
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {ERC20Integration} from "../../ERC20.sol";
 import {Execution} from "../../../Accounts.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 import "forge-std/console.sol"; // Import console for logging
 
 /// @author zeroknots
@@ -91,12 +90,6 @@ library UniswapV3Integration {
                 )
             )
         });
-    }
-
-    function getOraclePrice(address _priceFeed) internal view returns (int) {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(_priceFeed);
-        (, int price, , , ) = priceFeed.latestRoundData();
-        return price;
     }
 
     function getPoolAddress(
