@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Vm, VmSafe} from "forge-std/Vm.sol";
+import { Vm, VmSafe } from "forge-std/Vm.sol";
 
 address constant VM_ADDR = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D;
 
-function makeAddrAndKey(
-    string memory name
-) returns (address addr, uint256 privateKey) {
+function makeAddrAndKey(string memory name) returns (address addr, uint256 privateKey) {
     privateKey = uint256(keccak256(abi.encodePacked(name)));
     addr = Vm(VM_ADDR).addr(privateKey);
     Vm(VM_ADDR).label(addr, name);
@@ -23,10 +21,7 @@ function getAddr(uint256 pk) pure returns (address) {
     return Vm(VM_ADDR).addr(pk);
 }
 
-function sign(
-    uint256 pk,
-    bytes32 msgHash
-) pure returns (uint8 v, bytes32 r, bytes32 s) {
+function sign(uint256 pk, bytes32 msgHash) pure returns (uint8 v, bytes32 r, bytes32 s) {
     return Vm(VM_ADDR).sign(pk, msgHash);
 }
 
@@ -110,17 +105,11 @@ function stopAndReturnStateDiff() returns (VmSafe.AccountAccess[] memory) {
     return Vm(VM_ADDR).stopAndReturnStateDiff();
 }
 
-function envOr(
-    string memory name,
-    string memory defaultValue
-) view returns (string memory value) {
+function envOr(string memory name, string memory defaultValue) view returns (string memory value) {
     return Vm(VM_ADDR).envOr(name, defaultValue);
 }
 
-function envOr(
-    string memory name,
-    bool defaultValue
-) view returns (bool value) {
+function envOr(string memory name, bool defaultValue) view returns (bool value) {
     return Vm(VM_ADDR).envOr(name, defaultValue);
 }
 
@@ -132,7 +121,9 @@ function serializeUint(
     string memory objectKey,
     string memory valueKey,
     uint256 value
-) returns (string memory json) {
+)
+    returns (string memory json)
+{
     return Vm(VM_ADDR).serializeUint(objectKey, valueKey, value);
 }
 
@@ -140,7 +131,9 @@ function serializeString(
     string memory objectKey,
     string memory valueKey,
     string memory value
-) returns (string memory json) {
+)
+    returns (string memory json)
+{
     return Vm(VM_ADDR).serializeString(objectKey, valueKey, value);
 }
 
@@ -176,10 +169,7 @@ function toString(bytes32 input) pure returns (string memory) {
     return string(_bytes);
 }
 
-function parseJson(
-    string memory json,
-    string memory key
-) pure returns (bytes memory) {
+function parseJson(string memory json, string memory key) pure returns (bytes memory) {
     return Vm(VM_ADDR).parseJson(json, key);
 }
 
@@ -187,16 +177,11 @@ function parseJson(string memory json) pure returns (bytes memory) {
     return Vm(VM_ADDR).parseJson(json);
 }
 
-function parseJsonKeys(
-    string memory json,
-    string memory key
-) pure returns (string[] memory keys) {
+function parseJsonKeys(string memory json, string memory key) pure returns (string[] memory keys) {
     return Vm(VM_ADDR).parseJsonKeys(json, key);
 }
 
-function parseUint(
-    string memory stringifiedValue
-) pure returns (uint256 parsedValue) {
+function parseUint(string memory stringifiedValue) pure returns (uint256 parsedValue) {
     return Vm(VM_ADDR).parseUint(stringifiedValue);
 }
 
@@ -208,17 +193,10 @@ function stopMappingRecording() {
     Vm(VM_ADDR).stopMappingRecording();
 }
 
-function getMappingKeyAndParentOf(
-    address target,
-    bytes32 slot
-) returns (bool, bytes32, bytes32) {
+function getMappingKeyAndParentOf(address target, bytes32 slot) returns (bool, bytes32, bytes32) {
     return Vm(VM_ADDR).getMappingKeyAndParentOf(target, slot);
 }
 
-function getMappingSlotAt(
-    address target,
-    bytes32 slot,
-    uint256 idx
-) returns (bytes32) {
+function getMappingSlotAt(address target, bytes32 slot, uint256 idx) returns (bytes32) {
     return Vm(VM_ADDR).getMappingSlotAt(target, slot, idx);
 }

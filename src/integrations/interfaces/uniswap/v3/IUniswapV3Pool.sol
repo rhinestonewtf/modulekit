@@ -30,7 +30,9 @@ abstract contract IUniswapV3Pool {
         uint256 amount0,
         uint256 amount1,
         bytes memory data
-    ) external virtual;
+    )
+        external
+        virtual;
 
     function token0() external view virtual returns (address);
     function token1() external view virtual returns (address);
