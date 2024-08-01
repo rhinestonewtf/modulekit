@@ -12,11 +12,12 @@ import { IUniswapV3Pool } from "../../interfaces/uniswap/v3/IUniswapV3Pool.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ERC20Integration } from "../../ERC20.sol";
 import { Execution } from "../../../Accounts.sol";
-import "forge-std/console.sol"; // Import console for logging
 
 /// @author zeroknots
 library UniswapV3Integration {
     using ERC20Integration for IERC20;
+
+    error PoolDoesNotExist();
 
     function approveAndSwap(
         address smartAccount,
@@ -108,7 +109,9 @@ library UniswapV3Integration {
     {
         IUniswapV3Factory factory = IUniswapV3Factory(FACTORY_ADDRESS);
         address poolAddress = factory.getPool(token0, token1, SWAPROUTER_DEFAULTFEE);
-        require(poolAddress != address(0), "Pool does not exist");
+        if (poolAddress == address(0)) {
+            revert PoolDoesNotExist();
+        }
         return poolAddress;
     }
 
@@ -170,7 +173,6 @@ library UniswapV3Integration {
         view
         returns (bool swapToken0to1)
     {
-        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         address poolToken0 = IUniswapV3Pool(poolAddress).token0();
         bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
         return swapToken0to1;
