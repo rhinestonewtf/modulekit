@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { SWAPROUTER_ADDRESS, SWAPROUTER_DEFAULTFEE } from "../helpers/MainnetAddresses.sol";
+import {
+    SWAPROUTER_ADDRESS,
+    SWAPROUTER_DEFAULTFEE,
+    FACTORY_ADDRESS
+} from "../helpers/MainnetAddresses.sol";
 import { ISwapRouter } from "../../interfaces/uniswap/v3/ISwapRouter.sol";
+import { IUniswapV3Factory } from "../../interfaces/uniswap/v3/IUniswapV3Factory.sol";
+import { IUniswapV3Pool } from "../../interfaces/uniswap/v3/IUniswapV3Pool.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { ERC20Integration } from "../../ERC20.sol";
 import { Execution } from "../../../Accounts.sol";
+import "forge-std/console.sol"; // Import console for logging
 
 /// @author zeroknots
 library UniswapV3Integration {
@@ -89,5 +96,96 @@ library UniswapV3Integration {
                 )
             )
         });
+    }
+
+    function getPoolAddress(
+        address token0,
+        address token1
+    )
+        public
+        view
+        returns (address poolAddress)
+    {
+        IUniswapV3Factory factory = IUniswapV3Factory(FACTORY_ADDRESS);
+        address poolAddress = factory.getPool(token0, token1, SWAPROUTER_DEFAULTFEE);
+        require(poolAddress != address(0), "Pool does not exist");
+        return poolAddress;
+    }
+
+    function getSqrtPriceX96(address poolAddress) public view returns (uint160 sqrtPriceX96) {
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        IUniswapV3Pool.Slot0 memory slot0 = pool.slot0();
+        uint160 sqrtPriceX96 = slot0.sqrtPriceX96;
+        return sqrtPriceX96;
+    }
+
+    function sqrtPriceX96toPriceRatio(uint160 sqrtPriceX96)
+        internal
+        pure
+        returns (uint256 priceRatio)
+    {
+        uint256 decodedSqrtPrice = sqrtPriceX96 / (2 ** 96);
+        uint256 priceRatio = decodedSqrtPrice * decodedSqrtPrice;
+        return priceRatio;
+    }
+
+    function priceRatioToPrice(
+        uint256 priceRatio,
+        address poolAddress,
+        address tokenSwappedFrom
+    )
+        internal
+        view
+        returns (uint256 price)
+    {
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        address poolToken0 = pool.token0();
+        address poolToken1 = pool.token1();
+        uint256 token0Decimals = IERC20(poolToken0).decimals();
+        uint256 token1Decimals = IERC20(poolToken1).decimals();
+
+        bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
+        if (swapToken0to1) {
+            price = 10 ** token1Decimals / priceRatio;
+        } else {
+            price = priceRatio * 10 ** token0Decimals;
+        }
+        return price;
+    }
+
+    function priceRatioToSqrtPriceX96(uint256 priceRatio) internal pure returns (uint160) {
+        uint256 sqrtPriceRatio = sqrt256(priceRatio * 1e18); // Scale priceRatio to 18 decimals for
+            // precision
+
+        uint256 sqrtPriceX96 = (sqrtPriceRatio * 2 ** 96) / 1e9; // Adjust back from the scaling
+
+        return uint160(sqrtPriceX96);
+    }
+
+    function checkTokenOrder(
+        address tokenSwappedFrom,
+        address poolAddress
+    )
+        internal
+        view
+        returns (bool swapToken0to1)
+    {
+        IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
+        address poolToken0 = IUniswapV3Pool(poolAddress).token0();
+        bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
+        return swapToken0to1;
+    }
+
+    function sqrt256(uint256 y) internal pure returns (uint256 z) {
+        if (y > 3) {
+            z = y;
+            uint256 x = y / 2 + 1;
+            while (x < z) {
+                z = x;
+                x = (y / x + x) / 2;
+            }
+        } else if (y != 0) {
+            z = 1;
+        }
     }
 }

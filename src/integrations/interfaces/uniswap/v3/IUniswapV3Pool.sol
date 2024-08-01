@@ -33,4 +33,7 @@ abstract contract IUniswapV3Pool {
     )
         external
         virtual;
+
+    function token0() external view virtual returns (address);
+    function token1() external view virtual returns (address);
 }
