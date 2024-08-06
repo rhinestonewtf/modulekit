@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 // Interfaces
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
-import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
 import { INexus } from "@nexus/interfaces/INexus.sol";
 import { INexusAccountFactory } from "src/test/helpers/interfaces/INexusAccountFactory.sol";
 import {
