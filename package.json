@@ -41,7 +41,8 @@
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
-    "solarray": "github:sablier-labs/solarray"
+    "solarray": "github:sablier-labs/solarray",
+    "@bcnmy/nexus": "github:bcnmy/nexus"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.2",

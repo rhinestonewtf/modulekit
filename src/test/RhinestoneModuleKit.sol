@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
 import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
 import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
+import { NexusFactory } from "src/accounts/nexus/NexusFactory.sol";
 import { envOr, prank, label, deal, toString } from "src/test/utils/Vm.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
@@ -20,7 +21,8 @@ enum AccountType {
     DEFAULT,
     SAFE,
     KERNEL,
-    CUSTOM
+    CUSTOM,
+    NEXUS
 }
 
 struct AccountInstance {
@@ -44,6 +46,7 @@ string constant DEFAULT = "DEFAULT";
 string constant SAFE = "SAFE";
 string constant KERNEL = "KERNEL";
 string constant CUSTOM = "CUSTOM";
+string constant NEXUS = "NEXUS";
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
     /*//////////////////////////////////////////////////////////////////////////
@@ -59,6 +62,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     IAccountFactory public safeFactory;
     IAccountFactory public kernelFactory;
     IAccountFactory public erc7579Factory;
+    IAccountFactory public nexusFactory;
 
     HelperBase public safeHelper;
     HelperBase public kernelHelper;
@@ -80,6 +84,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             safeFactory = new SafeFactory();
             kernelFactory = new KernelFactory();
             erc7579Factory = new ERC7579Factory();
+            nexusFactory = new NexusFactory();
 
             erc7579Helper = new ERC7579Helpers();
             safeHelper = new SafeHelpers();
@@ -88,21 +93,26 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             safeFactory.init();
             kernelFactory.init();
             erc7579Factory.init();
+            nexusFactory.init();
 
             label(address(safeFactory), "SafeFactory");
             label(address(kernelFactory), "KernelFactory");
             label(address(erc7579Factory), "ERC7579Factory");
+            label(address(nexusFactory), "NexusFactory");
 
             // Stake factory on EntryPoint
             deal(address(safeFactory), 10 ether);
             deal(address(kernelFactory), 10 ether);
             deal(address(erc7579Factory), 10 ether);
+            deal(address(nexusFactory), 10 ether);
 
             prank(address(safeFactory));
             IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
             prank(address(kernelFactory));
             IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
             prank(address(erc7579Factory));
+            IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
+            prank(address(nexusFactory));
             IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
 
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
@@ -122,6 +132,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(CUSTOM))) {
                 env = AccountType.CUSTOM;
                 accountFactory = erc7579Factory;
+                accountHelper = erc7579Helper;
+            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(NEXUS))) {
+                env = AccountType.NEXUS;
+                accountFactory = nexusFactory;
                 accountHelper = erc7579Helper;
             } else {
                 revert InvalidAccountType();
