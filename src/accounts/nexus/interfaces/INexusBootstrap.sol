@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { IModule } from "@nexus/interfaces/modules/IModule.sol";
-
 struct BootstrapConfig {
     address module;
     bytes data;
 }
 
 interface INexusBootstrap {
-    /// @notice Initializes the Nexus account with a single validator.
-    /// @dev Intended to be called by the Nexus with a delegatecall.
-    /// @param validator The address of the validator module.
-    /// @param data The initialization data for the validator module.
-    function initNexusWithSingleValidator(IModule validator, bytes calldata data) external;
-
     /// @notice Initializes the Nexus account with multiple modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validators The configuration array for validator modules.

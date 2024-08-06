@@ -14,9 +14,6 @@ importers:
       '@ERC4337/account-abstraction-v0.6':
         specifier: github:eth-infinitism/account-abstraction#v0.6.0
         version: accountabstraction@https://codeload.github.com/eth-infinitism/account-abstraction/tar.gz/7174d6d845618dbd11cee68eefa715f5263690b6(ethers@5.7.2)(hardhat@2.22.6(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
-      '@bcnmy/nexus':
-        specifier: github:bcnmy/nexus
-        version: nexus@https://codeload.github.com/bcnmy/nexus/tar.gz/ab9616bd71fcd51048e834f87a7b60dccbfc0adb
       '@prb/math':
         specifier: ^4.0.2
         version: 4.0.3
@@ -904,10 +901,6 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-  dotenv@16.4.5:
-    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
-    engines: {node: '>=12'}
-
   ds-test@https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0:
     resolution: {tarball: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0}
     version: 1.0.0
@@ -1570,10 +1563,6 @@ packages:
   neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
 
-  nexus@https://codeload.github.com/bcnmy/nexus/tar.gz/ab9616bd71fcd51048e834f87a7b60dccbfc0adb:
-    resolution: {tarball: https://codeload.github.com/bcnmy/nexus/tar.gz/ab9616bd71fcd51048e834f87a7b60dccbfc0adb}
-    version: 1.0.0-beta
-
   node-addon-api@2.0.2:
     resolution: {integrity: sha512-Ntyt4AIXyaLIuMHF6IOoTakB3K+RWxwtsHNRxllEoA6vPwP9o4866g6YWDLUdnucilZhmkxiHwHr11gAENw+QA==}
 
@@ -1934,9 +1923,9 @@ packages:
     resolution: {integrity: sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==}
     engines: {node: '>=10'}
 
-  solady@https://codeload.github.com/vectorized/solady/tar.gz/2907b5036b9b3489891e69b49adba24c793940d4:
-    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/2907b5036b9b3489891e69b49adba24c793940d4}
-    version: 0.0.231
+  solady@https://codeload.github.com/vectorized/solady/tar.gz/11c27fab5233fae1456ee95d5a6ad06be8bd32c8:
+    resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/11c27fab5233fae1456ee95d5a6ad06be8bd32c8}
+    version: 0.0.232
 
   solady@https://codeload.github.com/vectorized/solady/tar.gz/8200a70e8dc2a77ecb074fc2e99a2a0d36547522:
     resolution: {tarball: https://codeload.github.com/vectorized/solady/tar.gz/8200a70e8dc2a77ecb074fc2e99a2a0d36547522}
@@ -2852,7 +2841,7 @@ snapshots:
   '@rhinestone/checknsignatures@https://codeload.github.com/rhinestonewtf/checknsignatures/tar.gz/9847c6b0d551c75ac337be1c9fe87f4449c352c9':
     dependencies:
       forge-std: https://codeload.github.com/foundry-rs/forge-std/tar.gz/1714bee72e286e73f76e320d110e0eaf5c4e649d
-      solady: https://codeload.github.com/vectorized/solady/tar.gz/2907b5036b9b3489891e69b49adba24c793940d4
+      solady: https://codeload.github.com/vectorized/solady/tar.gz/11c27fab5233fae1456ee95d5a6ad06be8bd32c8
 
   '@rhinestone/erc4337-validation@0.0.1-alpha.2(ethers@5.7.2)(hardhat@2.22.6(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))(typescript@4.9.5)':
     dependencies:
@@ -3520,8 +3509,6 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
-
-  dotenv@16.4.5: {}
 
   ds-test@https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0: {}
 
@@ -4367,11 +4354,6 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  nexus@https://codeload.github.com/bcnmy/nexus/tar.gz/ab9616bd71fcd51048e834f87a7b60dccbfc0adb:
-    dependencies:
-      '@openzeppelin/contracts': 5.0.2
-      dotenv: 16.4.5
-
   node-addon-api@2.0.2: {}
 
   node-emoji@1.11.0:
@@ -4713,7 +4695,7 @@ snapshots:
       astral-regex: 2.0.0
       is-fullwidth-code-point: 3.0.0
 
-  solady@https://codeload.github.com/vectorized/solady/tar.gz/2907b5036b9b3489891e69b49adba24c793940d4: {}
+  solady@https://codeload.github.com/vectorized/solady/tar.gz/11c27fab5233fae1456ee95d5a6ad06be8bd32c8: {}
 
   solady@https://codeload.github.com/vectorized/solady/tar.gz/8200a70e8dc2a77ecb074fc2e99a2a0d36547522: {}
 
