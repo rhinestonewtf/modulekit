@@ -71,6 +71,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     AccountType public env;
 
     error InvalidAccountType();
+    error ModuleKitUninitialized();
 
     /*//////////////////////////////////////////////////////////////////////////
                                      SETUP
@@ -117,29 +118,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
 
-            if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
-                env = AccountType.DEFAULT;
-                accountFactory = erc7579Factory;
-                accountHelper = erc7579Helper;
-            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE))) {
-                env = AccountType.SAFE;
-                accountFactory = safeFactory;
-                accountHelper = safeHelper;
-            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
-                env = AccountType.KERNEL;
-                accountFactory = kernelFactory;
-                accountHelper = kernelHelper;
-            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(CUSTOM))) {
-                env = AccountType.CUSTOM;
-                accountFactory = erc7579Factory;
-                accountHelper = erc7579Helper;
-            } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(NEXUS))) {
-                env = AccountType.NEXUS;
-                accountFactory = nexusFactory;
-                accountHelper = erc7579Helper;
-            } else {
-                revert InvalidAccountType();
-            }
+            _setAccountEnv(_env);
 
             label(address(accountFactory), "AccountFactory");
 
@@ -259,8 +238,34 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                                 ACCOUNT TYPE
     //////////////////////////////////////////////////////////////////////////*/
 
+    modifier usingAccountEnv(string memory _env) {
+        // Revert if the module kit is not initialized
+        if (!isInit) {
+            revert ModuleKitUninitialized();
+        }
+        // Cache the current env to restore it after the function call
+        AccountType _oldEnv = env;
+        IAccountFactory _oldAccountFactory;
+        HelperBase _oldAccountHelper;
+        // Set the new env
+        _setAccountEnv(_env);
+        _;
+        // Restore the old env
+        env = _oldEnv;
+        accountFactory = _oldAccountFactory;
+        accountHelper = _oldAccountHelper;
+    }
+
     function setAccountType(AccountType _env) public {
         env = _env;
+    }
+
+    function setAccountEnv(string memory _env) public {
+        _setAccountEnv(_env);
+    }
+
+    function setAccountEnv(AccountType _env) public {
+        _setAccountEnv(_env);
     }
 
     function getAccountType() public view returns (AccountType) {
@@ -293,5 +298,43 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             initCode: initCode,
             accountFactory: accountFactory
         });
+    }
+
+    function _setAccountEnv(string memory _env) internal {
+        if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
+            _setAccountEnv(AccountType.DEFAULT);
+        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE))) {
+            _setAccountEnv(AccountType.SAFE);
+        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
+            _setAccountEnv(AccountType.KERNEL);
+        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(CUSTOM))) {
+            _setAccountEnv(AccountType.CUSTOM);
+        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(NEXUS))) {
+            _setAccountEnv(AccountType.NEXUS);
+        } else {
+            revert InvalidAccountType();
+        }
+    }
+
+    function _setAccountEnv(AccountType _env) internal {
+        env = _env;
+        if (_env == AccountType.DEFAULT) {
+            accountFactory = erc7579Factory;
+            accountHelper = erc7579Helper;
+        } else if (_env == AccountType.SAFE) {
+            accountFactory = safeFactory;
+            accountHelper = safeHelper;
+        } else if (_env == AccountType.KERNEL) {
+            accountFactory = kernelFactory;
+            accountHelper = kernelHelper;
+        } else if (_env == AccountType.CUSTOM) {
+            accountFactory = erc7579Factory;
+            accountHelper = erc7579Helper;
+        } else if (_env == AccountType.NEXUS) {
+            accountFactory = nexusFactory;
+            accountHelper = erc7579Helper;
+        } else {
+            revert InvalidAccountType();
+        }
     }
 }

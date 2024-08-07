@@ -300,4 +300,67 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         });
         assertTrue(isValid);
     }
+
+    function testUsingAccountEnv() public {
+        string[] memory envs = new string[](6);
+        envs[0] = "DEFAULT";
+        envs[1] = "SAFE";
+        envs[2] = "KERNEL";
+        envs[3] = "NEXUS";
+        envs[4] = "CUSTOM";
+        envs[5] = "INVALID";
+
+        for (uint256 i = 0; i < envs.length; i++) {
+            string memory env = envs[i];
+            if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("INVALID"))) {
+                vm.expectRevert(InvalidAccountType.selector);
+                _usingAccountEnv(env);
+            } else {
+                _usingAccountEnv(env);
+            }
+        }
+    }
+
+    function testUsingAccountEnv_RevertsWhen_ModuleKitUninitialized() public {
+        isInit = false;
+        vm.expectRevert(ModuleKitUninitialized.selector);
+        _usingAccountEnv("DEFAULT");
+    }
+
+    function testSetAccountEnv() public {
+        // Deploy using current env
+        AccountInstance memory oldEnvInstance = makeAccountInstance("sameSalt");
+        assertTrue(oldEnvInstance.account.code.length == 0);
+        oldEnvInstance.deployAccount();
+        assertTrue(oldEnvInstance.account.code.length > 0);
+
+        // Switch env
+        string memory newEnv =
+            keccak256(abi.encode(env)) == keccak256(abi.encode("KERNEL")) ? "SAFE" : "KERNEL";
+        setAccountEnv(newEnv);
+
+        // Deploy using new env
+        AccountInstance memory newEnvInstance = makeAccountInstance("sameSalt");
+        assertTrue(newEnvInstance.account.code.length == 0);
+        newEnvInstance.deployAccount();
+        assertTrue(newEnvInstance.account.code.length > 0);
+    }
+
+    function testSetAccountEnv_RevertsWhen_InvalidAccountType() public {
+        vm.expectRevert(InvalidAccountType.selector);
+        setAccountEnv("INVALID");
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                INTERNAL
+    //////////////////////////////////////////////////////////////*/
+
+    function _usingAccountEnv(string memory env) internal usingAccountEnv(env) {
+        AccountInstance memory newInstance = makeAccountInstance(keccak256(abi.encode(env)));
+        assertTrue(newInstance.account.code.length == 0);
+
+        newInstance.deployAccount();
+
+        assertTrue(newInstance.account.code.length > 0);
+    }
 }
