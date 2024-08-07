@@ -253,6 +253,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         erc7579Factory.init();
         nexusFactory.init();
 
+        // Label factories
         label(address(safeFactory), "SafeFactory");
         label(address(kernelFactory), "KernelFactory");
         label(address(erc7579Factory), "ERC7579Factory");
@@ -264,6 +265,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         deal(address(erc7579Factory), 10 ether);
         deal(address(nexusFactory), 10 ether);
 
+        // Stake on EntryPoint
         prank(address(safeFactory));
         IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
         prank(address(kernelFactory));

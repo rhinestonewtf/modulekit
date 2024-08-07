@@ -25,7 +25,6 @@ import {
     getHelper as getHelperFromStorage,
     getAccountEnv as getAccountEnvFromStorage
 } from "./utils/Storage.sol";
-import { console2 } from "forge-std/console2.sol";
 
 library ModuleKitHelpers {
     /*//////////////////////////////////////////////////////////////////////////
@@ -351,7 +350,7 @@ library ModuleKitHelpers {
     }
 
     function setAccountEnv(AccountType env) internal {
-        _setAccountEnv(env);
+        _setAccountEnv(env.toString());
     }
 
     function getAccountType() internal view returns (AccountType accountType) {
@@ -377,22 +376,6 @@ library ModuleKitHelpers {
         returns (AccountType accountType)
     {
         return getAccountType();
-    }
-
-    function _setAccountEnv(AccountType env) private {
-        if (env == AccountType.DEFAULT) {
-            _setAccountEnv(DEFAULT);
-        } else if (env == AccountType.SAFE) {
-            _setAccountEnv(SAFE);
-        } else if (env == AccountType.KERNEL) {
-            _setAccountEnv(KERNEL);
-        } else if (env == AccountType.CUSTOM) {
-            _setAccountEnv(CUSTOM);
-        } else if (env == AccountType.NEXUS) {
-            _setAccountEnv(NEXUS);
-        } else {
-            revert InvalidAccountType();
-        }
     }
 
     function _setAccountEnv(string memory env) private {

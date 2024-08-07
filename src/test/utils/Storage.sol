@@ -25,16 +25,12 @@ function getExpectRevert() view returns (uint256 value) {
 
 function writeGasIdentifier(string memory id) {
     bytes32 slot = keccak256("ModuleKit.GasIdentifierSlot");
-    assembly {
-        sstore(slot, id)
-    }
+    writeString(slot, id);
 }
 
 function getGasIdentifier() view returns (string memory id) {
     bytes32 slot = keccak256("ModuleKit.GasIdentifierSlot");
-    assembly {
-        id := sload(slot)
-    }
+    id = readString(slot);
 }
 
 /*//////////////////////////////////////////////////////////////
@@ -106,8 +102,9 @@ function getIsInit() view returns (bool value) {
 
 function writeAccountType(string memory accountType) {
     bytes32 slot = keccak256("ModuleKit.AccountTypeSlot");
+    bytes32 accountTypeHash = keccak256(abi.encodePacked(accountType));
     assembly {
-        sstore(slot, accountType)
+        sstore(slot, accountTypeHash)
     }
 }
 
@@ -123,14 +120,14 @@ function getAccountType() view returns (bytes32 accountType) {
 //////////////////////////////////////////////////////////////*/
 
 function writeFactory(address factory, string memory factoryType) {
-    bytes32 slot = keccak256(abi.encodePacked("ModuleKit.", factoryType, "FactorySlot"));
+    bytes32 slot = keccak256(abi.encode("ModuleKit.", factoryType, "FactorySlot"));
     assembly {
         sstore(slot, factory)
     }
 }
 
 function getFactory(string memory factoryType) view returns (address factory) {
-    bytes32 slot = keccak256(abi.encodePacked("ModuleKit.", factoryType, "FactorySlot"));
+    bytes32 slot = keccak256(abi.encode("ModuleKit.", factoryType, "FactorySlot"));
     assembly {
         factory := sload(slot)
     }
@@ -141,15 +138,50 @@ function getFactory(string memory factoryType) view returns (address factory) {
 //////////////////////////////////////////////////////////////*/
 
 function writeHelper(address helper, string memory helperType) {
-    bytes32 slot = keccak256(abi.encodePacked("ModuleKit.", helperType, "HelperSlot"));
+    bytes32 slot = keccak256(abi.encode("ModuleKit.", helperType, "HelperSlot"));
     assembly {
         sstore(slot, helper)
     }
 }
 
 function getHelper(string memory helperType) view returns (address helper) {
-    bytes32 slot = keccak256(abi.encodePacked("ModuleKit.", helperType, "HelperSlot"));
+    bytes32 slot = keccak256(abi.encode("ModuleKit.", helperType, "HelperSlot"));
     assembly {
         helper := sload(slot)
     }
+}
+
+/*//////////////////////////////////////////////////////////////
+                        STRING STORAGE
+//////////////////////////////////////////////////////////////*/
+
+function writeString(bytes32 slot, string memory value) {
+    bytes memory strBytes = bytes(value);
+    uint256 length = strBytes.length;
+    assembly {
+        sstore(slot, length) // Store the length of the string
+    }
+    for (uint256 i = 0; i < length; i++) {
+        bytes32 charSlot = keccak256(abi.encodePacked(slot, i));
+        assembly {
+            sstore(charSlot, mload(add(add(strBytes, 0x20), i)))
+        }
+    }
+}
+
+function readString(bytes32 slot) view returns (string memory) {
+    uint256 length;
+    assembly {
+        length := sload(slot)
+    }
+    bytes memory strBytes = new bytes(length);
+    for (uint256 i = 0; i < length; i++) {
+        bytes32 charSlot = keccak256(abi.encodePacked(slot, i));
+        bytes32 charData;
+        assembly {
+            charData := sload(charSlot)
+        }
+        strBytes[i] = bytes1(charData);
+    }
+    return string(strBytes);
 }
