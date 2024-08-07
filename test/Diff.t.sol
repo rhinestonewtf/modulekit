@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
-import { writeSimulateUserOp } from "src/test/utils/Log.sol";
+import { writeSimulateUserOp } from "src/test/utils/Storage.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -12,6 +12,8 @@ import {
     MODULE_TYPE_FALLBACK,
     CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
+import { writeIsInit, getAccountType } from "src/test/utils/Storage.sol";
+import { toString } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -284,7 +286,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testSimulateUserOp() public {
-        writeSimulateUserOp(true);
+        instance.simulateUserOp(true);
         testexec__Given__TwoInputs();
     }
 
@@ -301,7 +303,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(isValid);
     }
 
-    function testUsingAccountEnv() public {
+    function testUsingAccountEnvE() public {
         string[] memory envs = new string[](6);
         envs[0] = "DEFAULT";
         envs[1] = "SAFE";
@@ -313,7 +315,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         for (uint256 i = 0; i < envs.length; i++) {
             string memory env = envs[i];
             if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("INVALID"))) {
-                vm.expectRevert(InvalidAccountType.selector);
+                vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
                 _usingAccountEnv(env);
             } else {
                 _usingAccountEnv(env);
@@ -322,7 +324,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testUsingAccountEnv_ModuleKitUninitialized() public {
-        isInit = false;
+        writeIsInit(false);
         _usingAccountEnv("DEFAULT");
     }
 
@@ -333,10 +335,12 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         oldEnvInstance.deployAccount();
         assertTrue(oldEnvInstance.account.code.length > 0);
 
+        // Load env
+        (bytes32 envHash) = getAccountType();
+
         // Switch env
-        string memory newEnv =
-            keccak256(abi.encode(env)) == keccak256(abi.encode("KERNEL")) ? "SAFE" : "KERNEL";
-        setAccountEnv(newEnv);
+        string memory newEnv = envHash == keccak256(abi.encode("KERNEL")) ? "SAFE" : "KERNEL";
+        instance.setAccountEnv(newEnv);
 
         // Deploy using new env
         AccountInstance memory newEnvInstance = makeAccountInstance("sameSalt");
@@ -346,15 +350,15 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testSetAccountEnv_RevertsWhen_InvalidAccountType() public {
-        vm.expectRevert(InvalidAccountType.selector);
-        setAccountEnv("INVALID");
+        vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
+        instance.setAccountEnv("INVALID");
     }
 
     /*//////////////////////////////////////////////////////////////
                                 INTERNAL
     //////////////////////////////////////////////////////////////*/
 
-    function _usingAccountEnv(string memory env) internal usingAccountEnv(env) {
+    function _usingAccountEnv(string memory env) internal usingAccountEnv(env.toAccountType()) {
         AccountInstance memory newInstance = makeAccountInstance(keccak256(abi.encode(env)));
         assertTrue(newInstance.account.code.length == 0);
 

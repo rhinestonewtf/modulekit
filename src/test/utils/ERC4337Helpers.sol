@@ -13,6 +13,13 @@ import "./Log.sol";
 import "./gas/GasCalculations.sol";
 import { Simulator } from "erc4337-validation/Simulator.sol";
 import { GasParser } from "./gas/GasParser.sol";
+import {
+    getSimulateUserOp,
+    getExpectRevert,
+    writeExpectRevert,
+    getGasIdentifier,
+    writeGasIdentifier
+} from "./Storage.sol";
 
 library ERC4337Helpers {
     using Simulator for PackedUserOperation;

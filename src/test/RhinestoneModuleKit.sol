@@ -16,6 +16,18 @@ import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
+import {
+    getIsInit,
+    getAccountEnv,
+    getHelper,
+    getFactory,
+    getAccountType,
+    writeIsInit,
+    writeAccountEnv,
+    writeFactory,
+    writeHelper
+} from "./utils/Storage.sol";
+import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
 
 enum AccountType {
     DEFAULT,
@@ -50,34 +62,23 @@ string constant NEXUS = "NEXUS";
 
 contract RhinestoneModuleKit is AuxiliaryFactory {
     /*//////////////////////////////////////////////////////////////////////////
+                                    LIBRARIES
+    //////////////////////////////////////////////////////////////////////////*/
+
+    using ModuleKitHelpers for *;
+
+    /*//////////////////////////////////////////////////////////////////////////
                             CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    bool internal isInit;
     MockValidator public _defaultValidator;
-
-    IAccountFactory public accountFactory;
-    HelperBase public accountHelper;
-
-    IAccountFactory public safeFactory;
-    IAccountFactory public kernelFactory;
-    IAccountFactory public erc7579Factory;
-    IAccountFactory public nexusFactory;
-
-    HelperBase public safeHelper;
-    HelperBase public kernelHelper;
-    HelperBase public erc7579Helper;
-
-    AccountType public env;
-
-    error InvalidAccountType();
 
     /*//////////////////////////////////////////////////////////////////////////
                                      SETUP
     //////////////////////////////////////////////////////////////////////////*/
 
     modifier initializeModuleKit() {
-        if (!isInit) {
+        if (!getIsInit()) {
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
             _initializeModuleKit(_env);
         }
@@ -93,6 +94,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
+        (AccountType env, address accountFactoryAddress, address accountHelper) =
+            ModuleKitHelpers.getAccountEnv();
+        IAccountFactory accountFactory = IAccountFactory(accountFactoryAddress);
         bytes memory initData = accountFactory.getInitData(address(_defaultValidator), "");
         address account = accountFactory.getAddress(salt, initData);
         bytes memory initCode = abi.encodePacked(
@@ -104,7 +108,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         instance = _makeAccountInstance({
             salt: salt,
             accountType: env,
-            helper: address(accountHelper),
+            helper: accountHelper,
             account: account,
             initCode: initCode,
             validator: address(_defaultValidator),
@@ -121,9 +125,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        makeAccountInstance({
+        address accountHelper = ModuleKitHelpers.getHelper(ModuleKitHelpers.getAccountType());
+        instance = makeAccountInstance({
             salt: salt,
-            helper: address(accountHelper),
+            helper: accountHelper,
             account: account,
             initCode: initCode
         });
@@ -147,6 +152,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             _factory := mload(add(initCode, 20))
         }
 
+        AccountType env = ModuleKitHelpers.getAccountType();
+
         instance = _makeAccountInstance({
             salt: salt,
             accountType: env,
@@ -156,7 +163,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             validator: address(_defaultValidator),
             accountFactory: _factory
         });
-        setAccountType(AccountType.CUSTOM);
+
+        ModuleKitHelpers.setAccountType(AccountType.CUSTOM);
     }
 
     function makeAccountInstance(
@@ -178,6 +186,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             _factory := mload(add(initCode, 20))
         }
 
+        AccountType env = instance.getAccountType();
+
         instance = _makeAccountInstance({
             salt: salt,
             accountType: env,
@@ -187,46 +197,27 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             validator: defaultValidator,
             accountFactory: _factory
         });
-        setAccountType(AccountType.CUSTOM);
+        ModuleKitHelpers.setAccountType(AccountType.CUSTOM);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 ACCOUNT TYPE
     //////////////////////////////////////////////////////////////////////////*/
 
-    modifier usingAccountEnv(string memory _env) {
+    modifier usingAccountEnv(AccountType env) {
         // If the module kit is not initialized, initialize it
-        if (!isInit) {
-            _initializeModuleKit(_env);
+        if (!getIsInit()) {
+            _initializeModuleKit(env.toString());
         } else {
             // Cache the current env to restore it after the function call
-            AccountType _oldEnv = env;
-            IAccountFactory _oldAccountFactory;
-            HelperBase _oldAccountHelper;
+            (AccountType _oldEnv, address _oldAccountFactory, address _oldAccountHelper) =
+                ModuleKitHelpers.getAccountEnv();
             // Set the new env
-            _setAccountEnv(_env);
+            ModuleKitHelpers.setAccountEnv(env);
             _;
             // Restore the old env
-            env = _oldEnv;
-            accountFactory = _oldAccountFactory;
-            accountHelper = _oldAccountHelper;
+            ModuleKitHelpers.setAccountEnv(_oldEnv);
         }
-    }
-
-    function setAccountType(AccountType _env) public {
-        env = _env;
-    }
-
-    function setAccountEnv(string memory _env) public {
-        _setAccountEnv(_env);
-    }
-
-    function setAccountEnv(AccountType _env) public {
-        _setAccountEnv(_env);
-    }
-
-    function getAccountType() public view returns (AccountType) {
-        return env;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -234,18 +225,29 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     function _initializeModuleKit(string memory _env) internal {
+        // Init
         super.init();
-        isInit = true;
+        writeIsInit(true);
 
-        safeFactory = new SafeFactory();
-        kernelFactory = new KernelFactory();
-        erc7579Factory = new ERC7579Factory();
-        nexusFactory = new NexusFactory();
+        // Factories
+        writeFactory(address(new ERC7579Factory()), DEFAULT);
+        writeFactory(address(new SafeFactory()), SAFE);
+        writeFactory(address(new KernelFactory()), KERNEL);
+        writeFactory(address(new NexusFactory()), NEXUS);
+        writeFactory(address(new ERC7579Factory()), CUSTOM);
 
-        erc7579Helper = new ERC7579Helpers();
-        safeHelper = new SafeHelpers();
-        kernelHelper = new KernelHelpers();
+        // Helpers
+        writeHelper(address(new ERC7579Helpers()), DEFAULT);
+        writeHelper(address(new SafeHelpers()), SAFE);
+        writeHelper(address(new KernelHelpers()), KERNEL);
+        writeHelper(address(new ERC7579Helpers()), NEXUS);
+        writeHelper(address(new ERC7579Helpers()), CUSTOM);
 
+        // Initialize factories
+        IAccountFactory safeFactory = IAccountFactory(getFactory(SAFE));
+        IAccountFactory kernelFactory = IAccountFactory(getFactory(KERNEL));
+        IAccountFactory erc7579Factory = IAccountFactory(getFactory(DEFAULT));
+        IAccountFactory nexusFactory = IAccountFactory(getFactory(NEXUS));
         safeFactory.init();
         kernelFactory.init();
         erc7579Factory.init();
@@ -271,8 +273,10 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         prank(address(nexusFactory));
         IStakeManager(ENTRYPOINT_ADDR).addStake{ value: 10 ether }(100_000);
 
-        _setAccountEnv(_env);
+        // Set env
+        ModuleKitHelpers.setAccountEnv(_env);
 
+        IAccountFactory accountFactory = IAccountFactory(getFactory(_env));
         label(address(accountFactory), "AccountFactory");
 
         _defaultValidator = new MockValidator();
@@ -289,6 +293,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         address helper
     )
         internal
+        view
         returns (AccountInstance memory instance)
     {
         instance = AccountInstance({
@@ -301,43 +306,5 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             initCode: initCode,
             accountFactory: accountFactory
         });
-    }
-
-    function _setAccountEnv(string memory _env) internal {
-        if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(DEFAULT))) {
-            _setAccountEnv(AccountType.DEFAULT);
-        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(SAFE))) {
-            _setAccountEnv(AccountType.SAFE);
-        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(KERNEL))) {
-            _setAccountEnv(AccountType.KERNEL);
-        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(CUSTOM))) {
-            _setAccountEnv(AccountType.CUSTOM);
-        } else if (keccak256(abi.encodePacked(_env)) == keccak256(abi.encodePacked(NEXUS))) {
-            _setAccountEnv(AccountType.NEXUS);
-        } else {
-            revert InvalidAccountType();
-        }
-    }
-
-    function _setAccountEnv(AccountType _env) internal {
-        env = _env;
-        if (_env == AccountType.DEFAULT) {
-            accountFactory = erc7579Factory;
-            accountHelper = erc7579Helper;
-        } else if (_env == AccountType.SAFE) {
-            accountFactory = safeFactory;
-            accountHelper = safeHelper;
-        } else if (_env == AccountType.KERNEL) {
-            accountFactory = kernelFactory;
-            accountHelper = kernelHelper;
-        } else if (_env == AccountType.CUSTOM) {
-            accountFactory = erc7579Factory;
-            accountHelper = erc7579Helper;
-        } else if (_env == AccountType.NEXUS) {
-            accountFactory = nexusFactory;
-            accountHelper = erc7579Helper;
-        } else {
-            revert InvalidAccountType();
-        }
     }
 }
