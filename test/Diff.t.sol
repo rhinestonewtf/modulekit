@@ -321,9 +321,8 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         }
     }
 
-    function testUsingAccountEnv_RevertsWhen_ModuleKitUninitialized() public {
+    function testUsingAccountEnv_ModuleKitUninitialized() public {
         isInit = false;
-        vm.expectRevert(ModuleKitUninitialized.selector);
         _usingAccountEnv("DEFAULT");
     }
 
