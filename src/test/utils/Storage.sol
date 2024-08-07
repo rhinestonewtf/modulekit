@@ -158,30 +158,47 @@ function getHelper(string memory helperType) view returns (address helper) {
 function writeString(bytes32 slot, string memory value) {
     bytes memory strBytes = bytes(value);
     uint256 length = strBytes.length;
+
+    // Store the length of the string at the initial slot
     assembly {
-        sstore(slot, length) // Store the length of the string
+        sstore(slot, length)
     }
-    for (uint256 i = 0; i < length; i++) {
-        bytes32 charSlot = keccak256(abi.encodePacked(slot, i));
+
+    // Store the actual string bytes in packed form
+    for (uint256 i = 0; i < length; i += 32) {
+        bytes32 data;
+        for (uint256 j = 0; j < 32 && i + j < length; j++) {
+            data |= bytes32(uint256(uint8(strBytes[i + j])) << (248 - j * 8));
+        }
+        bytes32 charSlot = keccak256(abi.encodePacked(slot, i / 32));
         assembly {
-            sstore(charSlot, mload(add(add(strBytes, 0x20), i)))
+            sstore(charSlot, data)
         }
     }
 }
 
 function readString(bytes32 slot) view returns (string memory) {
     uint256 length;
+
+    // Load the length of the string from the initial slot
     assembly {
         length := sload(slot)
     }
+
+    // Allocate memory for the string bytes
     bytes memory strBytes = new bytes(length);
-    for (uint256 i = 0; i < length; i++) {
-        bytes32 charSlot = keccak256(abi.encodePacked(slot, i));
-        bytes32 charData;
+
+    // Load the actual string bytes from storage in packed form
+    for (uint256 i = 0; i < length; i += 32) {
+        bytes32 charSlot = keccak256(abi.encodePacked(slot, i / 32));
+        bytes32 data;
         assembly {
-            charData := sload(charSlot)
+            data := sload(charSlot)
         }
-        strBytes[i] = bytes1(charData);
+        for (uint256 j = 0; j < 32 && i + j < length; j++) {
+            strBytes[i + j] = bytes1(uint8(uint256(data >> (248 - j * 8))));
+        }
     }
+
     return string(strBytes);
 }
