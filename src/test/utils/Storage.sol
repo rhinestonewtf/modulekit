@@ -97,7 +97,7 @@ function getIsInit() view returns (bool value) {
 }
 
 /*//////////////////////////////////////////////////////////////
-                            ACCOUNT TYPE
+                        ACCOUNT TYPE
 //////////////////////////////////////////////////////////////*/
 
 function writeAccountType(string memory accountType) {
