@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
-import { writeSimulateUserOp } from "src/test/utils/Storage.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -303,7 +302,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(isValid);
     }
 
-    function testUsingAccountEnvE() public {
+    function testUsingAccountEnv() public {
         string[] memory envs = new string[](6);
         envs[0] = "DEFAULT";
         envs[1] = "SAFE";
