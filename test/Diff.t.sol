@@ -11,7 +11,7 @@ import {
     MODULE_TYPE_FALLBACK,
     CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
-import { getAccountType } from "src/test/utils/Storage.sol";
+import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
@@ -135,6 +135,44 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(validatorEnabled);
         bool validator1Enabled = instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, newValidator1);
         assertTrue(validator1Enabled);
+    }
+
+    function test_getInstalledModules() public {
+        address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
+
+        InstalledModule[] memory modules = instance.getInstalledModules();
+        assertTrue(modules.length == 2);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+        );
+
+        address newExecutor = address(new MockExecutor());
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+        modules = instance.getInstalledModules();
+
+        assertTrue(modules.length == 3);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[2].moduleAddress == newExecutor
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+        );
     }
 
     function testRemoveValidator() public {

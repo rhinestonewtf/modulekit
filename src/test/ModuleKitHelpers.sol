@@ -23,7 +23,10 @@ import {
     writeAccountEnv,
     getFactory,
     getHelper as getHelperFromStorage,
-    getAccountEnv as getAccountEnvFromStorage
+    getAccountEnv as getAccountEnvFromStorage,
+    getInstalledModules as getInstalledModulesFromStorage,
+    writeInstalledModule as writeInstalledModuleToStorage,
+    InstalledModule
 } from "./utils/Storage.sol";
 
 library ModuleKitHelpers {
@@ -260,6 +263,18 @@ library ModuleKitHelpers {
             txValidator: txValidator
         });
         userOpData.entrypoint = instance.aux.entrypoint;
+    }
+
+    function getInstalledModules(AccountInstance memory)
+        internal
+        view
+        returns (InstalledModule[] memory)
+    {
+        return getInstalledModulesFromStorage();
+    }
+
+    function writeInstalledModule(InstalledModule memory module) internal {
+        writeInstalledModuleToStorage(module);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

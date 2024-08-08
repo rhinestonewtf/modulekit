@@ -18,7 +18,10 @@ import {
     getExpectRevert,
     writeExpectRevert,
     getGasIdentifier,
-    writeGasIdentifier
+    writeGasIdentifier,
+    writeInstalledModule,
+    getInstalledModules,
+    InstalledModule
 } from "./Storage.sol";
 
 library ERC4337Helpers {
@@ -69,6 +72,14 @@ library ERC4337Helpers {
                         writeExpectRevert(0);
                     }
                 }
+            }
+            // ModuleInstalled(uint256, address)
+            else if (
+                logs[i].topics[0]
+                    == 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123
+            ) {
+                (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+                writeInstalledModule(InstalledModule(moduleType, module));
             }
         }
         isExpectRevert = getExpectRevert();

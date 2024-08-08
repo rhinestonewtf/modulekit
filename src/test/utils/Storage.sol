@@ -134,6 +134,121 @@ function getHelper(string memory helperType) view returns (address helper) {
 }
 
 /*//////////////////////////////////////////////////////////////
+                        INSTALLED MODULE
+//////////////////////////////////////////////////////////////*/
+
+struct InstalledModule {
+    uint256 moduleType;
+    address moduleAddress;
+}
+
+// Adds new address to the installed module array
+// The array stores structs with the module type and the module address
+function writeInstalledModule(InstalledModule memory module) {
+    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
+    uint256 moduleType = module.moduleType;
+    address moduleAddress = module.moduleAddress;
+    assembly {
+        // Get the length of the array
+        let length := sload(lengthSlot)
+        // Update the length of the array
+        sstore(lengthSlot, add(length, 1))
+        // Calculate the location of the new slot in the array (elementSlot + length * (0x20 * 2))
+        let location := add(elementSlot, mul(length, 0x40))
+        // Store the module type and address in the new slot
+        sstore(location, moduleType)
+        sstore(add(location, 0x20), moduleAddress)
+    }
+}
+
+// Removes all installed modules
+function clearInstalledModules() {
+    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
+    assembly {
+        sstore(lengthSlot, 0)
+        for { let i := 0 } lt(i, 100) { i := add(i, 1) } {
+            sstore(add(elementSlot, mul(i, 0x40)), 0)
+            sstore(add(add(elementSlot, mul(i, 0x40)), 0x20), 0)
+        }
+    }
+}
+
+// Removes a specific installed module
+function removeInstalledModule(uint256 index) {
+    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
+    assembly {
+        // Get the length of the array
+        let length := sload(lengthSlot)
+        // Ensure the index is within bounds
+        if gt(length, index) {
+            // Calculate the location of the slot to remove
+            let location := add(elementSlot, mul(index, 0x40))
+            // Calculate the location of the last slot
+            let lastLocation := add(elementSlot, mul(sub(length, 1), 0x40))
+            // Load the last slot
+            let lastModuleType := sload(lastLocation)
+            let lastModuleAddress := sload(add(lastLocation, 0x20))
+            // Store the last slot in the location of the slot to remove
+            sstore(location, lastModuleType)
+            sstore(add(location, 0x20), lastModuleAddress)
+            // Clear the last slot
+            sstore(lastLocation, 0)
+            sstore(add(lastLocation, 0x20), 0)
+            // Update the length of the array
+            sstore(lengthSlot, sub(length, 1))
+        }
+    }
+}
+
+// Returns all installed modules as an array of InstalledModule structs
+function getInstalledModules() view returns (InstalledModule[] memory modules) {
+    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
+    assembly {
+        // Get the length of the array from storage
+        let length := sload(lengthSlot)
+
+        // Each struct is 64 bytes (32 bytes for moduleType and 32 bytes for moduleAddress)
+        let structSize := 0x40 // 64 bytes
+        let size := mul(length, structSize) // Total size for structs
+        let totalSize := add(add(size, 0x40), mul(0x20, length))
+
+        // Allocate memory for the array
+        let freeMemoryPtr := mload(0x40)
+        modules := freeMemoryPtr
+
+        // Store the length of the array in the first 32 bytes of memory
+        mstore(modules, length)
+
+        // Update the free memory pointer to the end of the allocated memory
+        mstore(0x40, add(freeMemoryPtr, totalSize))
+
+        // Copy the structs from storage to memory
+        for { let i := 0 } lt(i, length) { i := add(i, 1) } {
+            // Calculate memory location for this struct
+            let structLocation :=
+                add(add(freeMemoryPtr, add(0x40, mul(i, structSize))), mul(0x20, length))
+            let storageLocation := add(elementSlot, mul(i, structSize)) // Storage location for each
+                // struct
+
+            // Load the moduleType and moduleAddress from storage
+            let moduleType := sload(storageLocation)
+            let moduleAddress := sload(add(storageLocation, 0x20))
+
+            // Store the structLocation into memory
+            mstore(add(freeMemoryPtr, add(0x20, mul(i, 0x20))), structLocation)
+
+            // Store the moduleType and moduleAddress into memory
+            mstore(structLocation, moduleType)
+            mstore(add(structLocation, 0x20), moduleAddress)
+        }
+    }
+}
+
+/*//////////////////////////////////////////////////////////////
                         STRING STORAGE
 //////////////////////////////////////////////////////////////*/
 
