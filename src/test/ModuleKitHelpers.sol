@@ -422,16 +422,15 @@ library ModuleKitHelpers {
     }
 
     function getHelper(AccountType env) internal view returns (address) {
-        bytes32 envHash = keccak256(abi.encodePacked(env.toString()));
-        if (envHash == keccak256(abi.encodePacked(DEFAULT))) {
+        if (env == AccountType.DEFAULT) {
             return getHelperFromStorage(DEFAULT);
-        } else if (envHash == keccak256(abi.encodePacked(SAFE))) {
+        } else if (env == AccountType.SAFE) {
             return getHelperFromStorage(SAFE);
-        } else if (envHash == keccak256(abi.encodePacked(KERNEL))) {
+        } else if (env == AccountType.KERNEL) {
             return getHelperFromStorage(KERNEL);
-        } else if (envHash == keccak256(abi.encodePacked(CUSTOM))) {
+        } else if (env == AccountType.CUSTOM) {
             return getHelperFromStorage(CUSTOM);
-        } else if (envHash == keccak256(abi.encodePacked(NEXUS))) {
+        } else if (env == AccountType.NEXUS) {
             return getHelperFromStorage(NEXUS);
         } else {
             revert InvalidAccountType();
