@@ -12,7 +12,7 @@ import {
     MODULE_TYPE_FALLBACK,
     CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
-import { writeIsInit, getAccountType } from "src/test/utils/Storage.sol";
+import { getAccountType } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
@@ -324,7 +324,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testUsingAccountEnv_ModuleKitUninitialized() public {
-        writeIsInit(false);
+        isInit = false;
         _usingAccountEnv("DEFAULT");
     }
 

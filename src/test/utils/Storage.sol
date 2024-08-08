@@ -79,24 +79,6 @@ function getAccountEnv() view returns (bytes32 env, address factory, address hel
 }
 
 /*//////////////////////////////////////////////////////////////
-                            IS INIT
-//////////////////////////////////////////////////////////////*/
-
-function writeIsInit(bool value) {
-    bytes32 slot = keccak256("ModuleKit.IsInitSlot");
-    assembly {
-        sstore(slot, value)
-    }
-}
-
-function getIsInit() view returns (bool value) {
-    bytes32 slot = keccak256("ModuleKit.IsInitSlot");
-    assembly {
-        value := sload(slot)
-    }
-}
-
-/*//////////////////////////////////////////////////////////////
                         ACCOUNT TYPE
 //////////////////////////////////////////////////////////////*/
 

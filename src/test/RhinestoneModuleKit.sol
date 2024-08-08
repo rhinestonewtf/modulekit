@@ -17,12 +17,10 @@ import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
 import {
-    getIsInit,
     getAccountEnv,
     getHelper,
     getFactory,
     getAccountType,
-    writeIsInit,
     writeAccountEnv,
     writeFactory,
     writeHelper
@@ -72,13 +70,14 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     MockValidator public _defaultValidator;
+    bool public isInit;
 
     /*//////////////////////////////////////////////////////////////////////////
                                      SETUP
     //////////////////////////////////////////////////////////////////////////*/
 
     modifier initializeModuleKit() {
-        if (!getIsInit()) {
+        if (!isInit) {
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
             _initializeModuleKit(_env);
         }
@@ -206,7 +205,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     modifier usingAccountEnv(AccountType env) {
         // If the module kit is not initialized, initialize it
-        if (!getIsInit()) {
+        if (!isInit) {
             _initializeModuleKit(env.toString());
         } else {
             // Cache the current env to restore it after the function call
@@ -227,7 +226,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     function _initializeModuleKit(string memory _env) internal {
         // Init
         super.init();
-        writeIsInit(true);
+        isInit = true;
 
         // Factories
         writeFactory(address(new ERC7579Factory()), DEFAULT);
