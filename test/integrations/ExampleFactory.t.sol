@@ -7,6 +7,8 @@ import { ExampleFactory } from "src/integrations/registry/ExampleFactory.sol";
 import { ModuleKitHelpers, ModuleKitUserOp } from "src/ModuleKit.sol";
 import { IStakeManager } from "src/external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
+import { getHelper } from "src/test/utils/Storage.sol";
+import { AccountType } from "src/test/RhinestoneModuleKit.sol";
 
 contract ExampleFactoryTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -53,10 +55,11 @@ contract ExampleFactoryTest is BaseTest {
         bytes32 salt = bytes32(bytes("newAccount"));
         address account = factory.getAddress(salt, address(instance.defaultValidator), "");
         bytes memory initCode = factory.getInitCode(salt, address(instance.defaultValidator), "");
+        address erc7579Helper = ModuleKitHelpers.getHelper(AccountType.DEFAULT);
 
         instance = makeAccountInstance({
             salt: salt,
-            helper: address(erc7579Helper),
+            helper: erc7579Helper,
             account: account,
             initCode: initCode
         });
