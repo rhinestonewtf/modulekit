@@ -66,14 +66,14 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     using ModuleKitHelpers for *;
 
     /*//////////////////////////////////////////////////////////////////////////
-                            CONSTANTS & STORAGE
+                                CONSTANTS & STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
     MockValidator public _defaultValidator;
     bool public isInit;
 
     /*//////////////////////////////////////////////////////////////////////////
-                                     SETUP
+                                        SETUP
     //////////////////////////////////////////////////////////////////////////*/
 
     modifier initializeModuleKit() {
@@ -85,7 +85,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                MAKE INSTANCE
+                                    MAKE INSTANCE
     //////////////////////////////////////////////////////////////////////////*/
 
     function makeAccountInstance(bytes32 salt)
@@ -200,7 +200,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                ACCOUNT TYPE
+                                    ACCOUNT TYPE
     //////////////////////////////////////////////////////////////////////////*/
 
     modifier usingAccountEnv(AccountType env) {
