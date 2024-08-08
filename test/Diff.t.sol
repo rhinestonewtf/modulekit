@@ -13,7 +13,6 @@ import {
 } from "src/external/ERC7579.sol";
 import { getAccountType } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
-import { AccountType } from "src/test/RhinestoneModuleKit.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -336,11 +335,11 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(oldEnvInstance.account.code.length > 0);
 
         // Load env
-        AccountType env = ModuleKitHelpers.getAccountType();
+        (bytes32 envHash) = getAccountType();
 
         // Switch env
-        AccountType newEnv = env == AccountType.KERNEL ? AccountType.SAFE : AccountType.KERNEL;
-        instance.setAccountEnv(newEnv.toString());
+        string memory newEnv = envHash == keccak256(abi.encodePacked("KERNEL")) ? "SAFE" : "KERNEL";
+        instance.setAccountEnv(newEnv);
 
         // Deploy using new env
         AccountInstance memory newEnvInstance = makeAccountInstance("sameSalt");
