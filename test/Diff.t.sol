@@ -301,9 +301,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         assertTrue(modules.length == 2);
         assertTrue(
-            modules[1].moduleAddress == newValidator1 && modules[0].moduleAddress == newExecutor
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[0].moduleType == MODULE_TYPE_EXECUTOR
+            modules[0].moduleAddress == newValidator1 && modules[1].moduleAddress == newExecutor
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_EXECUTOR
         );
     }
 

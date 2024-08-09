@@ -142,39 +142,71 @@ struct InstalledModule {
     address moduleAddress;
 }
 
-// Adds new address to the installed module array for the given account
+// Adds new address to the installed module linked list for the given account
+// The list is stored in storage as a linked list in the following format:
+// ---------------------------------------------------------------------
+// | Slot                                                     | Value  |
+// |----------------------------------------------------------|--------|
+// | keccak256(abi.encode("ModuleKit.InstalledModuleSlot.")); | length |
+// | keccak256(abi.encode("ModuleKit.InstalledModuleHead.")); | head   |
+// | keccak256(abi.encode("ModuleKit.InstalledModuleTail.")); | tail   |
+// | keccak256(abi.encode(lengthSlot)) - initially X          | element|
+// ---------------------------------------------------------------------
+//
+// The elements are stored in the following way:
+// --------------------------
+// | Slot      | Value      |
+// |------------------------|
+// | X         | moduleType |
+// | X + 0x20  | moduleAddr |
+// | X + 0x40  | prev       |
+// | X + 0x60  | next       |
+// --------------------------
 function writeInstalledModule(InstalledModule memory module, address account) {
     bytes32 lengthSlot = keccak256(
         abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
     );
+    bytes32 headSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleHead.", keccak256(abi.encodePacked(account)))
+    );
+    bytes32 tailSlot =
+        keccak256(abi.encode("ModuleKit.InstalledModuleTail", keccak256(abi.encodePacked(account))));
     bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
     uint256 moduleType = module.moduleType;
     address moduleAddress = module.moduleAddress;
     assembly {
         // Get the length of the array
         let length := sload(lengthSlot)
-        // Update the length of the array
-        sstore(lengthSlot, add(length, 1))
-        // Calculate the location of the new slot in the array (elementSlot + length * (0x20 * 2))
-        let location := add(elementSlot, mul(length, 0x40))
-        // Store the module type and address in the new slot
-        sstore(location, moduleType)
-        sstore(add(location, 0x20), moduleAddress)
-    }
-}
-
-// Removes all installed modules
-function clearInstalledModules(address account) {
-    bytes32 lengthSlot = keccak256(
-        abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
-    );
-    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
-    assembly {
-        sstore(lengthSlot, 0)
-        for { let i := 0 } lt(i, 100) { i := add(i, 1) } {
-            sstore(add(elementSlot, mul(i, 0x40)), 0)
-            sstore(add(add(elementSlot, mul(i, 0x40)), 0x20), 0)
+        let nextSlot
+        let oldTail
+        switch iszero(length)
+        case 1 {
+            // If length is zero, set element slot to head and tail
+            sstore(headSlot, elementSlot)
+            sstore(tailSlot, elementSlot)
+            oldTail := elementSlot
+            nextSlot := elementSlot
         }
+        default {
+            oldTail := sload(tailSlot)
+            // Set the new elemeont slot to the old tail + 0x80
+            elementSlot := add(oldTail, 0x80)
+            // Set the old tail next slot to the new element slot
+            sstore(add(oldTail, 0x60), elementSlot)
+            // Update tailSlot to point to the new element slot
+            sstore(tailSlot, elementSlot)
+            // Set nextSlot to the head slot
+            nextSlot := sload(headSlot)
+        }
+        // Update the length of the list
+        sstore(lengthSlot, add(length, 1))
+        // Store the module type and address in the new slot
+        sstore(elementSlot, moduleType)
+        sstore(add(elementSlot, 0x20), moduleAddress)
+        // Store the old tail as the prev slot
+        sstore(add(elementSlot, 0x40), oldTail)
+        // Store the head as the next slot
+        sstore(add(elementSlot, 0x60), nextSlot)
     }
 }
 
@@ -183,26 +215,46 @@ function removeInstalledModule(uint256 index, address account) {
     bytes32 lengthSlot = keccak256(
         abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
     );
-    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
+    bytes32 headSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleHead.", keccak256(abi.encodePacked(account)))
+    );
+    bytes32 tailSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleTail.", keccak256(abi.encodePacked(account)))
+    );
     assembly {
-        // Get the length of the array
+        // Get the length of the list
         let length := sload(lengthSlot)
+        // Get the initial element slot
+        let elementSlot := sload(headSlot)
         // Ensure the index is within bounds
-        if gt(length, index) {
-            // Calculate the location of the slot to remove
-            let location := add(elementSlot, mul(index, 0x40))
-            // Calculate the location of the last slot
-            let lastLocation := add(elementSlot, mul(sub(length, 1), 0x40))
-            // Load the last slot
-            let lastModuleType := sload(lastLocation)
-            let lastModuleAddress := sload(add(lastLocation, 0x20))
-            // Store the last slot in the location of the slot to remove
-            sstore(location, lastModuleType)
-            sstore(add(location, 0x20), lastModuleAddress)
-            // Clear the last slot
-            sstore(lastLocation, 0)
-            sstore(add(lastLocation, 0x20), 0)
-            // Update the length of the array
+        if lt(index, length) {
+            // Traverse to the node to remove
+            for { let i := 0 } lt(i, index) { i := add(i, 1) } {
+                elementSlot := sload(add(elementSlot, 0x60))
+            }
+
+            // Get the previous and next slots
+            let prevSlot := sload(add(elementSlot, 0x40))
+            let nextSlot := sload(add(elementSlot, 0x60))
+
+            // Update the previous slot's next pointer
+            sstore(add(prevSlot, 0x60), nextSlot)
+            // Update the next slot's previous pointer
+            sstore(add(nextSlot, 0x40), prevSlot)
+
+            // Handle removing the head
+            if eq(elementSlot, sload(headSlot)) { sstore(headSlot, nextSlot) }
+
+            // Handle removing the tail
+            if eq(elementSlot, sload(tailSlot)) { sstore(tailSlot, prevSlot) }
+
+            // Clear the removed node
+            sstore(elementSlot, 0)
+            sstore(add(elementSlot, 0x20), 0)
+            sstore(add(elementSlot, 0x40), 0)
+            sstore(add(elementSlot, 0x60), 0)
+
+            // Update the length of the list
             sstore(lengthSlot, sub(length, 1))
         }
     }
@@ -213,7 +265,9 @@ function getInstalledModules(address account) view returns (InstalledModule[] me
     bytes32 lengthSlot = keccak256(
         abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
     );
-    bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
+    bytes32 headSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleHead.", keccak256(abi.encodePacked(account)))
+    );
     assembly {
         // Get the length of the array from storage
         let length := sload(lengthSlot)
@@ -233,13 +287,14 @@ function getInstalledModules(address account) view returns (InstalledModule[] me
         // Update the free memory pointer to the end of the allocated memory
         mstore(0x40, add(freeMemoryPtr, totalSize))
 
+        // Get the head of the linked list
+        let storageLocation := sload(headSlot)
+
         // Copy the structs from storage to memory
         for { let i := 0 } lt(i, length) { i := add(i, 1) } {
             // Calculate memory location for this struct
             let structLocation :=
                 add(add(freeMemoryPtr, add(0x40, mul(i, structSize))), mul(0x20, length))
-            let storageLocation := add(elementSlot, mul(i, structSize)) // Storage location for each
-                // struct
 
             // Load the moduleType and moduleAddress from storage
             let moduleType := sload(storageLocation)
@@ -251,6 +306,9 @@ function getInstalledModules(address account) view returns (InstalledModule[] me
             // Store the moduleType and moduleAddress into memory
             mstore(structLocation, moduleType)
             mstore(add(structLocation, 0x20), moduleAddress)
+
+            // Move to the next element in the linked list
+            storageLocation := sload(add(storageLocation, 0x60))
         }
     }
 }
