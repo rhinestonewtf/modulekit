@@ -138,7 +138,10 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(validator1Enabled);
     }
 
-    function test_getInstalledModules() public whenEnvIsNotKernelOrSafe {
+    function test_getInstalledModules()
+        public
+        whenEnvIsNotKernelOrSafe(ModuleKitHelpers.getAccountType())
+    {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -176,7 +179,10 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         );
     }
 
-    function test_getInstalledModules_DifferentInstances() public whenEnvIsNotKernelOrSafe {
+    function test_getInstalledModules_DifferentInstances()
+        public
+        whenEnvIsNotKernelOrSafe(ModuleKitHelpers.getAccountType())
+    {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -253,7 +259,10 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         );
     }
 
-    function test_getInstalledModules_AfterUninstall() public whenEnvIsNotKernelOrSafe {
+    function test_getInstalledModules_AfterUninstall()
+        public
+        whenEnvIsNotKernelOrSafe(ModuleKitHelpers.getAccountType())
+    {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -543,8 +552,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     // Used to skip tests when env is kernel or safe as sometimes
     // they don't emit events on module installation
-    modifier whenEnvIsNotKernelOrSafe() {
-        AccountType _env = ModuleKitHelpers.getAccountType();
+    modifier whenEnvIsNotKernelOrSafe(AccountType _env) {
         if (_env == AccountType.KERNEL || _env == AccountType.SAFE) {
             return;
         }
