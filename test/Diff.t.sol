@@ -541,11 +541,11 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
                                 MODIFIERS
     //////////////////////////////////////////////////////////////*/
 
-    // Used to skip tests when env is kernel or safe as sometimes they don't emit events on module
-    // installation
+    // Used to skip tests when env is kernel or safe as sometimes
+    // they don't emit events on module installation
     modifier whenEnvIsNotKernelOrSafe() {
-        AccountType env = ModuleKitHelpers.getAccountType();
-        if (env == AccountType.KERNEL || env == AccountType.SAFE) {
+        AccountType _env = ModuleKitHelpers.getAccountType();
+        if (_env == AccountType.KERNEL || _env == AccountType.SAFE) {
             return;
         }
         _;
