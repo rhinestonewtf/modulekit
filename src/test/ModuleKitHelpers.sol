@@ -23,7 +23,11 @@ import {
     writeAccountEnv,
     getFactory,
     getHelper as getHelperFromStorage,
-    getAccountEnv as getAccountEnvFromStorage
+    getAccountEnv as getAccountEnvFromStorage,
+    getInstalledModules as getInstalledModulesFromStorage,
+    writeInstalledModule as writeInstalledModuleToStorage,
+    removeInstalledModule as removeInstaleldModuleFromStorage,
+    InstalledModule
 } from "./utils/Storage.sol";
 
 library ModuleKitHelpers {
@@ -262,6 +266,44 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
+    function getInstalledModules(AccountInstance memory instance)
+        internal
+        view
+        returns (InstalledModule[] memory)
+    {
+        return getInstalledModulesFromStorage(instance.account);
+    }
+
+    function writeInstalledModule(
+        AccountInstance memory instance,
+        InstalledModule memory module
+    )
+        internal
+    {
+        writeInstalledModuleToStorage(module, instance.account);
+    }
+
+    function removeInstalledModule(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address moduleAddress
+    )
+        internal
+    {
+        // Get installed modules for account
+        InstalledModule[] memory installedModules = getInstalledModules(instance);
+        // Find module to remove (not super scalable at high module counts)
+        for (uint256 i; i < installedModules.length; i++) {
+            if (
+                installedModules[i].moduleType == moduleType
+                    && installedModules[i].moduleAddress == moduleAddress
+            ) {
+                // Remove module from storage
+                removeInstaleldModuleFromStorage(i, instance.account);
+                return;
+            }
+        }
+    }
     /*//////////////////////////////////////////////////////////////////////////
                                 CONTROL FLOW
     //////////////////////////////////////////////////////////////////////////*/
