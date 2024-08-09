@@ -338,7 +338,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         (bytes32 envHash) = getAccountType();
 
         // Switch env
-        string memory newEnv = envHash == keccak256(abi.encode("KERNEL")) ? "SAFE" : "KERNEL";
+        string memory newEnv = envHash == keccak256(abi.encodePacked("KERNEL")) ? "SAFE" : "KERNEL";
         instance.setAccountEnv(newEnv);
 
         // Deploy using new env
