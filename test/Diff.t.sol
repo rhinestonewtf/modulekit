@@ -175,6 +175,138 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         );
     }
 
+    function test_getInstalledModules_DifferentInstances() public {
+        address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
+
+        InstalledModule[] memory modules = instance.getInstalledModules();
+        assertTrue(modules.length == 2);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+        );
+
+        address newExecutor = address(new MockExecutor());
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+        modules = instance.getInstalledModules();
+
+        assertTrue(modules.length == 3);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[2].moduleAddress == newExecutor
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+        );
+
+        // Deploy new instance using current env
+        AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        assertTrue(newInstance.account.code.length == 0);
+        newInstance.deployAccount();
+        assertTrue(newInstance.account.code.length > 0);
+
+        // Install modules on new instance
+        newInstance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        newInstance.installModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: newExecutor,
+            data: ""
+        });
+
+        // Get installed modules on new instance
+        InstalledModule[] memory newModules = newInstance.getInstalledModules();
+        assertTrue(newModules.length == 2);
+        assertTrue(
+            newModules[0].moduleAddress == newValidator
+                && newModules[1].moduleAddress == newExecutor
+                && newModules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && newModules[1].moduleType == MODULE_TYPE_EXECUTOR
+        );
+
+        // Old instance modules should still be the same
+        modules = instance.getInstalledModules();
+        assertTrue(modules.length == 3);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[2].moduleAddress == newExecutor
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+        );
+    }
+
+    function test_getInstalledModules_AfterUninstall() public {
+        address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
+
+        InstalledModule[] memory modules = instance.getInstalledModules();
+        assertTrue(modules.length == 2);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+        );
+
+        address newExecutor = address(new MockExecutor());
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+        modules = instance.getInstalledModules();
+
+        assertTrue(modules.length == 3);
+        assertTrue(
+            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
+                && modules[2].moduleAddress == newExecutor
+                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+        );
+
+        // Uninstall module
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+
+        // Get installed modules
+        modules = instance.getInstalledModules();
+
+        assertTrue(modules.length == 2);
+        assertTrue(
+            modules[1].moduleAddress == newValidator1 && modules[0].moduleAddress == newExecutor
+                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[0].moduleType == MODULE_TYPE_EXECUTOR
+        );
+    }
+
     function testRemoveValidator() public {
         address newValidator = address(new MockValidator());
         instance.installModule({

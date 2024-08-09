@@ -142,10 +142,11 @@ struct InstalledModule {
     address moduleAddress;
 }
 
-// Adds new address to the installed module array
-// The array stores structs with the module type and the module address
-function writeInstalledModule(InstalledModule memory module) {
-    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+// Adds new address to the installed module array for the given account
+function writeInstalledModule(InstalledModule memory module, address account) {
+    bytes32 lengthSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
+    );
     bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
     uint256 moduleType = module.moduleType;
     address moduleAddress = module.moduleAddress;
@@ -163,8 +164,10 @@ function writeInstalledModule(InstalledModule memory module) {
 }
 
 // Removes all installed modules
-function clearInstalledModules() {
-    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+function clearInstalledModules(address account) {
+    bytes32 lengthSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
+    );
     bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
     assembly {
         sstore(lengthSlot, 0)
@@ -176,8 +179,10 @@ function clearInstalledModules() {
 }
 
 // Removes a specific installed module
-function removeInstalledModule(uint256 index) {
-    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+function removeInstalledModule(uint256 index, address account) {
+    bytes32 lengthSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
+    );
     bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
     assembly {
         // Get the length of the array
@@ -203,9 +208,11 @@ function removeInstalledModule(uint256 index) {
     }
 }
 
-// Returns all installed modules as an array of InstalledModule structs
-function getInstalledModules() view returns (InstalledModule[] memory modules) {
-    bytes32 lengthSlot = keccak256(abi.encode("ModuleKit.InstalledModuleSlot"));
+// Returns all installed modules for the given account
+function getInstalledModules(address account) view returns (InstalledModule[] memory modules) {
+    bytes32 lengthSlot = keccak256(
+        abi.encode("ModuleKit.InstalledModuleSlot.", keccak256(abi.encodePacked(account)))
+    );
     bytes32 elementSlot = keccak256(abi.encode(lengthSlot));
     assembly {
         // Get the length of the array from storage

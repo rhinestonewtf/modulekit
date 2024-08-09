@@ -21,6 +21,7 @@ import {
     writeGasIdentifier,
     writeInstalledModule,
     getInstalledModules,
+    removeInstalledModule,
     InstalledModule
 } from "./Storage.sol";
 
@@ -79,7 +80,26 @@ library ERC4337Helpers {
                     == 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123
             ) {
                 (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
-                writeInstalledModule(InstalledModule(moduleType, module));
+                writeInstalledModule(InstalledModule(moduleType, module), logs[i].emitter);
+            }
+            // ModuleUninstalled(uint256, address)
+            else if (
+                logs[i].topics[0]
+                    == 0x341347516a9de374859dfda710fa4828b2d48cb57d4fbe4c1149612b8e02276e
+            ) {
+                (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+                // Get all installed modules
+                InstalledModule[] memory installedModules = getInstalledModules(logs[i].emitter);
+                // Remove the uninstalled module from the list of installed modules
+                for (uint256 j; j < installedModules.length; j++) {
+                    if (
+                        installedModules[j].moduleAddress == module
+                            && installedModules[j].moduleType == moduleType
+                    ) {
+                        removeInstalledModule(j, logs[i].emitter);
+                        break;
+                    }
+                }
             }
         }
         isExpectRevert = getExpectRevert();
