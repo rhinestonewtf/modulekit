@@ -138,10 +138,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(validator1Enabled);
     }
 
-    function test_getInstalledModules()
-        public
-        whenEnvIsNotKernelOrSafe(ModuleKitHelpers.getAccountType())
-    {
+    function test_getInstalledModules() public whenEnvIsNotKernelOrSafe {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -158,31 +155,31 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         });
 
         InstalledModule[] memory modules = instance.getInstalledModules();
-        assertTrue(modules.length == 2);
+        AccountType env = ModuleKitHelpers.getAccountType();
+        assertTrue(modules.length == (env == AccountType.SAFE ? 3 : 2));
+        uint256 expectedIndex = env == AccountType.SAFE ? 1 : 0;
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
         );
 
         address newExecutor = address(new MockExecutor());
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
         modules = instance.getInstalledModules();
-
-        assertTrue(modules.length == 3);
+        assertTrue(modules.length == (env == AccountType.SAFE ? 4 : 3));
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[2].moduleAddress == newExecutor
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex + 2].moduleAddress == newExecutor
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 2].moduleType == MODULE_TYPE_EXECUTOR
         );
     }
 
-    function test_getInstalledModules_DifferentInstances()
-        public
-        whenEnvIsNotKernelOrSafe(ModuleKitHelpers.getAccountType())
-    {
+    function test_getInstalledModules_DifferentInstances() public whenEnvIsNotKernelOrSafe {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -199,24 +196,27 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         });
 
         InstalledModule[] memory modules = instance.getInstalledModules();
-        assertTrue(modules.length == 2);
+        AccountType env = ModuleKitHelpers.getAccountType();
+        assertTrue(modules.length == (env == AccountType.SAFE ? 3 : 2));
+        uint256 expectedIndex = env == AccountType.SAFE ? 1 : 0;
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
         );
 
         address newExecutor = address(new MockExecutor());
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
         modules = instance.getInstalledModules();
-
-        assertTrue(modules.length == 3);
+        assertTrue(modules.length == (env == AccountType.SAFE ? 4 : 3));
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[2].moduleAddress == newExecutor
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex + 2].moduleAddress == newExecutor
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 2].moduleType == MODULE_TYPE_EXECUTOR
         );
 
         // Deploy new instance using current env
@@ -249,20 +249,18 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         // Old instance modules should still be the same
         modules = instance.getInstalledModules();
-        assertTrue(modules.length == 3);
+        assertTrue(modules.length == (env == AccountType.SAFE ? 4 : 3));
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[2].moduleAddress == newExecutor
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex + 2].moduleAddress == newExecutor
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 2].moduleType == MODULE_TYPE_EXECUTOR
         );
     }
 
-    function test_getInstalledModules_AfterUninstall()
-        public
-        whenEnvIsNotKernelOrSafe(ModuleKitHelpers.getAccountType())
-    {
+    function test_getInstalledModules_AfterUninstall() public whenEnvIsNotKernelOrSafe {
         address newValidator = address(new MockValidator());
         address newValidator1 = address(new MockValidator());
         vm.label(newValidator, "2nd validator");
@@ -279,24 +277,28 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         });
 
         InstalledModule[] memory modules = instance.getInstalledModules();
-        assertTrue(modules.length == 2);
+        AccountType env = ModuleKitHelpers.getAccountType();
+        assertTrue(modules.length == (env == AccountType.SAFE ? 3 : 2));
+        uint256 expectedIndex = env == AccountType.SAFE ? 1 : 0;
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
         );
 
         address newExecutor = address(new MockExecutor());
         instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
         modules = instance.getInstalledModules();
 
-        assertTrue(modules.length == 3);
+        assertTrue(modules.length == (env == AccountType.SAFE ? 4 : 3));
         assertTrue(
-            modules[0].moduleAddress == newValidator && modules[1].moduleAddress == newValidator1
-                && modules[2].moduleAddress == newExecutor
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[2].moduleType == MODULE_TYPE_EXECUTOR
+            modules[expectedIndex].moduleAddress == newValidator
+                && modules[expectedIndex + 1].moduleAddress == newValidator1
+                && modules[expectedIndex + 2].moduleAddress == newExecutor
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 2].moduleType == MODULE_TYPE_EXECUTOR
         );
 
         // Uninstall module
@@ -309,11 +311,12 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Get installed modules
         modules = instance.getInstalledModules();
 
-        assertTrue(modules.length == 2);
+        assertTrue(modules.length == (env == AccountType.SAFE ? 3 : 2));
         assertTrue(
-            modules[0].moduleAddress == newValidator1 && modules[1].moduleAddress == newExecutor
-                && modules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && modules[1].moduleType == MODULE_TYPE_EXECUTOR
+            modules[expectedIndex].moduleAddress == newValidator1
+                && modules[expectedIndex + 1].moduleAddress == newExecutor
+                && modules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && modules[expectedIndex + 1].moduleType == MODULE_TYPE_EXECUTOR
         );
     }
 
@@ -552,8 +555,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     // Used to skip tests when env is kernel or safe as sometimes
     // they don't emit events on module installation
-    modifier whenEnvIsNotKernelOrSafe(AccountType _env) {
-        if (_env == AccountType.KERNEL || _env == AccountType.SAFE) {
+    modifier whenEnvIsNotKernelOrSafe() {
+        AccountType env = ModuleKitHelpers.getAccountType();
+        if (env == AccountType.KERNEL) {
             return;
         }
         _;
