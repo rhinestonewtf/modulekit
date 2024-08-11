@@ -13,7 +13,6 @@ import {
 } from "src/external/ERC7579.sol";
 import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
-import { AccountType } from "src/test/RhinestoneModuleKit.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
