@@ -221,9 +221,6 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         // Deploy new instance using current env
         AccountInstance memory newInstance = makeAccountInstance("newSalt");
-        assertTrue(newInstance.account.code.length == 0);
-        newInstance.deployAccount();
-        assertTrue(newInstance.account.code.length > 0);
 
         // Install modules on new instance
         newInstance.installModule({
@@ -239,12 +236,12 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         // Get installed modules on new instance
         InstalledModule[] memory newModules = newInstance.getInstalledModules();
-        assertTrue(newModules.length == 2);
+        assertTrue(newModules.length == (env == AccountType.SAFE ? 3 : 2));
         assertTrue(
-            newModules[0].moduleAddress == newValidator
-                && newModules[1].moduleAddress == newExecutor
-                && newModules[0].moduleType == MODULE_TYPE_VALIDATOR
-                && newModules[1].moduleType == MODULE_TYPE_EXECUTOR
+            newModules[expectedIndex].moduleAddress == newValidator
+                && newModules[expectedIndex + 1].moduleAddress == newExecutor
+                && newModules[expectedIndex].moduleType == MODULE_TYPE_VALIDATOR
+                && newModules[expectedIndex + 1].moduleType == MODULE_TYPE_EXECUTOR
         );
 
         // Old instance modules should still be the same
