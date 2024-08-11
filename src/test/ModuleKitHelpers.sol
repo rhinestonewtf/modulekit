@@ -26,9 +26,10 @@ import {
     getAccountEnv as getAccountEnvFromStorage,
     getInstalledModules as getInstalledModulesFromStorage,
     writeInstalledModule as writeInstalledModuleToStorage,
-    removeInstalledModule as removeInstaleldModuleFromStorage,
+    removeInstalledModule as removeInstalledModuleFromStorage,
     InstalledModule
 } from "./utils/Storage.sol";
+import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 
 library ModuleKitHelpers {
     /*//////////////////////////////////////////////////////////////////////////
@@ -299,7 +300,7 @@ library ModuleKitHelpers {
                     && installedModules[i].moduleAddress == moduleAddress
             ) {
                 // Remove module from storage
-                removeInstaleldModuleFromStorage(i, instance.account);
+                removeInstalledModuleFromStorage(i, instance.account);
                 return;
             }
         }
@@ -372,7 +373,22 @@ library ModuleKitHelpers {
     }
 
     function deployAccount(AccountInstance memory instance) internal {
+        // Record logs to track installed modules
+        recordLogs();
+        // Deploy account
         HelperBase(instance.accountHelper).deployAccount(instance);
+        // Parse logs and determine if a module was installed
+        VmSafe.Log[] memory logs = getRecordedLogs();
+        for (uint256 i; i < logs.length; i++) {
+            // ModuleInstalled(uint256, address)
+            if (
+                logs[i].topics[0]
+                    == 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123
+            ) {
+                (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+                writeInstalledModuleToStorage(InstalledModule(moduleType, module), logs[i].emitter);
+            }
+        }
     }
 
     function setAccountType(AccountInstance memory, AccountType env) internal {

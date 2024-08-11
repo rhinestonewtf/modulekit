@@ -221,6 +221,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         // Deploy new instance using current env
         AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        assertTrue(newInstance.account.code.length == 0);
+        newInstance.deployAccount();
+        assertTrue(newInstance.account.code.length > 0);
 
         // Install modules on new instance
         newInstance.installModule({
