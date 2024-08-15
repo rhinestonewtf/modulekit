@@ -14,17 +14,17 @@ import {
 } from "registry/DataTypes.sol";
 import { IExternalSchemaValidator } from "registry/external/IExternalSchemaValidator.sol";
 
-address constant REGISTRY_ADDR = 0xe0cde9239d16bEf05e62Bbf7aA93e420f464c826;
+address constant REGISTRY_ADDR = 0x0000000000E23E0033C3e93D9D4eBc2FF2AB2AEF;
 
 contract RegistryDeployer {
     IRegistry internal registry = IRegistry(REGISTRY_ADDR);
 
     // Default resolver
     ResolverUID internal resolverUID =
-        ResolverUID.wrap(0xdf658e5595d93baa803af242dc6e175b4cbef04de73509b50b944d1b2d167bb6);
+        ResolverUID.wrap(0xdbca873b13c783c0c9c6ddfc4280e505580bf6cc3dac83f8a0f7b44acaafca4f);
 
     SchemaUID internal schemaUID =
-        SchemaUID.wrap(0xdf658e5595d93baa803af242dc6e175b4cbef04de73509b50b944d1b2d167bb6);
+        SchemaUID.wrap(0x93d46fcca4ef7d66a413c7bde08bb1ff14bacbd04c4069bb24cd7c21729d7bf1);
 
     // Mock attester
     address internal mockAttester = 0xe0cde9239d16bEf05e62Bbf7aA93e420f464c826;
@@ -71,6 +71,17 @@ contract RegistryDeployer {
         });
     }
 
+    function predictModuleAddress(
+        bytes32 salt,
+        bytes memory initCode
+    )
+        public
+        view
+        returns (address)
+    {
+        return registry.calcModuleAddress(salt, initCode);
+    }
+
     // <---- ATTESTATIONS ---->
 
     function mockAttestToModule(
@@ -95,7 +106,7 @@ contract RegistryDeployer {
         });
     }
 
-    function isModuleAttestedMock(address module) public returns (bool) {
+    function isModuleAttestedMock(address module) public view returns (bool) {
         AttestationRecord memory attestation =
             registry.findAttestation({ module: module, attester: mockAttester });
         return attestation.time > 0 && attestation.expirationTime < block.timestamp
