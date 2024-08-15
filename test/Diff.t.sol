@@ -11,7 +11,8 @@ import {
     MODULE_TYPE_FALLBACK,
     CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
-import { getAccountType } from "src/test/utils/Storage.sol";
+import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
+import { toString } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -179,6 +180,171 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(validatorEnabled);
         bool validator1Enabled = instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, newValidator1);
         assertTrue(validator1Enabled);
+    }
+
+    function test_getInstalledModules() public whenEnvIsNotKernel {
+        address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                2, [newValidator, newValidator1], [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR]
+            ),
+            instance
+        );
+
+        address newExecutor = address(new MockExecutor());
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                3,
+                [newValidator, newValidator1, newExecutor],
+                [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]
+            ),
+            instance
+        );
+    }
+
+    function test_getInstalledModules_DifferentInstances() public whenEnvIsNotKernel {
+        address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                2, [newValidator, newValidator1], [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR]
+            ),
+            instance
+        );
+
+        address newExecutor = address(new MockExecutor());
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                3,
+                [newValidator, newValidator1, newExecutor],
+                [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]
+            ),
+            instance
+        );
+
+        // Deploy new instance using current env
+        AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        assertTrue(newInstance.account.code.length == 0);
+        newInstance.deployAccount();
+        assertTrue(newInstance.account.code.length > 0);
+
+        // Install modules on new instance
+        newInstance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        newInstance.installModule({
+            moduleTypeId: MODULE_TYPE_EXECUTOR,
+            module: newExecutor,
+            data: ""
+        });
+
+        // Assert installed modules on new instance
+        this._getModulesAndAssert(
+            abi.encode(
+                2, [newValidator, newExecutor], [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]
+            ),
+            newInstance
+        );
+
+        // Old instance modules should still be the same
+        this._getModulesAndAssert(
+            abi.encode(
+                3,
+                [newValidator, newValidator1, newExecutor],
+                [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]
+            ),
+            instance
+        );
+    }
+
+    function test_getInstalledModules_AfterUninstall() public whenEnvIsNotKernel {
+        address newValidator = address(new MockValidator());
+        address newValidator1 = address(new MockValidator());
+        vm.label(newValidator, "2nd validator");
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator1,
+            data: ""
+        });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                2, [newValidator, newValidator1], [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR]
+            ),
+            instance
+        );
+
+        address newExecutor = address(new MockExecutor());
+        instance.installModule({ moduleTypeId: MODULE_TYPE_EXECUTOR, module: newExecutor, data: "" });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                3, // length
+                [newValidator, newValidator1, newExecutor], // expectedAddresses
+                [MODULE_TYPE_VALIDATOR, MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR] // expectedTypes
+            ),
+            instance
+        );
+
+        // Uninstall module
+        instance.uninstallModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: newValidator,
+            data: ""
+        });
+
+        // Assert installed modules
+        this._getModulesAndAssert(
+            abi.encode(
+                2, [newValidator1, newExecutor], [MODULE_TYPE_VALIDATOR, MODULE_TYPE_EXECUTOR]
+            ),
+            instance
+        );
     }
 
     function testRemoveValidator() public {
@@ -398,7 +564,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     /*//////////////////////////////////////////////////////////////
-                                INTERNAL
+                                HELPERS
     //////////////////////////////////////////////////////////////*/
 
     function _usingAccountEnv(string memory env) internal usingAccountEnv(env.toAccountType()) {
@@ -408,5 +574,50 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         newInstance.deployAccount();
 
         assertTrue(newInstance.account.code.length > 0);
+    }
+
+    function _getModulesAndAssert(
+        bytes calldata expectedResultBytes,
+        AccountInstance memory _instance
+    )
+        public
+        view
+    {
+        InstalledModule[] memory modules = _instance.getInstalledModules();
+        // Parse length
+        uint256 length = abi.decode(expectedResultBytes[0:32], (uint256));
+        // Parse addresses and types
+        address[] memory expectedAddresses = new address[](length);
+        uint256[] memory expectedTypes = new uint256[](length);
+        for (uint256 i = 0; i < length; i++) {
+            expectedAddresses[i] =
+                abi.decode(expectedResultBytes[32 + i * 32:64 + i * 32], (address));
+            expectedTypes[i] = abi.decode(
+                expectedResultBytes[32 + length * 32 + i * 32:64 + length * 32 + i * 32], (uint256)
+            );
+        }
+        // Assert expected modules length
+        assertTrue(
+            modules.length == length + (instance.getAccountType() == AccountType.SAFE ? 1 : 0)
+        );
+        // AccountType.SAFE has 1 extra module added during setup, skip it
+        uint256 index = instance.getAccountType() == AccountType.SAFE ? 1 : 0;
+        for (uint256 i = 0; i < length; i++) {
+            assertTrue(modules[index + i].moduleAddress == expectedAddresses[i]);
+            assertTrue(modules[index + i].moduleType == expectedTypes[i]);
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+
+    // Used to skip tests when env is kernel as they don't emit events on module installation
+    modifier whenEnvIsNotKernel() {
+        AccountType env = ModuleKitHelpers.getAccountType();
+        if (env == AccountType.KERNEL) {
+            return;
+        }
+        _;
     }
 }
