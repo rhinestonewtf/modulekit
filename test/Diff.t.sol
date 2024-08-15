@@ -102,6 +102,51 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
     }
 
+    function testexec__RevertWhen__ValidationFails() public {
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+
+        // Create userOperation
+        instance.expect4337Revert();
+        // Create userOperation
+        instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: makeAddr("invalidValidator")
+        }).execUserOps();
+    }
+
+    function testexec__RevertWhen__ValidationReverts() public {
+        address revertingValidator = makeAddr("revertingValidator");
+        vm.etch(revertingValidator, address(validator).code);
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: revertingValidator,
+            data: ""
+        });
+
+        vm.etch(revertingValidator, hex"fd");
+
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+
+        // Create userOperation
+        instance.expect4337Revert();
+        // Create userOperation
+        instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: revertingValidator
+        }).execUserOps();
+    }
+
     function testexec__RevertWhen__UserOperationFails() public {
         // Create userOperation fields
         bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
@@ -500,11 +545,11 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         assertTrue(oldEnvInstance.account.code.length > 0);
 
         // Load env
-        AccountType env = ModuleKitHelpers.getAccountType();
+        (bytes32 envHash) = getAccountType();
 
         // Switch env
-        AccountType newEnv = env == AccountType.KERNEL ? AccountType.SAFE : AccountType.KERNEL;
-        instance.setAccountEnv(newEnv.toString());
+        string memory newEnv = envHash == keccak256(abi.encodePacked("KERNEL")) ? "SAFE" : "KERNEL";
+        instance.setAccountEnv(newEnv);
 
         // Deploy using new env
         AccountInstance memory newEnvInstance = makeAccountInstance("sameSalt");

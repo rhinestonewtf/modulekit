@@ -275,7 +275,9 @@ abstract contract ISoloMargin {
 
     function ownerSetInterestSetter(uint256 marketId, address interestSetter) public virtual;
 
-    function getAccountValues(Account.Info memory account)
+    function getAccountValues(
+        Account.Info memory account
+    )
         public
         view
         virtual
@@ -285,7 +287,9 @@ abstract contract ISoloMargin {
 
     function getMarketInterestSetter(uint256 marketId) public view virtual returns (address);
 
-    function getMarketSpreadPremium(uint256 marketId)
+    function getMarketSpreadPremium(
+        uint256 marketId
+    )
         public
         view
         virtual
@@ -327,7 +331,9 @@ abstract contract ISoloMargin {
 
     function getMarginRatio() public view virtual returns (Decimal.D256 memory);
 
-    function getMarketCurrentIndex(uint256 marketId)
+    function getMarketCurrentIndex(
+        uint256 marketId
+    )
         public
         view
         virtual
@@ -337,7 +343,9 @@ abstract contract ISoloMargin {
 
     function getRiskParams() public view virtual returns (Storage.RiskParams memory);
 
-    function getAccountBalances(Account.Info memory account)
+    function getAccountBalances(
+        Account.Info memory account
+    )
         public
         view
         virtual
@@ -380,7 +388,9 @@ abstract contract ISoloMargin {
         public
         virtual;
 
-    function getMarketWithInfo(uint256 marketId)
+    function getMarketWithInfo(
+        uint256 marketId
+    )
         public
         view
         virtual
@@ -404,7 +414,9 @@ abstract contract ISoloMargin {
         virtual
         returns (Types.Wei memory);
 
-    function getMarketTotalPar(uint256 marketId)
+    function getMarketTotalPar(
+        uint256 marketId
+    )
         public
         view
         virtual
@@ -421,7 +433,9 @@ abstract contract ISoloMargin {
 
     function getNumExcessTokens(uint256 marketId) public view virtual returns (Types.Wei memory);
 
-    function getMarketCachedIndex(uint256 marketId)
+    function getMarketCachedIndex(
+        uint256 marketId
+    )
         public
         view
         virtual
@@ -443,19 +457,25 @@ abstract contract ISoloMargin {
 
     function transferOwnership(address newOwner) public virtual;
 
-    function getAdjustedAccountValues(Account.Info memory account)
+    function getAdjustedAccountValues(
+        Account.Info memory account
+    )
         public
         view
         virtual
         returns (Monetary.Value memory, Monetary.Value memory);
 
-    function getMarketMarginPremium(uint256 marketId)
+    function getMarketMarginPremium(
+        uint256 marketId
+    )
         public
         view
         virtual
         returns (Decimal.D256 memory);
 
-    function getMarketInterestRate(uint256 marketId)
+    function getMarketInterestRate(
+        uint256 marketId
+    )
         public
         view
         virtual

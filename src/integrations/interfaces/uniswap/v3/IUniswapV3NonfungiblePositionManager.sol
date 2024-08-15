@@ -16,7 +16,9 @@ abstract contract IUniswapV3NonfungiblePositionManager {
         uint256 deadline;
     }
 
-    function mint(MintParams calldata params)
+    function mint(
+        MintParams calldata params
+    )
         external
         payable
         virtual
@@ -31,7 +33,9 @@ abstract contract IUniswapV3NonfungiblePositionManager {
         uint256 deadline;
     }
 
-    function increaseLiquidity(IncreaseLiquidityParams calldata params)
+    function increaseLiquidity(
+        IncreaseLiquidityParams calldata params
+    )
         external
         payable
         virtual
@@ -45,7 +49,9 @@ abstract contract IUniswapV3NonfungiblePositionManager {
         uint256 deadline;
     }
 
-    function decreaseLiquidity(DecreaseLiquidityParams calldata params)
+    function decreaseLiquidity(
+        DecreaseLiquidityParams calldata params
+    )
         external
         payable
         virtual
@@ -58,13 +64,17 @@ abstract contract IUniswapV3NonfungiblePositionManager {
         uint128 amount1Max;
     }
 
-    function collect(CollectParams calldata params)
+    function collect(
+        CollectParams calldata params
+    )
         external
         payable
         virtual
         returns (uint256 amount0, uint256 amount1);
 
-    function positions(uint256 tokenId)
+    function positions(
+        uint256 tokenId
+    )
         external
         view
         virtual

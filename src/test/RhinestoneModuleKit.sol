@@ -88,7 +88,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
                                     MAKE INSTANCE
     //////////////////////////////////////////////////////////////////////////*/
 
-    function makeAccountInstance(bytes32 salt)
+    function makeAccountInstance(
+        bytes32 salt
+    )
         internal
         initializeModuleKit
         returns (AccountInstance memory instance)

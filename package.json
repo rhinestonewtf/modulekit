@@ -1,6 +1,6 @@
 {
   "name": "@rhinestone/modulekit",
-  "version": "0.4.9",
+  "version": "0.4.10",
   "description": "A development kit for building and testing smart account modules.",
   "license": "GPL-3.0",
   "author": {
@@ -21,7 +21,7 @@
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
-    "test:accounts": "forge test && ACCOUNT_TYPE=SAFE forge test && ACCOUNT_TYPE=KERNEL forge test",
+    "test:accounts": "forge test && ACCOUNT_TYPE=SAFE forge test && ACCOUNT_TYPE=KERNEL forge test && ACCOUNT_TYPE=NEXUS forge test",
     "changeset": "changeset",
     "changeset:release": "pnpm build && changeset publish",
     "changeset:version": "changeset version && pnpm install --lockfile-only"
@@ -30,7 +30,7 @@
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@prb/math": "^4.0.2",
-    "@rhinestone/erc4337-validation": "^0.0.1-alpha.4",
+    "@rhinestone/erc4337-validation": "^0.0.1-alpha.5",
     "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579#v1.0.0",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",

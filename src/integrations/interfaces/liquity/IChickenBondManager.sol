@@ -53,7 +53,9 @@ interface IChickenBondManager {
         returns (uint256, uint256);
 
     // getters
-    function calcRedemptionFeePercentage(uint256 _fractionOfBLUSDToRedeem)
+    function calcRedemptionFeePercentage(
+        uint256 _fractionOfBLUSDToRedeem
+    )
         external
         view
         returns (uint256);

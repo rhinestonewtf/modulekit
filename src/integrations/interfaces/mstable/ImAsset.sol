@@ -137,7 +137,9 @@ interface ImAsset {
     // Views
     function getBasket() external view returns (bool, bool);
 
-    function getBasset(address _token)
+    function getBasset(
+        address _token
+    )
         external
         view
         returns (BassetPersonal memory personal, BassetData memory data);
