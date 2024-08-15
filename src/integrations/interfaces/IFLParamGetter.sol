@@ -3,7 +3,9 @@
 pragma solidity ^0.8.10;
 
 abstract contract IFLParamGetter {
-    function getFlashLoanParams(bytes memory _data)
+    function getFlashLoanParams(
+        bytes memory _data
+    )
         public
         view
         virtual

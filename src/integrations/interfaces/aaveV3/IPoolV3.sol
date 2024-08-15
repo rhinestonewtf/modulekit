@@ -574,7 +574,9 @@ interface IPoolV3 {
      * @return healthFactor The current health factor of the user
      *
      */
-    function getUserAccountData(address user)
+    function getUserAccountData(
+        address user
+    )
         external
         view
         returns (
@@ -648,7 +650,9 @@ interface IPoolV3 {
      * @return The configuration of the reserve
      *
      */
-    function getConfiguration(address asset)
+    function getConfiguration(
+        address asset
+    )
         external
         view
         returns (DataTypes.ReserveConfigurationMap memory);
@@ -659,7 +663,9 @@ interface IPoolV3 {
      * @return The configuration of the user
      *
      */
-    function getUserConfiguration(address user)
+    function getUserConfiguration(
+        address user
+    )
         external
         view
         returns (DataTypes.UserConfigurationMap memory);
@@ -760,7 +766,9 @@ interface IPoolV3 {
      * @param id The id of the category
      * @return The configuration data of the category
      */
-    function getEModeCategoryData(uint8 id)
+    function getEModeCategoryData(
+        uint8 id
+    )
         external
         view
         returns (DataTypes.EModeCategory memory);

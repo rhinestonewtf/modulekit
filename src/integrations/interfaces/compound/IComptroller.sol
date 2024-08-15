@@ -41,7 +41,9 @@ abstract contract IComptroller {
 
     function markets(address account) public view virtual returns (bool, uint256);
 
-    function getAccountLiquidity(address account)
+    function getAccountLiquidity(
+        address account
+    )
         external
         view
         virtual
