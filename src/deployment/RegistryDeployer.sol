@@ -26,7 +26,6 @@ contract RegistryDeployer {
     SchemaUID internal schemaUID =
         SchemaUID.wrap(0x93d46fcca4ef7d66a413c7bde08bb1ff14bacbd04c4069bb24cd7c21729d7bf1);
 
-    // Mock attester
     address internal mockAttester = 0xe0cde9239d16bEf05e62Bbf7aA93e420f464c826;
 
     error InvalidResolver();
@@ -98,12 +97,16 @@ contract RegistryDeployer {
             data: attestationData,
             moduleTypes: moduleTypes
         });
-        registry.attest({
-            schemaUID: _schemaUID,
-            request: request,
-            attester: mockAttester,
-            signature: hex"414141414141"
-        });
+        (bool success,) = mockAttester.call(
+            abi.encodeWithSignature(
+                "attest(address,bytes32,(address,uint48,bytes,uint256[]))",
+                REGISTRY_ADDR,
+                _schemaUID,
+                request
+            )
+        );
+
+        require(success, "Mock attestation failed");
     }
 
     function isModuleAttestedMock(address module) public view returns (bool) {
