@@ -122,7 +122,9 @@ library UniswapV3Integration {
         return sqrtPriceX96;
     }
 
-    function sqrtPriceX96toPriceRatio(uint160 sqrtPriceX96)
+    function sqrtPriceX96toPriceRatio(
+        uint160 sqrtPriceX96
+    )
         internal
         pure
         returns (uint256 priceRatio)

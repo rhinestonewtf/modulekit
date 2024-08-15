@@ -306,7 +306,9 @@ library ModuleKitHelpers {
         }
     }
 
-    function toAccountType(string memory _accountType)
+    function toAccountType(
+        string memory _accountType
+    )
         internal
         pure
         returns (AccountType accountType)
@@ -370,7 +372,9 @@ library ModuleKitHelpers {
         }
     }
 
-    function getAccountType(AccountInstance memory)
+    function getAccountType(
+        AccountInstance memory
+    )
         internal
         view
         returns (AccountType accountType)
@@ -413,7 +417,9 @@ library ModuleKitHelpers {
         }
     }
 
-    function getAccountEnv(AccountInstance memory)
+    function getAccountEnv(
+        AccountInstance memory
+    )
         internal
         view
         returns (AccountType env, address, address)

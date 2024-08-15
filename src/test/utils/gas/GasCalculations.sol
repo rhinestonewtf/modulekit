@@ -53,7 +53,9 @@ function getOpStackL1Gas(bytes memory data) pure returns (uint256 calldataGas) {
 /// @notice Parse the previous gas report from a file.
 /// @param fileContent The content of the file.
 /// @return prevGasCalculations The previous gas calculations.
-function parsePrevGasReport(string memory fileContent)
+function parsePrevGasReport(
+    string memory fileContent
+)
     pure
     returns (GasCalculations memory prevGasCalculations)
 {

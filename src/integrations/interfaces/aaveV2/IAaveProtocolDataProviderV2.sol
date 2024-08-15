@@ -12,7 +12,9 @@ abstract contract IAaveProtocolDataProviderV2 {
 
     function getAllATokens() external view virtual returns (TokenData[] memory);
 
-    function getReserveConfigurationData(address asset)
+    function getReserveConfigurationData(
+        address asset
+    )
         external
         view
         virtual
@@ -29,7 +31,9 @@ abstract contract IAaveProtocolDataProviderV2 {
             bool isFrozen
         );
 
-    function getReserveData(address asset)
+    function getReserveData(
+        address asset
+    )
         external
         view
         virtual
@@ -65,7 +69,9 @@ abstract contract IAaveProtocolDataProviderV2 {
             bool usageAsCollateralEnabled
         );
 
-    function getReserveTokensAddresses(address asset)
+    function getReserveTokensAddresses(
+        address asset
+    )
         external
         view
         virtual
