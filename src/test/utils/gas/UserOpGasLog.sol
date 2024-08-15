@@ -18,7 +18,9 @@ contract UserOpGasLog {
 
     mapping(bytes32 userOpHash => GasLog log) internal _log;
 
-    function getLog(bytes32 userOpHash)
+    function getLog(
+        bytes32 userOpHash
+    )
         external
         view
         returns (uint256 gasValidation, uint256 gasExecution)

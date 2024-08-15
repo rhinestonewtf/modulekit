@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
-import { writeSimulateUserOp } from "src/test/utils/Log.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -12,6 +11,8 @@ import {
     MODULE_TYPE_FALLBACK,
     CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
+import { getAccountType } from "src/test/utils/Storage.sol";
+import { toString } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -284,19 +285,84 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testSimulateUserOp() public {
-        writeSimulateUserOp(true);
+        instance.simulateUserOp(true);
         testexec__Given__TwoInputs();
     }
 
     function testERC1271() public {
+        bytes32 unformattedHash = keccak256("test");
         bytes32 hash =
-            instance.formatERC1271Hash(address(instance.defaultValidator), keccak256("test"));
+            instance.formatERC1271Hash(address(instance.defaultValidator), unformattedHash);
 
         bool isValid = instance.isValidSignature({
             validator: address(instance.defaultValidator),
-            hash: hash,
+            hash: unformattedHash,
             signature: bytes("test")
         });
         assertTrue(isValid);
+    }
+
+    function testUsingAccountEnv() public {
+        string[] memory envs = new string[](6);
+        envs[0] = "DEFAULT";
+        envs[1] = "SAFE";
+        envs[2] = "KERNEL";
+        envs[3] = "NEXUS";
+        envs[4] = "CUSTOM";
+        envs[5] = "INVALID";
+
+        for (uint256 i = 0; i < envs.length; i++) {
+            string memory env = envs[i];
+            if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("INVALID"))) {
+                vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
+                _usingAccountEnv(env);
+            } else {
+                _usingAccountEnv(env);
+            }
+        }
+    }
+
+    function testUsingAccountEnv_ModuleKitUninitialized() public {
+        isInit = false;
+        _usingAccountEnv("DEFAULT");
+    }
+
+    function testSetAccountEnv() public {
+        // Deploy using current env
+        AccountInstance memory oldEnvInstance = makeAccountInstance("sameSalt");
+        assertTrue(oldEnvInstance.account.code.length == 0);
+        oldEnvInstance.deployAccount();
+        assertTrue(oldEnvInstance.account.code.length > 0);
+
+        // Load env
+        (bytes32 envHash) = getAccountType();
+
+        // Switch env
+        string memory newEnv = envHash == keccak256(abi.encodePacked("KERNEL")) ? "SAFE" : "KERNEL";
+        instance.setAccountEnv(newEnv);
+
+        // Deploy using new env
+        AccountInstance memory newEnvInstance = makeAccountInstance("sameSalt");
+        assertTrue(newEnvInstance.account.code.length == 0);
+        newEnvInstance.deployAccount();
+        assertTrue(newEnvInstance.account.code.length > 0);
+    }
+
+    function testSetAccountEnv_RevertsWhen_InvalidAccountType() public {
+        vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
+        instance.setAccountEnv("INVALID");
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                INTERNAL
+    //////////////////////////////////////////////////////////////*/
+
+    function _usingAccountEnv(string memory env) internal usingAccountEnv(env.toAccountType()) {
+        AccountInstance memory newInstance = makeAccountInstance(keccak256(abi.encode(env)));
+        assertTrue(newInstance.account.code.length == 0);
+
+        newInstance.deployAccount();
+
+        assertTrue(newInstance.account.code.length > 0);
     }
 }

@@ -1,15 +1,45 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import { AccountInstance, UserOpData } from "./RhinestoneModuleKit.sol";
+import {
+    AccountInstance,
+    UserOpData,
+    AccountType,
+    DEFAULT,
+    SAFE,
+    NEXUS,
+    KERNEL,
+    CUSTOM
+} from "./RhinestoneModuleKit.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
-import { writeExpectRevert, writeGasIdentifier } from "./utils/Log.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { Execution } from "../external/ERC7579.sol";
+import {
+    getAccountType as getAccountTypeFromStorage,
+    writeAccountType,
+    writeExpectRevert,
+    writeGasIdentifier,
+    writeSimulateUserOp,
+    writeAccountEnv,
+    getFactory,
+    getHelper as getHelperFromStorage,
+    getAccountEnv as getAccountEnvFromStorage
+} from "./utils/Storage.sol";
 
 library ModuleKitHelpers {
+    /*//////////////////////////////////////////////////////////////////////////
+                                      ERRORS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    error InvalidAccountType();
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    LIBRARIES
+    //////////////////////////////////////////////////////////////////////////*/
+
     using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
+    using ModuleKitHelpers for AccountType;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
@@ -252,12 +282,165 @@ library ModuleKitHelpers {
         writeGasIdentifier(id);
     }
 
+    function simulateUserOp(AccountInstance memory, bool value) internal {
+        writeSimulateUserOp(value);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 ACCOUNT UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    function toString(AccountType _accountType) internal pure returns (string memory accountType) {
+        if (_accountType == AccountType.DEFAULT) {
+            return DEFAULT;
+        } else if (_accountType == AccountType.SAFE) {
+            return SAFE;
+        } else if (_accountType == AccountType.KERNEL) {
+            return KERNEL;
+        } else if (_accountType == AccountType.CUSTOM) {
+            return CUSTOM;
+        } else if (_accountType == AccountType.NEXUS) {
+            return NEXUS;
+        } else {
+            revert InvalidAccountType();
+        }
+    }
+
+    function toAccountType(
+        string memory _accountType
+    )
+        internal
+        pure
+        returns (AccountType accountType)
+    {
+        if (keccak256(abi.encodePacked(_accountType)) == keccak256(abi.encodePacked(DEFAULT))) {
+            return AccountType.DEFAULT;
+        } else if (keccak256(abi.encodePacked(_accountType)) == keccak256(abi.encodePacked(SAFE))) {
+            return AccountType.SAFE;
+        } else if (keccak256(abi.encodePacked(_accountType)) == keccak256(abi.encodePacked(KERNEL)))
+        {
+            return AccountType.KERNEL;
+        } else if (keccak256(abi.encodePacked(_accountType)) == keccak256(abi.encodePacked(CUSTOM)))
+        {
+            return AccountType.CUSTOM;
+        } else if (keccak256(abi.encodePacked(_accountType)) == keccak256(abi.encodePacked(NEXUS)))
+        {
+            return AccountType.NEXUS;
+        } else {
+            revert InvalidAccountType();
+        }
+    }
+
     function deployAccount(AccountInstance memory instance) internal {
         HelperBase(instance.accountHelper).deployAccount(instance);
+    }
+
+    function setAccountType(AccountInstance memory, AccountType env) internal {
+        setAccountType(env);
+    }
+
+    function setAccountType(AccountType env) internal {
+        writeAccountType(env.toString());
+    }
+
+    function setAccountEnv(AccountInstance memory, string memory env) internal {
+        setAccountEnv(env);
+    }
+
+    function setAccountEnv(string memory env) internal {
+        _setAccountEnv(env);
+    }
+
+    function setAccountEnv(AccountType env) internal {
+        _setAccountEnv(env.toString());
+    }
+
+    function getAccountType() internal view returns (AccountType accountType) {
+        bytes32 accountTypeHash = getAccountTypeFromStorage();
+        if (accountTypeHash == keccak256(abi.encodePacked(DEFAULT))) {
+            return AccountType.DEFAULT;
+        } else if (accountTypeHash == keccak256(abi.encodePacked(SAFE))) {
+            return AccountType.SAFE;
+        } else if (accountTypeHash == keccak256(abi.encodePacked(KERNEL))) {
+            return AccountType.KERNEL;
+        } else if (accountTypeHash == keccak256(abi.encodePacked(CUSTOM))) {
+            return AccountType.CUSTOM;
+        } else if (accountTypeHash == keccak256(abi.encodePacked(NEXUS))) {
+            return AccountType.NEXUS;
+        } else {
+            revert InvalidAccountType();
+        }
+    }
+
+    function getAccountType(
+        AccountInstance memory
+    )
+        internal
+        view
+        returns (AccountType accountType)
+    {
+        return getAccountType();
+    }
+
+    function _setAccountEnv(string memory env) private {
+        address factory = getFactory(env);
+        address helper = getHelperFromStorage(env);
+        if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked(DEFAULT))) {
+            writeAccountEnv(env, factory, helper);
+        } else if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked(SAFE))) {
+            writeAccountEnv(env, factory, helper);
+        } else if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked(KERNEL))) {
+            writeAccountEnv(env, factory, helper);
+        } else if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked(CUSTOM))) {
+            writeAccountEnv(env, factory, helper);
+        } else if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked(NEXUS))) {
+            writeAccountEnv(env, factory, helper);
+        } else {
+            revert InvalidAccountType();
+        }
+    }
+
+    function getAccountEnv() internal view returns (AccountType env, address, address) {
+        (bytes32 envHash, address factory, address helper) = getAccountEnvFromStorage();
+        if (envHash == keccak256(abi.encodePacked(DEFAULT))) {
+            return (AccountType.DEFAULT, factory, helper);
+        } else if (envHash == keccak256(abi.encodePacked(SAFE))) {
+            return (AccountType.SAFE, factory, helper);
+        } else if (envHash == keccak256(abi.encodePacked(KERNEL))) {
+            return (AccountType.KERNEL, factory, helper);
+        } else if (envHash == keccak256(abi.encodePacked(CUSTOM))) {
+            return (AccountType.CUSTOM, factory, helper);
+        } else if (envHash == keccak256(abi.encodePacked(NEXUS))) {
+            return (AccountType.NEXUS, factory, helper);
+        } else {
+            revert InvalidAccountType();
+        }
+    }
+
+    function getAccountEnv(
+        AccountInstance memory
+    )
+        internal
+        view
+        returns (AccountType env, address, address)
+    {
+        return getAccountEnv();
+    }
+
+    function getHelper(AccountType env) internal view returns (address) {
+        if (env == AccountType.DEFAULT) {
+            return getHelperFromStorage(DEFAULT);
+        } else if (env == AccountType.SAFE) {
+            return getHelperFromStorage(SAFE);
+        } else if (env == AccountType.KERNEL) {
+            return getHelperFromStorage(KERNEL);
+        } else if (env == AccountType.CUSTOM) {
+            return getHelperFromStorage(CUSTOM);
+        } else if (env == AccountType.NEXUS) {
+            return getHelperFromStorage(NEXUS);
+        } else {
+            revert InvalidAccountType();
+        }
     }
 
     /*//////////////////////////////////////////////////////////////////////////

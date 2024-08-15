@@ -4,7 +4,9 @@ pragma solidity ^0.8.10;
 
 abstract contract IPriceOracleGetterAave {
     function getAssetPrice(address _asset) external view virtual returns (uint256);
-    function getAssetsPrices(address[] calldata _assets)
+    function getAssetsPrices(
+        address[] calldata _assets
+    )
         external
         view
         virtual

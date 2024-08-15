@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "../Vm.sol";
 import "./GasCalculations.sol";
 import "../Log.sol";
+import { writeGasIdentifier } from "../Storage.sol";
 
 library GasParser {
     function parseAndWriteGas(

@@ -424,7 +424,9 @@ interface ILendingPoolV2 {
      * @return healthFactor the current health factor of the user
      *
      */
-    function getUserAccountData(address user)
+    function getUserAccountData(
+        address user
+    )
         external
         view
         returns (
@@ -459,7 +461,9 @@ interface ILendingPoolV2 {
      * @return The configuration of the reserve
      *
      */
-    function getConfiguration(address asset)
+    function getConfiguration(
+        address asset
+    )
         external
         view
         returns (DataTypes.ReserveConfigurationMap memory);
@@ -470,7 +474,9 @@ interface ILendingPoolV2 {
      * @return The configuration of the user
      *
      */
-    function getUserConfiguration(address user)
+    function getUserConfiguration(
+        address user
+    )
         external
         view
         returns (DataTypes.UserConfigurationMap memory);

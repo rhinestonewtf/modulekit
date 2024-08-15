@@ -1,5 +1,5 @@
 [profile.default]
-emv_version = "paris"
+evm_version = "paris"
 src = "src"
 out = "out"
 script = "script"
