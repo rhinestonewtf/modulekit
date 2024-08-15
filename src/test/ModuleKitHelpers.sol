@@ -267,7 +267,9 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
-    function getInstalledModules(AccountInstance memory instance)
+    function getInstalledModules(
+        AccountInstance memory instance
+    )
         internal
         view
         returns (InstalledModule[] memory)
