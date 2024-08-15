@@ -18,8 +18,8 @@ importers:
         specifier: ^4.0.2
         version: 4.0.3
       '@rhinestone/erc4337-validation':
-        specifier: ^0.0.1-alpha.4
-        version: 0.0.1-alpha.4(ethers@5.7.2)(hardhat@2.22.8(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
+        specifier: ^0.0.1-alpha.5
+        version: 0.0.1-alpha.5(ethers@5.7.2)(hardhat@2.22.8(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       '@rhinestone/module-bases':
         specifier: github:rhinestonewtf/module-bases
         version: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/7d7dbe629e6620dcc3e0e7f9dce8aa305964ae5a(ethers@5.7.2)(hardhat@2.22.8(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
@@ -411,8 +411,8 @@ packages:
   '@rhinestone/erc4337-validation@0.0.1-alpha.2':
     resolution: {integrity: sha512-sxBSHoR0hV0rN2bv5HfINHR3RyBChfd0OWH0TP8nlA9FolJ1EezLByxcyrvAgi2QLQ2Zf2zVcNky1qYdfF4NjQ==}
 
-  '@rhinestone/erc4337-validation@0.0.1-alpha.4':
-    resolution: {integrity: sha512-ZTm9tl7FEeg1kU5kre81z9w6OxcTBQlY8tiCV+QSDPowe6d/oC/clgTQ8krDLYVLwICOvlWc7oMH4z8L9s7osw==}
+  '@rhinestone/erc4337-validation@0.0.1-alpha.5':
+    resolution: {integrity: sha512-yOrYyQBrT0JfHb+rjvx4pqk8uItKxEtn7n8z3k0qbZTzkXaNS9pCUBsTxy0kp6T2SNUrbQ8I4DMSiyGqjdh2ng==}
 
   '@rhinestone/module-bases@https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/7d7dbe629e6620dcc3e0e7f9dce8aa305964ae5a':
     resolution: {tarball: https://codeload.github.com/rhinestonewtf/module-bases/tar.gz/7d7dbe629e6620dcc3e0e7f9dce8aa305964ae5a}
@@ -2872,7 +2872,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@rhinestone/erc4337-validation@0.0.1-alpha.4(ethers@5.7.2)(hardhat@2.22.8(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))':
+  '@rhinestone/erc4337-validation@0.0.1-alpha.5(ethers@5.7.2)(hardhat@2.22.8(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))':
     dependencies:
       '@openzeppelin/contracts': 5.0.1
       account-abstraction: accountabstraction@https://codeload.github.com/kopy-kat/account-abstraction/tar.gz/c5887153fbfe3ed09b2637cac39873f96d676f38(ethers@5.7.2)(hardhat@2.22.8(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
