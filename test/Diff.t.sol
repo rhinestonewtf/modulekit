@@ -12,7 +12,6 @@ import {
     CALLTYPE_SINGLE
 } from "src/external/ERC7579.sol";
 import { getAccountType } from "src/test/utils/Storage.sol";
-import { toString } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -100,6 +99,51 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
+    }
+
+    function testexec__RevertWhen__ValidationFails() public {
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+
+        // Create userOperation
+        instance.expect4337Revert();
+        // Create userOperation
+        instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: makeAddr("invalidValidator")
+        }).execUserOps();
+    }
+
+    function testexec__RevertWhen__ValidationReverts() public {
+        address revertingValidator = makeAddr("revertingValidator");
+        vm.etch(revertingValidator, address(validator).code);
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: revertingValidator,
+            data: ""
+        });
+
+        vm.etch(revertingValidator, hex"fd");
+
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+
+        // Create userOperation
+        instance.expect4337Revert();
+        // Create userOperation
+        instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: revertingValidator
+        }).execUserOps();
     }
 
     function testexec__RevertWhen__UserOperationFails() public {
