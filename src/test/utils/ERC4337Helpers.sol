@@ -29,9 +29,15 @@ library ERC4337Helpers {
     );
 
     function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
+        uint256 isExpectRevert = getExpectRevert();
+
         // ERC-4337 specs validation
         if (envOr("SIMULATE", false) || getSimulateUserOp()) {
-            userOps[0].simulateUserOp(address(onEntryPoint));
+            bool simulationSuccess = userOps[0].simulateUserOp(address(onEntryPoint));
+
+            if (isExpectRevert == 0) {
+                require(simulationSuccess, "UserOperation simulation failed");
+            }
         }
         // Record logs to determine if a revert happened
         recordLogs();
@@ -41,7 +47,6 @@ library ERC4337Helpers {
         bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
         (bool success,) = address(onEntryPoint).call(userOpCalldata);
 
-        uint256 isExpectRevert = getExpectRevert();
         if (isExpectRevert == 0) {
             require(success, "UserOperation execution failed");
         }
