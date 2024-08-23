@@ -103,57 +103,30 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testexec__RevertWhen__ValidationFails() public {
-        // Create userOperation fields
-        address receiver = makeAddr("receiver");
-        uint256 value = 10 gwei;
-        bytes memory callData = "";
+        // No revert reason
+        _revertWhen__ValidationFails("");
 
-        // Create userOperation
-        instance.expect4337Revert();
-        // Create userOperation
-        instance.getExecOps({
-            target: receiver,
-            value: value,
-            callData: callData,
-            txValidator: makeAddr("invalidValidator")
-        }).execUserOps();
+        // Revert selector
+
+        // Revert message
     }
 
     function testexec__RevertWhen__ValidationReverts() public {
-        address revertingValidator = makeAddr("revertingValidator");
-        vm.etch(revertingValidator, address(validator).code);
+        // No revert reason
+        _revertWhen__ValidationReverts("");
 
-        instance.installModule({
-            moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: revertingValidator,
-            data: ""
-        });
+        // Revert selector
 
-        vm.etch(revertingValidator, hex"fd");
-
-        // Create userOperation fields
-        address receiver = makeAddr("receiver");
-        uint256 value = 10 gwei;
-        bytes memory callData = "";
-
-        // Create userOperation
-        instance.expect4337Revert();
-        // Create userOperation
-        instance.getExecOps({
-            target: receiver,
-            value: value,
-            callData: callData,
-            txValidator: revertingValidator
-        }).execUserOps();
+        // Revert message
     }
 
     function testexec__RevertWhen__UserOperationFails() public {
-        // Create userOperation fields
-        bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
+        // No revert reason
+        _revertWhen__UserOperationFails("");
 
-        // Create userOperation
-        instance.expect4337Revert();
-        instance.exec({ target: address(mockTarget), callData: callData, value: 0 });
+        // Revert selector
+
+        // Revert message
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -606,6 +579,86 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             assertTrue(modules[index + i].moduleAddress == expectedAddresses[i]);
             assertTrue(modules[index + i].moduleType == expectedTypes[i]);
         }
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            EXPECT REVERT
+    //////////////////////////////////////////////////////////////*/
+
+    function _revertWhen__ValidationFails(bytes memory revertReason) public {
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+
+        // Expect the revert
+        if (revertReason.length == 0) {
+            instance.expect4337Revert();
+        } else if (revertReason.length == 4) {
+            instance.expect4337Revert();
+        } else {
+            instance.expect4337Revert();
+        }
+
+        // Create userOperation
+        instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: makeAddr("invalidValidator")
+        }).execUserOps();
+    }
+
+    function _revertWhen__ValidationReverts(bytes memory revertReason) public {
+        address revertingValidator = makeAddr("revertingValidator");
+        vm.etch(revertingValidator, address(validator).code);
+
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: revertingValidator,
+            data: ""
+        });
+
+        vm.etch(revertingValidator, hex"fd");
+
+        // Create userOperation fields
+        address receiver = makeAddr("receiver");
+        uint256 value = 10 gwei;
+        bytes memory callData = "";
+
+        // Expect the revert
+        if (revertReason.length == 0) {
+            instance.expect4337Revert();
+        } else if (revertReason.length == 4) {
+            instance.expect4337Revert();
+        } else {
+            instance.expect4337Revert();
+        }
+
+        // Create userOperation
+        instance.getExecOps({
+            target: receiver,
+            value: value,
+            callData: callData,
+            txValidator: revertingValidator
+        }).execUserOps();
+    }
+
+    function _revertWhen__UserOperationFails(bytes memory revertReason) public {
+        // Create userOperation fields
+        bytes memory callData = abi.encodeWithSelector(MockTarget.setAccessControl.selector, 2);
+
+        // Expect the revert
+        if (revertReason.length == 0) {
+            instance.expect4337Revert();
+        } else if (revertReason.length == 4) {
+            instance.expect4337Revert();
+        } else {
+            instance.expect4337Revert();
+        }
+
+        // Create userOperation
+        instance.exec({ target: address(mockTarget), callData: callData, value: 0 });
     }
 
     /*//////////////////////////////////////////////////////////////
