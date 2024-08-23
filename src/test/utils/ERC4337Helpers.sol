@@ -30,7 +30,7 @@ library ERC4337Helpers {
     using Simulator for PackedUserOperation;
 
     error UserOperationReverted(
-        bytes32 userOpHash, address sender, uint256 nonce, bytes revertReason
+        bytes32 userOpHash, address sender, string senderLabel, uint256 nonce, bytes revertReason
     );
     error InvalidRevertMessage(bytes4 expected, bytes4 reason);
     error InvalidRevertMessageBytes(bytes expected, bytes reason);
@@ -76,8 +76,9 @@ library ERC4337Helpers {
                     bytes32 userOpHash = logs[i].topics[1];
                     if (isExpectRevert == 0) {
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
+                        address account = address(bytes20(logs[i].topics[2]));
                         revert UserOperationReverted(
-                            userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
+                            userOpHash, account, getLabel(account), nonce, revertReason
                         );
                     } else {
                         if (isExpectRevert == 2) {
