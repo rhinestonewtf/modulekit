@@ -107,8 +107,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         _revertWhen__ValidationFails("");
 
         // Revert selector
+        _revertWhen__ValidationReverts(abi.encodePacked(bytes4(0x65c8fd4d)));
 
         // Revert message
+        _revertWhen__ValidationReverts(
+            abi.encodeWithSignature(
+                "FailedOpWithRevert(uint256,string,bytes)", 0, "AA23 reverted", ""
+            )
+        );
     }
 
     function testexec__RevertWhen__ValidationReverts() public {
@@ -116,6 +122,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         _revertWhen__ValidationReverts("");
 
         // Revert selector
+        _revertWhen__ValidationReverts(abi.encodePacked(bytes4(hex"ffffffff")));
 
         // Revert message
     }
@@ -125,8 +132,12 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         _revertWhen__UserOperationFails("");
 
         // Revert selector
+        _revertWhen__UserOperationFails(abi.encodePacked(bytes4(0x08c379a0)));
 
         // Revert message
+        _revertWhen__UserOperationFails(
+            abi.encodeWithSignature("Error(string)", "MockTarget: not authorized")
+        );
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -595,9 +606,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         if (revertReason.length == 0) {
             instance.expect4337Revert();
         } else if (revertReason.length == 4) {
-            instance.expect4337Revert();
+            instance.expect4337Revert(bytes4(revertReason));
         } else {
-            instance.expect4337Revert();
+            instance.expect4337Revert(revertReason);
         }
 
         // Create userOperation
@@ -630,9 +641,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         if (revertReason.length == 0) {
             instance.expect4337Revert();
         } else if (revertReason.length == 4) {
-            instance.expect4337Revert();
+            instance.expect4337Revert(bytes4(revertReason));
         } else {
-            instance.expect4337Revert();
+            instance.expect4337Revert(revertReason);
         }
 
         // Create userOperation
@@ -652,9 +663,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         if (revertReason.length == 0) {
             instance.expect4337Revert();
         } else if (revertReason.length == 4) {
-            instance.expect4337Revert();
+            instance.expect4337Revert(bytes4(revertReason));
         } else {
-            instance.expect4337Revert();
+            instance.expect4337Revert(revertReason);
         }
 
         // Create userOperation
