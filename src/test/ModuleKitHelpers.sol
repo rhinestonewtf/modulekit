@@ -170,7 +170,6 @@ library ModuleKitHelpers {
         address module
     )
         internal
-        view
         returns (bool)
     {
         return HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
@@ -183,7 +182,6 @@ library ModuleKitHelpers {
         bytes memory data
     )
         internal
-        view
         returns (bool)
     {
         return HelperBase(instance.accountHelper).isModuleInstalled(
@@ -312,7 +310,15 @@ library ModuleKitHelpers {
     //////////////////////////////////////////////////////////////////////////*/
 
     function expect4337Revert(AccountInstance memory) internal {
-        writeExpectRevert(1);
+        writeExpectRevert("");
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes4 selector) internal {
+        writeExpectRevert(abi.encodePacked(selector));
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes memory message) internal {
+        writeExpectRevert(message);
     }
 
     /**
