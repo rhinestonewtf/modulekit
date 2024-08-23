@@ -13,12 +13,14 @@ import {
 } from "src/external/ERC7579.sol";
 import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
+import { MockValidatorFalse } from "test/mocks/MockValidatorFalse.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
     MockValidator internal validator;
+    MockValidatorFalse internal validatorFalse;
     MockExecutor internal executor;
     MockFallback internal fallbackHandler;
     MockHook internal hook;
@@ -33,6 +35,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
         // Setup modules
         validator = new MockValidator();
+        validatorFalse = new MockValidatorFalse();
         hook = new MockHook();
         executor = new MockExecutor();
         fallbackHandler = new MockFallback();
@@ -107,13 +110,11 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         _revertWhen__ValidationFails("");
 
         // Revert selector
-        _revertWhen__ValidationReverts(abi.encodePacked(bytes4(0x65c8fd4d)));
+        _revertWhen__ValidationFails(abi.encodePacked(bytes4(0x220266b6)));
 
         // Revert message
-        _revertWhen__ValidationReverts(
-            abi.encodeWithSignature(
-                "FailedOpWithRevert(uint256,string,bytes)", 0, "AA23 reverted", ""
-            )
+        _revertWhen__ValidationFails(
+            abi.encodeWithSignature("FailedOp(uint256,string)", 0, "AA24 signature error")
         );
     }
 
@@ -122,22 +123,55 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         _revertWhen__ValidationReverts("");
 
         // Revert selector
-        _revertWhen__ValidationReverts(abi.encodePacked(bytes4(hex"ffffffff")));
+        _revertWhen__ValidationReverts(abi.encodePacked(bytes4(0x65c8fd4d)));
 
         // Revert message
+        bytes memory revertMessage;
+
+        AccountType env = ModuleKitHelpers.getAccountType();
+        if (env == AccountType.SAFE) {
+            revertMessage = abi.encodeWithSignature(
+                "FailedOpWithRevert(uint256,string,bytes)",
+                0,
+                "AA23 reverted",
+                abi.encode(bytes4(0xacfdb444))
+            );
+        } else {
+            revertMessage = abi.encodeWithSignature(
+                "FailedOpWithRevert(uint256,string,bytes)", 0, "AA23 reverted", ""
+            );
+        }
+
+        _revertWhen__ValidationReverts(revertMessage);
     }
 
     function testexec__RevertWhen__UserOperationFails() public {
+        // Deploy the account first
+        testexec__Given__TwoInputs();
+
         // No revert reason
         _revertWhen__UserOperationFails("");
 
+        bytes memory revertSelector;
+        bytes memory revertMessage;
+
+        AccountType env = ModuleKitHelpers.getAccountType();
+        if (env == AccountType.SAFE) {
+            revertSelector = abi.encodePacked(bytes4(0xacfdb444));
+            revertMessage = abi.encodePacked(bytes4(0xacfdb444));
+        } else if (env == AccountType.KERNEL) {
+            revertSelector = abi.encodePacked(bytes4(0xf21e646b));
+            revertMessage = abi.encodePacked(bytes4(0xf21e646b));
+        } else {
+            revertSelector = abi.encodePacked(bytes4(0x08c379a0));
+            revertMessage = abi.encodeWithSignature("Error(string)", "MockTarget: not authorized");
+        }
+
         // Revert selector
-        _revertWhen__UserOperationFails(abi.encodePacked(bytes4(0x08c379a0)));
+        _revertWhen__UserOperationFails(revertSelector);
 
         // Revert message
-        _revertWhen__UserOperationFails(
-            abi.encodeWithSignature("Error(string)", "MockTarget: not authorized")
-        );
+        _revertWhen__UserOperationFails(revertMessage);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -602,6 +636,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         uint256 value = 10 gwei;
         bytes memory callData = "";
 
+        if (!instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, address(validatorFalse))) {
+            instance.installModule({
+                moduleTypeId: MODULE_TYPE_VALIDATOR,
+                module: address(validatorFalse),
+                data: ""
+            });
+        }
+
         // Expect the revert
         if (revertReason.length == 0) {
             instance.expect4337Revert();
@@ -616,21 +658,24 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             target: receiver,
             value: value,
             callData: callData,
-            txValidator: makeAddr("invalidValidator")
+            txValidator: address(validatorFalse)
         }).execUserOps();
     }
 
     function _revertWhen__ValidationReverts(bytes memory revertReason) public {
         address revertingValidator = makeAddr("revertingValidator");
-        vm.etch(revertingValidator, address(validator).code);
 
-        instance.installModule({
-            moduleTypeId: MODULE_TYPE_VALIDATOR,
-            module: revertingValidator,
-            data: ""
-        });
+        if (!instance.isModuleInstalled(MODULE_TYPE_VALIDATOR, revertingValidator)) {
+            vm.etch(revertingValidator, address(validator).code);
 
-        vm.etch(revertingValidator, hex"fd");
+            instance.installModule({
+                moduleTypeId: MODULE_TYPE_VALIDATOR,
+                module: revertingValidator,
+                data: ""
+            });
+
+            vm.etch(revertingValidator, hex"fd");
+        }
 
         // Create userOperation fields
         address receiver = makeAddr("receiver");

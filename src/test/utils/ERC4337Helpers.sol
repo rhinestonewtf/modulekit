@@ -26,8 +26,6 @@ import {
     InstalledModule
 } from "./Storage.sol";
 
-import "forge-std/console2.sol";
-
 library ERC4337Helpers {
     using Simulator for PackedUserOperation;
 
@@ -75,15 +73,15 @@ library ERC4337Helpers {
                     abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
                 totalUserOpGas = actualGasUsed;
                 if (!userOpSuccess) {
+                    bytes32 userOpHash = logs[i].topics[1];
                     if (isExpectRevert == 0) {
-                        bytes32 userOpHash = logs[i].topics[1];
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
                         revert UserOperationReverted(
                             userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
                         );
                     } else {
                         if (isExpectRevert == 2) {
-                            checkRevertMessage(getUserOpRevertReason(logs, bytes32(0)));
+                            checkRevertMessage(getUserOpRevertReason(logs, userOpHash));
                         }
                         clearExpectRevert();
                     }
@@ -149,7 +147,7 @@ library ERC4337Helpers {
 
     function getUserOpRevertReason(
         VmSafe.Log[] memory logs,
-        bytes32 /* userOpHash */
+        bytes32 userOpHash
     )
         internal
         pure
@@ -160,6 +158,7 @@ library ERC4337Helpers {
             if (
                 logs[i].topics[0]
                     == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+                    && logs[i].topics[1] == userOpHash
             ) {
                 (, revertReason) = abi.decode(logs[i].data, (uint256, bytes));
             }
@@ -168,8 +167,6 @@ library ERC4337Helpers {
 
     function checkRevertMessage(bytes memory actualReason) internal view {
         bytes memory revertMessage = getExpectRevertMessage();
-        console2.logBytes(revertMessage);
-        console2.logBytes(actualReason);
 
         if (revertMessage.length == 4) {
             bytes4 expected = bytes4(revertMessage);

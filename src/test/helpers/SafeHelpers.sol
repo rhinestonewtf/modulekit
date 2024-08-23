@@ -245,7 +245,6 @@ contract SafeHelpers is HelperBase {
         bytes memory data
     )
         public
-        view
         virtual
         override
         deployAccountForAction(instance)

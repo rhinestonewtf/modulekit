@@ -170,7 +170,6 @@ library ModuleKitHelpers {
         address module
     )
         internal
-        view
         returns (bool)
     {
         return HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
@@ -183,7 +182,6 @@ library ModuleKitHelpers {
         bytes memory data
     )
         internal
-        view
         returns (bool)
     {
         return HelperBase(instance.accountHelper).isModuleInstalled(
