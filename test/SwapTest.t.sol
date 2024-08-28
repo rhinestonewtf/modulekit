@@ -7,7 +7,7 @@ import { ERC7579ExecutorBase } from "src/Modules.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { UniswapV3Integration } from "../src/integrations/uniswap/v3/Uniswap.sol";
 
-contract TestUniswap is RhinestoneModuleKit, BaseTest {
+contract TestUniswap is BaseTest {
     using ModuleKitHelpers for AccountInstance;
     using UniswapV3Integration for *;
 
