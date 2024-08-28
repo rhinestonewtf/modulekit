@@ -13,15 +13,20 @@ import {
 import { MockValidator } from "src/Mocks.sol";
 
 contract RegistryDeployerTest is RegistryDeployer, BaseTest {
+    uint256 internal mainnetFork;
+    uint256 internal testnetFork;
+
     function setUp() public override {
         super.setUp();
 
         string memory MAINNET_RPC_URL = vm.envString("MAINNET_RPC_URL");
-        vm.createSelectFork(MAINNET_RPC_URL);
-        vm.rollFork(18_501_477);
+        mainnetFork = vm.createFork(MAINNET_RPC_URL);
+
+        string memory TESTNET_RPC_URL = vm.envString("TESTNET_RPC_URL");
+        testnetFork = vm.createFork(TESTNET_RPC_URL);
     }
 
-    function testDeployModule() public {
+    function testDeployModule() public onMainnet {
         // Setup module bytecode, deploy params, and data
         bytes memory initCode = type(MockValidator).creationCode;
         bytes32 salt = bytes32(0);
@@ -44,7 +49,7 @@ contract RegistryDeployerTest is RegistryDeployer, BaseTest {
         assertEq(moduleRecord.metadata, metadata);
     }
 
-    function testDeployModuleViaFactory() public {
+    function testDeployModuleViaFactory() public onMainnet {
         bytes32 salt = bytes32(0);
         address factory = address(this);
         bytes memory callOnFactory = abi.encodeCall(this.deploy, (salt));
@@ -66,8 +71,8 @@ contract RegistryDeployerTest is RegistryDeployer, BaseTest {
         assertEq(moduleRecord.metadata, metadata);
     }
 
-    function testMockAttestModule() public {
-        testDeployModule();
+    function testMockAttestModule() public onTestnet {
+        deployModule();
 
         bytes memory initCode = type(MockValidator).creationCode;
         bytes32 salt = bytes32(0);
@@ -87,26 +92,69 @@ contract RegistryDeployerTest is RegistryDeployer, BaseTest {
         assertTrue(isModuleAttestedMock(module));
     }
 
-    function testFindResolver() public {
+    function testFindResolver() public onMainnet {
         ResolverUID _resolverUID = findResolver();
         assertEq(ResolverUID.unwrap(_resolverUID), ResolverUID.unwrap(resolverUID));
     }
 
-    function testRegisterResolver() public {
+    function testRegisterResolver() public onMainnet {
         ResolverUID _resolverUID = registerResolver(address(this));
         setResolverUID(_resolverUID);
         findResolver();
     }
 
-    function testFindSchema() public {
+    function testFindSchema() public onMainnet {
         SchemaUID _schemaUID = findSchema();
         assertEq(SchemaUID.unwrap(_schemaUID), SchemaUID.unwrap(schemaUID));
     }
 
-    function testRegisterSchema() public {
+    function testRegisterSchema() public onMainnet {
         SchemaUID _schemaUID = registerSchema({ schema: "schema", validator: address(this) });
         setSchemaUID(_schemaUID);
         findSchema();
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     INTERNAL
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function deployModule() internal {
+        // Setup module bytecode, deploy params, and data
+        bytes memory initCode = type(MockValidator).creationCode;
+        bytes32 salt = bytes32(0);
+        bytes memory metadata = hex"41414141414141";
+        bytes memory resolverContext = "";
+
+        // Deploy module
+        address module = deployModule({
+            initCode: initCode,
+            salt: salt,
+            metadata: metadata,
+            resolverContext: resolverContext
+        });
+
+        assertEq(module, predictModuleAddress({ salt: salt, initCode: initCode }));
+        assertGt(module.code.length, 0);
+
+        ModuleRecord memory moduleRecord = findModule(module);
+        assertEq(ResolverUID.unwrap(moduleRecord.resolverUID), ResolverUID.unwrap(resolverUID));
+        assertEq(moduleRecord.metadata, metadata);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                     MODIFIERS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    modifier onMainnet() {
+        vm.selectFork(mainnetFork);
+        vm.rollFork(20_626_383);
+        _;
+    }
+
+    modifier onTestnet() {
+        vm.selectFork(testnetFork);
+        vm.rollFork(6_586_870);
+        _;
     }
 
     /*//////////////////////////////////////////////////////////////////////////

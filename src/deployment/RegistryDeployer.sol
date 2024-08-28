@@ -14,7 +14,7 @@ import {
 } from "registry/DataTypes.sol";
 import { IExternalSchemaValidator } from "registry/external/IExternalSchemaValidator.sol";
 
-address constant REGISTRY_ADDR = 0x0000000000E23E0033C3e93D9D4eBc2FF2AB2AEF;
+address constant REGISTRY_ADDR = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;
 
 contract RegistryDeployer {
     IRegistry internal registry = IRegistry(REGISTRY_ADDR);
@@ -26,7 +26,7 @@ contract RegistryDeployer {
     SchemaUID internal schemaUID =
         SchemaUID.wrap(0x93d46fcca4ef7d66a413c7bde08bb1ff14bacbd04c4069bb24cd7c21729d7bf1);
 
-    address internal mockAttester = 0xe0cde9239d16bEf05e62Bbf7aA93e420f464c826;
+    address internal mockAttester = 0xA4C777199658a41688E9488c4EcbD7a2925Cc23A;
 
     error InvalidResolver();
 
@@ -90,6 +90,8 @@ contract RegistryDeployer {
     )
         public
     {
+        require(isContract(mockAttester), "MockAttester is not deployed on this network");
+
         SchemaUID _schemaUID = findSchema();
         AttestationRequest memory request = AttestationRequest({
             moduleAddress: module,
@@ -165,5 +167,14 @@ contract RegistryDeployer {
 
     function setSchemaUID(SchemaUID _schemaUID) public {
         schemaUID = _schemaUID;
+    }
+
+    // <---- OTHER ---->
+    function isContract(address _addr) internal returns (bool isContract) {
+        uint32 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
     }
 }
