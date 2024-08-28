@@ -81,6 +81,28 @@ contract RegistryDeployer {
         return registry.calcModuleAddress(salt, initCode);
     }
 
+    // <---- REGISTRATION ---->
+
+    function registerModule(
+        address module,
+        bytes memory metadata,
+        bytes memory resolverContext
+    )
+        public
+    {
+        ResolverUID _resolverUID = findResolver();
+        registry.registerModule({
+            resolverUID: _resolverUID,
+            moduleAddress: module,
+            metadata: metadata,
+            resolverContext: resolverContext
+        });
+    }
+
+    function findModule(address moduleAddress) public view returns (ModuleRecord memory) {
+        return registry.findModule(moduleAddress);
+    }
+
     // <---- ATTESTATIONS ---->
 
     function mockAttestToModule(
@@ -151,10 +173,6 @@ contract RegistryDeployer {
             schema: schema,
             validator: IExternalSchemaValidator(validator)
         });
-    }
-
-    function findModule(address moduleAddress) public view returns (ModuleRecord memory) {
-        return registry.findModule(moduleAddress);
     }
 
     function setRegistry(address _registry) public {
