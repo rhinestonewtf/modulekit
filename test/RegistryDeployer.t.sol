@@ -71,6 +71,23 @@ contract RegistryDeployerTest is RegistryDeployer, BaseTest {
         assertEq(moduleRecord.metadata, metadata);
     }
 
+    function testRegisterModule() public onMainnet {
+        address module = address(new MockValidator());
+
+        ModuleRecord memory moduleRecord = findModule(module);
+        assertEq(ResolverUID.unwrap(moduleRecord.resolverUID), bytes32(0));
+        assertEq(moduleRecord.metadata, "");
+
+        bytes memory metadata = hex"41414141414141";
+        bytes memory resolverContext = "";
+
+        registerModule({ module: module, metadata: metadata, resolverContext: resolverContext });
+
+        moduleRecord = findModule(module);
+        assertEq(ResolverUID.unwrap(moduleRecord.resolverUID), ResolverUID.unwrap(resolverUID));
+        assertEq(moduleRecord.metadata, metadata);
+    }
+
     function testMockAttestModule() public onTestnet {
         deployModule();
 
