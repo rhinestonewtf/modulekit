@@ -245,9 +245,9 @@ contract SafeHelpers is HelperBase {
         bytes memory data
     )
         public
-        view
         virtual
         override
+        deployAccountForAction(instance)
         returns (bool)
     {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
