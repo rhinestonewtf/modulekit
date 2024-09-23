@@ -108,7 +108,7 @@ library UniswapV3Integration {
         returns (address poolAddress)
     {
         IUniswapV3Factory factory = IUniswapV3Factory(FACTORY_ADDRESS);
-        address poolAddress = factory.getPool(token0, token1, SWAPROUTER_DEFAULTFEE);
+        poolAddress = factory.getPool(token0, token1, SWAPROUTER_DEFAULTFEE);
         if (poolAddress == address(0)) {
             revert PoolDoesNotExist();
         }
@@ -118,20 +118,16 @@ library UniswapV3Integration {
     function getSqrtPriceX96(address poolAddress) public view returns (uint160 sqrtPriceX96) {
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         IUniswapV3Pool.Slot0 memory slot0 = pool.slot0();
-        uint160 sqrtPriceX96 = slot0.sqrtPriceX96;
-        return sqrtPriceX96;
+        sqrtPriceX96 = slot0.sqrtPriceX96;
     }
 
-    function sqrtPriceX96toPriceRatio(
-        uint160 sqrtPriceX96
-    )
+    function sqrtPriceX96toPriceRatio(uint160 sqrtPriceX96)
         internal
         pure
         returns (uint256 priceRatio)
     {
-        uint256 decodedSqrtPrice = sqrtPriceX96 / (2 ** 96);
-        uint256 priceRatio = decodedSqrtPrice * decodedSqrtPrice;
-        return priceRatio;
+        uint256 decodedSqrtPrice = (sqrtPriceX96 * 10 ** 9) / (2 ** 96);
+        priceRatio = decodedSqrtPrice * decodedSqrtPrice;
     }
 
     function priceRatioToPrice(
@@ -151,16 +147,16 @@ library UniswapV3Integration {
 
         bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
         if (swapToken0to1) {
-            price = 10 ** token1Decimals / priceRatio;
+            price = (10 ** token1Decimals * 10 ** 18) / priceRatio;
         } else {
-            price = priceRatio * 10 ** token0Decimals;
+            price = (priceRatio * 10 ** token0Decimals) / 10 ** 18;
         }
         return price;
     }
 
     function priceRatioToSqrtPriceX96(uint256 priceRatio) internal pure returns (uint160) {
-        uint256 sqrtPriceRatio = sqrt256(priceRatio * 1e18); // Scale priceRatio to 18 decimals for
-            // precision
+        // Scale priceRatio to 18 decimals for precision
+        uint256 sqrtPriceRatio = sqrt256(priceRatio);
 
         uint256 sqrtPriceX96 = (sqrtPriceRatio * 2 ** 96) / 1e9; // Adjust back from the scaling
 
@@ -176,8 +172,7 @@ library UniswapV3Integration {
         returns (bool swapToken0to1)
     {
         address poolToken0 = IUniswapV3Pool(poolAddress).token0();
-        bool swapToken0to1 = (tokenSwappedFrom == poolToken0);
-        return swapToken0to1;
+        swapToken0to1 = (tokenSwappedFrom == poolToken0);
     }
 
     function sqrt256(uint256 y) internal pure returns (uint256 z) {
