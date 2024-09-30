@@ -288,7 +288,18 @@ contract SafeHelpers is HelperBase {
         override
         returns (bytes memory)
     {
-        return abi.encodePacked(validator, signature);
+        bytes32 typeHash = keccak256(
+            abi.encode(
+                // Define the structure of the typehash
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("Safe7579")),
+                keccak256(bytes("1")),
+                block.chainid,
+                address(instance.account)
+            )
+        );
+
+        return abi.encodePacked(typeHash, validator, signature);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
