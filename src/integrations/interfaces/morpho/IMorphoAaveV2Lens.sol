@@ -40,18 +40,14 @@ interface IMorphoAaveV2Lens {
     function isMarketCreatedAndNotPaused(address _poolToken) external view returns (bool);
 
     /// @dev Deprecated.
-    function isMarketCreatedAndNotPausedNorPartiallyPaused(
-        address _poolToken
-    )
+    function isMarketCreatedAndNotPausedNorPartiallyPaused(address _poolToken)
         external
         view
         returns (bool);
 
     function getAllMarkets() external view returns (address[] memory marketsCreated_);
 
-    function getMainMarketData(
-        address _poolToken
-    )
+    function getMainMarketData(address _poolToken)
         external
         view
         returns (
@@ -63,9 +59,7 @@ interface IMorphoAaveV2Lens {
             uint256 poolBorrowAmount
         );
 
-    function getAdvancedMarketData(
-        address _poolToken
-    )
+    function getAdvancedMarketData(address _poolToken)
         external
         view
         returns (
@@ -75,9 +69,7 @@ interface IMorphoAaveV2Lens {
             uint256 p2pBorrowDelta
         );
 
-    function getMarketConfiguration(
-        address _poolToken
-    )
+    function getMarketConfiguration(address _poolToken)
         external
         view
         returns (
@@ -94,23 +86,17 @@ interface IMorphoAaveV2Lens {
             uint256 decimals
         );
 
-    function getMarketPauseStatus(
-        address _poolToken
-    )
+    function getMarketPauseStatus(address _poolToken)
         external
         view
         returns (Types.MarketPauseStatus memory);
 
-    function getTotalMarketSupply(
-        address _poolToken
-    )
+    function getTotalMarketSupply(address _poolToken)
         external
         view
         returns (uint256 p2pSupplyAmount, uint256 poolSupplyAmount);
 
-    function getTotalMarketBorrow(
-        address _poolToken
-    )
+    function getTotalMarketBorrow(address _poolToken)
         external
         view
         returns (uint256 p2pBorrowAmount, uint256 poolBorrowAmount);
@@ -125,18 +111,14 @@ interface IMorphoAaveV2Lens {
 
     /// USERS ///
 
-    function getEnteredMarkets(
-        address _user
-    )
+    function getEnteredMarkets(address _user)
         external
         view
         returns (address[] memory enteredMarkets);
 
     function getUserHealthFactor(address _user) external view returns (uint256 healthFactor);
 
-    function getUserBalanceStates(
-        address _user
-    )
+    function getUserBalanceStates(address _user)
         external
         view
         returns (Types.LiquidityData memory assetData);
@@ -253,23 +235,17 @@ interface IMorphoAaveV2Lens {
         view
         returns (uint256);
 
-    function getAverageSupplyRatePerYear(
-        address _poolToken
-    )
+    function getAverageSupplyRatePerYear(address _poolToken)
         external
         view
         returns (uint256 avgSupplyRatePerYear, uint256 p2pSupplyAmount, uint256 poolSupplyAmount);
 
-    function getAverageBorrowRatePerYear(
-        address _poolToken
-    )
+    function getAverageBorrowRatePerYear(address _poolToken)
         external
         view
         returns (uint256 avgBorrowRatePerYear, uint256 p2pBorrowAmount, uint256 poolBorrowAmount);
 
-    function getRatesPerYear(
-        address _poolToken
-    )
+    function getRatesPerYear(address _poolToken)
         external
         view
         returns (

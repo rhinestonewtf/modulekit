@@ -68,9 +68,7 @@ interface IBoostedVaultWithLockup {
     // @return amount Total units of unclaimed rewards
     // @return first Index of the first userReward that has unlocked
     // @return last Index of the last userReward that has unlocked
-    function unclaimedRewards(
-        address _account
-    )
+    function unclaimedRewards(address _account)
         external
         view
         returns (uint256 amount, uint256 first, uint256 last);

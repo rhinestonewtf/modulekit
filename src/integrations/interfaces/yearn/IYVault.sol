@@ -11,9 +11,7 @@ interface IYVault {
     function totalAssets() external view returns (uint256);
     function withdrawalQueue(uint256 i) external view returns (address);
 
-    function strategies(
-        address
-    )
+    function strategies(address)
         external
         view
         returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256, uint256);

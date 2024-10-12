@@ -461,9 +461,7 @@ abstract contract HelperBase {
      * Encode a batched ERC7579 Execution Transaction
      * @param executions ERC7579 batched executions
      */
-    function encode(
-        Execution[] memory executions
-    )
+    function encode(Execution[] memory executions)
         public
         pure
         virtual
