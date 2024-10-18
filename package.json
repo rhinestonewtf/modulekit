@@ -68,10 +68,5 @@
   ],
   "publishConfig": {
     "access": "public"
-  },
-  "pnpm": {
-    "overrides": {
-      "@rhinestone/modulekit": "link:."
-    }
   }
 }

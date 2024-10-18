@@ -1,5 +1,0 @@
-packages:
-  - "." # This includes the root package
-
-resolutions:
-  "@rhinestone/modulekit": "link:."
