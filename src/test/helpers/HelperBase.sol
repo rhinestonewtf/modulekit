@@ -270,8 +270,8 @@ abstract contract HelperBase {
         address module
     )
         public
-        view
         virtual
+        deployAccountForAction(instance)
         returns (bool)
     {
         return isModuleInstalled(instance, moduleTypeId, module, "");
@@ -284,8 +284,8 @@ abstract contract HelperBase {
         bytes memory additionalContext
     )
         public
-        view
         virtual
+        deployAccountForAction(instance)
         returns (bool)
     {
         return IERC7579Account(instance.account).isModuleInstalled(

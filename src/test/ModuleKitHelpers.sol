@@ -25,13 +25,18 @@ import {
     writeAccountEnv,
     getFactory,
     getHelper as getHelperFromStorage,
-    getAccountEnv as getAccountEnvFromStorage
+    getAccountEnv as getAccountEnvFromStorage,
+    getInstalledModules as getInstalledModulesFromStorage,
+    writeInstalledModule as writeInstalledModuleToStorage,
+    removeInstalledModule as removeInstalledModuleFromStorage,
+    InstalledModule
 } from "./utils/Storage.sol";
 import {
     Session, PermissionId, ActionData, PolicyData, ERC7739Data
 } from "smartsessions/DataTypes.sol";
 import { ISessionValidator } from "smartsessions/interfaces/ISessionValidator.sol";
 import { console2 } from "forge-std/console2.sol";
+import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 
 library ModuleKitHelpers {
     /*//////////////////////////////////////////////////////////////////////////
@@ -174,7 +179,6 @@ library ModuleKitHelpers {
         address module
     )
         internal
-        view
         returns (bool)
     {
         return instance.account.code.length > 0
@@ -188,7 +192,6 @@ library ModuleKitHelpers {
         bytes memory data
     )
         internal
-        view
         returns (bool)
     {
         return HelperBase(instance.accountHelper).isModuleInstalled(
@@ -272,12 +275,58 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
+    function getInstalledModules(AccountInstance memory instance)
+        internal
+        view
+        returns (InstalledModule[] memory)
+    {
+        return getInstalledModulesFromStorage(instance.account);
+    }
+
+    function writeInstalledModule(
+        AccountInstance memory instance,
+        InstalledModule memory module
+    )
+        internal
+    {
+        writeInstalledModuleToStorage(module, instance.account);
+    }
+
+    function removeInstalledModule(
+        AccountInstance memory instance,
+        uint256 moduleType,
+        address moduleAddress
+    )
+        internal
+    {
+        // Get installed modules for account
+        InstalledModule[] memory installedModules = getInstalledModules(instance);
+        // Find module to remove (not super scalable at high module counts)
+        for (uint256 i; i < installedModules.length; i++) {
+            if (
+                installedModules[i].moduleType == moduleType
+                    && installedModules[i].moduleAddress == moduleAddress
+            ) {
+                // Remove module from storage
+                removeInstalledModuleFromStorage(i, instance.account);
+                return;
+            }
+        }
+    }
     /*//////////////////////////////////////////////////////////////////////////
                                 CONTROL FLOW
     //////////////////////////////////////////////////////////////////////////*/
 
     function expect4337Revert(AccountInstance memory) internal {
-        writeExpectRevert(1);
+        writeExpectRevert("");
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes4 selector) internal {
+        writeExpectRevert(abi.encodePacked(selector));
+    }
+
+    function expect4337Revert(AccountInstance memory, bytes memory message) internal {
+        writeExpectRevert(message);
     }
 
     /**
@@ -340,7 +389,22 @@ library ModuleKitHelpers {
     }
 
     function deployAccount(AccountInstance memory instance) internal {
+        // Record logs to track installed modules
+        recordLogs();
+        // Deploy account
         HelperBase(instance.accountHelper).deployAccount(instance);
+        // Parse logs and determine if a module was installed
+        VmSafe.Log[] memory logs = getRecordedLogs();
+        for (uint256 i; i < logs.length; i++) {
+            // ModuleInstalled(uint256, address)
+            if (
+                logs[i].topics[0]
+                    == 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123
+            ) {
+                (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+                writeInstalledModuleToStorage(InstalledModule(moduleType, module), logs[i].emitter);
+            }
+        }
     }
 
     function setAccountType(AccountInstance memory, AccountType env) internal {

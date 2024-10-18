@@ -16,17 +16,24 @@ import { GasParser } from "./gas/GasParser.sol";
 import {
     getSimulateUserOp,
     getExpectRevert,
-    writeExpectRevert,
+    getExpectRevertMessage,
+    clearExpectRevert,
     getGasIdentifier,
-    writeGasIdentifier
+    writeGasIdentifier,
+    writeInstalledModule,
+    getInstalledModules,
+    removeInstalledModule,
+    InstalledModule
 } from "./Storage.sol";
 
 library ERC4337Helpers {
     using Simulator for PackedUserOperation;
 
     error UserOperationReverted(
-        bytes32 userOpHash, address sender, uint256 nonce, bytes revertReason
+        bytes32 userOpHash, address sender, string senderLabel, uint256 nonce, bytes revertReason
     );
+    error InvalidRevertMessage(bytes4 expected, bytes4 reason);
+    error InvalidRevertMessageBytes(bytes expected, bytes reason);
 
     function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
         uint256 isExpectRevert = getExpectRevert();
@@ -45,10 +52,12 @@ library ERC4337Helpers {
         // Execute userOps
         address payable beneficiary = payable(address(0x69));
         bytes memory userOpCalldata = abi.encodeCall(IEntryPoint.handleOps, (userOps, beneficiary));
-        (bool success,) = address(onEntryPoint).call(userOpCalldata);
+        (bool success, bytes memory returnData) = address(onEntryPoint).call(userOpCalldata);
 
         if (isExpectRevert == 0) {
             require(success, "UserOperation execution failed");
+        } else if (isExpectRevert == 2 && !success) {
+            checkRevertMessage(returnData);
         }
 
         // Parse logs and determine if a revert happened
@@ -64,14 +73,45 @@ library ERC4337Helpers {
                     abi.decode(logs[i].data, (uint256, bool, uint256, uint256));
                 totalUserOpGas = actualGasUsed;
                 if (!userOpSuccess) {
+                    bytes32 userOpHash = logs[i].topics[1];
                     if (isExpectRevert == 0) {
-                        bytes32 userOpHash = logs[i].topics[1];
                         bytes memory revertReason = getUserOpRevertReason(logs, userOpHash);
+                        address account = address(bytes20(logs[i].topics[2]));
                         revert UserOperationReverted(
-                            userOpHash, address(bytes20(logs[i].topics[2])), nonce, revertReason
+                            userOpHash, account, getLabel(account), nonce, revertReason
                         );
                     } else {
-                        writeExpectRevert(0);
+                        if (isExpectRevert == 2) {
+                            checkRevertMessage(getUserOpRevertReason(logs, userOpHash));
+                        }
+                        clearExpectRevert();
+                    }
+                }
+            }
+            // ModuleInstalled(uint256, address)
+            else if (
+                logs[i].topics[0]
+                    == 0xd21d0b289f126c4b473ea641963e766833c2f13866e4ff480abd787c100ef123
+            ) {
+                (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+                writeInstalledModule(InstalledModule(moduleType, module), logs[i].emitter);
+            }
+            // ModuleUninstalled(uint256, address)
+            else if (
+                logs[i].topics[0]
+                    == 0x341347516a9de374859dfda710fa4828b2d48cb57d4fbe4c1149612b8e02276e
+            ) {
+                (uint256 moduleType, address module) = abi.decode(logs[i].data, (uint256, address));
+                // Get all installed modules
+                InstalledModule[] memory installedModules = getInstalledModules(logs[i].emitter);
+                // Remove the uninstalled module from the list of installed modules
+                for (uint256 j; j < installedModules.length; j++) {
+                    if (
+                        installedModules[j].moduleAddress == module
+                            && installedModules[j].moduleType == moduleType
+                    ) {
+                        removeInstalledModule(j, logs[i].emitter);
+                        break;
                     }
                 }
             }
@@ -84,7 +124,7 @@ library ERC4337Helpers {
                 require(!success, "UserOperation execution did not fail as expected");
             }
         }
-        writeExpectRevert(0);
+        clearExpectRevert();
 
         // Calculate gas for userOp
         string memory gasIdentifier = getGasIdentifier();
@@ -108,7 +148,7 @@ library ERC4337Helpers {
 
     function getUserOpRevertReason(
         VmSafe.Log[] memory logs,
-        bytes32 /* userOpHash */
+        bytes32 userOpHash
     )
         internal
         pure
@@ -119,8 +159,25 @@ library ERC4337Helpers {
             if (
                 logs[i].topics[0]
                     == 0x1c4fada7374c0a9ee8841fc38afe82932dc0f8e69012e927f061a8bae611a201
+                    && logs[i].topics[1] == userOpHash
             ) {
                 (, revertReason) = abi.decode(logs[i].data, (uint256, bytes));
+            }
+        }
+    }
+
+    function checkRevertMessage(bytes memory actualReason) internal view {
+        bytes memory revertMessage = getExpectRevertMessage();
+
+        if (revertMessage.length == 4) {
+            bytes4 expected = bytes4(revertMessage);
+            bytes4 actual = bytes4(actualReason);
+            if (expected != actual) {
+                revert InvalidRevertMessage(expected, actual);
+            }
+        } else {
+            if (revertMessage.length != actualReason.length) {
+                revert InvalidRevertMessageBytes(revertMessage, actualReason);
             }
         }
     }

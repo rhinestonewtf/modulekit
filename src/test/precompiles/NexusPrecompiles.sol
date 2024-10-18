@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.24;
 
 // Interfaces
 import { INexusAccountFactory } from "src/accounts/nexus/interfaces/INexusAccountFactory.sol";

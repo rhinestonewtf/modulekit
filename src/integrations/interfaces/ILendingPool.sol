@@ -51,9 +51,7 @@ abstract contract ILendingPool {
     function getReserves() external view virtual returns (address[] memory);
 
     /// @param _reserve underlying token address
-    function getReserveData(
-        address _reserve
-    )
+    function getReserveData(address _reserve)
         external
         view
         virtual
@@ -76,9 +74,7 @@ abstract contract ILendingPool {
         ); // timestamp of the last update of reserve data
 
     /// @param _user users address
-    function getUserAccountData(
-        address _user
-    )
+    function getUserAccountData(address _user)
         external
         view
         virtual
@@ -118,9 +114,7 @@ abstract contract ILendingPool {
             bool usageAsCollateralEnabled
         ); // Whether the user's current reserve is enabled as a collateral
 
-    function getReserveConfigurationData(
-        address _reserve
-    )
+    function getReserveConfigurationData(address _reserve)
         external
         view
         virtual
@@ -138,9 +132,7 @@ abstract contract ILendingPool {
     // ------------------ LendingPoolCoreData ------------------------
     function getReserveATokenAddress(address _reserve) public view virtual returns (address);
 
-    function getReserveConfiguration(
-        address _reserve
-    )
+    function getReserveConfiguration(address _reserve)
         external
         view
         virtual
@@ -155,17 +147,13 @@ abstract contract ILendingPool {
         virtual
         returns (uint256);
 
-    function getReserveCurrentLiquidityRate(
-        address _reserve
-    )
+    function getReserveCurrentLiquidityRate(address _reserve)
         public
         view
         virtual
         returns (uint256);
 
-    function getReserveCurrentVariableBorrowRate(
-        address _reserve
-    )
+    function getReserveCurrentVariableBorrowRate(address _reserve)
         public
         view
         virtual
@@ -175,18 +163,14 @@ abstract contract ILendingPool {
 
     function getReserveAvailableLiquidity(address _reserve) public view virtual returns (uint256);
 
-    function getReserveTotalBorrowsVariable(
-        address _reserve
-    )
+    function getReserveTotalBorrowsVariable(address _reserve)
         public
         view
         virtual
         returns (uint256);
 
     // ---------------- LendingPoolDataProvider ---------------------
-    function calculateUserGlobalData(
-        address _user
-    )
+    function calculateUserGlobalData(address _user)
         public
         view
         virtual

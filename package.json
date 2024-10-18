@@ -1,6 +1,6 @@
 {
   "name": "@rhinestone/modulekit",
-  "version": "0.4.10",
+  "version": "0.4.13",
   "description": "A development kit for building and testing smart account modules.",
   "license": "GPL-3.0",
   "author": {
@@ -34,6 +34,7 @@
     "@rhinestone/module-bases": "github:rhinestonewtf/module-bases",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579#v1.0.0",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
+    "@rhinestone/registry": "github:rhinestonewtf/registry#v1.0",
     "@safe-global/safe-contracts": "^1.4.1",
     "@zerodev/kernel": "github:kopy-kat/kernel#patch",
     "ds-test": "github:dapphub/ds-test",

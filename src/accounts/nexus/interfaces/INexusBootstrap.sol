@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.24;
 
 struct BootstrapConfig {
     address module;
@@ -62,9 +62,7 @@ interface INexusBootstrap {
     /// @notice Prepares calldata for the initNexusWithSingleValidator function.
     /// @param validator The configuration for the validator module.
     /// @return init The prepared calldata for initNexusWithSingleValidator.
-    function getInitNexusWithSingleValidatorCalldata(
-        BootstrapConfig calldata validator
-    )
+    function getInitNexusWithSingleValidatorCalldata(BootstrapConfig calldata validator)
         external
         view
         returns (bytes memory init);

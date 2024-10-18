@@ -183,9 +183,7 @@ interface IRewardsController is IRewardsDistributor {
      * as "rewardsList"
      *
      */
-    function claimAllRewardsToSelf(
-        address[] calldata assets
-    )
+    function claimAllRewardsToSelf(address[] calldata assets)
         external
         returns (address[] memory rewardsList, uint256[] memory claimedAmounts);
 }
