@@ -12,8 +12,10 @@ import {
     CUSTOM
 } from "./RhinestoneModuleKit.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
+import { EncodeLib } from "smartsessions/lib/EncodeLib.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { Execution } from "../external/ERC7579.sol";
+import { prank } from "src/test/utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
     writeAccountType,
@@ -29,6 +31,11 @@ import {
     removeInstalledModule as removeInstalledModuleFromStorage,
     InstalledModule
 } from "./utils/Storage.sol";
+import {
+    Session, PermissionId, ActionData, PolicyData, ERC7739Data
+} from "smartsessions/DataTypes.sol";
+import { ISessionValidator } from "smartsessions/interfaces/ISessionValidator.sol";
+import { console2 } from "forge-std/console2.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 
 library ModuleKitHelpers {
@@ -37,6 +44,7 @@ library ModuleKitHelpers {
     //////////////////////////////////////////////////////////////////////////*/
 
     error InvalidAccountType();
+    error SmartSessionNotInstalled();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     LIBRARIES
@@ -45,6 +53,7 @@ library ModuleKitHelpers {
     using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
     using ModuleKitHelpers for AccountType;
+    using EncodeLib for PermissionId;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
@@ -172,7 +181,8 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
+        return instance.account.code.length > 0
+            && HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
     }
 
     function isModuleInstalled(
@@ -501,6 +511,13 @@ library ModuleKitHelpers {
         }
     }
 
+    modifier withAccountDeployed(AccountInstance memory instance) {
+        if (instance.account.code.length == 0) {
+            deployAccount(instance);
+        }
+        _;
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 SIGNATURE UTILS
     //////////////////////////////////////////////////////////////////////////*/
@@ -555,5 +572,95 @@ library ModuleKitHelpers {
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
         userOpData.userOp.signature = "DEFAULT SIGNATURE";
         return userOpData;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                             SMART SESSIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev Adds a session to the account
+    function addSession(
+        AccountInstance memory instance,
+        Session memory session
+    )
+        internal
+        withAccountDeployed(instance)
+        returns (PermissionId[] memory permissionIds)
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+        // Enable session
+        Session[] memory sessions = new Session[](1);
+        sessions[0] = session;
+        prank(instance.account);
+        permissionIds = instance.smartSession.enableSessions(sessions);
+    }
+
+    /// @dev Adds a session to the account with the default validator
+    function addSession(
+        AccountInstance memory instance,
+        bytes32 salt,
+        PolicyData[] memory userOpPolicies,
+        ERC7739Data memory erc7739Policy,
+        ActionData[] memory actionDatas
+    )
+        internal
+        withAccountDeployed(instance)
+        returns (PermissionId[] memory permissionIds)
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: salt,
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: userOpPolicies,
+            erc7739Policies: erc7739Policy,
+            actions: actionDatas
+        });
+        Session[] memory sessions = new Session[](1);
+        sessions[0] = session;
+        // Enable session
+        prank(instance.account);
+        permissionIds = instance.smartSession.enableSessions(sessions);
+    }
+
+    function removeSession(
+        AccountInstance memory instance,
+        PermissionId permissionId
+    )
+        internal
+        withAccountDeployed(instance)
+    {
+        // Check if smart sessions module is installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            revert SmartSessionNotInstalled();
+        }
+        // Remove session
+        prank(instance.account);
+        instance.smartSession.removeSession(permissionId);
+    }
+
+    function isSessionEnabled(
+        AccountInstance memory instance,
+        PermissionId permissionId
+    )
+        internal
+        withAccountDeployed(instance)
+        returns (bool)
+    {
+        // Check if smart sessions module is installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            revert SmartSessionNotInstalled();
+        }
+        // Check if session is enabled
+        return instance.smartSession.isPermissionEnabled(permissionId, instance.account);
     }
 }

@@ -5,7 +5,7 @@ import { IERC7484 } from "src/Interfaces.sol";
 import { MockRegistry } from "src/Mocks.sol";
 import { etch } from "../utils/Vm.sol";
 
-address constant REGISTRY_ADDR = 0x0000000071727DE22E5e9d8baF0EdaC6f37dA033;
+address constant REGISTRY_ADDR = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;
 
 function etchRegistry() returns (IERC7484) {
     address _registry = address(new MockRegistry());
