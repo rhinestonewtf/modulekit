@@ -4,6 +4,8 @@ erc4337-validation/=node_modules/@rhinestone/erc4337-validation/src/
 safe7579/=node_modules/@rhinestone/safe7579/src/
 modulekit/=node_modules/@rhinestone/modulekit/src/
 module-bases/=node_modules/@rhinestone/module-bases/src/
+smartsessions/=node_modules/smartsessions/contracts/
+flatbytes/=node_modules/@rhinestone/flatbytes/src/
 
 @ERC4337/=node_modules/@ERC4337/
 account-abstraction/=node_modules/@ERC4337/account-abstraction/contracts/
@@ -19,3 +21,4 @@ solarray/=node_modules/solarray/src/
 @prb/math/=node_modules/@prb/math/src/
 kernel/=node_modules/@zerodev/kernel/src/
 ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
+node_modules/smartsessions/contracts/:excessively-safe-call/=node_modules/excessively-safe-call/src/

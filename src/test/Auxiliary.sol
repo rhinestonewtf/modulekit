@@ -5,6 +5,7 @@ import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC7579Bootstrap } from "../external/ERC7579.sol";
 import { IERC7484 } from "src/Interfaces.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
+import { etchSmartSessions } from "./predeploy/SmartSessions.sol";
 import { EntryPointSimulations } from
     "@ERC4337/account-abstraction/contracts/core/EntryPointSimulations.sol";
 import { IEntryPointSimulations } from
@@ -12,6 +13,7 @@ import { IEntryPointSimulations } from
 import { etchRegistry } from "./predeploy/Registry.sol";
 import { MockFactory } from "./predeploy/MockFactory.sol";
 import { UserOpGasLog } from "./utils/gas/UserOpGasLog.sol";
+import { ISmartSession } from "smartsessions/ISmartSession.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 
@@ -20,6 +22,7 @@ struct Auxiliary {
     UserOpGasLog gasSimulation;
     IERC7484 registry;
     MockFactory mockFactory;
+    ISmartSession smartSession;
 }
 
 contract AuxiliaryFactory {
@@ -33,5 +36,7 @@ contract AuxiliaryFactory {
         label(address(auxiliary.entrypoint), "EntryPoint");
         auxiliary.registry = etchRegistry();
         label(address(auxiliary.registry), "ERC7484Registry");
+        auxiliary.smartSession = etchSmartSessions();
+        label(address(auxiliary.smartSession), "SmartSession");
     }
 }
