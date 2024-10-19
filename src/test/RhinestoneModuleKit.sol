@@ -14,9 +14,8 @@ import { KernelHelpers } from "./helpers/KernelHelpers.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
-import { SMARTSESSION_ADDR } from "./predeploy/SmartSessions.sol";
-import { ISmartSession } from "smartsessions/ISmartSession.sol";
-import { ISessionValidator } from "smartsessions/interfaces/ISessionValidator.sol";
+import { SMARTSESSION_ADDR } from "./precompiles/SmartSessions.sol";
+import { ISmartSession, ISessionValidator } from "src/test/helpers/interfaces/ISmartSession.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator, MockStatelessValidator } from "../Mocks.sol";
 import {

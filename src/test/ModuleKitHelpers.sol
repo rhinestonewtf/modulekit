@@ -12,7 +12,6 @@ import {
     CUSTOM
 } from "./RhinestoneModuleKit.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
-import { EncodeLib } from "smartsessions/lib/EncodeLib.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { Execution } from "../external/ERC7579.sol";
 import { prank } from "src/test/utils/Vm.sol";
@@ -32,9 +31,13 @@ import {
     InstalledModule
 } from "./utils/Storage.sol";
 import {
-    Session, PermissionId, ActionData, PolicyData, ERC7739Data
-} from "smartsessions/DataTypes.sol";
-import { ISessionValidator } from "smartsessions/interfaces/ISessionValidator.sol";
+    Session,
+    PermissionId,
+    ActionData,
+    PolicyData,
+    ERC7739Data,
+    ISessionValidator
+} from "src/test/helpers/interfaces/ISmartSession.sol";
 import { console2 } from "forge-std/console2.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 
@@ -53,7 +56,6 @@ library ModuleKitHelpers {
     using ModuleKitHelpers for AccountInstance;
     using ModuleKitHelpers for UserOpData;
     using ModuleKitHelpers for AccountType;
-    using EncodeLib for PermissionId;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS

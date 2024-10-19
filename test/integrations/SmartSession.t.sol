@@ -14,7 +14,12 @@ import { MockPolicy, MockTarget } from "src/Mocks.sol";
 import { BaseTest } from "../BaseTest.t.sol";
 
 // Types
-import { PermissionId, PolicyData, ActionData, ERC7739Data } from "smartsessions/DataTypes.sol";
+import {
+    PermissionId,
+    PolicyData,
+    ActionData,
+    ERC7739Data
+} from "src/test/helpers/interfaces/ISmartSession.sol";
 
 /// @dev Tests for smart session integration within the RhinestoneModuleKit
 contract SmartSessionTest is BaseTest {

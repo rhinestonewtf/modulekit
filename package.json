@@ -41,7 +41,6 @@
     "erc7579": "github:erc7579/erc7579-implementation",
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "forge-std": "github:foundry-rs/forge-std",
-    "smartsessions": "github:erc7579/smartsessions#cantina-spearbit-remediated",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray"
   },
