@@ -759,7 +759,8 @@ library ModuleKitHelpers {
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
         SmartSessionMode mode,
-        Session memory session
+        Session memory session,
+        function (bytes32) internal returns (bytes memory) signFunction
     )
         internal
         returns (bytes memory)
@@ -775,9 +776,9 @@ library ModuleKitHelpers {
                 makeMultiChainEnableData(instance, permissionId, session, mode);
             // Get the hash
             bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
-            // Sign the enable hash (not really necessary since we're using a mock validator)
+            // Sign the enable hash
             enableData.permissionEnableSig =
-                abi.encodePacked(instance.defaultValidator, ecdsaSignDefault(hash));
+                abi.encodePacked(instance.defaultValidator, signFunction(hash));
             // Sign user op
             userOperation.signature =
                 EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
@@ -785,7 +786,7 @@ library ModuleKitHelpers {
         }
     }
 
-    function encodeSignatureUse(
+    function encodeSignatureUseMode(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
         Session memory session
@@ -793,18 +794,26 @@ library ModuleKitHelpers {
         internal
         returns (bytes memory)
     {
-        return instance.encodeSignature(userOperation, SmartSessionMode.USE, session);
+        return instance.encodeSignature(
+            userOperation,
+            SmartSessionMode.USE,
+            session,
+            ecdsaSignDefault // Irrelevant in use mode
+        );
     }
 
-    function encodeSignatureEnable(
+    function encodeSignatureEnableMode(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
-        Session memory session
+        Session memory session,
+        function (bytes32) internal returns (bytes memory) signFunction
     )
         internal
         returns (bytes memory)
     {
-        return instance.encodeSignature(userOperation, SmartSessionMode.ENABLE, session);
+        return instance.encodeSignature(
+            userOperation, SmartSessionMode.UNSAFE_ENABLE, session, signFunction
+        );
     }
 
     function isSessionEnabled(
@@ -849,33 +858,16 @@ library ModuleKitHelpers {
         // Get permission id
         PermissionId permissionId = getPermissionId(instance, session);
 
-        // Check if session is enabled and encode signature
+        // Check if session is enabled and enable if not
         if (!isSessionEnabled(instance, session)) {
-            // Create enable session data
-            EnableSession memory enableData = makeMultiChainEnableData(
-                instance, permissionId, session, SmartSessionMode.UNSAFE_ENABLE
-            );
-            // Get the hash
-            bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
-            // Sign the enable hash (not really necessary since we're using a mock validator)
-            enableData.permissionEnableSig =
-                abi.encodePacked(instance.defaultValidator, ecdsaSignDefault(hash));
-            // Sign user op
-            userOpData.userOp.signature =
-                EncodeLib.encodeUnsafeEnable(userOpData.userOp.signature, enableData);
-
-            // We could also do this instead:
-            // prank(instance.account);
-            // Session[] memory sessions = new Session[](1);
-            // sessions[0] = session;
-            // instance.smartSession.enableSessions(sessions);
-            // userOpData.userOp.signature =
-            //     EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
-        } else {
-            // Sign user op
-            userOpData.userOp.signature =
-                EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
+            prank(instance.account);
+            Session[] memory sessions = new Session[](1);
+            sessions[0] = session;
+            instance.smartSession.enableSessions(sessions);
         }
+
+        // Sign user op
+        userOpData.userOp.signature = EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
 
         // Execute user op
         userOpData.execUserOps();
