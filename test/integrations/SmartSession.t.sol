@@ -6,9 +6,11 @@ import { MODULE_TYPE_VALIDATOR } from "src/external/ERC7579.sol";
 
 // Libraries
 import { ModuleKitHelpers, AccountInstance } from "src/ModuleKit.sol";
+import { ecdsaSign } from "src/Helpers.sol";
 
 // Mocks
 import { MockPolicy, MockTarget } from "src/Mocks.sol";
+import { MockK1Validator } from "test/mocks/MockK1Validator.sol";
 
 // Tests
 import { BaseTest } from "../BaseTest.t.sol";
@@ -22,6 +24,7 @@ import {
     Session,
     ISessionValidator
 } from "src/test/helpers/interfaces/ISmartSession.sol";
+import { UserOpData, PackedUserOperation } from "src/test/RhinestoneModuleKit.sol";
 
 /// @dev Tests for smart session integration within the RhinestoneModuleKit
 contract SmartSessionTest is BaseTest {
@@ -30,6 +33,7 @@ contract SmartSessionTest is BaseTest {
     //////////////////////////////////////////////////////////////*/
 
     using ModuleKitHelpers for AccountInstance;
+    using ModuleKitHelpers for UserOpData;
 
     /*//////////////////////////////////////////////////////////////
                                VARIABLES
@@ -99,7 +103,7 @@ contract SmartSessionTest is BaseTest {
     }
 
     function test_addSession_preInstalled() public {
-        // Install a module
+        // Install smart session
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(auxiliary.smartSession),
@@ -183,6 +187,62 @@ contract SmartSessionTest is BaseTest {
 
         // Check if the value was set
         assertTrue(target.value() == 1337);
+    }
+
+    function test_encodeSignatureEnableMode() public {
+        // Deploy MockK1Validator
+        MockK1Validator mockK1Validator = new MockK1Validator();
+
+        // Make an owner
+        Account memory owner = makeAccount("owner");
+
+        // Install validator
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(mockK1Validator),
+            data: abi.encodePacked(owner.addr)
+        });
+
+        // Install smart session
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(auxiliary.smartSession),
+            data: ""
+        });
+
+        // Setup calldata to execute
+        bytes memory callData = abi.encodeWithSelector(MockTarget.set.selector, (1337));
+
+        // Get exec user ops
+        UserOpData memory userOpData = instance.getExecOps({
+            target: address(target),
+            value: 0,
+            callData: callData,
+            txValidator: address(instance.defaultValidator)
+        });
+
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: "mockSalt",
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
+            erc7739Policies: _getEmptyERC7739Data(
+                "mockContent", _getEmptyPolicyDatas(address(mockPolicy))
+            ),
+            actions: _getEmptyActionDatas(address(target), MockTarget.set.selector, address(mockPolicy))
+        });
+
+        // Get enable mode signature
+        bytes memory signature = instance.encodeSignatureEnableMode(
+            userOpData.userOp, session, ecdsaSign, address(mockK1Validator), owner.key
+        );
+
+        // Update the user op signature
+        userOpData.userOp.signature = signature;
+
+        // Execute user ops
+        userOpData.execUserOps();
     }
 
     /*//////////////////////////////////////////////////////////////
