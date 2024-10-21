@@ -583,7 +583,7 @@ library ModuleKitHelpers {
         return userOpData;
     }
 
-    function ecdsaSignDefault(uint256, bytes32 hash) internal pure returns (bytes memory) {
+    function ecdsaSignDefault(bytes32 hash) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = (27, hash, hash);
         return abi.encodePacked(r, s, v);
     }
@@ -760,9 +760,8 @@ library ModuleKitHelpers {
         PackedUserOperation memory userOperation,
         SmartSessionMode mode,
         Session memory session,
-        function (uint256, bytes32) internal returns (bytes memory) signFunction,
-        address validator,
-        uint256 pk
+        function (bytes32) internal returns (bytes memory) signFunction,
+        address validator
     )
         internal
         returns (bytes memory)
@@ -779,7 +778,7 @@ library ModuleKitHelpers {
             // Get the hash
             bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
             // Sign the enable hash
-            enableData.permissionEnableSig = abi.encodePacked(validator, signFunction(pk, hash));
+            enableData.permissionEnableSig = abi.encodePacked(validator, signFunction(hash));
             // Sign user op
             userOperation.signature =
                 EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
@@ -800,8 +799,7 @@ library ModuleKitHelpers {
             SmartSessionMode.USE,
             session,
             ecdsaSignDefault, // Irrelevant in use mode
-            address(0), // Irrelevant in use mode
-            0 // Irrelevant in use mode
+            address(0) // Irrelevant in use mode
         );
     }
 
@@ -809,15 +807,14 @@ library ModuleKitHelpers {
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
         Session memory session,
-        function (uint256, bytes32) internal returns (bytes memory) signFunction,
-        address validator,
-        uint256 pk
+        function (bytes32) internal returns (bytes memory) signFunction,
+        address validator
     )
         internal
         returns (bytes memory)
     {
         return instance.encodeSignature(
-            userOperation, SmartSessionMode.UNSAFE_ENABLE, session, signFunction, validator, pk
+            userOperation, SmartSessionMode.UNSAFE_ENABLE, session, signFunction, validator
         );
     }
 

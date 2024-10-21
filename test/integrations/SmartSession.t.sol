@@ -43,6 +43,8 @@ contract SmartSessionTest is BaseTest {
     MockPolicy mockPolicy;
     // @@dev A mock target contract
     MockTarget target;
+    // @dev Owner account
+    Account owner;
 
     /*//////////////////////////////////////////////////////////////
                                  SETUP
@@ -194,7 +196,7 @@ contract SmartSessionTest is BaseTest {
         MockK1Validator mockK1Validator = new MockK1Validator();
 
         // Make an owner
-        Account memory owner = makeAccount("owner");
+        owner = makeAccount("owner");
 
         // Install validator
         instance.installModule({
@@ -235,7 +237,7 @@ contract SmartSessionTest is BaseTest {
 
         // Get enable mode signature
         bytes memory signature = instance.encodeSignatureEnableMode(
-            userOpData.userOp, session, ecdsaSign, address(mockK1Validator), owner.key
+            userOpData.userOp, session, _signWithOwner, address(mockK1Validator)
         );
 
         // Update the user op signature
@@ -248,6 +250,13 @@ contract SmartSessionTest is BaseTest {
     /*//////////////////////////////////////////////////////////////
                                 HELPERS
     //////////////////////////////////////////////////////////////*/
+
+    function _signWithOwner(bytes32 hash) internal view returns (bytes memory) {
+        // Sign the hash with the owner
+        bytes memory signature = ecdsaSign(owner.key, hash);
+        // Return the signature
+        return signature;
+    }
 
     function _getEmptyPolicyDatas(address policyContract)
         internal
