@@ -18,7 +18,9 @@ import {
     PermissionId,
     PolicyData,
     ActionData,
-    ERC7739Data
+    ERC7739Data,
+    Session,
+    ISessionValidator
 } from "src/test/helpers/interfaces/ISmartSession.sol";
 
 /// @dev Tests for smart session integration within the RhinestoneModuleKit
@@ -134,6 +136,28 @@ contract SmartSessionTest is BaseTest {
         instance.removeSession(permissionIds[0]);
         // Check if the session is disabled
         assertFalse(instance.isSessionEnabled(permissionIds[0]));
+    }
+
+    function test_getPermissionId() public {
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: "mockSalt",
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
+            erc7739Policies: _getEmptyERC7739Data(
+                "mockContent", _getEmptyPolicyDatas(address(mockPolicy))
+            ),
+            actions: _getEmptyActionDatas(address(target), MockTarget.set.selector, address(mockPolicy))
+        });
+
+        // Add a session
+        PermissionId[] memory permissionIds = instance.addSession({ session: session });
+        // Get the permission id
+        PermissionId permissionId = instance.getPermissionId(session);
+
+        // Check if the permission id is correct
+        assertTrue(permissionIds[0] == permissionId);
     }
 
     /*//////////////////////////////////////////////////////////////

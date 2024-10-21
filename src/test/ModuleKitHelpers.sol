@@ -36,7 +36,8 @@ import {
     ActionData,
     PolicyData,
     ERC7739Data,
-    ISessionValidator
+    ISessionValidator,
+    SmartSessionMode
 } from "src/test/helpers/interfaces/ISmartSession.sol";
 import { console2 } from "forge-std/console2.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
@@ -580,6 +581,14 @@ library ModuleKitHelpers {
                              SMART SESSIONS
     //////////////////////////////////////////////////////////////*/
 
+    /// @dev Makes sure the smart sessions module is installed
+    modifier withSmartSessionsInstalled(AccountInstance memory instance) {
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            revert SmartSessionNotInstalled();
+        }
+        _;
+    }
+
     /// @dev Adds a session to the account
     function addSession(
         AccountInstance memory instance,
@@ -640,11 +649,8 @@ library ModuleKitHelpers {
     )
         internal
         withAccountDeployed(instance)
+        withSmartSessionsInstalled(instance)
     {
-        // Check if smart sessions module is installed
-        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
-            revert SmartSessionNotInstalled();
-        }
         // Remove session
         prank(instance.account);
         instance.smartSession.removeSession(permissionId);
@@ -656,13 +662,50 @@ library ModuleKitHelpers {
     )
         internal
         withAccountDeployed(instance)
+        withSmartSessionsInstalled(instance)
         returns (bool)
+    {
+        // Check if session is enabled
+        return instance.smartSession.isPermissionEnabled(permissionId, instance.account);
+    }
+
+    function getPermissionId(
+        AccountInstance memory instance,
+        Session memory session
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (PermissionId permissionId)
     {
         // Check if smart sessions module is installed
         if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
             revert SmartSessionNotInstalled();
         }
-        // Check if session is enabled
-        return instance.smartSession.isPermissionEnabled(permissionId, instance.account);
+        return instance.smartSession.getPermissionId(session);
+    }
+
+    function getSessionDigest(
+        AccountInstance memory instance,
+        Session memory session,
+        SmartSessionMode mode
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (bytes32)
+    {
+        return instance.smartSession.getSessionDigest(
+            getPermissionId(instance, session), instance.account, session, mode
+        );
+    }
+
+    function getSessionNonce(
+        AccountInstance memory instance,
+        PermissionId permissionId
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (uint256)
+    {
+        return instance.smartSession.getNonce(permissionId, instance.account);
     }
 }

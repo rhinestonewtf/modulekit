@@ -15,6 +15,17 @@ type ActionId is bytes32;
 
 type ValidationData is uint256;
 
+using { permissionIdEq as == } for PermissionId global;
+using { permissionIdNeq as != } for PermissionId global;
+
+function permissionIdEq(PermissionId uid1, PermissionId uid2) pure returns (bool) {
+    return PermissionId.unwrap(uid1) == PermissionId.unwrap(uid2);
+}
+
+function permissionIdNeq(PermissionId uid1, PermissionId uid2) pure returns (bool) {
+    return PermissionId.unwrap(uid1) != PermissionId.unwrap(uid2);
+}
+
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                       Parameters                           */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
