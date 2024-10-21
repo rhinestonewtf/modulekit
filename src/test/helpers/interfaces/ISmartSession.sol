@@ -43,6 +43,20 @@ enum PolicyType {
     ERC1271
 }
 
+struct EnableSession {
+    uint8 chainDigestIndex;
+    ChainDigest[] hashesAndChainIds;
+    Session sessionToEnable;
+    // in order to enable a session, the smart account has to sign a digest. The signature for this
+    // is stored here.
+    bytes permissionEnableSig;
+}
+
+struct ChainDigest {
+    uint64 chainId;
+    bytes32 sessionDigest;
+}
+
 // Action data is a struct that contains the actionId and the policies that are associated with this
 // action.
 struct ActionData {
@@ -286,6 +300,37 @@ interface ISmartSession {
     function isPermissionEnabled(
         PermissionId permissionId,
         address account
+    )
+        external
+        view
+        returns (bool);
+    function isISessionValidatorSet(
+        PermissionId permissionId,
+        address account
+    )
+        external
+        view
+        returns (bool);
+    function areUserOpPoliciesEnabled(
+        address account,
+        PermissionId permissionId,
+        PolicyData[] calldata userOpPolicies
+    )
+        external
+        view
+        returns (bool);
+    function areERC1271PoliciesEnabled(
+        address account,
+        PermissionId permissionId,
+        PolicyData[] calldata erc1271Policies
+    )
+        external
+        view
+        returns (bool);
+    function areActionsEnabled(
+        address account,
+        PermissionId permissionId,
+        ActionData[] calldata actions
     )
         external
         view

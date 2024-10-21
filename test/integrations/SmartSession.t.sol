@@ -48,6 +48,8 @@ contract SmartSessionTest is BaseTest {
         super.setUp();
         // Deploy mock policy
         mockPolicy = new MockPolicy();
+        // Set the policy to allow any action
+        mockPolicy.setValidationData(0);
         // Deploy mock target
         target = new MockTarget();
     }
@@ -93,7 +95,7 @@ contract SmartSessionTest is BaseTest {
             )
         });
         // Check if the session is enabled
-        assertTrue(instance.isSessionEnabled(permissionIds[0]));
+        assertTrue(instance.isPermissionEnabled(permissionIds[0]));
     }
 
     function test_addSession_preInstalled() public {
@@ -115,7 +117,7 @@ contract SmartSessionTest is BaseTest {
             )
         });
         // Check if the session is enabled
-        assertTrue(instance.isSessionEnabled(permissionIds[0]));
+        assertTrue(instance.isPermissionEnabled(permissionIds[0]));
     }
 
     function test_removeSession() public {
@@ -131,11 +133,11 @@ contract SmartSessionTest is BaseTest {
             )
         });
         // Check if the session is enabled
-        assertTrue(instance.isSessionEnabled(permissionIds[0]));
+        assertTrue(instance.isPermissionEnabled(permissionIds[0]));
         // Remove the session
         instance.removeSession(permissionIds[0]);
         // Check if the session is disabled
-        assertFalse(instance.isSessionEnabled(permissionIds[0]));
+        assertFalse(instance.isPermissionEnabled(permissionIds[0]));
     }
 
     function test_getPermissionId() public {
@@ -158,6 +160,29 @@ contract SmartSessionTest is BaseTest {
 
         // Check if the permission id is correct
         assertTrue(permissionIds[0] == permissionId);
+    }
+
+    function test_useSession() public {
+        // Setup calldata to execute
+        bytes memory callData = abi.encodeWithSelector(MockTarget.set.selector, (1337));
+
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: "mockSalt",
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
+            erc7739Policies: _getEmptyERC7739Data(
+                "mockContent", _getEmptyPolicyDatas(address(mockPolicy))
+            ),
+            actions: _getEmptyActionDatas(address(target), MockTarget.set.selector, address(mockPolicy))
+        });
+
+        // Use the session
+        instance.useSession(session, address(target), 0, /* value */ callData);
+
+        // Check if the value was set
+        assertTrue(target.value() == 1337);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -215,6 +240,7 @@ contract SmartSessionTest is BaseTest {
         PolicyData[] memory erc1271Policies
     )
         internal
+        pure
         returns (ERC7739Data memory)
     {
         string[] memory contents = new string[](1);

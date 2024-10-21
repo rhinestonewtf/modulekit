@@ -11,6 +11,7 @@ import {
     KERNEL,
     CUSTOM
 } from "./RhinestoneModuleKit.sol";
+import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { Execution } from "../external/ERC7579.sol";
@@ -37,9 +38,13 @@ import {
     PolicyData,
     ERC7739Data,
     ISessionValidator,
-    SmartSessionMode
+    SmartSessionMode,
+    ISmartSession,
+    EnableSession,
+    ChainDigest
 } from "src/test/helpers/interfaces/ISmartSession.sol";
-import { console2 } from "forge-std/console2.sol";
+import { EncodeLib, HashLib } from "src/test/helpers/SmartSessionHelpers.sol";
+import { Solarray } from "solarray/Solarray.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 
 library ModuleKitHelpers {
@@ -49,6 +54,7 @@ library ModuleKitHelpers {
 
     error InvalidAccountType();
     error SmartSessionNotInstalled();
+    error InvalidContextLength();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     LIBRARIES
@@ -577,6 +583,11 @@ library ModuleKitHelpers {
         return userOpData;
     }
 
+    function ecdsaSignDefault(bytes32 hash) internal pure returns (bytes memory) {
+        (uint8 v, bytes32 r, bytes32 s) = (27, hash, hash);
+        return abi.encodePacked(r, s, v);
+    }
+
     /*//////////////////////////////////////////////////////////////
                              SMART SESSIONS
     //////////////////////////////////////////////////////////////*/
@@ -636,11 +647,8 @@ library ModuleKitHelpers {
             erc7739Policies: erc7739Policy,
             actions: actionDatas
         });
-        Session[] memory sessions = new Session[](1);
-        sessions[0] = session;
         // Enable session
-        prank(instance.account);
-        permissionIds = instance.smartSession.enableSessions(sessions);
+        return instance.addSession(session);
     }
 
     function removeSession(
@@ -656,7 +664,7 @@ library ModuleKitHelpers {
         instance.smartSession.removeSession(permissionId);
     }
 
-    function isSessionEnabled(
+    function isPermissionEnabled(
         AccountInstance memory instance,
         PermissionId permissionId
     )
@@ -707,5 +715,215 @@ library ModuleKitHelpers {
         returns (uint256)
     {
         return instance.smartSession.getNonce(permissionId, instance.account);
+    }
+
+    /// @dev Encodes a signature for a user operation using the correct format
+    /// @param instance AccountInstance
+    /// @param userOperation PackedUserOperation
+    /// @param context bytes, a bytes array with the following format:
+    ///     [0-24] : nonce key
+    ///     [24-56] : execution mode
+    ///     [56-88] : permissionId
+    ///     [88]: abi.encode(EnableSession)
+    function encodeSignature(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        bytes calldata context
+    )
+        internal
+        returns (bytes memory)
+    {
+        // Parse context
+        PermissionId permissionId = abi.decode(context[:32], (PermissionId));
+        EnableSession memory enableData = abi.decode(context[88:], (EnableSession));
+        Session memory session = enableData.sessionToEnable;
+
+        // Encode based on length
+        if (context.length < 88) {
+            revert InvalidContextLength();
+        } else if (context.length == 88) {
+            // Encode signature
+            return EncodeLib.encodeUse(permissionId, userOperation.signature);
+        } else {
+            // Use encodeUse or encodeUnsafeEnable if policies are enabled
+            if (!instance.isSessionEnabled(session)) {
+                return EncodeLib.encodeUse(permissionId, userOperation.signature);
+            } else {
+                return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+            }
+        }
+    }
+
+    /// @dev Encodes the signature for a user operation using the correct format
+    function encodeSignature(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        SmartSessionMode mode,
+        Session memory session
+    )
+        internal
+        returns (bytes memory)
+    {
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+        // Encode based on mode
+        if (mode == SmartSessionMode.USE) {
+            return EncodeLib.encodeUse(permissionId, userOperation.signature);
+        } else {
+            // Create enable session data
+            EnableSession memory enableData =
+                makeMultiChainEnableData(instance, permissionId, session, mode);
+            // Get the hash
+            bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
+            // Sign the enable hash (not really necessary since we're using a mock validator)
+            enableData.permissionEnableSig =
+                abi.encodePacked(instance.defaultValidator, ecdsaSignDefault(hash));
+            // Sign user op
+            userOperation.signature =
+                EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+            return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+        }
+    }
+
+    function encodeSignatureUse(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        Session memory session
+    )
+        internal
+        returns (bytes memory)
+    {
+        return instance.encodeSignature(userOperation, SmartSessionMode.USE, session);
+    }
+
+    function encodeSignatureEnable(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        Session memory session
+    )
+        internal
+        returns (bytes memory)
+    {
+        return instance.encodeSignature(userOperation, SmartSessionMode.ENABLE, session);
+    }
+
+    function isSessionEnabled(
+        AccountInstance memory instance,
+        Session memory session
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (bool)
+    {
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+        return instance.smartSession.isISessionValidatorSet(permissionId, instance.account)
+            && instance.smartSession.areUserOpPoliciesEnabled(
+                instance.account, permissionId, session.userOpPolicies
+            )
+            && instance.smartSession.areActionsEnabled(instance.account, permissionId, session.actions)
+            && instance.smartSession.areERC1271PoliciesEnabled(
+                instance.account, permissionId, session.erc7739Policies.erc1271Policies
+            );
+    }
+
+    function useSession(
+        AccountInstance memory instance,
+        Session memory session,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+
+        // Get user ops
+        UserOpData memory userOpData =
+            instance.getExecOps(target, value, callData, address(instance.smartSession));
+
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+
+        // Check if session is enabled and encode signature
+        if (!isSessionEnabled(instance, session)) {
+            // Create enable session data
+            EnableSession memory enableData = makeMultiChainEnableData(
+                instance, permissionId, session, SmartSessionMode.UNSAFE_ENABLE
+            );
+            // Get the hash
+            bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
+            // Sign the enable hash (not really necessary since we're using a mock validator)
+            enableData.permissionEnableSig =
+                abi.encodePacked(instance.defaultValidator, ecdsaSignDefault(hash));
+            // Sign user op
+            userOpData.userOp.signature =
+                EncodeLib.encodeUnsafeEnable(userOpData.userOp.signature, enableData);
+
+            // We could also do this instead:
+            // prank(instance.account);
+            // Session[] memory sessions = new Session[](1);
+            // sessions[0] = session;
+            // instance.smartSession.enableSessions(sessions);
+            // userOpData.userOp.signature =
+            //     EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
+        } else {
+            // Sign user op
+            userOpData.userOp.signature =
+                EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
+        }
+
+        // Execute user op
+        userOpData.execUserOps();
+    }
+
+    function makeMultiChainEnableData(
+        AccountInstance memory instance,
+        PermissionId permissionId,
+        Session memory session,
+        SmartSessionMode mode
+    )
+        internal
+        view
+        returns (EnableSession memory enableData)
+    {
+        bytes32 sessionDigest = instance.smartSession.getSessionDigest({
+            permissionId: permissionId,
+            account: instance.account,
+            data: session,
+            mode: mode
+        });
+
+        ChainDigest[] memory chainDigests = ModuleKitHelpers.encodeHashesAndChainIds(
+            Solarray.uint64s(181_818, uint64(block.chainid), 777),
+            Solarray.bytes32s(sessionDigest, sessionDigest, sessionDigest)
+        );
+
+        enableData = EnableSession({
+            chainDigestIndex: 1,
+            hashesAndChainIds: chainDigests,
+            sessionToEnable: session,
+            permissionEnableSig: ""
+        });
+    }
+
+    function encodeHashesAndChainIds(
+        uint64[] memory chainIds,
+        bytes32[] memory hashes
+    )
+        internal
+        pure
+        returns (ChainDigest[] memory)
+    {
+        uint256 length = chainIds.length;
+        ChainDigest[] memory hashesAndChainIds = new ChainDigest[](length);
+        for (uint256 i; i < length; i++) {
+            hashesAndChainIds[i] = ChainDigest({ chainId: chainIds[i], sessionDigest: hashes[i] });
+        }
+        return hashesAndChainIds;
     }
 }
