@@ -56,7 +56,7 @@ contract SmartSessionTest is BaseTest {
         // Deploy mock policy
         mockPolicy = new MockPolicy();
         // Set the policy to allow any action
-        mockPolicy.setValidationData(0);
+        mockPolicy.setValidationData(address(instance.account), 0);
         // Deploy mock target
         target = new MockTarget();
     }
