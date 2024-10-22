@@ -771,18 +771,6 @@ library ModuleKitHelpers {
         // Encode based on mode
         if (mode == SmartSessionMode.USE) {
             return EncodeLib.encodeUse(permissionId, userOperation.signature);
-        } else if (mode == SmartSessionMode.UNSAFE_ENABLE) {
-            // Create enable session data
-            EnableSession memory enableData =
-                makeMultiChainEnableData(instance, permissionId, session, mode);
-            // Get the hash
-            bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
-            // Sign the enable hash
-            enableData.permissionEnableSig = abi.encodePacked(validator, signFunction(hash));
-            // Sign user op
-            userOperation.signature =
-                EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
-            return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
         } else {
             // Create enable session data
             EnableSession memory enableData =
@@ -791,9 +779,12 @@ library ModuleKitHelpers {
             bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
             // Sign the enable hash
             enableData.permissionEnableSig = abi.encodePacked(validator, signFunction(hash));
-            // Sign user op
-            userOperation.signature = EncodeLib.encodeEnable(userOperation.signature, enableData);
-            return EncodeLib.encodeEnable(userOperation.signature, enableData);
+            // Encode based on mode
+            if (mode == SmartSessionMode.UNSAFE_ENABLE) {
+                return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+            } else {
+                return EncodeLib.encodeEnable(userOperation.signature, enableData);
+            }
         }
     }
 
