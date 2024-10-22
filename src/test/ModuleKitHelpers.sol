@@ -875,6 +875,41 @@ library ModuleKitHelpers {
         userOpData.execUserOps();
     }
 
+    function useSession(
+        AccountInstance memory instance,
+        Session memory session,
+        Execution[] memory executions
+    )
+        internal
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+
+        // Get user ops for multiple executions
+        UserOpData memory userOpData =
+            instance.getExecOps(executions, address(instance.smartSession));
+
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+
+        // Check if session is enabled and enable if not
+        if (!isSessionEnabled(instance, session)) {
+            prank(instance.account);
+            Session[] memory sessions = new Session[](1);
+            sessions[0] = session;
+            instance.smartSession.enableSessions(sessions);
+        }
+
+        // Sign user op
+        userOpData.userOp.signature = EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
+
+        // Execute user op
+        userOpData.execUserOps();
+    }
+
     function makeMultiChainEnableData(
         AccountInstance memory instance,
         PermissionId permissionId,

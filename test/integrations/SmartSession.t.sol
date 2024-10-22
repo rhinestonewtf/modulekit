@@ -24,6 +24,7 @@ import {
     Session,
     ISessionValidator
 } from "src/test/helpers/interfaces/ISmartSession.sol";
+import { Execution } from "src/external/ERC7579.sol";
 import { UserOpData, PackedUserOperation } from "src/test/RhinestoneModuleKit.sol";
 
 /// @dev Tests for smart session integration within the RhinestoneModuleKit
@@ -189,6 +190,35 @@ contract SmartSessionTest is BaseTest {
 
         // Check if the value was set
         assertTrue(target.value() == 1337);
+    }
+
+    function test_useSession_batchExecutions() public {
+        // Setup calldata to execute multiple operations
+        bytes memory callData1 = abi.encodeWithSelector(MockTarget.set.selector, (1337));
+        bytes memory callData2 = abi.encodeWithSelector(MockTarget.set.selector, (7331));
+
+        // Create executions array
+        Execution[] memory executions = new Execution[](2);
+        executions[0] = Execution({ target: address(target), value: 0, callData: callData1 });
+        executions[1] = Execution({ target: address(target), value: 0, callData: callData2 });
+
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: "mockSalt",
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
+            erc7739Policies: _getEmptyERC7739Data(
+                "mockContent", _getEmptyPolicyDatas(address(mockPolicy))
+            ),
+            actions: _getEmptyActionDatas(address(target), MockTarget.set.selector, address(mockPolicy))
+        });
+
+        // Use the session with multiple executions
+        instance.useSession(session, executions);
+
+        // Check if the second execution's value was set (since it was the last one)
+        assertEq(target.value(), 7331, "Target value should be set to last execution value");
     }
 
     function test_encodeSignatureEnableMode() public {
