@@ -9,10 +9,12 @@ pragma solidity ^0.8.23;
 import { MockRegistry } from "module-bases/mocks/MockRegistry.sol";
 import { MockTarget } from "module-bases/mocks/MockTarget.sol";
 import { MockHookMultiPlexer } from "module-bases/mocks/MockHookMultiPlexer.sol";
+import { MockPolicy } from "module-bases/mocks/MockPolicy.sol";
 
 /*//////////////////////////////////////////////////////////////
                              Modules
 //////////////////////////////////////////////////////////////*/
+
 import { MockValidator } from "module-bases/mocks/MockValidator.sol";
 import { MockExecutor } from "module-bases/mocks/MockExecutor.sol";
 import { MockHook } from "module-bases/mocks/MockHook.sol";

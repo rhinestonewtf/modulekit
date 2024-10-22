@@ -14,6 +14,8 @@ import { KernelHelpers } from "./helpers/KernelHelpers.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
+import { SMARTSESSION_ADDR } from "./precompiles/SmartSessions.sol";
+import { ISmartSession, ISessionValidator } from "src/test/helpers/interfaces/ISmartSession.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
 import { MockValidator } from "../Mocks.sol";
 import {
@@ -44,6 +46,8 @@ struct AccountInstance {
     bytes32 salt;
     bytes initCode;
     address accountFactory;
+    ISmartSession smartSession;
+    ISessionValidator defaultSessionValidator;
 }
 
 struct UserOpData {
@@ -70,6 +74,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     MockValidator public _defaultValidator;
+    MockValidator public _defaultSessionValidator;
     bool public isInit;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -111,7 +116,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             account: account,
             initCode: initCode,
             validator: address(_defaultValidator),
-            accountFactory: address(accountFactory)
+            accountFactory: address(accountFactory),
+            sessionValidator: address(_defaultSessionValidator)
         });
     }
 
@@ -160,7 +166,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             account: account,
             initCode: initCode,
             validator: address(_defaultValidator),
-            accountFactory: _factory
+            accountFactory: _factory,
+            sessionValidator: address(_defaultSessionValidator)
         });
 
         ModuleKitHelpers.setAccountType(AccountType.CUSTOM);
@@ -171,7 +178,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         address account,
         bytes memory initCode,
         address helper,
-        address defaultValidator
+        address defaultValidator,
+        address defaultSessionValidator
     )
         internal
         initializeModuleKit
@@ -194,7 +202,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             account: account,
             initCode: initCode,
             validator: defaultValidator,
-            accountFactory: _factory
+            accountFactory: _factory,
+            sessionValidator: defaultSessionValidator
         });
         ModuleKitHelpers.setAccountType(AccountType.CUSTOM);
     }
@@ -277,11 +286,17 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         // Set env
         ModuleKitHelpers.setAccountEnv(_env);
 
+        // Set factory
         IAccountFactory accountFactory = IAccountFactory(getFactory(_env));
         label(address(accountFactory), "AccountFactory");
 
+        // Set default validator
         _defaultValidator = new MockValidator();
         label(address(_defaultValidator), "DefaultValidator");
+
+        // Set session validator
+        _defaultSessionValidator = new MockValidator();
+        label(address(_defaultSessionValidator), "SessionValidator");
     }
 
     function _makeAccountInstance(
@@ -290,6 +305,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         bytes memory initCode,
         address accountFactory,
         address validator,
+        address sessionValidator,
         AccountType accountType,
         address helper
     )
@@ -305,7 +321,9 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             salt: salt,
             defaultValidator: IERC7579Validator(validator),
             initCode: initCode,
-            accountFactory: accountFactory
+            accountFactory: accountFactory,
+            smartSession: ISmartSession(SMARTSESSION_ADDR),
+            defaultSessionValidator: ISessionValidator(sessionValidator)
         });
     }
 }
