@@ -80,6 +80,18 @@ library EncodeLib {
         );
     }
 
+    function encodeEnable(
+        bytes memory sig,
+        EnableSession memory enableData
+    )
+        internal
+        pure
+        returns (bytes memory packedSig)
+    {
+        packedSig =
+            abi.encodePacked(SmartSessionMode.ENABLE, abi.encode(enableData, sig).flzCompress());
+    }
+
     function decodeEnable(bytes calldata packedSig)
         internal
         pure

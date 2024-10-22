@@ -277,6 +277,62 @@ contract SmartSessionTest is BaseTest {
         userOpData.execUserOps();
     }
 
+    function test_encodeSignatureUnsafeEnableMode() public {
+        // Deploy MockK1Validator
+        MockK1Validator mockK1Validator = new MockK1Validator();
+
+        // Make an owner
+        owner = makeAccount("owner");
+
+        // Install validator
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(mockK1Validator),
+            data: abi.encodePacked(owner.addr)
+        });
+
+        // Install smart session
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: address(auxiliary.smartSession),
+            data: ""
+        });
+
+        // Setup calldata to execute
+        bytes memory callData = abi.encodeWithSelector(MockTarget.set.selector, (1337));
+
+        // Get exec user ops
+        UserOpData memory userOpData = instance.getExecOps({
+            target: address(target),
+            value: 0,
+            callData: callData,
+            txValidator: address(instance.defaultValidator)
+        });
+
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: "mockSalt",
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
+            erc7739Policies: _getEmptyERC7739Data(
+                "mockContent", _getEmptyPolicyDatas(address(mockPolicy))
+            ),
+            actions: _getEmptyActionDatas(address(target), MockTarget.set.selector, address(mockPolicy))
+        });
+
+        // Get enable mode signature
+        bytes memory signature = instance.encodeSignatureUnsafeEnableMode(
+            userOpData.userOp, session, _signWithOwner, address(mockK1Validator)
+        );
+
+        // Update the user op signature
+        userOpData.userOp.signature = signature;
+
+        // Execute user ops
+        userOpData.execUserOps();
+    }
+
     /*//////////////////////////////////////////////////////////////
                                 HELPERS
     //////////////////////////////////////////////////////////////*/

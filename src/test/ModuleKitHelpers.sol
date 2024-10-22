@@ -771,7 +771,7 @@ library ModuleKitHelpers {
         // Encode based on mode
         if (mode == SmartSessionMode.USE) {
             return EncodeLib.encodeUse(permissionId, userOperation.signature);
-        } else {
+        } else if (mode == SmartSessionMode.UNSAFE_ENABLE) {
             // Create enable session data
             EnableSession memory enableData =
                 makeMultiChainEnableData(instance, permissionId, session, mode);
@@ -783,6 +783,17 @@ library ModuleKitHelpers {
             userOperation.signature =
                 EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
             return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+        } else {
+            // Create enable session data
+            EnableSession memory enableData =
+                makeMultiChainEnableData(instance, permissionId, session, mode);
+            // Get the hash
+            bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
+            // Sign the enable hash
+            enableData.permissionEnableSig = abi.encodePacked(validator, signFunction(hash));
+            // Sign user op
+            userOperation.signature = EncodeLib.encodeEnable(userOperation.signature, enableData);
+            return EncodeLib.encodeEnable(userOperation.signature, enableData);
         }
     }
 
@@ -804,6 +815,21 @@ library ModuleKitHelpers {
     }
 
     function encodeSignatureEnableMode(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        Session memory session,
+        function (bytes32) internal returns (bytes memory) signFunction,
+        address validator
+    )
+        internal
+        returns (bytes memory)
+    {
+        return instance.encodeSignature(
+            userOperation, SmartSessionMode.ENABLE, session, signFunction, validator
+        );
+    }
+
+    function encodeSignatureUnsafeEnableMode(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
         Session memory session,
