@@ -54,7 +54,6 @@ library ModuleKitHelpers {
 
     error InvalidAccountType();
     error SmartSessionNotInstalled();
-    error InvalidContextLength();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     LIBRARIES
