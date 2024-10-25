@@ -37,6 +37,8 @@ contract NexusFactory is IAccountFactory {
         override
         returns (address account)
     {
+        // Note: signature in nexus account factory is below
+        // function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable)
         account = factory.createAccount(initCode, salt);
     }
 
