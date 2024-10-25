@@ -22,9 +22,7 @@ interface ISwapRouter is IUniswapV3SwapCallback {
     /// @param params The parameters necessary for the swap, encoded as `ExactInputSingleParams` in
     /// calldata
     /// @return amountOut The amount of the received token
-    function exactInputSingle(
-        ExactInputSingleParams calldata params
-    )
+    function exactInputSingle(ExactInputSingleParams calldata params)
         external
         payable
         returns (uint256 amountOut);
@@ -42,9 +40,7 @@ interface ISwapRouter is IUniswapV3SwapCallback {
     /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams`
     /// in calldata
     /// @return amountOut The amount of the received token
-    function exactInput(
-        ExactInputParams calldata params
-    )
+    function exactInput(ExactInputParams calldata params)
         external
         payable
         returns (uint256 amountOut);
@@ -64,9 +60,7 @@ interface ISwapRouter is IUniswapV3SwapCallback {
     /// @param params The parameters necessary for the swap, encoded as `ExactOutputSingleParams` in
     /// calldata
     /// @return amountIn The amount of the input token
-    function exactOutputSingle(
-        ExactOutputSingleParams calldata params
-    )
+    function exactOutputSingle(ExactOutputSingleParams calldata params)
         external
         payable
         returns (uint256 amountIn);
@@ -84,9 +78,7 @@ interface ISwapRouter is IUniswapV3SwapCallback {
     /// @param params The parameters necessary for the multi-hop swap, encoded as
     /// `ExactOutputParams` in calldata
     /// @return amountIn The amount of the input token
-    function exactOutput(
-        ExactOutputParams calldata params
-    )
+    function exactOutput(ExactOutputParams calldata params)
         external
         payable
         returns (uint256 amountIn);

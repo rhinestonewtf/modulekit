@@ -13,9 +13,7 @@ contract MockUniswap is ISwapRouter {
         override
     { }
 
-    function exactInputSingle(
-        ExactInputSingleParams calldata params
-    )
+    function exactInputSingle(ExactInputSingleParams calldata params)
         external
         payable
         override
@@ -24,9 +22,7 @@ contract MockUniswap is ISwapRouter {
         return params.amountIn;
     }
 
-    function exactInput(
-        ExactInputParams calldata params
-    )
+    function exactInput(ExactInputParams calldata params)
         external
         payable
         override
@@ -35,9 +31,7 @@ contract MockUniswap is ISwapRouter {
         return params.amountIn;
     }
 
-    function exactOutputSingle(
-        ExactOutputSingleParams calldata params
-    )
+    function exactOutputSingle(ExactOutputSingleParams calldata params)
         external
         payable
         override
@@ -46,9 +40,7 @@ contract MockUniswap is ISwapRouter {
         return params.amountOut;
     }
 
-    function exactOutput(
-        ExactOutputParams calldata params
-    )
+    function exactOutput(ExactOutputParams calldata params)
         external
         payable
         override

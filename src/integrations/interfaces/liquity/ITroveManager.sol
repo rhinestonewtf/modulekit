@@ -77,9 +77,7 @@ interface ITroveManager {
 
     function hasPendingRewards(address _borrower) external view returns (bool);
 
-    function getEntireDebtAndColl(
-        address _borrower
-    )
+    function getEntireDebtAndColl(address _borrower)
         external
         view
         returns (

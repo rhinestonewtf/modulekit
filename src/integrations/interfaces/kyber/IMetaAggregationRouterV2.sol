@@ -28,9 +28,7 @@ interface IMetaAggregationRouterV2 {
         bytes clientData;
     }
 
-    function swap(
-        SwapExecutionParams calldata execution
-    )
+    function swap(SwapExecutionParams calldata execution)
         external
         payable
         returns (uint256, uint256);

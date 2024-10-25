@@ -11,9 +11,11 @@ import {
     KERNEL,
     CUSTOM
 } from "./RhinestoneModuleKit.sol";
+import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { Execution } from "../external/ERC7579.sol";
+import { prank } from "src/test/utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
     writeAccountType,
@@ -29,6 +31,20 @@ import {
     removeInstalledModule as removeInstalledModuleFromStorage,
     InstalledModule
 } from "./utils/Storage.sol";
+import {
+    Session,
+    PermissionId,
+    ActionData,
+    PolicyData,
+    ERC7739Data,
+    ISessionValidator,
+    SmartSessionMode,
+    ISmartSession,
+    EnableSession,
+    ChainDigest
+} from "src/test/helpers/interfaces/ISmartSession.sol";
+import { EncodeLib, HashLib } from "src/test/helpers/SmartSessionHelpers.sol";
+import { Solarray } from "solarray/Solarray.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 
 library ModuleKitHelpers {
@@ -37,6 +53,8 @@ library ModuleKitHelpers {
     //////////////////////////////////////////////////////////////////////////*/
 
     error InvalidAccountType();
+    error InvalidContextLength();
+    error SmartSessionNotInstalled();
 
     /*//////////////////////////////////////////////////////////////////////////
                                     LIBRARIES
@@ -172,7 +190,8 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
+        return instance.account.code.length > 0
+            && HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
     }
 
     function isModuleInstalled(
@@ -265,9 +284,7 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
-    function getInstalledModules(
-        AccountInstance memory instance
-    )
+    function getInstalledModules(AccountInstance memory instance)
         internal
         view
         returns (InstalledModule[] memory)
@@ -357,9 +374,7 @@ library ModuleKitHelpers {
         }
     }
 
-    function toAccountType(
-        string memory _accountType
-    )
+    function toAccountType(string memory _accountType)
         internal
         pure
         returns (AccountType accountType)
@@ -438,9 +453,7 @@ library ModuleKitHelpers {
         }
     }
 
-    function getAccountType(
-        AccountInstance memory
-    )
+    function getAccountType(AccountInstance memory)
         internal
         view
         returns (AccountType accountType)
@@ -483,9 +496,7 @@ library ModuleKitHelpers {
         }
     }
 
-    function getAccountEnv(
-        AccountInstance memory
-    )
+    function getAccountEnv(AccountInstance memory)
         internal
         view
         returns (AccountType env, address, address)
@@ -507,6 +518,13 @@ library ModuleKitHelpers {
         } else {
             revert InvalidAccountType();
         }
+    }
+
+    modifier withAccountDeployed(AccountInstance memory instance) {
+        if (instance.account.code.length == 0) {
+            deployAccount(instance);
+        }
+        _;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -563,5 +581,395 @@ library ModuleKitHelpers {
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
         userOpData.userOp.signature = "DEFAULT SIGNATURE";
         return userOpData;
+    }
+
+    function ecdsaSignDefault(bytes32 hash) internal pure returns (bytes memory) {
+        (uint8 v, bytes32 r, bytes32 s) = (27, hash, hash);
+        return abi.encodePacked(r, s, v);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                             SMART SESSIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @dev Makes sure the smart sessions module is installed
+    modifier withSmartSessionsInstalled(AccountInstance memory instance) {
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            revert SmartSessionNotInstalled();
+        }
+        _;
+    }
+
+    /// @dev Adds a session to the account
+    function addSession(
+        AccountInstance memory instance,
+        Session memory session
+    )
+        internal
+        withAccountDeployed(instance)
+        returns (PermissionId[] memory permissionIds)
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+        // Enable session
+        Session[] memory sessions = new Session[](1);
+        sessions[0] = session;
+        prank(instance.account);
+        permissionIds = instance.smartSession.enableSessions(sessions);
+    }
+
+    /// @dev Adds a session to the account with the default validator
+    function addSession(
+        AccountInstance memory instance,
+        bytes32 salt,
+        PolicyData[] memory userOpPolicies,
+        ERC7739Data memory erc7739Policy,
+        ActionData[] memory actionDatas
+    )
+        internal
+        withAccountDeployed(instance)
+        returns (PermissionId[] memory permissionIds)
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+        // Setup session data
+        Session memory session = Session({
+            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
+            salt: salt,
+            sessionValidatorInitData: "mockInitData",
+            userOpPolicies: userOpPolicies,
+            erc7739Policies: erc7739Policy,
+            actions: actionDatas
+        });
+        // Enable session
+        return instance.addSession(session);
+    }
+
+    function removeSession(
+        AccountInstance memory instance,
+        PermissionId permissionId
+    )
+        internal
+        withAccountDeployed(instance)
+        withSmartSessionsInstalled(instance)
+    {
+        // Remove session
+        prank(instance.account);
+        instance.smartSession.removeSession(permissionId);
+    }
+
+    function isPermissionEnabled(
+        AccountInstance memory instance,
+        PermissionId permissionId
+    )
+        internal
+        withAccountDeployed(instance)
+        withSmartSessionsInstalled(instance)
+        returns (bool)
+    {
+        // Check if session is enabled
+        return instance.smartSession.isPermissionEnabled(permissionId, instance.account);
+    }
+
+    function getPermissionId(
+        AccountInstance memory instance,
+        Session memory session
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (PermissionId permissionId)
+    {
+        // Check if smart sessions module is installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            revert SmartSessionNotInstalled();
+        }
+        return instance.smartSession.getPermissionId(session);
+    }
+
+    function getSessionDigest(
+        AccountInstance memory instance,
+        Session memory session,
+        SmartSessionMode mode
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (bytes32)
+    {
+        return instance.smartSession.getSessionDigest(
+            getPermissionId(instance, session), instance.account, session, mode
+        );
+    }
+
+    function getSessionNonce(
+        AccountInstance memory instance,
+        PermissionId permissionId
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (uint256)
+    {
+        return instance.smartSession.getNonce(permissionId, instance.account);
+    }
+
+    /// @dev Encodes a signature for a user operation using the correct format
+    /// @param instance AccountInstance
+    /// @param userOperation PackedUserOperation
+    /// @param context bytes, a bytes array with the following format:
+    ///     [0-24] : nonce key
+    ///     [24-56] : execution mode
+    ///     [56-88] : permissionId
+    ///     [88]: abi.encode(EnableSession)
+    function encodeSignature(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        bytes calldata context
+    )
+        internal
+        returns (bytes memory)
+    {
+        // Parse context
+        PermissionId permissionId = abi.decode(context[:32], (PermissionId));
+        EnableSession memory enableData = abi.decode(context[88:], (EnableSession));
+        Session memory session = enableData.sessionToEnable;
+
+        // Encode based on length
+        if (context.length < 88) {
+            revert InvalidContextLength();
+        } else if (context.length == 88) {
+            // Encode signature
+            return EncodeLib.encodeUse(permissionId, userOperation.signature);
+        } else {
+            // Use encodeUse or encodeUnsafeEnable if policies are enabled
+            if (!instance.isSessionEnabled(session)) {
+                return EncodeLib.encodeUse(permissionId, userOperation.signature);
+            } else {
+                return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+            }
+        }
+    }
+
+    /// @dev Encodes the signature for a user operation using the correct format
+    function encodeSignature(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        SmartSessionMode mode,
+        Session memory session,
+        function (bytes32) internal returns (bytes memory) signFunction,
+        address validator
+    )
+        internal
+        returns (bytes memory)
+    {
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+        // Encode based on mode
+        if (mode == SmartSessionMode.USE) {
+            return EncodeLib.encodeUse(permissionId, userOperation.signature);
+        } else {
+            // Create enable session data
+            EnableSession memory enableData =
+                makeMultiChainEnableData(instance, permissionId, session, mode);
+            // Get the hash
+            bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
+            // Sign the enable hash
+            enableData.permissionEnableSig = abi.encodePacked(validator, signFunction(hash));
+            // Encode based on mode
+            if (mode == SmartSessionMode.UNSAFE_ENABLE) {
+                return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
+            } else {
+                return EncodeLib.encodeEnable(userOperation.signature, enableData);
+            }
+        }
+    }
+
+    function encodeSignatureUseMode(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        Session memory session
+    )
+        internal
+        returns (bytes memory)
+    {
+        return instance.encodeSignature(
+            userOperation,
+            SmartSessionMode.USE,
+            session,
+            ecdsaSignDefault, // Irrelevant in use mode
+            address(0) // Irrelevant in use mode
+        );
+    }
+
+    function encodeSignatureEnableMode(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        Session memory session,
+        function (bytes32) internal returns (bytes memory) signFunction,
+        address validator
+    )
+        internal
+        returns (bytes memory)
+    {
+        return instance.encodeSignature(
+            userOperation, SmartSessionMode.ENABLE, session, signFunction, validator
+        );
+    }
+
+    function encodeSignatureUnsafeEnableMode(
+        AccountInstance memory instance,
+        PackedUserOperation memory userOperation,
+        Session memory session,
+        function (bytes32) internal returns (bytes memory) signFunction,
+        address validator
+    )
+        internal
+        returns (bytes memory)
+    {
+        return instance.encodeSignature(
+            userOperation, SmartSessionMode.UNSAFE_ENABLE, session, signFunction, validator
+        );
+    }
+
+    function isSessionEnabled(
+        AccountInstance memory instance,
+        Session memory session
+    )
+        internal
+        withSmartSessionsInstalled(instance)
+        returns (bool)
+    {
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+        return instance.smartSession.isISessionValidatorSet(permissionId, instance.account)
+            && instance.smartSession.areUserOpPoliciesEnabled(
+                instance.account, permissionId, session.userOpPolicies
+            )
+            && instance.smartSession.areActionsEnabled(instance.account, permissionId, session.actions)
+            && instance.smartSession.areERC1271PoliciesEnabled(
+                instance.account, permissionId, session.erc7739Policies.erc1271Policies
+            );
+    }
+
+    function useSession(
+        AccountInstance memory instance,
+        Session memory session,
+        address target,
+        uint256 value,
+        bytes memory callData
+    )
+        internal
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+
+        // Get user ops
+        UserOpData memory userOpData =
+            instance.getExecOps(target, value, callData, address(instance.smartSession));
+
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+
+        // Check if session is enabled and enable if not
+        if (!isSessionEnabled(instance, session)) {
+            prank(instance.account);
+            Session[] memory sessions = new Session[](1);
+            sessions[0] = session;
+            instance.smartSession.enableSessions(sessions);
+        }
+
+        // Sign user op
+        userOpData.userOp.signature = EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
+
+        // Execute user op
+        userOpData.execUserOps();
+    }
+
+    function useSession(
+        AccountInstance memory instance,
+        Session memory session,
+        Execution[] memory executions
+    )
+        internal
+    {
+        // Check if smart sessions module is already installed
+        if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
+            // Install smart sessions module
+            instance.installModule(1, address(instance.smartSession), "");
+        }
+
+        // Get user ops for multiple executions
+        UserOpData memory userOpData =
+            instance.getExecOps(executions, address(instance.smartSession));
+
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+
+        // Check if session is enabled and enable if not
+        if (!isSessionEnabled(instance, session)) {
+            prank(instance.account);
+            Session[] memory sessions = new Session[](1);
+            sessions[0] = session;
+            instance.smartSession.enableSessions(sessions);
+        }
+
+        // Sign user op
+        userOpData.userOp.signature = EncodeLib.encodeUse(permissionId, userOpData.userOp.signature);
+
+        // Execute user op
+        userOpData.execUserOps();
+    }
+
+    function makeMultiChainEnableData(
+        AccountInstance memory instance,
+        PermissionId permissionId,
+        Session memory session,
+        SmartSessionMode mode
+    )
+        internal
+        view
+        returns (EnableSession memory enableData)
+    {
+        bytes32 sessionDigest = instance.smartSession.getSessionDigest({
+            permissionId: permissionId,
+            account: instance.account,
+            data: session,
+            mode: mode
+        });
+
+        ChainDigest[] memory chainDigests = ModuleKitHelpers.encodeHashesAndChainIds(
+            Solarray.uint64s(181_818, uint64(block.chainid), 777),
+            Solarray.bytes32s(sessionDigest, sessionDigest, sessionDigest)
+        );
+
+        enableData = EnableSession({
+            chainDigestIndex: 1,
+            hashesAndChainIds: chainDigests,
+            sessionToEnable: session,
+            permissionEnableSig: ""
+        });
+    }
+
+    function encodeHashesAndChainIds(
+        uint64[] memory chainIds,
+        bytes32[] memory hashes
+    )
+        internal
+        pure
+        returns (ChainDigest[] memory)
+    {
+        uint256 length = chainIds.length;
+        ChainDigest[] memory hashesAndChainIds = new ChainDigest[](length);
+        for (uint256 i; i < length; i++) {
+            hashesAndChainIds[i] = ChainDigest({ chainId: chainIds[i], sessionDigest: hashes[i] });
+        }
+        return hashesAndChainIds;
     }
 }

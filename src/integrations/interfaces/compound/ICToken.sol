@@ -63,9 +63,7 @@ abstract contract ICToken is IERC20 {
 
     function underlying() external virtual returns (address);
 
-    function getAccountSnapshot(
-        address account
-    )
+    function getAccountSnapshot(address account)
         external
         view
         virtual

@@ -43,4 +43,17 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
     function isInitialized(address smartAccount) external pure returns (bool) {
         return false;
     }
+
+    function validateSignatureWithData(
+        bytes32,
+        bytes calldata,
+        bytes calldata
+    )
+        external
+        view
+        override
+        returns (bool validSig)
+    {
+        return false;
+    }
 }
