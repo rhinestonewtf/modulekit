@@ -607,7 +607,7 @@ library ModuleKitHelpers {
     )
         internal
         withAccountDeployed(instance)
-        returns (PermissionId[] memory permissionIds)
+        returns (PermissionId permissionIds)
     {
         // Check if smart sessions module is already installed
         if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
@@ -618,7 +618,7 @@ library ModuleKitHelpers {
         Session[] memory sessions = new Session[](1);
         sessions[0] = session;
         prank(instance.account);
-        permissionIds = instance.smartSession.enableSessions(sessions);
+        permissionIds = instance.smartSession.enableSessions(sessions)[0];
     }
 
     /// @dev Adds a session to the account with the default validator
@@ -631,7 +631,7 @@ library ModuleKitHelpers {
     )
         internal
         withAccountDeployed(instance)
-        returns (PermissionId[] memory permissionIds)
+        returns (PermissionId permissionIds)
     {
         // Check if smart sessions module is already installed
         if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
@@ -718,39 +718,22 @@ library ModuleKitHelpers {
     }
 
     /// @dev Encodes a signature for a user operation using the correct format
-    /// @param instance AccountInstance
-    /// @param userOperation PackedUserOperation
-    /// @param context bytes, a bytes array with the following format:
-    ///     [0-24] : nonce key
-    ///     [24-56] : execution mode
-    ///     [56-88] : permissionId
-    ///     [88]: abi.encode(EnableSession)
     function encodeSignature(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
-        bytes calldata context
+        SmartSessionMode mode,
+        Session memory session
     )
         internal
         returns (bytes memory)
     {
-        // Parse context
-        PermissionId permissionId = abi.decode(context[:32], (PermissionId));
-        EnableSession memory enableData = abi.decode(context[88:], (EnableSession));
-        Session memory session = enableData.sessionToEnable;
-
-        // Encode based on length
-        if (context.length < 88) {
-            revert InvalidContextLength();
-        } else if (context.length == 88) {
-            // Encode signature
+        // Get permission id
+        PermissionId permissionId = getPermissionId(instance, session);
+        // Encode based on mode
+        if (mode == SmartSessionMode.USE) {
             return EncodeLib.encodeUse(permissionId, userOperation.signature);
         } else {
-            // Use encodeUse or encodeUnsafeEnable if policies are enabled
-            if (!instance.isSessionEnabled(session)) {
-                return EncodeLib.encodeUse(permissionId, userOperation.signature);
-            } else {
-                return EncodeLib.encodeUnsafeEnable(userOperation.signature, enableData);
-            }
+            revert("Missing signFunction and validator params");
         }
     }
 
@@ -773,8 +756,7 @@ library ModuleKitHelpers {
             return EncodeLib.encodeUse(permissionId, userOperation.signature);
         } else {
             // Create enable session data
-            EnableSession memory enableData =
-                makeMultiChainEnableData(instance, permissionId, session, mode);
+            EnableSession memory enableData = makeMultiChainEnableData(instance, session, mode);
             // Get the hash
             bytes32 hash = HashLib.multichainDigest(enableData.hashesAndChainIds);
             // Sign the enable hash
@@ -929,14 +911,13 @@ library ModuleKitHelpers {
 
     function makeMultiChainEnableData(
         AccountInstance memory instance,
-        PermissionId permissionId,
         Session memory session,
         SmartSessionMode mode
     )
         internal
-        view
         returns (EnableSession memory enableData)
     {
+        PermissionId permissionId = instance.getPermissionId(session);
         bytes32 sessionDigest = instance.smartSession.getSessionDigest({
             permissionId: permissionId,
             account: instance.account,

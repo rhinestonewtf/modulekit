@@ -91,7 +91,7 @@ contract SmartSessionTest is BaseTest {
 
     function test_addSession() public {
         // Add a session
-        PermissionId[] memory permissionIds = instance.addSession({
+        PermissionId permissionIds = instance.addSession({
             salt: bytes32("salt1"),
             userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
             erc7739Policy: _getEmptyERC7739Data(
@@ -102,7 +102,7 @@ contract SmartSessionTest is BaseTest {
             )
         });
         // Check if the session is enabled
-        assertTrue(instance.isPermissionEnabled(permissionIds[0]));
+        assertTrue(instance.isPermissionEnabled(permissionIds));
     }
 
     function test_addSession_preInstalled() public {
@@ -113,7 +113,7 @@ contract SmartSessionTest is BaseTest {
             data: ""
         });
         // Add a session
-        PermissionId[] memory permissionIds = instance.addSession({
+        PermissionId permissionIds = instance.addSession({
             salt: bytes32("salt1"),
             userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
             erc7739Policy: _getEmptyERC7739Data(
@@ -124,12 +124,12 @@ contract SmartSessionTest is BaseTest {
             )
         });
         // Check if the session is enabled
-        assertTrue(instance.isPermissionEnabled(permissionIds[0]));
+        assertTrue(instance.isPermissionEnabled(permissionIds));
     }
 
     function test_removeSession() public {
         // Add a session
-        PermissionId[] memory permissionIds = instance.addSession({
+        PermissionId permissionIds = instance.addSession({
             salt: bytes32("salt1"),
             userOpPolicies: _getEmptyPolicyDatas(address(mockPolicy)),
             erc7739Policy: _getEmptyERC7739Data(
@@ -140,11 +140,11 @@ contract SmartSessionTest is BaseTest {
             )
         });
         // Check if the session is enabled
-        assertTrue(instance.isPermissionEnabled(permissionIds[0]));
+        assertTrue(instance.isPermissionEnabled(permissionIds));
         // Remove the session
-        instance.removeSession(permissionIds[0]);
+        instance.removeSession(permissionIds);
         // Check if the session is disabled
-        assertFalse(instance.isPermissionEnabled(permissionIds[0]));
+        assertFalse(instance.isPermissionEnabled(permissionIds));
     }
 
     function test_getPermissionId() public {
@@ -161,12 +161,12 @@ contract SmartSessionTest is BaseTest {
         });
 
         // Add a session
-        PermissionId[] memory permissionIds = instance.addSession({ session: session });
+        PermissionId permissionIds = instance.addSession({ session: session });
         // Get the permission id
         PermissionId permissionId = instance.getPermissionId(session);
 
         // Check if the permission id is correct
-        assertTrue(permissionIds[0] == permissionId);
+        assertTrue(permissionIds == permissionId);
     }
 
     function test_useSession() public {
