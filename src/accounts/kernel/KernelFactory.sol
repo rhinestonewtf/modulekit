@@ -51,4 +51,8 @@ contract KernelFactory is IAccountFactory {
             Kernel.initialize, (rootValidator, IHook(address(hookMultiPlexer)), initData, hex"00")
         );
     }
+
+    function setHookMultiPlexer(address hook) public {
+        hookMultiPlexer = MockHookMultiPlexer(hook);
+    }
 }
