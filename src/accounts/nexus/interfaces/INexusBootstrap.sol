@@ -1,12 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import { IERC7579Module } from "src/external/ERC7579.sol";
+import { IERC7484 } from "src/Interfaces.sol";
+
 struct BootstrapConfig {
     address module;
     bytes data;
 }
 
 interface INexusBootstrap {
+    /// @notice Initializes the Nexus account with a single validator.
+    /// @dev Intended to be called by the Nexus with a delegatecall.
+    /// @param validator The address of the validator module.
+    /// @param data The initialization data for the validator module.
+    function initNexusWithSingleValidator(
+        IERC7579Module validator,
+        bytes calldata data,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
+    )
+        external;
+
     /// @notice Initializes the Nexus account with multiple modules.
     /// @dev Intended to be called by the Nexus with a delegatecall.
     /// @param validators The configuration array for validator modules.
@@ -17,7 +33,10 @@ interface INexusBootstrap {
         BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks
+        BootstrapConfig[] calldata fallbacks,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
     )
         external;
 
@@ -27,7 +46,10 @@ interface INexusBootstrap {
     /// @param hook The configuration for the hook module.
     function initNexusScoped(
         BootstrapConfig[] calldata validators,
-        BootstrapConfig calldata hook
+        BootstrapConfig calldata hook,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
     )
         external;
 
@@ -41,7 +63,10 @@ interface INexusBootstrap {
         BootstrapConfig[] calldata validators,
         BootstrapConfig[] calldata executors,
         BootstrapConfig calldata hook,
-        BootstrapConfig[] calldata fallbacks
+        BootstrapConfig[] calldata fallbacks,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
     )
         external
         view
@@ -53,7 +78,10 @@ interface INexusBootstrap {
     /// @return init The prepared calldata for initNexusScoped.
     function getInitNexusScopedCalldata(
         BootstrapConfig[] calldata validators,
-        BootstrapConfig calldata hook
+        BootstrapConfig calldata hook,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
     )
         external
         view
@@ -62,7 +90,12 @@ interface INexusBootstrap {
     /// @notice Prepares calldata for the initNexusWithSingleValidator function.
     /// @param validator The configuration for the validator module.
     /// @return init The prepared calldata for initNexusWithSingleValidator.
-    function getInitNexusWithSingleValidatorCalldata(BootstrapConfig calldata validator)
+    function getInitNexusWithSingleValidatorCalldata(
+        BootstrapConfig calldata validator,
+        IERC7484 registry,
+        address[] calldata attesters,
+        uint8 threshold
+    )
         external
         view
         returns (bytes memory init);
