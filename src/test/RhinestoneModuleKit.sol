@@ -11,6 +11,7 @@ import { HelperBase } from "./helpers/HelperBase.sol";
 import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { SafeHelpers } from "./helpers/SafeHelpers.sol";
 import { KernelHelpers } from "./helpers/KernelHelpers.sol";
+import { NexusHelpers } from "./helpers/NexusHelpers.sol";
 import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
@@ -248,7 +249,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         writeHelper(address(new ERC7579Helpers()), DEFAULT);
         writeHelper(address(new SafeHelpers()), SAFE);
         writeHelper(address(new KernelHelpers()), KERNEL);
-        writeHelper(address(new ERC7579Helpers()), NEXUS);
+        writeHelper(address(new NexusHelpers()), NEXUS);
         writeHelper(address(new ERC7579Helpers()), CUSTOM);
 
         // Initialize factories
