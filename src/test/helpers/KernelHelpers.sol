@@ -458,6 +458,21 @@ contract KernelHelpers is HelperBase {
             abi.encodePacked(ValidatorLib.validatorToIdentifier(IValidator(validator)), signature);
     }
 
+    function getHookMultiPlexer(AccountInstance memory instance) public view returns (address) {
+        return address(KernelFactory(instance.accountFactory).hookMultiPlexer());
+    }
+
+    function setHookMultiPlexer(
+        AccountInstance memory instance,
+        address hookMultiPlexer
+    )
+        public
+        virtual
+        deployAccountForAction(instance)
+    {
+        KernelFactory(instance.accountFactory).setHookMultiPlexer(hookMultiPlexer);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                     INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
@@ -474,9 +489,5 @@ contract KernelHelpers is HelperBase {
         ValidationManager.ValidationConfig memory validationConfig =
             Kernel(payable(instance.account)).validationConfig(vId);
         return address(validationConfig.hook);
-    }
-
-    function getHookMultiPlexer(AccountInstance memory instance) internal view returns (address) {
-        return address(KernelFactory(instance.accountFactory).hookMultiPlexer());
     }
 }

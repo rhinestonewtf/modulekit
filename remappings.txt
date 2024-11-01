@@ -20,4 +20,3 @@ solarray/=node_modules/solarray/src/
 @prb/math/=node_modules/@prb/math/src/
 kernel/=node_modules/@zerodev/kernel/src/
 ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
-node_modules/smartsessions/contracts/:excessively-safe-call/=node_modules/excessively-safe-call/src/

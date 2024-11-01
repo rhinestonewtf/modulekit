@@ -14,7 +14,7 @@ import {
 import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
-import { Execution } from "../external/ERC7579.sol";
+import { Execution, MODULE_TYPE_HOOK } from "../external/ERC7579.sol";
 import { prank } from "src/test/utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
@@ -46,6 +46,7 @@ import {
 import { EncodeLib, HashLib } from "src/test/helpers/SmartSessionHelpers.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
+import { KernelHelpers } from "./helpers/KernelHelpers.sol";
 
 library ModuleKitHelpers {
     /*//////////////////////////////////////////////////////////////////////////
@@ -837,6 +838,27 @@ library ModuleKitHelpers {
             );
     }
 
+    /// @dev Kernel requires us to temporarily disable the hook multiplexer to use smart sessions
+    modifier withHookFixForKernel(AccountInstance memory instance) {
+        // Check if account is KERNEL
+        if (instance.accountType == AccountType.KERNEL) {
+            // Cache hook multiplexer
+            address hookMultiplexer =
+                KernelHelpers(instance.accountHelper).getHookMultiPlexer(instance);
+            // Uninstall MockHookMultiplexer
+            instance.uninstallModule(MODULE_TYPE_HOOK, hookMultiplexer, "");
+            // Set hook multiplexer to address(1)
+            KernelHelpers(instance.accountHelper).setHookMultiPlexer(instance, address(1));
+            _;
+            // Set hook multiplexer back to MockHookMultiplexer
+            KernelHelpers(instance.accountHelper).setHookMultiPlexer(instance, hookMultiplexer);
+            // Reinstall MockHookMultiplexer
+            instance.installModule(MODULE_TYPE_HOOK, hookMultiplexer, "");
+        } else {
+            _;
+        }
+    }
+
     function useSession(
         AccountInstance memory instance,
         Session memory session,
@@ -845,6 +867,7 @@ library ModuleKitHelpers {
         bytes memory callData
     )
         internal
+        withHookFixForKernel(instance)
     {
         // Check if smart sessions module is already installed
         if (!instance.isModuleInstalled(1, address(instance.smartSession))) {
@@ -880,6 +903,7 @@ library ModuleKitHelpers {
         Execution[] memory executions
     )
         internal
+        withHookFixForKernel(instance)
     {
         // Check if smart sessions module is already installed
         if (!instance.isModuleInstalled(1, address(instance.smartSession))) {

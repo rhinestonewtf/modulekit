@@ -8,9 +8,11 @@ import {
     INexusBootstrap,
     BootstrapConfig as NexusBootstrapConfig
 } from "src/accounts/nexus/interfaces/INexusBootstrap.sol";
+import { IERC7484 } from "src/Interfaces.sol";
 
 // Constants
 import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
+import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
 
 // Utils
 import { NexusPrecompiles } from "src/test/precompiles/NexusPrecompiles.sol";
@@ -38,7 +40,8 @@ contract NexusFactory is IAccountFactory {
         returns (address account)
     {
         // Note: signature in nexus account factory is below
-        // function createAccount(bytes calldata initData, bytes32 salt) external payable override returns (address payable)
+        // function createAccount(bytes calldata initData, bytes32 salt) external payable override
+        // returns (address payable)
         account = factory.createAccount(initCode, salt);
     }
 
@@ -65,6 +68,12 @@ contract NexusFactory is IAccountFactory {
     {
         NexusBootstrapConfig memory config =
             NexusBootstrapConfig({ module: validator, data: initData });
-        return bootstrapDefault.getInitNexusWithSingleValidatorCalldata(config);
+
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x000000333034E9f539ce08819E12c1b8Cb29084d);
+
+        return bootstrapDefault.getInitNexusWithSingleValidatorCalldata(
+            config, IERC7484(REGISTRY_ADDR), attesters, 1
+        );
     }
 }
