@@ -679,6 +679,8 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         public
         withModuleStorageClearValidation(instance, module)
     {
+        // Set simulate mode to false
+        instance.simulateUserOp(false);
         // Install a module
         module = address(new MockK1Validator());
         // Install the module
