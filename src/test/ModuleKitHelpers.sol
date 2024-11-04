@@ -353,11 +353,9 @@ library ModuleKitHelpers {
         internal
         view
     {
-        // Track all writes and clears across all accesses
-        bytes32[] memory allWrittenSlots = new bytes32[](1000);
-        bytes32[] memory allClearedSlots = new bytes32[](1000);
-        uint256 totalWritten = 0;
-        uint256 totalCleared = 0;
+        bytes32[] memory seenSlots = new bytes32[](1000);
+        bytes32[] memory finalValues = new bytes32[](1000);
+        uint256 numSlots;
 
         // Loop through account accesses
         for (uint256 i; i < accountAccesses.length; i++) {
@@ -377,31 +375,29 @@ library ModuleKitHelpers {
                         continue;
                     }
 
-                    if (access.newValue != bytes32(0)) {
-                        // Record write
-                        allWrittenSlots[totalWritten] = access.slot;
-                        totalWritten++;
-                    } else {
-                        // Record clear
-                        allClearedSlots[totalCleared] = access.slot;
-                        totalCleared++;
+                    // Find if we've seen this slot
+                    bool found;
+                    for (uint256 k; k < numSlots; k++) {
+                        if (seenSlots[k] == access.slot) {
+                            finalValues[k] = access.newValue;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // If not seen, add it
+                    if (!found) {
+                        seenSlots[numSlots] = access.slot;
+                        finalValues[numSlots] = access.newValue;
+                        numSlots++;
                     }
                 }
             }
         }
 
-        // Verify all writes were cleared
-        for (uint256 i; i < totalWritten; i++) {
-            bool wasCleared = false;
-
-            for (uint256 j; j < totalCleared; j++) {
-                if (allWrittenSlots[i] == allClearedSlots[j]) {
-                    wasCleared = true;
-                    break;
-                }
-            }
-
-            if (!wasCleared) {
+        // Check if any slot's final value is non-zero
+        for (uint256 i; i < numSlots; i++) {
+            if (finalValues[i] != bytes32(0)) {
                 revert("Storage not cleared after uninstalling module");
             }
         }
