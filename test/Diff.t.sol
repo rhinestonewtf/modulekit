@@ -15,6 +15,8 @@ import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
 import { MockValidatorFalse } from "test/mocks/MockValidatorFalse.sol";
 import { MockK1Validator, VALIDATION_SUCCESS } from "test/mocks/MockK1Validator.sol";
+import { MockK1ValidatorUncompliantUninstall } from
+    "test/mocks/MockK1ValidatorUncompliantUninstall.sol";
 import { VALIDATION_SUCCESS, VALIDATION_FAILED } from "erc7579/interfaces/IERC7579Module.sol";
 import { VmSafe } from "src/test/utils/Vm.sol";
 
@@ -654,9 +656,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Set simulate mode to false
         instance.simulateUserOp(false);
         // Install a module
-        address module = address(new MockK1Validator());
-        // Start state diff recording
-        instance.startStateDiffRecording();
+        module = address(new MockK1ValidatorUncompliantUninstall());
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: module,
@@ -667,12 +667,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             address(0xffffffffffffffffffff),
             MockK1Validator(module).smartAccountOwners(address(instance.account))
         );
-        // Stop state diff recording
-        VmSafe.AccountAccess[] memory accountAccesses = instance.stopAndReturnStateDiff();
         // Expect revert
         vm.expectRevert();
-        // Assert that the module storage was cleared
-        instance.verifyModuleStorageWasCleared(accountAccesses, module);
+        this.__revertWhen_verifyModuleStorageWasCleared_NotCleared();
+    }
+
+    function __revertWhen_verifyModuleStorageWasCleared_NotCleared() public {
+        // Uninstall
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_VALIDATOR, module: module, data: "" });
     }
 
     function test_withModuleStorageClearValidation()

@@ -20,7 +20,8 @@ import {
     VmSafe,
     startStateDiffRecording as vmStartStateDiffRecording,
     stopAndReturnStateDiff as vmStopAndReturnStateDiff,
-    getMappingKeyAndParentOf
+    getMappingKeyAndParentOf,
+    envOr
 } from "src/test/utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
@@ -146,6 +147,31 @@ library ModuleKitHelpers {
         return exec(instance, target, 0, callData);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                                 HOOKS
+    //////////////////////////////////////////////////////////////*/
+
+    function preEnvHook() internal {
+        if (envOr("COMPLIANCE", false)) {
+            if (envOr("SIMULATE", false)) {
+                revert("Compliance and simulate cannot be used together");
+            } else {
+                // Start state diff recording
+                vmStartStateDiffRecording();
+            }
+        }
+    }
+
+    function postEnvHook(AccountInstance memory instance, bytes memory data) internal {
+        if (envOr("COMPLIANCE", false)) {
+            address module = abi.decode(data, (address));
+            // Stop state diff recording and return account accesses
+            VmSafe.AccountAccess[] memory accountAccesses = vmStopAndReturnStateDiff();
+            // Check if storage was cleared
+            verifyModuleStorageWasCleared(instance, accountAccesses, module);
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
@@ -159,6 +185,8 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
+        // Run preEnvHook
+        preEnvHook();
         userOpData = instance.getInstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -187,6 +215,8 @@ library ModuleKitHelpers {
 
         // send userOp to entrypoint
         userOpData.execUserOps();
+        // Run postEnvHook
+        postEnvHook(instance, abi.encode(module));
     }
 
     function isModuleInstalled(
@@ -401,14 +431,6 @@ library ModuleKitHelpers {
                 revert("Storage not cleared after uninstalling module");
             }
         }
-    }
-
-    /// Verifies that storage was correctly cleared after uninstalling a module
-    modifier withUninstallStorageValidation(AccountInstance memory instance, address module) {
-        instance.startStateDiffRecording();
-        _;
-        VmSafe.AccountAccess[] memory accountAccess = instance.stopAndReturnStateDiff();
-        verifyModuleStorageWasCleared(instance, accountAccess, module);
     }
 
     /*//////////////////////////////////////////////////////////////////////////
