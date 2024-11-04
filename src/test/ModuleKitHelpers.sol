@@ -156,12 +156,8 @@ library ModuleKitHelpers {
 
     function preEnvHook() internal {
         if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
-            if (envOr("SIMULATE", false) || getSimulateUserOp()) {
-                revert("Compliance and simulate cannot be used together");
-            } else {
-                // Start state diff recording
-                vmStartStateDiffRecording();
-            }
+            // Start state diff recording
+            vmStartStateDiffRecording();
         }
     }
 
