@@ -186,8 +186,6 @@ contract KernelHelpers is HelperBase {
             });
         }
 
-        uint256 nonce = getNonce(instance, callData, txValidator);
-
         address execHook = getExecHook(instance, txValidator);
         if (execHook != address(0) && execHook != address(1)) {
             callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
@@ -237,7 +235,7 @@ contract KernelHelpers is HelperBase {
      */
     function getInstallValidatorData(
         AccountInstance memory instance,
-        address module,
+        address, // module
         bytes memory initData
     )
         public
@@ -257,7 +255,7 @@ contract KernelHelpers is HelperBase {
      */
     function getInstallExecutorData(
         AccountInstance memory instance,
-        address module,
+        address, // module
         bytes memory initData
     )
         public
@@ -277,7 +275,7 @@ contract KernelHelpers is HelperBase {
      */
     function getInstallFallbackData(
         AccountInstance memory instance,
-        address module,
+        address, // module
         bytes memory initData
     )
         public
@@ -300,8 +298,8 @@ contract KernelHelpers is HelperBase {
      * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
      */
     function getUninstallFallbackData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -432,7 +430,7 @@ contract KernelHelpers is HelperBase {
 
     function formatERC1271Hash(
         AccountInstance memory instance,
-        address validator,
+        address, // validator
         bytes32 hash
     )
         public
@@ -445,7 +443,7 @@ contract KernelHelpers is HelperBase {
     }
 
     function formatERC1271Signature(
-        AccountInstance memory instance,
+        AccountInstance memory, // instance
         address validator,
         bytes memory signature
     )

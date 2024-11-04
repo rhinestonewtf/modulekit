@@ -188,7 +188,7 @@ contract RegistryDeployer {
     }
 
     // <---- OTHER ---->
-    function isContract(address _addr) internal returns (bool isContract) {
+    function isContract(address _addr) internal view returns (bool _isContract) {
         uint32 size;
         assembly {
             size := extcodesize(_addr)

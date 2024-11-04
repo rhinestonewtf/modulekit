@@ -19,6 +19,7 @@ contract NexusHelpers is HelperBase {
         address txValidator
     )
         public
+        view
         override
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
@@ -52,6 +53,7 @@ contract NexusHelpers is HelperBase {
         address txValidator
     )
         public
+        view
         override
         returns (PackedUserOperation memory userOp, bytes32 userOpHash)
     {
@@ -61,31 +63,11 @@ contract NexusHelpers is HelperBase {
         }
         bytes memory callData;
         if (isInstall) {
-            initData = getInstallModuleData({
-                instance: instance,
-                moduleType: moduleType,
-                module: module,
-                initData: initData
-            });
-            callData = getInstallModuleCallData({
-                instance: instance,
-                moduleType: moduleType,
-                module: module,
-                initData: initData
-            });
+            initData = getInstallModuleData(instance, moduleType, module, initData);
+            callData = getInstallModuleCallData(instance, moduleType, module, initData);
         } else {
-            initData = getUninstallModuleData({
-                instance: instance,
-                moduleType: moduleType,
-                module: module,
-                initData: initData
-            });
-            callData = getUninstallModuleCallData({
-                instance: instance,
-                moduleType: moduleType,
-                module: module,
-                initData: initData
-            });
+            initData = getUninstallModuleData(instance, moduleType, module, initData);
+            callData = getUninstallModuleCallData(instance, moduleType, module, initData);
         }
 
         userOp = PackedUserOperation({
@@ -194,8 +176,8 @@ contract NexusHelpers is HelperBase {
      * get callData to install fallback on ERC7579 Account
      */
     function getInstallFallbackData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -213,8 +195,8 @@ contract NexusHelpers is HelperBase {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function getUninstallFallbackData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -249,7 +231,7 @@ contract NexusHelpers is HelperBase {
     }
 
     function formatERC1271Signature(
-        AccountInstance memory instance,
+        AccountInstance memory, // instance
         address validator,
         bytes memory signature
     )
