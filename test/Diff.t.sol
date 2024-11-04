@@ -30,6 +30,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     MockTarget internal mockTarget;
 
     MockERC20 internal token;
+    address module;
 
     function setUp() public override {
         super.setUp();
@@ -674,9 +675,12 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         instance.verifyModuleStorageWasCleared(accountAccesses, module);
     }
 
-    function test_withModuleStorageClearValidation() public {
+    function test_withModuleStorageClearValidation()
+        public
+        withModuleStorageClearValidation(instance, module)
+    {
         // Install a module
-        address module = address(new MockK1Validator());
+        module = address(new MockK1Validator());
         // Install the module
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
