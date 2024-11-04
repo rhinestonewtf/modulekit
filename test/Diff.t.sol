@@ -19,8 +19,6 @@ import { VALIDATION_SUCCESS, VALIDATION_FAILED } from "erc7579/interfaces/IERC75
 import { VmSafe } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
-    event LogAddress(address);
-
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
