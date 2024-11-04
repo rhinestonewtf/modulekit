@@ -13,7 +13,7 @@ import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { EIP1271_MAGIC_VALUE, IERC1271 } from "module-bases/interfaces/IERC1271.sol";
 
-contract MockK1Validator is IValidator {
+contract MockK1ValidatorUncompliantUninstall is IValidator {
     bytes4 constant ERC1271_INVALID = 0xffffffff;
     mapping(address => address) public smartAccountOwners;
 
@@ -47,9 +47,8 @@ contract MockK1Validator is IValidator {
         smartAccountOwners[msg.sender] = owner;
     }
 
-    function onUninstall(bytes calldata data) external {
+    function onUninstall(bytes calldata data) external pure {
         data;
-        delete smartAccountOwners[msg.sender];
     }
 
     function isModuleType(uint256 moduleTypeId) external pure returns (bool) {

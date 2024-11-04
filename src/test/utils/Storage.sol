@@ -81,6 +81,24 @@ function getSimulateUserOp() view returns (bool value) {
 }
 
 /*//////////////////////////////////////////////////////////////
+                        STORAGE COMPLIANCE
+//////////////////////////////////////////////////////////////*/
+
+function writeStorageCompliance(bool value) {
+    bytes32 slot = keccak256("ModuleKit.StorageCompliance");
+    assembly {
+        sstore(slot, value)
+    }
+}
+
+function getStorageCompliance() view returns (bool value) {
+    bytes32 slot = keccak256("ModuleKit.StorageCompliance");
+    assembly {
+        value := sload(slot)
+    }
+}
+
+/*//////////////////////////////////////////////////////////////
                         ACCOUNT ENV
 //////////////////////////////////////////////////////////////*/
 

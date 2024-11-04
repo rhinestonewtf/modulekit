@@ -29,6 +29,7 @@ import {
     writeHelper
 } from "./utils/Storage.sol";
 import { ModuleKitHelpers } from "./ModuleKitHelpers.sol";
+import { VmSafe } from "./utils/Vm.sol";
 
 enum AccountType {
     DEFAULT,
@@ -326,5 +327,16 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
             smartSession: ISmartSession(SMARTSESSION_ADDR),
             defaultSessionValidator: ISessionValidator(sessionValidator)
         });
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            STORAGE CLEARING
+    //////////////////////////////////////////////////////////////*/
+
+    modifier withModuleStorageClearValidation(AccountInstance memory instance, address module) {
+        instance.startStateDiffRecording();
+        _;
+        VmSafe.AccountAccess[] memory accountAccess = instance.stopAndReturnStateDiff();
+        instance.verifyModuleStorageWasCleared(accountAccess, module);
     }
 }

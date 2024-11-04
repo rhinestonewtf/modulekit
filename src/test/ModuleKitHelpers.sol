@@ -15,13 +15,23 @@ import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { Execution, MODULE_TYPE_HOOK } from "../external/ERC7579.sol";
-import { prank } from "src/test/utils/Vm.sol";
+import {
+    prank,
+    VmSafe,
+    startStateDiffRecording as vmStartStateDiffRecording,
+    stopAndReturnStateDiff as vmStopAndReturnStateDiff,
+    getMappingKeyAndParentOf,
+    envOr
+} from "src/test/utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
     writeAccountType,
     writeExpectRevert,
     writeGasIdentifier,
     writeSimulateUserOp,
+    writeStorageCompliance,
+    getStorageCompliance,
+    getSimulateUserOp,
     writeAccountEnv,
     getFactory,
     getHelper as getHelperFromStorage,
@@ -140,6 +150,27 @@ library ModuleKitHelpers {
         return exec(instance, target, 0, callData);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                                 HOOKS
+    //////////////////////////////////////////////////////////////*/
+
+    function preEnvHook() internal {
+        if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
+            // Start state diff recording
+            vmStartStateDiffRecording();
+        }
+    }
+
+    function postEnvHook(AccountInstance memory instance, bytes memory data) internal {
+        if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
+            address module = abi.decode(data, (address));
+            // Stop state diff recording and return account accesses
+            VmSafe.AccountAccess[] memory accountAccesses = vmStopAndReturnStateDiff();
+            // Check if storage was cleared
+            verifyModuleStorageWasCleared(instance, accountAccesses, module);
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
@@ -153,6 +184,8 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
+        // Run preEnvHook
+        preEnvHook();
         userOpData = instance.getInstallModuleOps(
             moduleTypeId, module, data, address(instance.defaultValidator)
         );
@@ -181,6 +214,8 @@ library ModuleKitHelpers {
 
         // send userOp to entrypoint
         userOpData.execUserOps();
+        // Run postEnvHook
+        postEnvHook(instance, abi.encode(module));
     }
 
     function isModuleInstalled(
@@ -323,6 +358,80 @@ library ModuleKitHelpers {
             }
         }
     }
+
+    /// Start recording the state diff
+    function startStateDiffRecording(AccountInstance memory) internal {
+        vmStartStateDiffRecording();
+    }
+
+    /// Stop recording the state diff and return the account accesses
+    function stopAndReturnStateDiff(AccountInstance memory)
+        internal
+        returns (VmSafe.AccountAccess[] memory)
+    {
+        return vmStopAndReturnStateDiff();
+    }
+
+    /// Verifies from an accountAccesses array that storage was correctly cleared after uninstalling
+    /// a module
+    function verifyModuleStorageWasCleared(
+        AccountInstance memory,
+        VmSafe.AccountAccess[] memory accountAccesses,
+        address module
+    )
+        internal
+        view
+    {
+        bytes32[] memory seenSlots = new bytes32[](1000);
+        bytes32[] memory finalValues = new bytes32[](1000);
+        uint256 numSlots;
+
+        // Loop through account accesses
+        for (uint256 i; i < accountAccesses.length; i++) {
+            // Skip tests
+            if (accountAccesses[i].accessor == address(this)) {
+                continue;
+            }
+
+            // If we are accessing the storage of the module check writes and clears
+            if (accountAccesses[i].account == module) {
+                // Process all storage accesses for this module
+                for (uint256 j; j < accountAccesses[i].storageAccesses.length; j++) {
+                    VmSafe.StorageAccess memory access = accountAccesses[i].storageAccesses[j];
+
+                    // Skip reads
+                    if (!access.isWrite) {
+                        continue;
+                    }
+
+                    // Find if we've seen this slot
+                    bool found;
+                    for (uint256 k; k < numSlots; k++) {
+                        if (seenSlots[k] == access.slot) {
+                            finalValues[k] = access.newValue;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // If not seen, add it
+                    if (!found) {
+                        seenSlots[numSlots] = access.slot;
+                        finalValues[numSlots] = access.newValue;
+                        numSlots++;
+                    }
+                }
+            }
+        }
+
+        // Check if any slot's final value is non-zero
+        for (uint256 i; i < numSlots; i++) {
+            if (finalValues[i] != bytes32(0)) {
+                revert("Storage not cleared after uninstalling module");
+            }
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 CONTROL FLOW
     //////////////////////////////////////////////////////////////////////////*/
@@ -353,6 +462,10 @@ library ModuleKitHelpers {
 
     function simulateUserOp(AccountInstance memory, bool value) internal {
         writeSimulateUserOp(value);
+    }
+
+    function storageCompliance(AccountInstance memory, bool value) internal {
+        writeStorageCompliance(value);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

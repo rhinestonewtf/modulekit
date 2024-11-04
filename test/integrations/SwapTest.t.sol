@@ -5,7 +5,7 @@ import "test/BaseTest.t.sol";
 import "src/ModuleKit.sol";
 import { ERC7579ExecutorBase } from "src/Modules.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
-import { UniswapV3Integration } from "../src/integrations/uniswap/v3/Uniswap.sol";
+import { UniswapV3Integration } from "src/integrations/uniswap/v3/Uniswap.sol";
 
 contract TestUniswap is BaseTest {
     using ModuleKitHelpers for AccountInstance;
