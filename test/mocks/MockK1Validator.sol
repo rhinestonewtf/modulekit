@@ -43,7 +43,8 @@ contract MockK1Validator is IValidator {
     }
 
     function onInstall(bytes calldata data) external {
-        smartAccountOwners[msg.sender] = address(bytes20(data));
+        address owner = abi.decode(data, (address));
+        smartAccountOwners[msg.sender] = owner;
     }
 
     function onUninstall(bytes calldata data) external {

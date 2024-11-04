@@ -232,7 +232,7 @@ contract SmartSessionTest is BaseTest {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(mockK1Validator),
-            data: abi.encodePacked(owner.addr)
+            data: abi.encode(owner.addr)
         });
 
         // Install smart session
@@ -288,7 +288,7 @@ contract SmartSessionTest is BaseTest {
         instance.installModule({
             moduleTypeId: MODULE_TYPE_VALIDATOR,
             module: address(mockK1Validator),
-            data: abi.encodePacked(owner.addr)
+            data: abi.encode(owner.addr)
         });
 
         // Install smart session

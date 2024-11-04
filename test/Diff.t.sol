@@ -14,8 +14,13 @@ import {
 import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
 import { MockValidatorFalse } from "test/mocks/MockValidatorFalse.sol";
+import { MockK1Validator, VALIDATION_SUCCESS } from "test/mocks/MockK1Validator.sol";
+import { VALIDATION_SUCCESS, VALIDATION_FAILED } from "erc7579/interfaces/IERC7579Module.sol";
+import { VmSafe } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
+    event LogAddress(address);
+
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
@@ -624,6 +629,64 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             assertTrue(modules[index + i].moduleAddress == expectedAddresses[i]);
             assertTrue(modules[index + i].moduleType == expectedTypes[i]);
         }
+    }
+
+    function test_verifyModuleStorageWasCleared() public {
+        // Set simulate mode to false
+        instance.simulateUserOp(false);
+        // Install a module
+        address module = address(new MockK1Validator());
+        // Start state diff recording
+        instance.startStateDiffRecording();
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: module,
+            data: abi.encode(instance.account)
+        });
+        // Uninstall the module
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_VALIDATOR, module: module, data: "" });
+        // Stop state diff recording
+        VmSafe.AccountAccess[] memory accountAccesses = instance.stopAndReturnStateDiff();
+        // Assert that the module storage was cleared
+        instance.verifyModuleStorageWasCleared(accountAccesses, module);
+    }
+
+    function test_verifyModuleStorageWasCleared_RevertsWhen_NotCleared() public {
+        // Set simulate mode to false
+        instance.simulateUserOp(false);
+        // Install a module
+        address module = address(new MockK1Validator());
+        // Start state diff recording
+        instance.startStateDiffRecording();
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: module,
+            data: abi.encode(0xffffffffffffffffffff)
+        });
+        // Assert module storage
+        assertEq(
+            address(0xffffffffffffffffffff),
+            MockK1Validator(module).smartAccountOwners(address(instance.account))
+        );
+        // Stop state diff recording
+        VmSafe.AccountAccess[] memory accountAccesses = instance.stopAndReturnStateDiff();
+        // Expect revert
+        vm.expectRevert();
+        // Assert that the module storage was cleared
+        instance.verifyModuleStorageWasCleared(accountAccesses, module);
+    }
+
+    function test_withModuleStorageClearValidation() public {
+        // Install a module
+        address module = address(new MockK1Validator());
+        // Install the module
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: module,
+            data: abi.encode(VALIDATION_FAILED)
+        });
+        // Uninstall the module
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_VALIDATOR, module: module, data: "" });
     }
 
     /*//////////////////////////////////////////////////////////////
