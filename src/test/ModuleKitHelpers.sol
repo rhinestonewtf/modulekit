@@ -29,6 +29,9 @@ import {
     writeExpectRevert,
     writeGasIdentifier,
     writeSimulateUserOp,
+    writeStorageCompliance,
+    getStorageCompliance,
+    getSimulateUserOp,
     writeAccountEnv,
     getFactory,
     getHelper as getHelperFromStorage,
@@ -152,8 +155,8 @@ library ModuleKitHelpers {
     //////////////////////////////////////////////////////////////*/
 
     function preEnvHook() internal {
-        if (envOr("COMPLIANCE", false)) {
-            if (envOr("SIMULATE", false)) {
+        if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
+            if (envOr("SIMULATE", false) || getSimulateUserOp()) {
                 revert("Compliance and simulate cannot be used together");
             } else {
                 // Start state diff recording
@@ -163,7 +166,7 @@ library ModuleKitHelpers {
     }
 
     function postEnvHook(AccountInstance memory instance, bytes memory data) internal {
-        if (envOr("COMPLIANCE", false)) {
+        if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
             address module = abi.decode(data, (address));
             // Stop state diff recording and return account accesses
             VmSafe.AccountAccess[] memory accountAccesses = vmStopAndReturnStateDiff();
@@ -463,6 +466,10 @@ library ModuleKitHelpers {
 
     function simulateUserOp(AccountInstance memory, bool value) internal {
         writeSimulateUserOp(value);
+    }
+
+    function storageCompliance(AccountInstance memory, bool value) internal {
+        writeStorageCompliance(value);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

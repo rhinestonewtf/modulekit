@@ -652,9 +652,14 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         instance.verifyModuleStorageWasCleared(accountAccesses, module);
     }
 
-    function test_verifyModuleStorageWasCleared_RevertsWhen_NotCleared() public {
+    function test_verifyModuleStorageWasCleared_RevertsWhen_NotCleared_UsingComplianceFlag()
+        public
+    {
         // Set simulate mode to false
         instance.simulateUserOp(false);
+        // Set compliance flag
+        instance.storageCompliance(true);
+
         // Install a module
         module = address(new MockK1ValidatorUncompliantUninstall());
         instance.installModule({
@@ -670,6 +675,33 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Expect revert
         vm.expectRevert();
         this.__revertWhen_verifyModuleStorageWasCleared_NotCleared();
+    }
+
+    function test_verifyModuleStorageWasCleared_RevertsWhen_NotCleared() public {
+        // Set simulate mode to false
+        instance.simulateUserOp(false);
+        // Install a module
+        module = address(new MockK1ValidatorUncompliantUninstall());
+        // Start state diff recording
+        instance.startStateDiffRecording();
+        instance.installModule({
+            moduleTypeId: MODULE_TYPE_VALIDATOR,
+            module: module,
+            data: abi.encode(0xffffffffffffffffffff)
+        });
+        // Assert module storage
+        assertEq(
+            address(0xffffffffffffffffffff),
+            MockK1Validator(module).smartAccountOwners(address(instance.account))
+        );
+        // Uninstall the module
+        instance.uninstallModule({ moduleTypeId: MODULE_TYPE_VALIDATOR, module: module, data: "" });
+        // Stop state diff recording
+        VmSafe.AccountAccess[] memory accountAccesses = instance.stopAndReturnStateDiff();
+        // Expect revert
+        vm.expectRevert();
+        // Assert that the module storage was cleared
+        instance.verifyModuleStorageWasCleared(accountAccesses, module);
     }
 
     function __revertWhen_verifyModuleStorageWasCleared_NotCleared() public {
