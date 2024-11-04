@@ -11,8 +11,8 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
     function onUninstall(bytes calldata data) external virtual override { }
 
     function validateUserOp(
-        PackedUserOperation calldata userOp,
-        bytes32 userOpHash
+        PackedUserOperation calldata, // userOp
+        bytes32 // userOpHash
     )
         external
         virtual
@@ -23,9 +23,9 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
     }
 
     function isValidSignatureWithSender(
-        address sender,
-        bytes32 hash,
-        bytes calldata data
+        address, // sender
+        bytes32, // hash
+        bytes calldata // signature
     )
         external
         view
@@ -40,7 +40,13 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
         return typeID == TYPE_VALIDATOR;
     }
 
-    function isInitialized(address smartAccount) external pure returns (bool) {
+    function isInitialized(
+        address // smartAccount
+    )
+        external
+        pure
+        returns (bool)
+    {
         return false;
     }
 
@@ -50,7 +56,7 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
         bytes calldata
     )
         external
-        view
+        pure
         override
         returns (bool validSig)
     {

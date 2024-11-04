@@ -133,8 +133,8 @@ contract SafeHelpers is HelperBase {
      * get callData to install hook on ERC7579 Account
      */
     function getInstallHookData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -150,8 +150,8 @@ contract SafeHelpers is HelperBase {
      * get callData to uninstall hook on ERC7579 Account
      */
     function getUninstallHookData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -167,8 +167,8 @@ contract SafeHelpers is HelperBase {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function getUninstallFallbackData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -279,7 +279,7 @@ contract SafeHelpers is HelperBase {
     }
 
     function formatERC1271Signature(
-        AccountInstance memory instance,
+        AccountInstance memory, // instance
         address validator,
         bytes memory signature
     )

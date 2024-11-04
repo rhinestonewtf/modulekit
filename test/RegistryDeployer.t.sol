@@ -182,7 +182,7 @@ contract RegistryDeployerTest is RegistryDeployer, BaseTest {
         return address(new MockValidator{ salt: salt }());
     }
 
-    function predictAddress(bytes32 salt) public returns (address) {
+    function predictAddress(bytes32 salt) public view returns (address) {
         bytes32 hash = keccak256(
             abi.encodePacked(
                 bytes1(0xff), address(this), salt, keccak256(type(MockValidator).creationCode)
@@ -191,7 +191,13 @@ contract RegistryDeployerTest is RegistryDeployer, BaseTest {
         return address(uint160(uint256(hash)));
     }
 
-    function supportsInterface(bytes4 interfaceID) external view returns (bool) {
+    function supportsInterface(
+        bytes4 // interfaceID
+    )
+        external
+        pure
+        returns (bool)
+    {
         return true;
     }
 }

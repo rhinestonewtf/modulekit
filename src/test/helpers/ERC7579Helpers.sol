@@ -81,8 +81,8 @@ contract ERC7579Helpers is HelperBase {
      * get callData to install fallback on ERC7579 Account
      */
     function getInstallFallbackData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -100,8 +100,8 @@ contract ERC7579Helpers is HelperBase {
      * get callData to uninstall fallback on ERC7579 Account
      */
     function getUninstallFallbackData(
-        AccountInstance memory instance,
-        address module,
+        AccountInstance memory, // instance
+        address, // module
         bytes memory initData
     )
         public
@@ -136,7 +136,7 @@ contract ERC7579Helpers is HelperBase {
     }
 
     function formatERC1271Signature(
-        AccountInstance memory instance,
+        AccountInstance memory, // instance
         address validator,
         bytes memory signature
     )

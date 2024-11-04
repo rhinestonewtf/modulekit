@@ -96,11 +96,8 @@ library ModuleKitHelpers {
     {
         bytes memory erc7579ExecCall =
             HelperBase(instance.accountHelper).encode(target, value, callData);
-        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp({
-            instance: instance,
-            callData: erc7579ExecCall,
-            txValidator: txValidator
-        });
+        (userOpData.userOp, userOpData.userOpHash) =
+            HelperBase(instance.accountHelper).execUserOp(instance, erc7579ExecCall, txValidator);
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
@@ -113,11 +110,8 @@ library ModuleKitHelpers {
         returns (UserOpData memory userOpData)
     {
         bytes memory erc7579ExecCall = HelperBase(instance.accountHelper).encode(executions);
-        (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper).execUserOp({
-            instance: instance,
-            callData: erc7579ExecCall,
-            txValidator: txValidator
-        });
+        (userOpData.userOp, userOpData.userOpHash) =
+            HelperBase(instance.accountHelper).execUserOp(instance, erc7579ExecCall, txValidator);
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
@@ -286,14 +280,7 @@ library ModuleKitHelpers {
     {
         // get userOp with correct nonce for selected txValidator
         (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper)
-            .configModuleUserOp({
-            instance: instance,
-            moduleType: moduleType,
-            module: module,
-            initData: initData,
-            isInstall: true,
-            txValidator: txValidator
-        });
+            .configModuleUserOp(instance, moduleType, module, initData, true, txValidator);
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
@@ -309,14 +296,7 @@ library ModuleKitHelpers {
     {
         // get userOp with correct nonce for selected txValidator
         (userOpData.userOp, userOpData.userOpHash) = HelperBase(instance.accountHelper)
-            .configModuleUserOp({
-            instance: instance,
-            moduleType: moduleType,
-            module: module,
-            initData: initData,
-            isInstall: false,
-            txValidator: txValidator
-        });
+            .configModuleUserOp(instance, moduleType, module, initData, false, txValidator);
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
@@ -654,12 +634,9 @@ library ModuleKitHelpers {
         internal
         returns (bool)
     {
-        return HelperBase(instance.accountHelper).isValidSignature({
-            instance: instance,
-            validator: validator,
-            hash: hash,
-            signature: signature
-        });
+        return HelperBase(instance.accountHelper).isValidSignature(
+            instance, validator, hash, signature
+        );
     }
 
     function formatERC1271Hash(
@@ -670,11 +647,7 @@ library ModuleKitHelpers {
         internal
         returns (bytes32)
     {
-        return HelperBase(instance.accountHelper).formatERC1271Hash({
-            instance: instance,
-            validator: validator,
-            hash: hash
-        });
+        return HelperBase(instance.accountHelper).formatERC1271Hash(instance, validator, hash);
     }
 
     function formatERC1271Signature(
@@ -685,11 +658,9 @@ library ModuleKitHelpers {
         internal
         returns (bytes memory)
     {
-        return HelperBase(instance.accountHelper).formatERC1271Signature({
-            instance: instance,
-            validator: validator,
-            signature: signature
-        });
+        return HelperBase(instance.accountHelper).formatERC1271Signature(
+            instance, validator, signature
+        );
     }
 
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
@@ -753,14 +724,14 @@ library ModuleKitHelpers {
             instance.installModule(1, address(instance.smartSession), "");
         }
         // Setup session data
-        Session memory session = Session({
-            sessionValidator: ISessionValidator(address(instance.defaultSessionValidator)),
-            salt: salt,
-            sessionValidatorInitData: "mockInitData",
-            userOpPolicies: userOpPolicies,
-            erc7739Policies: erc7739Policy,
-            actions: actionDatas
-        });
+        Session memory session = Session(
+            ISessionValidator(address(instance.defaultSessionValidator)),
+            "mockInitData",
+            salt,
+            userOpPolicies,
+            erc7739Policy,
+            actionDatas
+        );
         // Enable session
         return instance.addSession(session);
     }
