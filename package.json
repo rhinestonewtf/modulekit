@@ -1,6 +1,6 @@
 {
   "name": "@rhinestone/modulekit",
-  "version": "0.4.15",
+  "version": "0.4.16",
   "description": "A development kit for building and testing smart account modules.",
   "license": "GPL-3.0",
   "author": {
