@@ -258,22 +258,26 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         IAccountFactory kernelFactory = IAccountFactory(getFactory(KERNEL));
         IAccountFactory erc7579Factory = IAccountFactory(getFactory(DEFAULT));
         IAccountFactory nexusFactory = IAccountFactory(getFactory(NEXUS));
+        IAccountFactory customFactory = IAccountFactory(getFactory(CUSTOM));
         safeFactory.init();
         kernelFactory.init();
         erc7579Factory.init();
         nexusFactory.init();
+        customFactory.init();
 
         // Label factories
         label(address(safeFactory), "SafeFactory");
         label(address(kernelFactory), "KernelFactory");
         label(address(erc7579Factory), "ERC7579Factory");
         label(address(nexusFactory), "NexusFactory");
+        label(address(customFactory), "CustomFactory");
 
         // Stake factory on EntryPoint
         deal(address(safeFactory), 10 ether);
         deal(address(kernelFactory), 10 ether);
         deal(address(erc7579Factory), 10 ether);
         deal(address(nexusFactory), 10 ether);
+        deal(address(customFactory), 10 ether);
 
         // Stake on EntryPoint
         prank(address(safeFactory));

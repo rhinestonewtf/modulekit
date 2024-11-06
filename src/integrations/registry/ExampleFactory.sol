@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.25;
 
-import { LibClone } from "solady/utils/LibClone.sol";
 import { IMSA, ERC7579Bootstrap, IERC7579Module } from "src/external/ERC7579.sol";
 import { FactoryBase } from "./FactoryBase.sol";
+import { IMSA } from "erc7579/interfaces/IMSA.sol";
+import { MSAProxy } from "erc7579/utils/MSAProxy.sol";
 
 contract ExampleFactory is FactoryBase {
     address public immutable IMPLEMENTATION;
@@ -34,19 +35,19 @@ contract ExampleFactory is FactoryBase {
     {
         _checkRegistry(validator, 1);
 
-        bytes32 _salt = _getSalt(salt, validator, validatorInitData);
-        (bool alreadyDeployed, address account) =
-            LibClone.createDeterministicERC1967(msg.value, IMPLEMENTATION, _salt);
+        bytes memory initData = abi.encode(
+            BOOTSTRAP,
+            abi.encodeCall(
+                ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
+            )
+        );
 
-        if (!alreadyDeployed) {
-            bytes memory initData = abi.encode(
-                BOOTSTRAP,
-                abi.encodeCall(
-                    ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
-                )
-            );
-            IMSA(account).initializeAccount(initData);
-        }
+        address account = address(
+            new MSAProxy{ salt: salt }(
+                IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData)
+            )
+        );
+
         return account;
     }
 
@@ -56,12 +57,33 @@ contract ExampleFactory is FactoryBase {
         bytes calldata validatorInitData
     )
         public
-        view
         virtual
         returns (address)
     {
-        bytes32 _salt = _getSalt(salt, validator, validatorInitData);
-        return LibClone.predictDeterministicAddressERC1967(IMPLEMENTATION, _salt, address(this));
+        _checkRegistry(validator, 1);
+
+        bytes memory initData = abi.encode(
+            BOOTSTRAP,
+            abi.encodeCall(
+                ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
+            )
+        );
+
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                keccak256(
+                    abi.encodePacked(
+                        type(MSAProxy).creationCode,
+                        abi.encode(IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData))
+                    )
+                )
+            )
+        );
+
+        return address(uint160(uint256(hash)));
     }
 
     function getInitCode(
