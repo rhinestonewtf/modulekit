@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import "../../external/ERC7579.sol";
-import { LibClone } from "solady/utils/LibClone.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
+import { IMSA } from "erc7579/interfaces/IMSA.sol";
+import { MSAProxy } from "erc7579/utils/MSAProxy.sol";
 
 contract ERC7579Factory is IAccountFactory {
     ERC7579Account internal implementation;
@@ -14,18 +15,14 @@ contract ERC7579Factory is IAccountFactory {
         bootstrapDefault = new ERC7579Bootstrap();
     }
 
-    function createAccount(
-        bytes32 salt,
-        bytes memory initCode
-    )
-        public
-        override
-        returns (address account)
-    {
-        bytes32 _salt = _getSalt(salt, initCode);
-        account = LibClone.cloneDeterministic(0, address(implementation), initCode, _salt);
+    function createAccount(bytes32 salt, bytes memory initCode) public override returns (address) {
+        address account = address(
+            new MSAProxy{ salt: salt }(
+                address(implementation), abi.encodeCall(IMSA.initializeAccount, initCode)
+            )
+        );
 
-        IMSA(account).initializeAccount(initCode);
+        return account;
     }
 
     function getAddress(
@@ -37,10 +34,24 @@ contract ERC7579Factory is IAccountFactory {
         override
         returns (address)
     {
-        bytes32 _salt = _getSalt(salt, initCode);
-        return LibClone.predictDeterministicAddress(
-            address(implementation), initCode, _salt, address(this)
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                keccak256(
+                    abi.encodePacked(
+                        type(MSAProxy).creationCode,
+                        abi.encode(
+                            address(implementation),
+                            abi.encodeCall(IMSA.initializeAccount, initCode)
+                        )
+                    )
+                )
+            )
         );
+
+        return address(uint160(uint256(hash)));
     }
 
     function getInitData(
