@@ -52,16 +52,11 @@ contract TestUniswap is BaseTest {
     function testApproveAndSwap() public {
         address poolAddress = UniswapV3Integration.getPoolAddress(address(tokenA), address(tokenB));
         uint160 sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(poolAddress);
-        emit log_named_uint("Square Root Price X96", sqrtPriceX96);
 
         uint256 priceRatio = UniswapV3Integration.sqrtPriceX96toPriceRatio(sqrtPriceX96);
 
-        emit log_named_uint("Price Ratio", priceRatio);
-
         uint256 price =
             UniswapV3Integration.priceRatioToPrice(priceRatio, poolAddress, address(tokenA));
-
-        emit log_named_uint("Price", price);
 
         bool swapToken0to1 = UniswapV3Integration.checkTokenOrder(address(tokenA), poolAddress);
 
@@ -72,22 +67,13 @@ contract TestUniswap is BaseTest {
             priceRatioLimit = (priceRatio * (1000 + slippage)) / 1000;
         }
 
-        emit log_named_uint("Price Ratio Limit", priceRatioLimit);
-
         uint256 priceLimit =
             UniswapV3Integration.priceRatioToPrice(priceRatioLimit, poolAddress, address(tokenA));
 
-        emit log_named_uint("Price Limit", priceLimit);
-
         uint160 sqrtPriceLimitX96 = UniswapV3Integration.priceRatioToSqrtPriceX96(priceRatioLimit);
-
-        emit log_named_uint("sqrtPriceLimitX96", sqrtPriceLimitX96);
 
         uint256 initialAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 initialAccountBalanceB = tokenB.balanceOf(instance.account);
-
-        emit log_named_uint("Initial Balance of Token A (account)", initialAccountBalanceA);
-        emit log_named_uint("Initial Balance of Token B (account)", initialAccountBalanceB);
 
         Execution[] memory swap = UniswapV3Integration.approveAndSwap(
             instance.account, tokenA, tokenB, amountIn, sqrtPriceLimitX96
@@ -104,11 +90,7 @@ contract TestUniswap is BaseTest {
         uint256 finalAccountBalanceA = tokenA.balanceOf(instance.account);
         uint256 finalAccountBalanceB = tokenB.balanceOf(instance.account);
 
-        emit log_named_uint("Final Balance of Token A (account)", finalAccountBalanceA);
-        emit log_named_uint("Final Balance of Token B (account)", finalAccountBalanceB);
-
         sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(poolAddress);
-        emit log_named_uint("Post Swap Square Root Price X96", sqrtPriceX96);
 
         require(
             finalAccountBalanceA < initialAccountBalanceA,
