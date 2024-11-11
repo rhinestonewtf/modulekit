@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { IERC7579Module } from "src/external/ERC7579.sol";
 import { IERC7484 } from "src/Interfaces.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { BaseTest } from "test/BaseTest.t.sol";
 import { ERC7579Account, ERC7579Bootstrap } from "src/external/ERC7579.sol";

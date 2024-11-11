@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.0 <0.9.0;
 
 // Constants
 import { MODULE_TYPE_VALIDATOR } from "src/external/ERC7579.sol";

@@ -1,4 +1,5 @@
 [profile.default]
+solc_version = "0.8.23"
 evm_version = "cancun"
 src = "src"
 out = "out"

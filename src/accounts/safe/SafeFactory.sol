@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { Safe7579, ISafe7579 } from "safe7579/Safe7579.sol";
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";

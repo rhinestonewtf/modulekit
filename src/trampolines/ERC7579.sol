@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { ModuleManager } from "erc7579/core/ModuleManager.sol";
 import { HookManager, IHook } from "erc7579/core/HookManager.sol";

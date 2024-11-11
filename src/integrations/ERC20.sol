@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { Execution } from "../Accounts.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { HelperBase } from "./HelperBase.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";

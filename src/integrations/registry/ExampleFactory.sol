@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { IMSA, ERC7579Bootstrap, IERC7579Module } from "src/external/ERC7579.sol";
 import { FactoryBase } from "./FactoryBase.sol";

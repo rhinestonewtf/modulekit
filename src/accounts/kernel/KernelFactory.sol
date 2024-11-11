@@ -1,4 +1,4 @@
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { KernelFactory as KernelAccountFactory } from "kernel/factory/KernelFactory.sol";
 import { Kernel } from "kernel/Kernel.sol";
