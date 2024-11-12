@@ -7,9 +7,10 @@ import { INexusBootstrap } from "src/accounts/nexus/interfaces/INexusBootstrap.s
 
 // Utils
 import { label } from "src/test/utils/Vm.sol";
+import { BytecodeDeployer } from "./BytecodeDeployer.sol";
 
 /// @notice Nexus contracts precompiled using --via-ir
-contract NexusPrecompiles {
+contract NexusPrecompiles is BytecodeDeployer {
     /*//////////////////////////////////////////////////////////////
                                  DEPLOY
     //////////////////////////////////////////////////////////////*/
@@ -47,18 +48,6 @@ contract NexusPrecompiles {
         bootstrap = INexusBootstrap(_deploy(NEXUS_BOOTSTRAP_BYTECODE));
         // Label contract
         label(address(bootstrap), "NexusBootstrap");
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                PRIVATE
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Deploys a contract using CREATE, reverts on failure
-    function _deploy(bytes memory creationBytecode) private returns (address contractAddress) {
-        assembly {
-            contractAddress := create(0, add(creationBytecode, 0x20), mload(creationBytecode))
-        }
-        require(contractAddress != address(0), "NexusPrecompiles: deployment failed");
     }
 
     /*//////////////////////////////////////////////////////////////
