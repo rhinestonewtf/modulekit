@@ -169,8 +169,8 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             revertSelector = abi.encodePacked(bytes4(0xf21e646b));
             revertMessage = abi.encodePacked(bytes4(0xf21e646b));
         } else {
-            revertSelector = abi.encodePacked(bytes4(0x08c379a0));
-            revertMessage = abi.encodeWithSignature("Error(string)", "MockTarget: not authorized");
+            revertSelector = abi.encodePacked(bytes4(0x82b42900));
+            revertMessage = abi.encodePacked(bytes4(0x82b42900));
         }
 
         // Revert selector
