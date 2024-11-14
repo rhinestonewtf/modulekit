@@ -17,7 +17,7 @@ contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
 
     function init() public override {
         implementation = deployERC7579Account();
-        bootstrapDefault = deployERC7579Bootstrap();
+        bootstrapDefault = IERC7579Bootstrap(deployERC7579Bootstrap());
     }
 
     function createAccount(bytes32 salt, bytes memory initCode) public override returns (address) {

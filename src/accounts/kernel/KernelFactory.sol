@@ -18,7 +18,7 @@ contract KernelFactory is IAccountFactory, KernelPrecompiles {
     MockHookMultiPlexer public hookMultiPlexer;
 
     function init() public override {
-        kernelImpl = deployKernel(ENTRYPOINT_ADDR);
+        kernelImpl = IKernel(deployKernel(ENTRYPOINT_ADDR));
         factory = deployKernelFactory(address(kernelImpl));
         hookMultiPlexer = new MockHookMultiPlexer();
     }
@@ -51,7 +51,7 @@ contract KernelFactory is IAccountFactory, KernelPrecompiles {
 
         _init = abi.encodeCall(
             IKernel.initialize,
-            (rootValidator, IHook(address(hookMultiPlexer)), initData, hex"00", new bytes[](0))
+            (rootValidator, address(hookMultiPlexer), initData, hex"00", new bytes[](0))
         );
     }
 
