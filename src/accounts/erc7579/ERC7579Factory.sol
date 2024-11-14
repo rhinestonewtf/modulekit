@@ -7,7 +7,7 @@ import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.
 import {
     IERC7579Bootstrap,
     BootstrapConfig as ERC7579BootstrapConfig
-} from "./interfaces/IERC7579Bootstrap.sol";
+} from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { ERC7579Precompiles } from "src/test/precompiles/ERC7579Precompiles.sol";
 import { MSAProxy } from "./MSAProxy.sol";
 

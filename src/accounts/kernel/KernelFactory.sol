@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IKernelFactory as IKernelAccountFactory } from "./interfaces/IKernelFactory.sol";
-import { IKernel } from "./interfaces/IKernel.sol";
+import { IKernelFactory as IKernelAccountFactory } from
+    "src/accounts/kernel/interfaces/IKernelFactory.sol";
+import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
 import { ValidatorLib } from "./lib/ValidationTypeLib.sol";

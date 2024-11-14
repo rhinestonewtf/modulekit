@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { ISafe7579 } from "./interfaces/ISafe7579.sol";
+import { ISafe7579 } from "src/accounts/safe/interfaces/ISafe7579.sol";
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafeProxy.sol";
 import { SafeProxyFactory } from
     "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import { ISafe7579Launchpad, IERC7484, ModuleInit } from "./interfaces/ISafe7579Launchpad.sol";
+import {
+    ISafe7579Launchpad,
+    IERC7484,
+    ModuleInit
+} from "src/accounts/safe/interfaces/ISafe7579Launchpad.sol";
 import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
 import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
 import { makeAddr } from "src/test/utils/Vm.sol";
