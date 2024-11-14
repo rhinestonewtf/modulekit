@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { CallType, ExecType, ExecModeSelector } from "./Types.sol";
 import { PassFlag, ValidationMode, ValidationType } from "./Types.sol";

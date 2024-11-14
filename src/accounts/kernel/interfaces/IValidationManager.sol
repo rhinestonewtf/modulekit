@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.0 <0.9.0;
 
 import { IHook, ISigner } from "./IERC7579Modules.sol";
 import { PassFlag, PolicyData, ValidationId, PermissionId } from "../lib/ValidationTypeLib.sol";
