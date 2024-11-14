@@ -17,14 +17,15 @@ import {
 } from "src/accounts/kernel/types/Constants.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
+import { IERC7579Account } from "src/accounts/kernel/interfaces/IERC7579Account.sol";
 import { MockFallback } from "src/accounts/kernel/mock/MockFallback.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
 import { etch } from "../utils/Vm.sol";
-import { IValidator, IModule } from "src/accounts/kernel/interfaces/IERC7579Modules.sol";
+import { IValidator, IModule } from "src/accounts/common/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType, Execution } from "src/external/ERC7579.sol";
+import { CallType } from "src/accounts/common/lib/ModeLib.sol";
+import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { TrustedForwarder } from "src/Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";

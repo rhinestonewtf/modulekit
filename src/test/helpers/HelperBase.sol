@@ -1,13 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { Execution, IERC7579Account } from "../../external/ERC7579.sol";
-import "erc7579/lib/ModeLib.sol";
-import "erc7579/interfaces/IERC7579Module.sol";
+import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+import {
+    ModeLib,
+    ModeCode,
+    CALLTYPE_SINGLE,
+    CALLTYPE_BATCH,
+    MODE_DEFAULT,
+    EXECTYPE_DEFAULT,
+    CALLTYPE_BATCH,
+    ModePayload
+} from "src/accounts/common/lib/ModeLib.sol";
+import {
+    IModule as IERC7579Module,
+    MODULE_TYPE_VALIDATOR,
+    MODULE_TYPE_EXECUTOR,
+    MODULE_TYPE_HOOK,
+    MODULE_TYPE_FALLBACK
+} from "src/accounts/common/interfaces/IERC7579Modules.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
+import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 
 abstract contract HelperBase {
     /*//////////////////////////////////////////////////////////////////////////

@@ -9,11 +9,11 @@ import { ERC7579HookDestruct } from "module-bases/ERC7579HookDestruct.sol";
 import { ERC7579FallbackBase } from "module-bases/ERC7579FallbackBase.sol";
 import { SchedulingBase } from "module-bases/SchedulingBase.sol";
 import {
-    IERC7579Validator,
-    IERC7579Executor,
-    IERC7579Fallback,
-    IERC7579Hook
-} from "./external/ERC7579.sol";
+    IValidator as IERC7579Validator,
+    IExecutor as IERC7579Executor,
+    IFallback as IERC7579Fallback,
+    IHook as IERC7579Hook
+} from "src/accounts/common/interfaces/IERC7579Modules.sol";
 import { ERC7484RegistryAdapter } from "module-bases/ERC7484RegistryAdapter.sol";
 import { ERC7579ModuleBase } from "module-bases/ERC7579ModuleBase.sol";
 import { TrustedForwarder } from "module-bases/utils/TrustedForwarder.sol";

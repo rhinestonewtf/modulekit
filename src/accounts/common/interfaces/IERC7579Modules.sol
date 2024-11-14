@@ -4,6 +4,14 @@ pragma solidity >=0.8.0 <0.9.0;
 import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 
+uint256 constant VALIDATION_SUCCESS = 0;
+uint256 constant VALIDATION_FAILED = 1;
+
+uint256 constant MODULE_TYPE_VALIDATOR = 1;
+uint256 constant MODULE_TYPE_EXECUTOR = 2;
+uint256 constant MODULE_TYPE_FALLBACK = 3;
+uint256 constant MODULE_TYPE_HOOK = 4;
+
 interface IModule {
     error AlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);

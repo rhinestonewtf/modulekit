@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IMSA, ERC7579Bootstrap, IERC7579Module } from "src/external/ERC7579.sol";
+import { IMSA } from "src/accounts/erc7579/interfaces/IMSA.sol";
 import { FactoryBase } from "./FactoryBase.sol";
-import { IMSA } from "erc7579/interfaces/IMSA.sol";
-import { MSAProxy } from "erc7579/utils/MSAProxy.sol";
+import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import { IModule as IERC7579Module } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { MSAProxy } from "src/accounts/erc7579/MSAProxy.sol";
 
 contract ExampleFactory is FactoryBase {
     address public immutable IMPLEMENTATION;
@@ -38,7 +39,7 @@ contract ExampleFactory is FactoryBase {
         bytes memory initData = abi.encode(
             BOOTSTRAP,
             abi.encodeCall(
-                ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
+                IERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
             )
         );
 
@@ -65,7 +66,7 @@ contract ExampleFactory is FactoryBase {
         bytes memory initData = abi.encode(
             BOOTSTRAP,
             abi.encodeCall(
-                ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
+                IERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
             )
         );
 

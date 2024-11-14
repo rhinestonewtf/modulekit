@@ -7,19 +7,19 @@ import { ISafe7579Launchpad } from "src/accounts/safe/interfaces/ISafe7579Launch
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import {
-    IERC7579Account,
     MODULE_TYPE_HOOK,
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK
-} from "../../external/ERC7579.sol";
+} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
 import { HookType } from "src/accounts/safe/types/DataTypes.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { CALLTYPE_STATIC } from "src/accounts/common/lib/ModeLib.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { startPrank, stopPrank } from "../utils/Vm.sol";
-import { CallType } from "src/external/ERC7579.sol";
+import { CallType } from "src/accounts/common/lib/ModeLib.sol";
 
 contract SafeHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////

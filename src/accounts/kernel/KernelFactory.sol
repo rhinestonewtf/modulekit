@@ -7,7 +7,7 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
 import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
 import { ValidatorLib } from "./lib/ValidationTypeLib.sol";
 import { ValidationId } from "./types/Types.sol";
-import { IValidator, IHook } from "./interfaces/IERC7579Modules.sol";
+import { IValidator, IHook } from "src/accounts/common/interfaces/IERC7579Modules.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { KernelPrecompiles } from "src/test/precompiles/KernelPrecompiles.sol";

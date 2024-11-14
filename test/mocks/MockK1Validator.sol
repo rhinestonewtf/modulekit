@@ -6,7 +6,7 @@ import {
     VALIDATION_SUCCESS,
     VALIDATION_FAILED,
     MODULE_TYPE_VALIDATOR
-} from "erc7579/interfaces/IERC7579Module.sol";
+} from "src/accounts/common/interfaces/IERC7579Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
@@ -22,7 +22,7 @@ contract MockK1Validator is IValidator {
         bytes32 userOpHash
     )
         external
-        view
+        payable
         returns (uint256 validation)
     {
         return ECDSA.recover(MessageHashUtils.toEthSignedMessageHash(userOpHash), userOp.signature)
@@ -42,12 +42,12 @@ contract MockK1Validator is IValidator {
             == smartAccountOwners[msg.sender] ? EIP1271_MAGIC_VALUE : ERC1271_INVALID;
     }
 
-    function onInstall(bytes calldata data) external {
+    function onInstall(bytes calldata data) external payable {
         address owner = abi.decode(data, (address));
         smartAccountOwners[msg.sender] = owner;
     }
 
-    function onUninstall(bytes calldata data) external {
+    function onUninstall(bytes calldata data) external payable {
         data;
         delete smartAccountOwners[msg.sender];
     }

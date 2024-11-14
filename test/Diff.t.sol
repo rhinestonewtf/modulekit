@@ -9,15 +9,16 @@ import {
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_HOOK,
     MODULE_TYPE_FALLBACK,
-    CALLTYPE_SINGLE
-} from "src/external/ERC7579.sol";
+    VALIDATION_SUCCESS,
+    VALIDATION_FAILED
+} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { CALLTYPE_SINGLE } from "src/accounts/common/lib/ModeLib.sol";
 import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";
 import { MockValidatorFalse } from "test/mocks/MockValidatorFalse.sol";
 import { MockK1Validator, VALIDATION_SUCCESS } from "test/mocks/MockK1Validator.sol";
 import { MockK1ValidatorUncompliantUninstall } from
     "test/mocks/MockK1ValidatorUncompliantUninstall.sol";
-import { VALIDATION_SUCCESS, VALIDATION_FAILED } from "erc7579/interfaces/IERC7579Module.sol";
 import { VmSafe } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {

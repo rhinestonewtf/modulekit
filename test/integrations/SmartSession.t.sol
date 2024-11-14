@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 // Constants
-import { MODULE_TYPE_VALIDATOR } from "src/external/ERC7579.sol";
+import { MODULE_TYPE_VALIDATOR } from "src/accounts/common/interfaces/IERC7579Modules.sol";
 
 // Libraries
 import { ModuleKitHelpers, AccountInstance } from "src/ModuleKit.sol";
@@ -24,7 +24,7 @@ import {
     Session,
     ISessionValidator
 } from "src/test/helpers/interfaces/ISmartSession.sol";
-import { Execution } from "src/external/ERC7579.sol";
+import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 import { UserOpData, PackedUserOperation } from "src/test/RhinestoneModuleKit.sol";
 
 /// @dev Tests for smart session integration within the RhinestoneModuleKit
