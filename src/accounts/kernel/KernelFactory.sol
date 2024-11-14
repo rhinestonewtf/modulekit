@@ -51,7 +51,7 @@ contract KernelFactory is IAccountFactory, KernelPrecompiles {
 
         _init = abi.encodeCall(
             IKernel.initialize,
-            (rootValidator, address(hookMultiPlexer), initData, hex"00", new bytes[](0))
+            (rootValidator, IHook(address(hookMultiPlexer)), initData, hex"00", new bytes[](0))
         );
     }
 
