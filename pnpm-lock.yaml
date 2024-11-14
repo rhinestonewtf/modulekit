@@ -32,9 +32,6 @@ importers:
       '@safe-global/safe-contracts':
         specifier: ^1.4.1
         version: 1.4.1(ethers@5.7.2)
-      '@zerodev/kernel':
-        specifier: github:kopy-kat/kernel#patch
-        version: kernel@https://codeload.github.com/kopy-kat/kernel/tar.gz/acc457ce5169929ce3ce0f06a9540f85ccc8b25f
       ds-test:
         specifier: github:dapphub/ds-test
         version: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
@@ -1414,10 +1411,6 @@ packages:
   keccak@3.0.4:
     resolution: {integrity: sha512-3vKuW0jV8J3XNTzvfyicFR5qvxrSAGl7KIhvgOu5cmWwM7tZRj3fMbj/pfIf4be7aznbc+prBWGjywox/g2Y6Q==}
     engines: {node: '>=10.0.0'}
-
-  kernel@https://codeload.github.com/kopy-kat/kernel/tar.gz/acc457ce5169929ce3ce0f06a9540f85ccc8b25f:
-    resolution: {tarball: https://codeload.github.com/kopy-kat/kernel/tar.gz/acc457ce5169929ce3ce0f06a9540f85ccc8b25f}
-    version: 3.0.0
 
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
@@ -4129,8 +4122,6 @@ snapshots:
       node-addon-api: 2.0.2
       node-gyp-build: 4.8.2
       readable-stream: 3.6.2
-
-  kernel@https://codeload.github.com/kopy-kat/kernel/tar.gz/acc457ce5169929ce3ce0f06a9540f85ccc8b25f: {}
 
   keyv@4.5.4:
     dependencies:
