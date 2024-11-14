@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.21;
 
-import { CallType, ExecType, ModeCode } from "../../common/lib/ModeLib.sol";
+import { CallType, ExecType, ExecMode } from "../lib/ExecLib.sol";
+import { PackedUserOperation } from
+    "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 
 struct Execution {
     address target;
@@ -9,40 +11,10 @@ struct Execution {
     bytes callData;
 }
 
-interface IERC7579AccountEvents {
+interface IERC7579Account {
     event ModuleInstalled(uint256 moduleTypeId, address module);
     event ModuleUninstalled(uint256 moduleTypeId, address module);
-}
 
-interface IERC7579AccountView {
-    /**
-     * @dev Returns the account id of the smart account
-     * @return accountImplementationId the account id of the smart account
-     * the accountId should be structured like so:
-     *        "vendorname.accountname.semver"
-     */
-    function accountId() external view returns (string memory accountImplementationId);
-
-    /**
-     * Function to check if the account supports a certain CallType or ExecType (see ModeLib.sol)
-     * @param encodedMode the encoded mode
-     */
-    function supportsExecutionMode(ModeCode encodedMode) external view returns (bool);
-
-    /**
-     * Function to check if the account supports installation of a certain module type Id
-     * @param moduleTypeId the module type ID according the ERC-7579 spec
-     */
-    function supportsModule(uint256 moduleTypeId) external view returns (bool);
-}
-
-interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
-    // Error thrown when an unsupported ModuleType is requested
-    error UnsupportedModuleType(uint256 moduleTypeId);
-    // Error thrown when an execution with an unsupported CallType was made
-    error UnsupportedCallType(CallType callType);
-    // Error thrown when an execution with an unsupported ExecType was made
-    error UnsupportedExecType(ExecType execType);
     /**
      * @dev Executes a transaction on behalf of the account.
      *         This function is intended to be called by ERC-4337 EntryPoint.sol
@@ -53,8 +25,7 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
      * @param mode The encoded execution mode of the transaction. See ModeLib.sol for details
      * @param executionCalldata The encoded execution call data
      */
-
-    function execute(ModeCode mode, bytes calldata executionCalldata) external;
+    function execute(ExecMode mode, bytes calldata executionCalldata) external payable;
 
     /**
      * @dev Executes a transaction on behalf of the account.
@@ -67,10 +38,11 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
      * @param executionCalldata The encoded execution call data
      */
     function executeFromExecutor(
-        ModeCode mode,
+        ExecMode mode,
         bytes calldata executionCalldata
     )
         external
+        payable
         returns (bytes[] memory returnData);
 
     /**
@@ -81,11 +53,11 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
      * @param hash The hash of the data that is signed
      * @param data The data that is signed
      */
-    function isValidSignature(bytes32 hash, bytes calldata data) external returns (bytes4);
+    function isValidSignature(bytes32 hash, bytes calldata data) external view returns (bytes4);
 
     /**
      * @dev installs a Module of a certain type on the smart account
-     * @dev Implement Authorization control of your chosing
+     * @dev Implement Authorization control of your choosing
      * @param moduleTypeId the module type ID according the ERC-7579 spec
      * @param module the module address
      * @param initData arbitrary data that may be required on the module during `onInstall`
@@ -96,11 +68,12 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
         address module,
         bytes calldata initData
     )
-        external;
+        external
+        payable;
 
     /**
      * @dev uninstalls a Module of a certain type on the smart account
-     * @dev Implement Authorization control of your chosing
+     * @dev Implement Authorization control of your choosing
      * @param moduleTypeId the module type ID according the ERC-7579 spec
      * @param module the module address
      * @param deInitData arbitrary data that may be required on the module during `onUninstall`
@@ -111,7 +84,20 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
         address module,
         bytes calldata deInitData
     )
-        external;
+        external
+        payable;
+
+    /**
+     * Function to check if the account supports a certain CallType or ExecType (see ModeLib.sol)
+     * @param encodedMode the encoded mode
+     */
+    function supportsExecutionMode(ExecMode encodedMode) external view returns (bool);
+
+    /**
+     * Function to check if the account supports installation of a certain module type Id
+     * @param moduleTypeId the module type ID according the ERC-7579 spec
+     */
+    function supportsModule(uint256 moduleTypeId) external view returns (bool);
 
     /**
      * Function to check if the account has a certain module installed
@@ -120,7 +106,7 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
      *            thus may be necessary to query multiple module types
      * @param module the module address
      * @param additionalContext additional context data that the smart account may interpret to
-     *                          identifiy conditions under which the module is installed.
+     *                          identify conditions under which the module is installed.
      *                          usually this is not necessary, but for some special hooks that
      *                          are stored in mappings, this param might be needed
      */
@@ -132,4 +118,12 @@ interface IERC7579Account is IERC7579AccountEvents, IERC7579AccountView {
         external
         view
         returns (bool);
+
+    /**
+     * @dev Returns the account id of the smart account
+     * @return accountImplementationId the account id of the smart account
+     * the accountId should be structured like so:
+     *        "vendorname.accountname.semver"
+     */
+    function accountId() external view returns (string memory accountImplementationId);
 }

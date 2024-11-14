@@ -1,24 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import { KernelFactory as KernelAccountFactory } from "kernel/factory/KernelFactory.sol";
-import { Kernel } from "kernel/Kernel.sol";
-import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
+import { IKernelFactory as IKernelAccountFactory } from "./interfaces/IKernelFactory.sol";
+import { IKernel } from "./interfaces/IKernel.sol";
+import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
-import { ValidatorLib } from "kernel/utils/ValidationTypeLib.sol";
-import { ValidationId } from "kernel/types/Types.sol";
-import { IValidator, IHook } from "kernel/interfaces/IERC7579Modules.sol";
+import { ValidatorLib } from "./lib/ValidationTypeLib.sol";
+import { ValidationId } from "./types/Types.sol";
+import { IValidator, IHook } from "./interfaces/IERC7579Modules.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
+import { KernelPrecompiles } from "src/test/precompiles/KernelPrecompiles.sol";
 
-contract KernelFactory is IAccountFactory {
-    KernelAccountFactory internal factory;
-    Kernel internal kernalImpl;
+contract KernelFactory is IAccountFactory, KernelPrecompiles {
+    IKernelAccountFactory internal factory;
+    IKernel internal kernelImpl;
     MockHookMultiPlexer public hookMultiPlexer;
 
     function init() public override {
-        kernalImpl = new Kernel(IEntryPoint(ENTRYPOINT_ADDR));
-        factory = new KernelAccountFactory(address(kernalImpl));
+        kernelImpl = deployKernel(ENTRYPOINT_ADDR);
+        factory = deployKernelFactory(address(kernelImpl));
         hookMultiPlexer = new MockHookMultiPlexer();
     }
 
@@ -33,7 +34,7 @@ contract KernelFactory is IAccountFactory {
         account = factory.createAccount(data, salt);
     }
 
-    function getAddress(bytes32 salt, bytes memory data) public view override returns (address) {
+    function getAddress(bytes32 salt, bytes memory data) public override returns (address) {
         return factory.getAddress(data, salt);
     }
 
@@ -49,7 +50,8 @@ contract KernelFactory is IAccountFactory {
         ValidationId rootValidator = ValidatorLib.validatorToIdentifier(IValidator(validator));
 
         _init = abi.encodeCall(
-            Kernel.initialize, (rootValidator, IHook(address(hookMultiPlexer)), initData, hex"00")
+            IKernel.initialize,
+            (rootValidator, IHook(address(hookMultiPlexer)), initData, hex"00", new bytes[](0))
         );
     }
 

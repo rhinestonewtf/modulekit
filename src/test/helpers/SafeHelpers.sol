@@ -16,7 +16,7 @@ import {
 import { HookType } from "src/accounts/safe/types/DataTypes.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { CALLTYPE_STATIC } from "src/accounts/safe/lib/ModeLib.sol";
+import { CALLTYPE_STATIC } from "src/accounts/common/lib/ModeLib.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { startPrank, stopPrank } from "../utils/Vm.sol";
 import { CallType } from "src/external/ERC7579.sol";

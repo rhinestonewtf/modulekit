@@ -2,8 +2,8 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { ValidatorLib } from "kernel/utils/ValidationTypeLib.sol";
-import { ValidationType, ValidationMode, ValidationId } from "kernel/types/Types.sol";
+import { ValidatorLib, ValidationConfig } from "src/accounts/kernel/lib/ValidationTypeLib.sol";
+import { ValidationType, ValidationMode, ValidationId } from "src/accounts/kernel/types/Types.sol";
 import {
     VALIDATION_TYPE_PERMISSION,
     VALIDATION_TYPE_ROOT,
@@ -14,33 +14,25 @@ import {
     MODULE_TYPE_HOOK,
     MODULE_TYPE_VALIDATOR,
     KERNEL_WRAPPER_TYPE_HASH
-} from "kernel/types/Constants.sol";
+} from "src/accounts/kernel/types/Constants.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
-import { IEntryPoint } from "kernel/interfaces/IEntryPoint.sol";
+import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { IERC7579Account } from "erc7579/interfaces/IERC7579Account.sol";
-import { MockFallback } from "kernel/mock/MockFallback.sol";
+import { MockFallback } from "src/accounts/kernel/mock/MockFallback.sol";
 import { HelperBase } from "./HelperBase.sol";
-import { Kernel } from "kernel/Kernel.sol";
+import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
 import { etch } from "../utils/Vm.sol";
-import { IValidator, IModule } from "kernel/interfaces/IERC7579Modules.sol";
+import { IValidator, IModule } from "src/accounts/kernel/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { CallType, Execution } from "src/external/ERC7579.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { TrustedForwarder } from "src/Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
-import { ValidationManager } from "kernel/core/ValidationManager.sol";
 import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
+import { KernelPrecompiles, ISetSelector } from "src/test/precompiles/KernelPrecompiles.sol";
 
-contract SetSelector is Kernel {
-    constructor(IEntryPoint _entrypoint) Kernel(_entrypoint) { }
-
-    function setSelector(ValidationId vId, bytes4 selector, bool allowed) external {
-        _setSelector(vId, selector, allowed);
-    }
-}
-
-contract KernelHelpers is HelperBase {
+contract KernelHelpers is HelperBase, KernelPrecompiles {
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -64,7 +56,7 @@ contract KernelHelpers is HelperBase {
 
         address execHook = getExecHook(instance, txValidator);
         if (execHook != address(0) && execHook != address(1)) {
-            callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
+            callData = abi.encodePacked(IKernel.executeUserOp.selector, callData);
         }
 
         userOp = PackedUserOperation({
@@ -188,7 +180,7 @@ contract KernelHelpers is HelperBase {
 
         address execHook = getExecHook(instance, txValidator);
         if (execHook != address(0) && execHook != address(1)) {
-            callData = abi.encodePacked(Kernel.executeUserOp.selector, callData);
+            callData = abi.encodePacked(IKernel.executeUserOp.selector, callData);
         }
 
         userOp = PackedUserOperation({
@@ -219,12 +211,12 @@ contract KernelHelpers is HelperBase {
         assembly {
             selector := mload(add(callData, 32))
         }
-        bool isAllowedSelector = Kernel(payable(instance.account)).isAllowedSelector(vId, selector);
+        bool isAllowedSelector = IKernel(payable(instance.account)).isAllowedSelector(vId, selector);
         if (!isAllowedSelector) {
             bytes memory accountCode = instance.account.code;
-            address _setSelector = address(new SetSelector(IEntryPoint(ENTRYPOINT_ADDR)));
+            address _setSelector = address(deployKernelWithSetSelector(ENTRYPOINT_ADDR));
             etch(instance.account, _setSelector.code);
-            SetSelector(payable(instance.account)).setSelector(vId, selector, true);
+            ISetSelector(payable(instance.account)).setSelector(vId, selector, true);
             etch(instance.account, accountCode);
         }
     }
@@ -439,7 +431,7 @@ contract KernelHelpers is HelperBase {
         deployAccountForAction(instance)
         returns (bytes32)
     {
-        return Kernel(payable(instance.account))._toWrappedHash(hash);
+        return IKernel(payable(instance.account))._toWrappedHash(hash);
     }
 
     function formatERC1271Signature(
@@ -484,8 +476,8 @@ contract KernelHelpers is HelperBase {
         returns (address)
     {
         ValidationId vId = ValidatorLib.validatorToIdentifier(IValidator(txValidator));
-        ValidationManager.ValidationConfig memory validationConfig =
-            Kernel(payable(instance.account)).validationConfig(vId);
+        ValidationConfig memory validationConfig =
+            IKernel(payable(instance.account)).validationConfig(vId);
         return address(validationConfig.hook);
     }
 }

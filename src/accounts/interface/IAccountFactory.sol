@@ -11,7 +11,7 @@ interface IAccountFactory {
         external
         returns (address account);
 
-    function getAddress(bytes32 salt, bytes memory initCode) external view returns (address);
+    function getAddress(bytes32 salt, bytes memory initCode) external returns (address);
 
     function getInitData(
         address validator,
