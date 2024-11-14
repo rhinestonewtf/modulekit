@@ -6,8 +6,8 @@ import { IKernelFactory as IKernelAccountFactory } from
 import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
-import { ValidatorLib } from "./lib/ValidationTypeLib.sol";
-import { ValidationId } from "./types/Types.sol";
+import { ValidatorLib } from "src/accounts/kernel/lib/ValidationTypeLib.sol";
+import { ValidationId } from "src/accounts/kernel/types/Types.sol";
 import { IValidator, IHook } from "src/accounts/common/interfaces/IERC7579Modules.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
