@@ -36,7 +36,6 @@
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
-    "erc7579": "github:erc7579/erc7579-implementation",
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",

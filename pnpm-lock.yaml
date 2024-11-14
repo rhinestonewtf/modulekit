@@ -35,9 +35,6 @@ importers:
       ds-test:
         specifier: github:dapphub/ds-test
         version: https://codeload.github.com/dapphub/ds-test/tar.gz/e282159d5170298eb2455a6c05280ab5a73a4ef0
-      erc7579:
-        specifier: github:erc7579/erc7579-implementation
-        version: erc7579-implementation@https://codeload.github.com/erc7579/erc7579-implementation/tar.gz/0f321b8544cea7ad3be1b5669c7998329636ef84(ethers@5.7.2)(hardhat@2.22.15(typescript@4.9.5))(lodash@4.17.21)(typechain@5.2.0(typescript@4.9.5))
       excessively-safe-call:
         specifier: github:nomad-xyz/ExcessivelySafeCall
         version: '@nomad-xyz/excessively-safe-call@https://codeload.github.com/nomad-xyz/ExcessivelySafeCall/tar.gz/81cd99ce3e69117d665d7601c330ea03b97acce0'
