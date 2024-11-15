@@ -26,8 +26,8 @@ contract SafeFactory is IAccountFactory, Safe7579Precompiles {
     SafeProxyFactory internal safeProxyFactory;
 
     function init() public override {
-        safe7579 = ISafe7579(deploySafe7579());
-        launchpad = ISafe7579Launchpad(deploySafe7579Launchpad(ENTRYPOINT_ADDR, REGISTRY_ADDR));
+        safe7579 = deploySafe7579();
+        launchpad = deploySafe7579Launchpad(ENTRYPOINT_ADDR, REGISTRY_ADDR);
         safeSingleton = new Safe();
         safeProxyFactory = new SafeProxyFactory();
     }

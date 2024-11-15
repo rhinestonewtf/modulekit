@@ -19,7 +19,7 @@ contract KernelFactory is IAccountFactory, KernelPrecompiles {
     MockHookMultiPlexer public hookMultiPlexer;
 
     function init() public override {
-        kernelImpl = IKernel(deployKernel(ENTRYPOINT_ADDR));
+        kernelImpl = deployKernel(ENTRYPOINT_ADDR);
         factory = deployKernelFactory(address(kernelImpl));
         hookMultiPlexer = new MockHookMultiPlexer();
     }
