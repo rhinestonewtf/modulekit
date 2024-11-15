@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.24 <0.9.0;
 
 import { IMSA } from "src/accounts/erc7579/interfaces/IMSA.sol";
 import { FactoryBase } from "./FactoryBase.sol";

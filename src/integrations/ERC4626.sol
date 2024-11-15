@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.24 <0.9.0;
 
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
 import { Execution } from "../Accounts.sol";

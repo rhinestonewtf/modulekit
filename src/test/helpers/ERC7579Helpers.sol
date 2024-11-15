@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.24 <0.9.0;
 
 // note: removing the first import will cause a build error
 import { AccountInstance } from "../RhinestoneModuleKit.sol";

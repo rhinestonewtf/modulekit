@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.24 <0.9.0;
 
 import { IERC7579Account } from "./IERC7579Account.sol";
 import { IAccount, ValidationData } from "./IAccount.sol";
