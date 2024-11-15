@@ -10,7 +10,7 @@ library Initializable {
         bytes32 slot = INIT_SLOT;
         bool isInitializable;
         assembly {
-            isInitializable := sload(slot)
+            isInitializable := tload(slot)
         }
 
         if (!isInitializable) {
