@@ -19,7 +19,7 @@ import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.
 import { CALLTYPE_STATIC } from "safe7579/lib/ModeLib.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { startPrank, stopPrank } from "../utils/Vm.sol";
-import { CallType } from "src/external/ERC7579.sol";
+import { CallType } from "../../external/ERC7579.sol";
 
 contract SafeHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
