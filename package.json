@@ -31,7 +31,7 @@
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@prb/math": "^4.0.2",
     "@rhinestone/erc4337-validation": "^0.0.4",
-    "@rhinestone/module-bases": "github:rhinestonewtf/module-bases#a85e120eadb3c6a0c3934f94dd013de7f67f088b",
+    "@rhinestone/module-bases": "github:rhinestonewtf/module-bases#6ed072249860c7143d3f29b153187ab6d5924e84",
     "@rhinestone/safe7579": "github:rhinestonewtf/safe7579#v1.0.0",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "@rhinestone/registry": "github:rhinestonewtf/registry#v1.0",

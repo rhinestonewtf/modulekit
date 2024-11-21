@@ -7,11 +7,11 @@ import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafePro
 import { SafeProxyFactory } from
     "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
 import { Safe7579Launchpad, IERC7484, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
-import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
-import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
-import { makeAddr } from "src/test/utils/Vm.sol";
+import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
+import { REGISTRY_ADDR } from "../../test/predeploy/Registry.sol";
+import { makeAddr } from "../../test/utils/Vm.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
+import { IAccountFactory } from "../interface/IAccountFactory.sol";
 
 contract SafeFactory is IAccountFactory {
     // singletons

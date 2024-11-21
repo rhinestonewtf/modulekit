@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "../../external/ERC7579.sol";
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
+import { IAccountFactory } from "../interface/IAccountFactory.sol";
 import { IMSA } from "erc7579/interfaces/IMSA.sol";
 import { MSAProxy } from "erc7579/utils/MSAProxy.sol";
 
