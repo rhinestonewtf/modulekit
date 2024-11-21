@@ -6,7 +6,7 @@ import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType } from "../../external/ERC7579.sol";
+import { CallType } from "src/external/ERC7579.sol";
 
 contract NexusHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////

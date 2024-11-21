@@ -24,7 +24,7 @@ import { Kernel } from "kernel/Kernel.sol";
 import { etch } from "../utils/Vm.sol";
 import { IValidator, IModule } from "kernel/interfaces/IERC7579Modules.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType, Execution } from "../../external/ERC7579.sol";
+import { CallType, Execution } from "src/external/ERC7579.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { TrustedForwarder } from "src/Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
