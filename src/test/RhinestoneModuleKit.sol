@@ -18,7 +18,7 @@ import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { SMARTSESSION_ADDR } from "./precompiles/SmartSessions.sol";
 import { ISmartSession, ISessionValidator } from "src/test/helpers/interfaces/ISmartSession.sol";
 import { IERC7579Validator } from "../external/ERC7579.sol";
-import { MockValidator } from "../Mocks.sol";
+import { MockValidator, MockStatelessValidator } from "../Mocks.sol";
 import {
     getAccountEnv,
     getHelper,
@@ -76,7 +76,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     MockValidator public _defaultValidator;
-    MockValidator public _defaultSessionValidator;
+    MockStatelessValidator public _defaultSessionValidator;
     bool public isInit;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -301,7 +301,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         label(address(_defaultValidator), "DefaultValidator");
 
         // Set session validator
-        _defaultSessionValidator = new MockValidator();
+        _defaultSessionValidator = new MockStatelessValidator();
         label(address(_defaultSessionValidator), "SessionValidator");
     }
 

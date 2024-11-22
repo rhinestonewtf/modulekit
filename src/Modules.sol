@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 /* solhint-disable no-unused-import */
 import { ERC7579ValidatorBase } from "module-bases/ERC7579ValidatorBase.sol";
+import { ERC7579StatelessValidatorBase } from "module-bases/ERC7579StatelessValidatorBase.sol";
 import { ERC7579ExecutorBase } from "module-bases/ERC7579ExecutorBase.sol";
 import { ERC7579HookBase } from "module-bases/ERC7579HookBase.sol";
 import { ERC7579HookDestruct } from "module-bases/ERC7579HookDestruct.sol";

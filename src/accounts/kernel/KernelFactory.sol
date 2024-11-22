@@ -7,8 +7,8 @@ import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
 import { ValidatorLib } from "kernel/utils/ValidationTypeLib.sol";
 import { ValidationId } from "kernel/types/Types.sol";
 import { IValidator, IHook } from "kernel/interfaces/IERC7579Modules.sol";
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
-import { MockHookMultiPlexer } from "src/Mocks.sol";
+import { IAccountFactory } from "../interface/IAccountFactory.sol";
+import { MockHookMultiPlexer } from "../../Mocks.sol";
 
 contract KernelFactory is IAccountFactory {
     KernelAccountFactory internal factory;
