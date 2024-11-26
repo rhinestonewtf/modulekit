@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 /* solhint-disable no-unused-vars */
 import { ERC7579ValidatorBase } from "src/Modules.sol";
@@ -57,7 +57,6 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
     )
         external
         pure
-        override
         returns (bool validSig)
     {
         return false;

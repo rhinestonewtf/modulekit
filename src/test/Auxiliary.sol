@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
 import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";

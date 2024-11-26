@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IKernelFactory as IKernelAccountFactory } from
     "src/accounts/kernel/interfaces/IKernelFactory.sol";
@@ -8,7 +8,8 @@ import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/I
 import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
 import { ValidatorLib } from "src/accounts/kernel/lib/ValidationTypeLib.sol";
 import { ValidationId } from "src/accounts/kernel/types/Types.sol";
-import { IValidator, IHook } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IValidator } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IHook } from "src/accounts/kernel/interfaces/IERC7579Modules.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { KernelPrecompiles } from "src/test/precompiles/KernelPrecompiles.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IMSA } from "./interfaces/IMSA.sol";
@@ -9,7 +9,6 @@ import {
     BootstrapConfig as ERC7579BootstrapConfig
 } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { ERC7579Precompiles } from "src/test/precompiles/ERC7579Precompiles.sol";
-import { MSAProxy } from "./MSAProxy.sol";
 
 contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
     IERC7579Account internal implementation;
@@ -21,13 +20,7 @@ contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
     }
 
     function createAccount(bytes32 salt, bytes memory initCode) public override returns (address) {
-        address account = address(
-            new MSAProxy{ salt: salt }(
-                address(implementation), abi.encodeCall(IMSA.initializeAccount, initCode)
-            )
-        );
-
-        return account;
+        return deployMSAPRoxy(salt, address(implementation), initCode);
     }
 
     function getAddress(
@@ -46,7 +39,7 @@ contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
                 salt,
                 keccak256(
                     abi.encodePacked(
-                        type(MSAProxy).creationCode,
+                        MSAPROXY_BYTECODE,
                         abi.encode(
                             address(implementation),
                             abi.encodeCall(IMSA.initializeAccount, initCode)

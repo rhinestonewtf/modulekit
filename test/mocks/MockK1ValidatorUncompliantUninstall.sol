@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import {
     IValidator,
@@ -11,7 +11,7 @@ import { PackedUserOperation } from "src/external/ERC4337.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { EIP1271_MAGIC_VALUE, IERC1271 } from "module-bases/interfaces/IERC1271.sol";
+import { EIP1271_MAGIC_VALUE, IERC1271 } from "src/module-bases/interfaces/IERC1271.sol";
 
 contract MockK1ValidatorUncompliantUninstall is IValidator {
     bytes4 constant ERC1271_INVALID = 0xffffffff;
@@ -42,12 +42,12 @@ contract MockK1ValidatorUncompliantUninstall is IValidator {
             == smartAccountOwners[msg.sender] ? EIP1271_MAGIC_VALUE : ERC1271_INVALID;
     }
 
-    function onInstall(bytes calldata data) external payable {
+    function onInstall(bytes calldata data) external {
         address owner = abi.decode(data, (address));
         smartAccountOwners[msg.sender] = owner;
     }
 
-    function onUninstall(bytes calldata data) external payable {
+    function onUninstall(bytes calldata data) external {
         data;
     }
 

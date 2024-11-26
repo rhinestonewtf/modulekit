@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
@@ -23,7 +23,7 @@ interface IModule {
      *
      * MUST revert on error (i.e. if module is already enabled)
      */
-    function onInstall(bytes calldata data) external payable;
+    function onInstall(bytes calldata data) external;
 
     /**
      * @dev This function is called by the smart account during uninstallation of the module
@@ -32,7 +32,7 @@ interface IModule {
      *
      * MUST revert on error
      */
-    function onUninstall(bytes calldata data) external payable;
+    function onUninstall(bytes calldata data) external;
 
     /**
      * @dev Returns boolean value if module is a certain type
@@ -91,10 +91,9 @@ interface IHook is IModule {
         bytes calldata msgData
     )
         external
-        payable
         returns (bytes memory hookData);
 
-    function postCheck(bytes calldata hookData) external payable;
+    function postCheck(bytes calldata hookData) external;
 }
 
 interface IFallback is IModule { }

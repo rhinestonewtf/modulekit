@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
 import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
@@ -18,7 +18,7 @@ import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { SMARTSESSION_ADDR } from "./precompiles/SmartSessions.sol";
 import { ISmartSession, ISessionValidator } from "src/test/helpers/interfaces/ISmartSession.sol";
 import { IValidator as IERC7579Validator } from "src/accounts/common/interfaces/IERC7579Modules.sol";
-import { MockValidator } from "../Mocks.sol";
+import { MockValidator, MockStatelessValidator } from "../Mocks.sol";
 import {
     getAccountEnv,
     getHelper,
@@ -76,7 +76,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     MockValidator public _defaultValidator;
-    MockValidator public _defaultSessionValidator;
+    MockStatelessValidator public _defaultSessionValidator;
     bool public isInit;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -301,7 +301,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         label(address(_defaultValidator), "DefaultValidator");
 
         // Set session validator
-        _defaultSessionValidator = new MockValidator();
+        _defaultSessionValidator = new MockStatelessValidator();
         label(address(_defaultSessionValidator), "SessionValidator");
     }
 

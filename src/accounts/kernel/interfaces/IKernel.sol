@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IERC7579Account } from "./IERC7579Account.sol";
 import { IAccount, ValidationData } from "./IAccount.sol";
 import { IAccountExecute } from "./IAccountExecute.sol";
 import { ValidationId, ValidationConfig } from "../lib/ValidationTypeLib.sol";
-import { IHook } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IHook } from "./IERC7579Modules.sol";
 import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { ExecMode } from "../lib/ExecLib.sol";

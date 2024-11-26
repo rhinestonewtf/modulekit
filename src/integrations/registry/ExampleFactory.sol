@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.24 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IMSA } from "src/accounts/erc7579/interfaces/IMSA.sol";
 import { FactoryBase } from "./FactoryBase.sol";
 import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { IModule as IERC7579Module } from "src/accounts/common/interfaces/IERC7579Modules.sol";
-import { MSAProxy } from "src/accounts/erc7579/MSAProxy.sol";
+import { ERC7579Precompiles } from "src/test/precompiles/ERC7579Precompiles.sol";
 
-contract ExampleFactory is FactoryBase {
+contract ExampleFactory is FactoryBase, ERC7579Precompiles {
     address public immutable IMPLEMENTATION;
     address public immutable BOOTSTRAP;
 
@@ -43,11 +43,7 @@ contract ExampleFactory is FactoryBase {
             )
         );
 
-        address account = address(
-            new MSAProxy{ salt: salt }(
-                IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData)
-            )
-        );
+        address account = deployMSAPRoxy(salt, IMPLEMENTATION, initData);
 
         return account;
     }
@@ -77,7 +73,7 @@ contract ExampleFactory is FactoryBase {
                 salt,
                 keccak256(
                     abi.encodePacked(
-                        type(MSAProxy).creationCode,
+                        MSAPROXY_BYTECODE,
                         abi.encode(IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData))
                     )
                 )
