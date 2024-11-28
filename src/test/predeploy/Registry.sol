@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { IERC7484 } from "src/Interfaces.sol";
-import { MockRegistry } from "src/Mocks.sol";
+import { IERC7484 } from "../../Interfaces.sol";
+import { MockRegistry } from "../../Mocks.sol";
 import { etch } from "../utils/Vm.sol";
 
 address constant REGISTRY_ADDR = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;

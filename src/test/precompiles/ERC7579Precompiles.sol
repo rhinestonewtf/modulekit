@@ -2,12 +2,12 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
-import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
-import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
-import { IMSA } from "src/accounts/erc7579/interfaces/IMSA.sol";
+import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
+import { IERC7579Bootstrap } from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import { IMSA } from "../../accounts/erc7579/interfaces/IMSA.sol";
 
 // Utils
-import { label } from "src/test/utils/Vm.sol";
+import { label } from "../../test/utils/Vm.sol";
 import { BytecodeDeployer } from "./BytecodeDeployer.sol";
 
 interface RhinestoneBootstrap {

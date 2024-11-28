@@ -2,11 +2,11 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
-import { ISafe7579 } from "src/accounts/safe/interfaces/ISafe7579.sol";
-import { ISafe7579Launchpad } from "src/accounts/safe/interfaces/ISafe7579Launchpad.sol";
+import { ISafe7579 } from "../../accounts/safe/interfaces/ISafe7579.sol";
+import { ISafe7579Launchpad } from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
 
 // Utils
-import { label } from "src/test/utils/Vm.sol";
+import { label } from "../../test/utils/Vm.sol";
 import { BytecodeDeployer } from "./BytecodeDeployer.sol";
 
 contract Safe7579Precompiles is BytecodeDeployer {

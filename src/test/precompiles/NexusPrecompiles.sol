@@ -6,7 +6,7 @@ import { INexusAccountFactory } from "../../accounts/nexus/interfaces/INexusAcco
 import { INexusBootstrap } from "../../accounts/nexus/interfaces/INexusBootstrap.sol";
 
 // Utils
-import { label } from "src/test/utils/Vm.sol";
+import { label } from "../../test/utils/Vm.sol";
 import { BytecodeDeployer } from "./BytecodeDeployer.sol";
 
 /// @notice Nexus contracts precompiled using --via-ir

@@ -2,14 +2,14 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
-import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
-import { IKernelFactory } from "src/accounts/kernel/interfaces/IKernelFactory.sol";
+import { IKernel } from "../../accounts/kernel/interfaces/IKernel.sol";
+import { IKernelFactory } from "../../accounts/kernel/interfaces/IKernelFactory.sol";
 
 // Types
-import { ValidationId } from "src/accounts/kernel/types/Types.sol";
+import { ValidationId } from "../../accounts/kernel/types/Types.sol";
 
 // Utils
-import { label } from "src/test/utils/Vm.sol";
+import { label } from "../../test/utils/Vm.sol";
 import { BytecodeDeployer } from "./BytecodeDeployer.sol";
 
 interface ISetSelector is IKernel {
