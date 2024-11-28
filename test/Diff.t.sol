@@ -11,7 +11,7 @@ import {
     MODULE_TYPE_FALLBACK,
     VALIDATION_SUCCESS,
     VALIDATION_FAILED
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { CALLTYPE_SINGLE } from "src/accounts/common/lib/ModeLib.sol";
 import { getAccountType, InstalledModule } from "src/test/utils/Storage.sol";
 import { toString } from "src/test/utils/Vm.sol";

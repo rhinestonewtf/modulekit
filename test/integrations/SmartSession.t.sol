@@ -2,7 +2,7 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 // Constants
-import { MODULE_TYPE_VALIDATOR } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { MODULE_TYPE_VALIDATOR } from "src/accounts/common/interfaces/IERC7579Module.sol";
 
 // Libraries
 import { ModuleKitHelpers, AccountInstance } from "src/ModuleKit.sol";

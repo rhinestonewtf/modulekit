@@ -22,7 +22,7 @@ import { MockFallback } from "src/accounts/kernel/mock/MockFallback.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
 import { etch } from "../utils/Vm.sol";
-import { IValidator, IModule } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IValidator, IModule } from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { CallType } from "src/accounts/common/lib/ModeLib.sol";
 import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";

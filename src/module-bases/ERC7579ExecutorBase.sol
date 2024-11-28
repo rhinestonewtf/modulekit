@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IExecutor as IERC7579Executor } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IExecutor as IERC7579Executor } from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
 import {
     Execution,

@@ -18,7 +18,7 @@ import {
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_HOOK,
     MODULE_TYPE_FALLBACK
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import "../utils/Vm.sol";

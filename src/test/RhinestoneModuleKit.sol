@@ -17,7 +17,7 @@ import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { SMARTSESSION_ADDR } from "./precompiles/SmartSessions.sol";
 import { ISmartSession, ISessionValidator } from "src/test/helpers/interfaces/ISmartSession.sol";
-import { IValidator as IERC7579Validator } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IValidator as IERC7579Validator } from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { MockValidator, MockStatelessValidator } from "../Mocks.sol";
 import {
     getAccountEnv,

@@ -7,7 +7,7 @@ import {
     IModule as IERC7579Module,
     VALIDATION_SUCCESS,
     VALIDATION_FAILED
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
 
 type ConfigId is bytes32;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IHook as IERC7579Hook } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IHook as IERC7579Hook } from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 import { TrustedForwarder } from "./utils/TrustedForwarder.sol";
 

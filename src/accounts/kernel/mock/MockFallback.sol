@@ -2,7 +2,7 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 import { IERC7579Account } from "../interfaces/IERC7579Account.sol";
-import { IFallback } from "../interfaces/IERC7579Modules.sol";
+import { IFallback } from "../interfaces/IERC7579Module.sol";
 import { CallType, ExecType, ExecMode, ExecLib } from "../lib/ExecLib.sol";
 import { EXEC_MODE_DEFAULT } from "../types/Constants.sol";
 

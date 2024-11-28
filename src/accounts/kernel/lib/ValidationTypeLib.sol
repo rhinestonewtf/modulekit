@@ -3,7 +3,7 @@ pragma solidity >=0.8.23 <0.9.0;
 
 import {
     IValidator, IPolicy, IHook, ISigner
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import {
     PassFlag,
     ValidationType,

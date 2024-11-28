@@ -14,7 +14,7 @@ import {
     IExecutor as IERC7579Executor,
     IFallback as IERC7579Fallback,
     IHook as IERC7579Hook
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { ERC7484RegistryAdapter } from "src/module-bases/ERC7484RegistryAdapter.sol";
 import { ERC7579ModuleBase } from "src/module-bases/ERC7579ModuleBase.sol";
 import { TrustedForwarder } from "src/module-bases/utils/TrustedForwarder.sol";

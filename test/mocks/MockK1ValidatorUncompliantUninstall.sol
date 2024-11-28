@@ -6,7 +6,7 @@ import {
     VALIDATION_SUCCESS,
     VALIDATION_FAILED,
     MODULE_TYPE_VALIDATOR
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";

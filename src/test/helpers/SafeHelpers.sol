@@ -11,7 +11,7 @@ import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK
-} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+} from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
 import { HookType } from "src/accounts/safe/types/DataTypes.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";

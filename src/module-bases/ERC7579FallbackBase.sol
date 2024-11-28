@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IFallback as IERC7579Fallback } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IFallback as IERC7579Fallback } from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
 abstract contract ERC7579FallbackBase is IERC7579Fallback, ERC7579ModuleBase {

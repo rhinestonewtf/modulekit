@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
-import { IHook as IERC7579Hook } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IHook as IERC7579Hook } from "src/accounts/common/interfaces/IERC7579Module.sol";
 import { ExecutionLib, Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 import {
     ModeLib,
