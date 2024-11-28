@@ -11,3 +11,4 @@ solady/=node_modules/solady/src/
 solarray/=node_modules/solarray/src/
 @prb/math/=node_modules/@prb/math/src/
 ExcessivelySafeCall/=node_modules/excessively-safe-call/src/
+module-bases/=src/module-bases/

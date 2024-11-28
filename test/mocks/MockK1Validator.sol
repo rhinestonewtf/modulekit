@@ -11,7 +11,7 @@ import { PackedUserOperation } from "src/external/ERC4337.sol";
 import { ECDSA } from "solady/utils/ECDSA.sol";
 import { SignatureCheckerLib } from "solady/utils/SignatureCheckerLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { EIP1271_MAGIC_VALUE, IERC1271 } from "src/module-bases/interfaces/IERC1271.sol";
+import { EIP1271_MAGIC_VALUE, IERC1271 } from "module-bases/interfaces/IERC1271.sol";
 
 contract MockK1Validator is IValidator {
     bytes4 constant ERC1271_INVALID = 0xffffffff;
