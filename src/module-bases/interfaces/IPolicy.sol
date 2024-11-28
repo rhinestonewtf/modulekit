@@ -2,12 +2,12 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 // solhint-disable no-unused-import
-import { PackedUserOperation, _packValidationData } from "src/external/ERC4337.sol";
+import { PackedUserOperation, _packValidationData } from "../../external/ERC4337.sol";
 import {
     IModule as IERC7579Module,
     VALIDATION_SUCCESS,
     VALIDATION_FAILED
-} from "src/accounts/common/interfaces/IERC7579Module.sol";
+} from "../../accounts/common/interfaces/IERC7579Module.sol";
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
 
 type ConfigId is bytes32;

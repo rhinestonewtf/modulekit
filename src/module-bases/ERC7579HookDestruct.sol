@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
-import { IHook as IERC7579Hook } from "src/accounts/common/interfaces/IERC7579Module.sol";
-import { ExecutionLib, Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
+import { IERC7579Account } from "../accounts/common/interfaces/IERC7579Account.sol";
+import { IHook as IERC7579Hook } from "../accounts/common/interfaces/IERC7579Module.sol";
+import { ExecutionLib, Execution } from "../accounts/erc7579/lib/ExecutionLib.sol";
 import {
     ModeLib,
     CallType,
@@ -11,8 +11,8 @@ import {
     CALLTYPE_SINGLE,
     CALLTYPE_BATCH,
     CALLTYPE_DELEGATECALL
-} from "src/accounts/common/lib/ModeLib.sol";
-import { IAccountExecute } from "src/external/ERC4337.sol";
+} from "../accounts/common/lib/ModeLib.sol";
+import { IAccountExecute } from "../external/ERC4337.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 import { TrustedForwarder } from "./utils/TrustedForwarder.sol";
 

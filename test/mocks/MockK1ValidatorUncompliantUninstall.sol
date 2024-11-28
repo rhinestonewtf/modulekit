@@ -47,7 +47,7 @@ contract MockK1ValidatorUncompliantUninstall is IValidator {
         smartAccountOwners[msg.sender] = owner;
     }
 
-    function onUninstall(bytes calldata data) external {
+    function onUninstall(bytes calldata data) external pure {
         data;
     }
 

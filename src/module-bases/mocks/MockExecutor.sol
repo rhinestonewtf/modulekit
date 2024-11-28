@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import { ERC7579ExecutorBase } from "../ERC7579ExecutorBase.sol";
 // solhint-disable-next-line no-unused-import
-import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
 
 contract MockExecutor is ERC7579ExecutorBase {
     function onInstall(bytes calldata data) external override { }

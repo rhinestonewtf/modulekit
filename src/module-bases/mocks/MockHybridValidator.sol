@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import { ERC7579HybridValidatorBase } from "../ERC7579HybridValidatorBase.sol";
-import { PackedUserOperation } from "src/external/ERC4337.sol";
+import { PackedUserOperation } from "../../external/ERC4337.sol";
 
 contract MockHybridValidator is ERC7579HybridValidatorBase {
     function onInstall(bytes calldata data) external virtual override { }

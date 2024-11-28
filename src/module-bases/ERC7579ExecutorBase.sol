@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IExecutor as IERC7579Executor } from "src/accounts/common/interfaces/IERC7579Module.sol";
-import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+import { IExecutor as IERC7579Executor } from "../accounts/common/interfaces/IERC7579Module.sol";
+import { IERC7579Account } from "../accounts/common/interfaces/IERC7579Account.sol";
 import {
     Execution,
     ExecutionLib as ERC7579ExecutionLib
-} from "src/accounts/erc7579/lib/ExecutionLib.sol";
+} from "../accounts/erc7579/lib/ExecutionLib.sol";
 import {
     ModeCode,
     ModeLib as ERC7579ModeLib,
@@ -18,7 +18,7 @@ import {
     EXECTYPE_DEFAULT,
     MODE_DEFAULT,
     CALLTYPE_DELEGATECALL
-} from "src/accounts/common/lib/ModeLib.sol";
+} from "../accounts/common/lib/ModeLib.sol";
 import { ERC7579ModuleBase } from "./ERC7579ModuleBase.sol";
 
 abstract contract ERC7579ExecutorBase is IERC7579Executor, ERC7579ModuleBase {

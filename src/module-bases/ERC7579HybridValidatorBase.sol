@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import {
     PackedUserOperation,
     _packValidationData as _packValidationData4337
-} from "src/external/ERC4337.sol";
+} from "../external/ERC4337.sol";
 import { ERC7579ValidatorBase } from "./ERC7579ValidatorBase.sol";
 import { ERC7579StatelessValidatorBase } from "./ERC7579StatelessValidatorBase.sol";
 

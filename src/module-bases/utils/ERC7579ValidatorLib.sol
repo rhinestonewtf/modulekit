@@ -2,8 +2,8 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 // solhint-disable-next-line no-unused-import
-import { IERC7579Account, Execution } from "src/accounts/common/interfaces/IERC7579Account.sol";
-import { PackedUserOperation, UserOperationLib } from "src/external/ERC4337.sol";
+import { IERC7579Account, Execution } from "../../accounts/common/interfaces/IERC7579Account.sol";
+import { PackedUserOperation, UserOperationLib } from "../../external/ERC4337.sol";
 
 enum ACCOUNT_EXEC_TYPE {
     EXEC_SINGLE,
