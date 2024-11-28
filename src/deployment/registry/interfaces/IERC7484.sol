@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { ModuleType } from "src/deployment/registry/types/DataTypes.sol";
+import { ModuleType } from "../types/DataTypes.sol";
 
 interface IERC7484 {
     event NewTrustedAttesters(address indexed smartAccount);

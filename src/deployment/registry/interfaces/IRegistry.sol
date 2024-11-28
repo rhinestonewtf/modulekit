@@ -12,11 +12,10 @@ import {
     RevocationRequest,
     SchemaUID,
     SchemaRecord
-} from "src/deployment/registry/types/DataTypes.sol";
-import { IExternalSchemaValidator } from
-    "src/deployment/registry/interfaces/IExternalSchemaValidator.sol";
-import { IExternalResolver } from "src/deployment/registry/interfaces/IExternalResolver.sol";
-import { IERC7484 } from "src/deployment/registry/interfaces/IERC7484.sol";
+} from "../types/DataTypes.sol";
+import { IExternalSchemaValidator } from "./IExternalSchemaValidator.sol";
+import { IExternalResolver } from "./IExternalResolver.sol";
+import { IERC7484 } from "./IERC7484.sol";
 
 /**
  * Interface definition of all features of the registry:

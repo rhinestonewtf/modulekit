@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { AttestationRecord, ModuleRecord } from "src/deployment/registry/types/DataTypes.sol";
+import { AttestationRecord, ModuleRecord } from "../types/DataTypes.sol";
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
 
 /**

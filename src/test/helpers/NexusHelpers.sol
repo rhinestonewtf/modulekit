@@ -5,8 +5,8 @@ import { PackedUserOperation } from "../../external/ERC4337.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType } from "src/accounts/common/lib/ModeLib.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+import { CallType } from "../../accounts/common/lib/ModeLib.sol";
 
 contract NexusHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////

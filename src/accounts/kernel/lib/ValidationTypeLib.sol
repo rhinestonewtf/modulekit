@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import {
-    IValidator, IPolicy, IHook, ISigner
-} from "src/accounts/common/interfaces/IERC7579Module.sol";
+import { IValidator, IPolicy, IHook, ISigner } from "../../common/interfaces/IERC7579Module.sol";
 import {
     PassFlag,
     ValidationType,

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { IExternalSchemaValidator } from
-    "src/deployment/registry/interfaces/IExternalSchemaValidator.sol";
-import { IExternalResolver } from "src/deployment/registry/interfaces/IExternalResolver.sol";
+import { IExternalSchemaValidator } from "../interfaces/IExternalSchemaValidator.sol";
+import { IExternalResolver } from "../interfaces/IExternalResolver.sol";
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     Storage Structs                        */

@@ -10,9 +10,9 @@ import {
     PolicyData,
     ActionData,
     ERC7739Data
-} from "src/test/helpers/interfaces/ISmartSession.sol";
+} from "../../test/helpers/interfaces/ISmartSession.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
-import { ModeCode as ExecutionMode } from "src/accounts/common/lib/ModeLib.sol";
+import { ModeCode as ExecutionMode } from "../../accounts/common/lib/ModeLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 

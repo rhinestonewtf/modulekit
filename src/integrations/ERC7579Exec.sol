@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import {
     Execution,
     ExecutionLib as ERC7579ExecutionLib
-} from "src/accounts/erc7579/lib/ExecutionLib.sol";
+} from "../accounts/erc7579/lib/ExecutionLib.sol";
 import {
     ModeLib as ERC7579ModeLib,
     CALLTYPE_SINGLE,
@@ -14,8 +14,8 @@ import {
     MODE_DEFAULT,
     ModePayload,
     ModeCode
-} from "src/accounts/common/lib/ModeLib.sol";
-import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+} from "../accounts/common/lib/ModeLib.sol";
+import { IERC7579Account } from "../accounts/common/interfaces/IERC7579Account.sol";
 
 library ERC7579Exec {
     function exec7579(

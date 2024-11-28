@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
+import { IAccountFactory } from "../../accounts/interface/IAccountFactory.sol";
 import { IMSA } from "./interfaces/IMSA.sol";
-import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
 import {
     IERC7579Bootstrap,
     BootstrapConfig as ERC7579BootstrapConfig
-} from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
-import { ERC7579Precompiles } from "src/test/precompiles/ERC7579Precompiles.sol";
+} from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import { ERC7579Precompiles } from "../../test/precompiles/ERC7579Precompiles.sol";
 
 contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
     IERC7579Account internal implementation;

@@ -2,8 +2,8 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { ValidatorLib, ValidationConfig } from "src/accounts/kernel/lib/ValidationTypeLib.sol";
-import { ValidationType, ValidationMode, ValidationId } from "src/accounts/kernel/types/Types.sol";
+import { ValidatorLib, ValidationConfig } from "../../accounts/kernel/lib/ValidationTypeLib.sol";
+import { ValidationType, ValidationMode, ValidationId } from "../../accounts/kernel/types/Types.sol";
 import {
     VALIDATION_TYPE_PERMISSION,
     VALIDATION_TYPE_ROOT,
@@ -14,24 +14,24 @@ import {
     MODULE_TYPE_HOOK,
     MODULE_TYPE_VALIDATOR,
     KERNEL_WRAPPER_TYPE_HASH
-} from "src/accounts/kernel/types/Constants.sol";
+} from "../../accounts/kernel/types/Constants.sol";
 import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { IERC7579Account } from "src/accounts/kernel/interfaces/IERC7579Account.sol";
-import { MockFallback } from "src/accounts/kernel/mock/MockFallback.sol";
+import { IERC7579Account } from "../../accounts/kernel/interfaces/IERC7579Account.sol";
+import { MockFallback } from "../../accounts/kernel/mock/MockFallback.sol";
 import { HelperBase } from "./HelperBase.sol";
-import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
+import { IKernel } from "../../accounts/kernel/interfaces/IKernel.sol";
 import { etch } from "../utils/Vm.sol";
-import { IValidator, IModule } from "src/accounts/common/interfaces/IERC7579Module.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType } from "src/accounts/common/lib/ModeLib.sol";
-import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
-import { MockHookMultiPlexer } from "src/Mocks.sol";
-import { TrustedForwarder } from "src/Modules.sol";
-import { PackedUserOperation } from "src/external/ERC4337.sol";
-import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
+import { IValidator, IModule } from "../../accounts/common/interfaces/IERC7579Module.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+import { CallType } from "../../accounts/common/lib/ModeLib.sol";
+import { Execution } from "../../accounts/erc7579/lib/ExecutionLib.sol";
+import { MockHookMultiPlexer } from "../../Mocks.sol";
+import { TrustedForwarder } from "../../Modules.sol";
+import { PackedUserOperation } from "../../external/ERC4337.sol";
+import { KernelFactory } from "../../accounts/kernel/KernelFactory.sol";
 import { EIP712 } from "solady/utils/EIP712.sol";
-import { KernelPrecompiles, ISetSelector } from "src/test/precompiles/KernelPrecompiles.sol";
+import { KernelPrecompiles, ISetSelector } from "../../test/precompiles/KernelPrecompiles.sol";
 
 contract KernelHelpers is HelperBase, KernelPrecompiles {
     /*//////////////////////////////////////////////////////////////////////////
@@ -224,7 +224,7 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
 
     /**
      * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L311-L321
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L311-L321
      */
     function getInstallValidatorData(
         AccountInstance memory instance,
@@ -244,7 +244,7 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
 
     /**
      * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L324-L334
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L324-L334
      */
     function getInstallExecutorData(
         AccountInstance memory instance,
@@ -264,7 +264,7 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
 
     /**
      * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L336-L345
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L336-L345
      */
     function getInstallFallbackData(
         AccountInstance memory instance,
@@ -288,7 +288,7 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
 
     /**
      * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/src/Kernel.sol#L402-L403
+     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L402-L403
      */
     function getUninstallFallbackData(
         AccountInstance memory, // instance

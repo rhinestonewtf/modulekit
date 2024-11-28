@@ -2,17 +2,17 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 import { IKernelFactory as IKernelAccountFactory } from
-    "src/accounts/kernel/interfaces/IKernelFactory.sol";
-import { IKernel } from "src/accounts/kernel/interfaces/IKernel.sol";
+    "../../accounts/kernel/interfaces/IKernelFactory.sol";
+import { IKernel } from "../../accounts/kernel/interfaces/IKernel.sol";
 import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
 import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
-import { ValidatorLib } from "src/accounts/kernel/lib/ValidationTypeLib.sol";
-import { ValidationId } from "src/accounts/kernel/types/Types.sol";
-import { IValidator } from "src/accounts/common/interfaces/IERC7579Module.sol";
-import { IHook } from "src/accounts/kernel/interfaces/IERC7579Modules.sol";
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
-import { MockHookMultiPlexer } from "src/Mocks.sol";
-import { KernelPrecompiles } from "src/test/precompiles/KernelPrecompiles.sol";
+import { ValidatorLib } from "../../accounts/kernel/lib/ValidationTypeLib.sol";
+import { ValidationId } from "../../accounts/kernel/types/Types.sol";
+import { IValidator } from "../../accounts/common/interfaces/IERC7579Module.sol";
+import { IHook } from "../../accounts/kernel/interfaces/IERC7579Modules.sol";
+import { IAccountFactory } from "../../accounts/interface/IAccountFactory.sol";
+import { MockHookMultiPlexer } from "../../Mocks.sol";
+import { KernelPrecompiles } from "../../test/precompiles/KernelPrecompiles.sol";
 
 contract KernelFactory is IAccountFactory, KernelPrecompiles {
     IKernelAccountFactory internal factory;

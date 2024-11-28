@@ -5,8 +5,8 @@ pragma solidity >=0.8.23 <0.9.0;
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType } from "src/accounts/common/lib/ModeLib.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+import { CallType } from "../../accounts/common/lib/ModeLib.sol";
 
 contract ERC7579Helpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////

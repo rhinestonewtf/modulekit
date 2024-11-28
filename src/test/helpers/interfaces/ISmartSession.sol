@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { IModule } from "src/accounts/common/interfaces/IERC7579Module.sol";
+import { IModule } from "../../../accounts/common/interfaces/IERC7579Module.sol";
 
-import { PackedUserOperation } from "src/external/ERC4337.sol";
+import { PackedUserOperation } from "../../../external/ERC4337.sol";
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                 Custom Types & Constants                   */
