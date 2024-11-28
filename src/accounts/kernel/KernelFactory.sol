@@ -9,7 +9,7 @@ import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
 import { ValidatorLib } from "src/accounts/kernel/lib/ValidationTypeLib.sol";
 import { ValidationId } from "src/accounts/kernel/types/Types.sol";
 import { IValidator } from "src/accounts/common/interfaces/IERC7579Module.sol";
-import { IHook } from "src/accounts/kernel/interfaces/IERC7579Module.sol";
+import { IHook } from "src/accounts/kernel/interfaces/IERC7579Modules.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { MockHookMultiPlexer } from "src/Mocks.sol";
 import { KernelPrecompiles } from "src/test/precompiles/KernelPrecompiles.sol";

@@ -5,7 +5,7 @@ import { IERC7579Account } from "./IERC7579Account.sol";
 import { IAccount, ValidationData } from "./IAccount.sol";
 import { IAccountExecute } from "./IAccountExecute.sol";
 import { ValidationId, ValidationConfig } from "../lib/ValidationTypeLib.sol";
-import { IHook } from "./IERC7579Module.sol";
+import { IHook } from "./IERC7579Modules.sol";
 import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 import { ExecMode } from "../lib/ExecLib.sol";
