@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
-import { ERC7579Factory } from "src/accounts/erc7579/ERC7579Factory.sol";
-import { KernelFactory } from "src/accounts/kernel/KernelFactory.sol";
-import { NexusFactory } from "src/accounts/nexus/NexusFactory.sol";
-import { envOr, prank, label, deal, toString } from "src/test/utils/Vm.sol";
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
+import { SafeFactory } from "../accounts/safe/SafeFactory.sol";
+import { ERC7579Factory } from "../accounts/erc7579/ERC7579Factory.sol";
+import { KernelFactory } from "../accounts/kernel/KernelFactory.sol";
+import { NexusFactory } from "../accounts/nexus/NexusFactory.sol";
+import { envOr, prank, label, deal, toString } from "../test/utils/Vm.sol";
+import { IAccountFactory } from "../accounts/interface/IAccountFactory.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
 import { ERC7579Helpers } from "./helpers/ERC7579Helpers.sol";
 import { SafeHelpers } from "./helpers/SafeHelpers.sol";
@@ -16,8 +16,8 @@ import { Auxiliary, AuxiliaryFactory } from "./Auxiliary.sol";
 import { PackedUserOperation, IStakeManager, IEntryPoint } from "../external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "./predeploy/EntryPoint.sol";
 import { SMARTSESSION_ADDR } from "./precompiles/SmartSessions.sol";
-import { ISmartSession, ISessionValidator } from "src/test/helpers/interfaces/ISmartSession.sol";
-import { IValidator as IERC7579Validator } from "src/accounts/common/interfaces/IERC7579Module.sol";
+import { ISmartSession, ISessionValidator } from "./helpers/interfaces/ISmartSession.sol";
+import { IValidator as IERC7579Validator } from "../accounts/common/interfaces/IERC7579Module.sol";
 import { MockValidator, MockStatelessValidator } from "../Mocks.sol";
 import {
     getAccountEnv,

@@ -2,8 +2,8 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
-import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
-import { IERC7484 } from "src/Interfaces.sol";
+import { IERC7579Bootstrap } from "../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import { IERC7484 } from "../Interfaces.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { etchSmartSessions } from "./precompiles/SmartSessions.sol";
 import { EntryPointSimulations } from
@@ -13,7 +13,7 @@ import { IEntryPointSimulations } from
 import { etchRegistry } from "./predeploy/Registry.sol";
 import { MockFactory } from "./predeploy/MockFactory.sol";
 import { UserOpGasLog } from "./utils/gas/UserOpGasLog.sol";
-import { ISmartSession } from "src/test/helpers/interfaces/ISmartSession.sol";
+import { ISmartSession } from "../test/helpers/interfaces/ISmartSession.sol";
 import "./utils/Vm.sol";
 import "./utils/Log.sol";
 

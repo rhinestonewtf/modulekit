@@ -14,8 +14,8 @@ import {
 import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
-import { MODULE_TYPE_HOOK } from "src/accounts/common/interfaces/IERC7579Module.sol";
-import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
+import { MODULE_TYPE_HOOK } from "../accounts/common/interfaces/IERC7579Module.sol";
+import { Execution } from "../accounts/erc7579/lib/ExecutionLib.sol";
 import {
     prank,
     VmSafe,
@@ -23,7 +23,7 @@ import {
     stopAndReturnStateDiff as vmStopAndReturnStateDiff,
     getMappingKeyAndParentOf,
     envOr
-} from "src/test/utils/Vm.sol";
+} from "./utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
     writeAccountType,
@@ -53,8 +53,8 @@ import {
     ISmartSession,
     EnableSession,
     ChainDigest
-} from "src/test/helpers/interfaces/ISmartSession.sol";
-import { EncodeLib, HashLib } from "src/test/helpers/SmartSessionHelpers.sol";
+} from "../test/helpers/interfaces/ISmartSession.sol";
+import { EncodeLib, HashLib } from "../test/helpers/SmartSessionHelpers.sol";
 import { Solarray } from "solarray/Solarray.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
 import { KernelHelpers } from "./helpers/KernelHelpers.sol";
