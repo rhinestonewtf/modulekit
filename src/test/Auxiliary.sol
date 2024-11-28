@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IEntryPoint, PackedUserOperation } from "../external/ERC4337.sol";
-import { ERC7579Bootstrap } from "../external/ERC7579.sol";
+import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { IERC7484 } from "src/Interfaces.sol";
 import { etchEntrypoint } from "./predeploy/EntryPoint.sol";
 import { etchSmartSessions } from "./precompiles/SmartSessions.sol";

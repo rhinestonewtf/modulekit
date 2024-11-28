@@ -12,7 +12,7 @@ import {
     ERC7739Data
 } from "src/test/helpers/interfaces/ISmartSession.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
-import { ModeCode as ExecutionMode } from "erc7579/lib/ModeLib.sol";
+import { ModeCode as ExecutionMode } from "src/accounts/common/lib/ModeLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 

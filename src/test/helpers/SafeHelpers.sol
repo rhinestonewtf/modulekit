@@ -1,25 +1,25 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { HelperBase } from "./HelperBase.sol";
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { Safe7579Launchpad } from "safe7579/Safe7579Launchpad.sol";
+import { ISafe7579Launchpad } from "src/accounts/safe/interfaces/ISafe7579Launchpad.sol";
 import { SafeFactory } from "src/accounts/safe/SafeFactory.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import {
-    IERC7579Account,
     MODULE_TYPE_HOOK,
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK
-} from "../../external/ERC7579.sol";
-import { HookType } from "safe7579/DataTypes.sol";
+} from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+import { HookType } from "src/accounts/safe/types/DataTypes.sol";
 import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { CALLTYPE_STATIC } from "safe7579/lib/ModeLib.sol";
+import { CALLTYPE_STATIC } from "src/accounts/common/lib/ModeLib.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
 import { startPrank, stopPrank } from "../utils/Vm.sol";
-import { CallType } from "src/external/ERC7579.sol";
+import { CallType } from "src/accounts/common/lib/ModeLib.sol";
 
 contract SafeHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
@@ -324,7 +324,7 @@ contract SafeHelpers is HelperBase {
                 });
                 bytes32 userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
                 bytes memory userOpValidationCallData =
-                    abi.encodeCall(Safe7579Launchpad.validateUserOp, (userOp, userOpHash, 0));
+                    abi.encodeCall(ISafe7579Launchpad.validateUserOp, (userOp, userOpHash, 0));
                 startPrank(address(instance.aux.entrypoint));
                 (bool success,) = instance.account.call(userOpValidationCallData);
                 if (!success) {
@@ -359,13 +359,13 @@ contract SafeHelpers is HelperBase {
         assembly {
             factory := mload(add(originalInitCode, 20))
         }
-        Safe7579Launchpad.InitData memory initData = abi.decode(
-            IAccountFactory(factory).getInitData(txValidator, ""), (Safe7579Launchpad.InitData)
+        ISafe7579Launchpad.InitData memory initData = abi.decode(
+            IAccountFactory(factory).getInitData(txValidator, ""), (ISafe7579Launchpad.InitData)
         );
         initData.callData = erc4337CallData;
         initCode = abi.encodePacked(
             factory, abi.encodeCall(SafeFactory.createAccount, (salt, abi.encode(initData)))
         );
-        callData = abi.encodeCall(Safe7579Launchpad.setupSafe, (initData));
+        callData = abi.encodeCall(ISafe7579Launchpad.setupSafe, (initData));
     }
 }

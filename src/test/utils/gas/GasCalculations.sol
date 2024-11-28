@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { UD60x18, ud, intoUint256 } from "@prb/math/UD60x18.sol";
 import { PRBMathCastingUint256 } from "@prb/math/casting/Uint256.sol";

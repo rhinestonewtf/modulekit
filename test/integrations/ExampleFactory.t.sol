@@ -1,29 +1,31 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { BaseTest } from "test/BaseTest.t.sol";
-import { ERC7579Account, ERC7579Bootstrap } from "src/external/ERC7579.sol";
+import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
+import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { ExampleFactory } from "src/integrations/registry/ExampleFactory.sol";
 import { ModuleKitHelpers, ModuleKitUserOp } from "src/ModuleKit.sol";
 import { IStakeManager } from "src/external/ERC4337.sol";
 import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
 import { getHelper } from "src/test/utils/Storage.sol";
 import { AccountType } from "src/test/RhinestoneModuleKit.sol";
+import { ERC7579Precompiles } from "src/test/precompiles/ERC7579Precompiles.sol";
 
-contract ExampleFactoryTest is BaseTest {
+contract ExampleFactoryTest is BaseTest, ERC7579Precompiles {
     using ModuleKitHelpers for *;
     using ModuleKitUserOp for *;
 
-    ERC7579Account implementation;
-    ERC7579Bootstrap bootstrap;
+    IERC7579Account implementation;
+    IERC7579Bootstrap bootstrap;
     ExampleFactory factory;
 
     function setUp() public override {
         super.setUp();
 
-        implementation = new ERC7579Account();
+        implementation = deployERC7579Account();
         vm.label(address(implementation), "AccountSingleton");
-        bootstrap = new ERC7579Bootstrap();
+        bootstrap = deployERC7579Bootstrap();
         vm.label(address(bootstrap), "Bootstrap");
         address[] memory trustedAttesters = new address[](2);
         trustedAttesters[0] = makeAddr("attester1");
@@ -48,7 +50,7 @@ contract ExampleFactoryTest is BaseTest {
         address account =
             factory.createAccount(keccak256("1"), address(instance.defaultValidator), "");
         assertTrue(account != address(0));
-        assertEq(ERC7579Account(payable(account)).accountId(), "uMSA.advanced/withHook.v0.1");
+        assertEq(IERC7579Account(payable(account)).accountId(), "uMSA.advanced/withHook.v0.1");
     }
 
     function test_userOpFlow() public {

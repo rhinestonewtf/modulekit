@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
-import { IRegistry, IExternalResolver } from "registry/IRegistry.sol";
+import { IRegistry, IExternalResolver } from "src/deployment/registry/interfaces/IRegistry.sol";
 import {
     ResolverRecord,
     ModuleRecord,
@@ -11,8 +11,9 @@ import {
     ModuleType,
     SchemaUID,
     SchemaRecord
-} from "registry/DataTypes.sol";
-import { IExternalSchemaValidator } from "registry/external/IExternalSchemaValidator.sol";
+} from "src/deployment/registry/types/DataTypes.sol";
+import { IExternalSchemaValidator } from
+    "src/deployment/registry/interfaces/IExternalSchemaValidator.sol";
 
 address constant REGISTRY_ADDR = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;
 

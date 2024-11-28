@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 interface IAccountFactory {
     function init() external;
@@ -11,7 +11,7 @@ interface IAccountFactory {
         external
         returns (address account);
 
-    function getAddress(bytes32 salt, bytes memory initCode) external view returns (address);
+    function getAddress(bytes32 salt, bytes memory initCode) external returns (address);
 
     function getInitData(
         address validator,

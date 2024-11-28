@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { IERC7484 } from "src/Interfaces.sol";
 import { MockRegistry } from "src/Mocks.sol";

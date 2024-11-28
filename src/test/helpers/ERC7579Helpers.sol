@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 // note: removing the first import will cause a build error
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
 import { HelperBase } from "./HelperBase.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "src/Interfaces.sol";
-import { CallType } from "src/external/ERC7579.sol";
+import { CallType } from "src/accounts/common/lib/ModeLib.sol";
 
 contract ERC7579Helpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////

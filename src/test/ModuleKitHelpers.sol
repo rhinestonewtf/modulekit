@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity >=0.8.23 <0.9.0;
 
 import {
     AccountInstance,
@@ -14,7 +14,8 @@ import {
 import { PackedUserOperation } from "../external/ERC4337.sol";
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
-import { Execution, MODULE_TYPE_HOOK } from "../external/ERC7579.sol";
+import { MODULE_TYPE_HOOK } from "src/accounts/common/interfaces/IERC7579Modules.sol";
+import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 import {
     prank,
     VmSafe,
