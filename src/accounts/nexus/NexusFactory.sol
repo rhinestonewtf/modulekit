@@ -2,20 +2,20 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
-import { IAccountFactory } from "src/accounts/interface/IAccountFactory.sol";
-import { INexusAccountFactory } from "src/accounts/nexus/interfaces/INexusAccountFactory.sol";
+import { IAccountFactory } from "../interface/IAccountFactory.sol";
+import { INexusAccountFactory } from "../nexus/interfaces/INexusAccountFactory.sol";
 import {
     INexusBootstrap,
     BootstrapConfig as NexusBootstrapConfig
-} from "src/accounts/nexus/interfaces/INexusBootstrap.sol";
-import { IERC7484 } from "src/Interfaces.sol";
+} from "../nexus/interfaces/INexusBootstrap.sol";
+import { IERC7484 } from "../../Interfaces.sol";
 
 // Constants
-import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
-import { REGISTRY_ADDR } from "src/test/predeploy/Registry.sol";
+import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
+import { REGISTRY_ADDR } from "../../test/predeploy/Registry.sol";
 
 // Utils
-import { NexusPrecompiles } from "src/test/precompiles/NexusPrecompiles.sol";
+import { NexusPrecompiles } from "../../test/precompiles/NexusPrecompiles.sol";
 
 contract NexusFactory is IAccountFactory {
     INexusAccountFactory internal factory;

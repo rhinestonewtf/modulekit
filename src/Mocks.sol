@@ -17,6 +17,7 @@ import { MockPolicy } from "src/module-bases/mocks/MockPolicy.sol";
 
 import { MockValidator } from "src/module-bases/mocks/MockValidator.sol";
 import { MockStatelessValidator } from "src/module-bases/mocks/MockStatelessValidator.sol";
+import { MockHybridValidator } from "src/module-bases/mocks/MockHybridValidator.sol";
 import { MockExecutor } from "src/module-bases/mocks/MockExecutor.sol";
 import { MockHook } from "src/module-bases/mocks/MockHook.sol";
 import { MockFallback } from "src/module-bases/mocks/MockFallback.sol";

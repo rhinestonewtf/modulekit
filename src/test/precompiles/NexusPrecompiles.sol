@@ -2,8 +2,8 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
-import { INexusAccountFactory } from "src/accounts/nexus/interfaces/INexusAccountFactory.sol";
-import { INexusBootstrap } from "src/accounts/nexus/interfaces/INexusBootstrap.sol";
+import { INexusAccountFactory } from "../../accounts/nexus/interfaces/INexusAccountFactory.sol";
+import { INexusBootstrap } from "../../accounts/nexus/interfaces/INexusBootstrap.sol";
 
 // Utils
 import { label } from "src/test/utils/Vm.sol";

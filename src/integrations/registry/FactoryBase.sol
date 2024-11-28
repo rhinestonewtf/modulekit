@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { IERC7484 } from "src/Interfaces.sol";
+import { IERC7484 } from "../../Interfaces.sol";
 
 abstract contract FactoryBase {
     IERC7484 public immutable REGISTRY;

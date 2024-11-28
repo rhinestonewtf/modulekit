@@ -2,10 +2,11 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 /* solhint-disable no-unused-vars */
+import { ERC7579StatelessValidatorBase } from "src/Modules.sol";
 import { ERC7579ValidatorBase } from "src/Modules.sol";
 import { PackedUserOperation } from "src/external/ERC4337.sol";
 
-contract MockValidatorFalse is ERC7579ValidatorBase {
+contract MockValidatorFalse is ERC7579StatelessValidatorBase, ERC7579ValidatorBase {
     function onInstall(bytes calldata data) external virtual override { }
 
     function onUninstall(bytes calldata data) external virtual override { }
@@ -57,6 +58,7 @@ contract MockValidatorFalse is ERC7579ValidatorBase {
     )
         external
         pure
+        override
         returns (bool validSig)
     {
         return false;
