@@ -5,16 +5,15 @@ import { BaseTest } from "test/BaseTest.t.sol";
 import { IERC7579Account } from "src/accounts/common/interfaces/IERC7579Account.sol";
 import { IERC7579Bootstrap } from "src/accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { ExampleFactory } from "src/integrations/registry/ExampleFactory.sol";
-import { ModuleKitHelpers, ModuleKitUserOp } from "src/ModuleKit.sol";
+import { ModuleKitHelpers } from "src/ModuleKit.sol";
 import { IStakeManager } from "src/external/ERC4337.sol";
-import { ENTRYPOINT_ADDR } from "src/test/predeploy/EntryPoint.sol";
+import { ENTRYPOINT_ADDR } from "src/deployment/predeploy/EntryPoint.sol";
 import { getHelper } from "src/test/utils/Storage.sol";
 import { AccountType } from "src/test/RhinestoneModuleKit.sol";
-import { ERC7579Precompiles } from "src/test/precompiles/ERC7579Precompiles.sol";
+import { ERC7579Precompiles } from "src/deployment/precompiles/ERC7579Precompiles.sol";
 
 contract ExampleFactoryTest is BaseTest, ERC7579Precompiles {
     using ModuleKitHelpers for *;
-    using ModuleKitUserOp for *;
 
     IERC7579Account implementation;
     IERC7579Bootstrap bootstrap;

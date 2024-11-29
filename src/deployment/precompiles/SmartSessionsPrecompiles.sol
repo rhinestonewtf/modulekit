@@ -2,11 +2,12 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 /* solhint-disable max-line-length */
-import "../utils/Vm.sol";
+import { etch } from "../../test/utils/Vm.sol";
 
 // Interfaces
-import { ISmartSession } from "../../test/helpers/interfaces/ISmartSession.sol";
+import { ISmartSession } from "../../integrations/interfaces/ISmartSession.sol";
 
+/// @dev Preset smart session contract address
 address constant SMARTSESSION_ADDR = 0x0000000071727De22e5E9D8bAF0EDAc6F37da034;
 
 function etchSmartSessions() returns (ISmartSession) {

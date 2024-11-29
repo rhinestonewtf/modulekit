@@ -2,9 +2,12 @@
 pragma solidity >=0.8.23 <0.9.0;
 /* solhint-enable no-unused-import */
 
+// Dependencies
 import { MockUniswap, ISwapRouter } from "../../integrations/uniswap/MockUniswap.sol";
 import { SWAPROUTER_ADDRESS } from "../../integrations/uniswap/helpers/MainnetAddresses.sol";
-import { etch } from "../utils/Vm.sol";
+
+// Utils
+import { etch } from "../../test/utils/Vm.sol";
 
 contract MockFactory {
     ISwapRouter public uniswap;

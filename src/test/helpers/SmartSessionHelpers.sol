@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
+/// @dev A collection of smart session related libraries, vendored from
+/// https://github.com/erc7579/smartsessions
+
+// Interfaces
 import {
     SmartSessionMode,
     PermissionId,
@@ -10,11 +14,15 @@ import {
     PolicyData,
     ActionData,
     ERC7739Data
-} from "../../test/helpers/interfaces/ISmartSession.sol";
+} from "../../integrations/interfaces/ISmartSession.sol";
+
+// Libraries
 import { LibZip } from "solady/utils/LibZip.sol";
-import { ModeCode as ExecutionMode } from "../../accounts/common/lib/ModeLib.sol";
 import { EfficientHashLib } from "solady/utils/EfficientHashLib.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+
+// Types
+import { ModeCode as ExecutionMode } from "../../accounts/common/lib/ModeLib.sol";
 
 library SmartSessionModeLib {
     function isUseMode(SmartSessionMode mode) internal pure returns (bool) {

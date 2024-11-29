@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-// note: removing the first import will cause a build error
+// Types
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { HelperBase } from "./HelperBase.sol";
-import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
 import { CallType } from "../../accounts/common/lib/ModeLib.sol";
 
+// Dependencies
+import { HelperBase } from "./HelperBase.sol";
+
+// Interfaces
+import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+
+/// @notice Helper functions for ERC7579 reference implementation based Accounts
 contract ERC7579Helpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
                                     MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    /**
-     * get callData to uninstall validator on ERC7579 Account
-     */
+    /// @notice get callData to uninstall a validator on an ERC7579 Account
+    /// @param instance AccountInstance the account instance to uninstall the validator from
+    /// @param module address the address of the module to uninstall
+    /// @param initData bytes the data to pass to the module
     function getUninstallValidatorData(
         AccountInstance memory instance,
         address module,
@@ -45,9 +51,10 @@ contract ERC7579Helpers is HelperBase {
         data = abi.encode(previous, initData);
     }
 
-    /**
-     * get callData to uninstall executor on ERC7579 Account
-     */
+    /// @notice get callData to install a validator on an ERC7579 Account
+    /// @param instance AccountInstance the account instance to install the validator on
+    /// @param module address the address of the module to install
+    /// @param initData bytes the data to pass to the module
     function getUninstallExecutorData(
         AccountInstance memory instance,
         address module,
@@ -77,9 +84,8 @@ contract ERC7579Helpers is HelperBase {
         data = abi.encode(previous, initData);
     }
 
-    /**
-     * get callData to install fallback on ERC7579 Account
-     */
+    /// @notice get callData to install a fallback on an ERC7579 Account
+    /// @param initData bytes the data to pass to the module
     function getInstallFallbackData(
         AccountInstance memory, // instance
         address, // module
@@ -96,9 +102,8 @@ contract ERC7579Helpers is HelperBase {
         data = abi.encodePacked(selector, callType, _initData);
     }
 
-    /**
-     * get callData to uninstall fallback on ERC7579 Account
-     */
+    /// @notice get callData to uninstall a fallback on an ERC7579 Account
+    /// @param initData bytes the data to pass to the module
     function getUninstallFallbackData(
         AccountInstance memory, // instance
         address, // module
@@ -118,6 +123,12 @@ contract ERC7579Helpers is HelperBase {
                                 SIGNATURE UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Check if a signature is valid for an account, returns true if isValidSignature
+    /// returns EIP1271_MAGIC_VALUE
+    /// @param instance AccountInstance the account instance to check the signature on
+    /// @param validator address the address of the validator
+    /// @param hash bytes32 the hash to check the signature against
+    /// @param signature bytes the signature to check
     function isValidSignature(
         AccountInstance memory instance,
         address validator,
@@ -135,6 +146,9 @@ contract ERC7579Helpers is HelperBase {
         ) == EIP1271_MAGIC_VALUE;
     }
 
+    /// @notice Format a ERC1271 signature for an account
+    /// @param validator address the address of the validator
+    /// @param signature bytes the signature to format
     function formatERC1271Signature(
         AccountInstance memory, // instance
         address validator,

@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import "../types/DataTypes.sol";
+// Interfaces
 import { IERC7579Account } from "./IERC7579Account.sol";
+import { ISafeOp } from "./ISafeOp.sol";
+
+// Types
+import "../types/DataTypes.sol";
 import { ModeCode } from "../../common/lib/ModeLib.sol";
 import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
-import { ISafeOp } from "./ISafeOp.sol";
 
 /**
  * @title ERC7579 Adapter for Safe accounts.

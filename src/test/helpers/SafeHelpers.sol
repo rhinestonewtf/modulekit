@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { HelperBase } from "./HelperBase.sol";
+// Types
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { ISafe7579Launchpad } from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
-import { SafeFactory } from "../../accounts/safe/SafeFactory.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
 import {
     MODULE_TYPE_HOOK,
@@ -12,20 +10,36 @@ import {
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_FALLBACK
 } from "../../accounts/common/interfaces/IERC7579Module.sol";
-import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
 import { HookType } from "../../accounts/safe/types/DataTypes.sol";
-import { IAccountFactory } from "../../accounts/interface/IAccountFactory.sol";
-import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { CALLTYPE_STATIC } from "../../accounts/common/lib/ModeLib.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
-import { startPrank, stopPrank } from "../utils/Vm.sol";
 import { CallType } from "../../accounts/common/lib/ModeLib.sol";
 
+// Dependencies
+import { HelperBase } from "./HelperBase.sol";
+import { SafeFactory } from "../../accounts/safe/SafeFactory.sol";
+
+// Interfaces
+import { ISafe7579Launchpad } from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
+import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
+import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
+import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+
+// Utils
+import { startPrank, stopPrank } from "../utils/Vm.sol";
+
+/// @notice Helper functions for the Safe7579 implementation
 contract SafeHelpers is HelperBase {
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Gets userOp and userOpHash for an executing calldata on an account instance
+    /// @param instance AccountInstance the account instance to execute the callData on
+    /// @param callData bytes the calldata to execute
+    /// @param txValidator address the address of the validator
+    /// @return userOp PackedUserOperation the user operation
+    /// @return userOpHash bytes32 the hash of the user operation
     function execUserOp(
         AccountInstance memory instance,
         bytes memory callData,
@@ -65,122 +79,15 @@ contract SafeHelpers is HelperBase {
                                     MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
-    /**
-     * get callData to uninstall validator on ERC7579 Account
-     */
-    function getUninstallValidatorData(
-        AccountInstance memory instance,
-        address module,
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory data)
-    {
-        // get previous validator in sentinel list
-        address previous;
-
-        (address[] memory array,) =
-            IAccountModulesPaginated(instance.account).getValidatorsPaginated(address(0x1), 100);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == module) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == module) previous = array[i - 1];
-            }
-        }
-        data = abi.encode(previous, initData);
-    }
-
-    /**
-     * get callData to uninstall executor on ERC7579 Account
-     */
-    function getUninstallExecutorData(
-        AccountInstance memory instance,
-        address module,
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory data)
-    {
-        // get previous executor in sentinel list
-        address previous;
-
-        (address[] memory array,) =
-            IAccountModulesPaginated(instance.account).getExecutorsPaginated(address(0x1), 100);
-
-        if (array.length == 1) {
-            previous = address(0x1);
-        } else if (array[0] == module) {
-            previous = address(0x1);
-        } else {
-            for (uint256 i = 1; i < array.length; i++) {
-                if (array[i] == module) previous = array[i - 1];
-            }
-        }
-        data = abi.encode(previous, initData);
-    }
-
-    /**
-     * get callData to install hook on ERC7579 Account
-     */
-    function getInstallHookData(
-        AccountInstance memory, // instance
-        address, // module
-        bytes memory initData
-    )
-        public
-        view
-        virtual
-        override
-        returns (bytes memory data)
-    {
-        data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
-    }
-
-    /**
-     * get callData to uninstall hook on ERC7579 Account
-     */
-    function getUninstallHookData(
-        AccountInstance memory, // instance
-        address, // module
-        bytes memory initData
-    )
-        public
-        pure
-        virtual
-        override
-        returns (bytes memory data)
-    {
-        data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
-    }
-
-    /**
-     * get callData to uninstall fallback on ERC7579 Account
-     */
-    function getUninstallFallbackData(
-        AccountInstance memory, // instance
-        address, // module
-        bytes memory initData
-    )
-        public
-        pure
-        virtual
-        override
-        returns (bytes memory data)
-    {
-        (bytes4 selector,, bytes memory _initData) = abi.decode(initData, (bytes4, CallType, bytes));
-        data = abi.encode(selector, _initData);
-    }
-
+    /// @notice Configures a userop for an account instance to install or uninstall a module
+    /// @param instance AccountInstance the account instance to configure the userop for
+    /// @param moduleType uint256 the type of the module
+    /// @param module address the address of the module
+    /// @param initData bytes the data to pass to the module
+    /// @param isInstall bool whether to install or uninstall the module
+    /// @param txValidator address the address of the validator
+    /// @return userOp PackedUserOperation the packed user operation
+    /// @return userOpHash bytes32 the hash of the user operation
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -238,6 +145,130 @@ contract SafeHelpers is HelperBase {
         userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
     }
 
+    /// @notice Gets the data to install a validator on an account instance
+    /// @param instance AccountInstance the account instance to install the validator on
+    /// @param initData the data to pass to the validator
+    /// @return data the data to install the validator
+    function getUninstallValidatorData(
+        AccountInstance memory instance,
+        address module,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        // get previous validator in sentinel list
+        address previous;
+
+        (address[] memory array,) =
+            IAccountModulesPaginated(instance.account).getValidatorsPaginated(address(0x1), 100);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == module) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == module) previous = array[i - 1];
+            }
+        }
+        data = abi.encode(previous, initData);
+    }
+
+    /// @notice Gets the data to install an executor on an account instance
+    /// @param instance AccountInstance the account instance to install the executor on
+    /// @param initData the data to pass to the executor
+    /// @return data the data to install the executor
+    function getUninstallExecutorData(
+        AccountInstance memory instance,
+        address module,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        // get previous executor in sentinel list
+        address previous;
+
+        (address[] memory array,) =
+            IAccountModulesPaginated(instance.account).getExecutorsPaginated(address(0x1), 100);
+
+        if (array.length == 1) {
+            previous = address(0x1);
+        } else if (array[0] == module) {
+            previous = address(0x1);
+        } else {
+            for (uint256 i = 1; i < array.length; i++) {
+                if (array[i] == module) previous = array[i - 1];
+            }
+        }
+        data = abi.encode(previous, initData);
+    }
+
+    /// @notice Gets the data to install a hook on an account instance
+    /// @param initData the data to pass to the hook
+    /// @return data the data to install the hook
+    function getInstallHookData(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
+    }
+
+    /// @notice Gets the data to uninstall a hook on an account instance
+    /// @param initData the data to pass to the hook
+    /// @return data the data to uninstall the hook
+    function getUninstallHookData(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        data = abi.encode(HookType.GLOBAL, bytes4(0x0), initData);
+    }
+
+    /// @notice Gets the data to install a fallback on an account instance
+    /// @param initData the data to pass to the fallback
+    /// @return data the data to install the fallback
+    function getUninstallFallbackData(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        pure
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        (bytes4 selector,, bytes memory _initData) = abi.decode(initData, (bytes4, CallType, bytes));
+        data = abi.encode(selector, _initData);
+    }
+
+    /// @notice Checks if a module is installed on an account instance
+    /// @param instance AccountInstance the account instance to check
+    /// @param moduleTypeId uint256 the type of the module
+    /// @param module address the address of the module
+    /// @param data bytes the data to pass to the module
+    /// @return bool whether the module is installed
     function isModuleInstalled(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -261,6 +292,13 @@ contract SafeHelpers is HelperBase {
                                 SIGNATURE UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Checks if a signature is valid for an account instance
+    /// @param instance AccountInstance the account instance to check the signature on
+    /// @param validator address the address of the validator
+    /// @param hash bytes32 the hash to check the signature against
+    /// @param signature bytes the signature to check
+    /// @return isValid bool whether the signature is valid, returns true if isValidSignature
+    /// returns EIP1271_MAGIC_VALUE
     function isValidSignature(
         AccountInstance memory instance,
         address validator,
@@ -278,6 +316,10 @@ contract SafeHelpers is HelperBase {
         ) == EIP1271_MAGIC_VALUE;
     }
 
+    /// @notice Format a ERC1271 signature for an account
+    /// @param validator address the address of the validator
+    /// @param signature bytes the signature to format
+    /// @return bytes the formatted signature
     function formatERC1271Signature(
         AccountInstance memory, // instance
         address validator,
@@ -295,6 +337,9 @@ contract SafeHelpers is HelperBase {
                                 ACCOUNT UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Deploys an account instance if it has not been deployed yet
+    ///         reverts if no initCode is provided
+    /// @param instance AccountInstance the account instance to deploy
     function deployAccount(AccountInstance memory instance) public virtual override {
         if (instance.account.code.length == 0) {
             if (instance.initCode.length == 0) {
@@ -345,6 +390,11 @@ contract SafeHelpers is HelperBase {
                                     INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Gets the initCode and callData for a new account instance
+    /// @param salt bytes32 the salt for the account instance
+    /// @param txValidator address the address of the validator
+    /// @param originalInitCode bytes the original initCode for the account instance
+    /// @param erc4337CallData bytes the callData for the ERC4337 call
     function _getInitCallData(
         bytes32 salt,
         address txValidator,

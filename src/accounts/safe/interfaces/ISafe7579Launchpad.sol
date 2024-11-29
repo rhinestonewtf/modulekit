@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import {
     IAccount,
     PackedUserOperation
 } from "@ERC4337/account-abstraction/contracts/interfaces/IAccount.sol";
 import { ISafe7579 } from "./ISafe7579.sol";
-import { IERC7484 } from "./IERC7484.sol";
+
+// Types
 import { ModuleInit } from "../types/DataTypes.sol";
 
 interface ISafe7579Launchpad is IAccount {

@@ -23,7 +23,6 @@ import { VmSafe } from "src/test/utils/Vm.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
-    using ModuleKitUserOp for *;
 
     MockValidator internal validator;
     MockValidatorFalse internal validatorFalse;

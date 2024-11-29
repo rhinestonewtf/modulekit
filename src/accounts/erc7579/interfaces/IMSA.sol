@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { IERC7579Account } from "../../common/interfaces/IERC7579Account.sol";
 import { IERC4337Account } from "../../common/interfaces/IERC4337Account.sol";
 
-import { CallType, ExecType, ModeCode } from "../../common/lib/ModeLib.sol";
+// Types
+import { CallType, ExecType } from "../../common/lib/ModeLib.sol";
 
 interface IMSA is IERC7579Account, IERC4337Account {
     // Error thrown when an unsupported ModuleType is requested

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
+/* solhint-disable no-unused-import */
+
 import {
     PackedUserOperation,
     _packValidationData as _packValidationData4337

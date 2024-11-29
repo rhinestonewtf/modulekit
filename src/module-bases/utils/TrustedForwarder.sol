@@ -43,6 +43,7 @@ abstract contract TrustedForwarder {
         address _account;
         address forwarder;
         if (msg.data.length >= 40) {
+            // solhint-disable-next-line no-inline-assembly
             assembly {
                 _account := shr(96, calldataload(sub(calldatasize(), 20)))
                 forwarder := shr(96, calldataload(sub(calldatasize(), 40)))

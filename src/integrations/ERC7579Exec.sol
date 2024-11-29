@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
+// Libraries
 import {
     Execution,
     ExecutionLib as ERC7579ExecutionLib
@@ -15,6 +16,8 @@ import {
     ModePayload,
     ModeCode
 } from "../accounts/common/lib/ModeLib.sol";
+
+// Interfaces
 import { IERC7579Account } from "../accounts/common/interfaces/IERC7579Account.sol";
 
 library ERC7579Exec {

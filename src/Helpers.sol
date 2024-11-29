@@ -2,11 +2,39 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 /* solhint-disable no-unused-import */
-import { ERC4337Helpers } from "./test/utils/ERC4337Helpers.sol";
-import { ERC7579Helpers } from "./test/helpers/ERC7579Helpers.sol";
-import { sign as vmSign } from "./test/utils/Vm.sol";
 
-function ecdsaSign(uint256 privKey, bytes32 digest) pure returns (bytes memory signature) {
-    (uint8 v, bytes32 r, bytes32 s) = vmSign(privKey, digest);
-    return abi.encodePacked(r, s, v);
-}
+/*//////////////////////////////////////////////////////////////
+                            4337
+//////////////////////////////////////////////////////////////*/
+
+import { ERC4337Helpers } from "./test/utils/ERC4337Helpers.sol";
+
+/*//////////////////////////////////////////////////////////////
+                        7579 REFERENCE
+//////////////////////////////////////////////////////////////*/
+
+import { ERC7579Helpers } from "./test/helpers/ERC7579Helpers.sol";
+
+/*//////////////////////////////////////////////////////////////
+                            KERNEL
+//////////////////////////////////////////////////////////////*/
+
+import { KernelHelpers } from "./test/helpers/KernelHelpers.sol";
+
+/*//////////////////////////////////////////////////////////////
+                            NEXUS
+//////////////////////////////////////////////////////////////*/
+
+import { NexusHelpers } from "./test/helpers/NexusHelpers.sol";
+
+/*//////////////////////////////////////////////////////////////
+                            SAFE
+//////////////////////////////////////////////////////////////*/
+
+import { SafeHelpers } from "./test/helpers/SafeHelpers.sol";
+
+/*//////////////////////////////////////////////////////////////
+                            UTIL
+//////////////////////////////////////////////////////////////*/
+
+import { ecdsaSign } from "./test/utils/ECDSA.sol";

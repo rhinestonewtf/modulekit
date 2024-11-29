@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+
+// Types
 import { Execution } from "../accounts/erc7579/lib/ExecutionLib.sol";
+
+// Dependencies
 import { ERC7579Exec } from "./ERC7579Exec.sol";
 
 library ERC20Integration {

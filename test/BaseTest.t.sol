@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "src/ModuleKit.sol";
 import "src/Accounts.sol";
 import "src/Mocks.sol";
+import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 
 contract BaseTest is RhinestoneModuleKit, Test {
     using ModuleKitHelpers for AccountInstance;
