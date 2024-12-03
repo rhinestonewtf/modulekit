@@ -1,8 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+/* solhint-disable no-unused-import */
+
+// Interfaces
 import { IERC7579Account } from "../interfaces/IERC7579Account.sol";
 import { IFallback } from "../interfaces/IERC7579Modules.sol";
+
+// Types
 import { CallType, ExecType, ExecMode, ExecLib } from "../lib/ExecLib.sol";
 import { EXEC_MODE_DEFAULT } from "../types/Constants.sol";
 
@@ -15,11 +20,11 @@ contract Callee {
 }
 
 contract MockFallback is IFallback {
-    mapping(address => bytes) public data;
+    mapping(address account => bytes accountData) public data;
 
     uint256 public valueStored;
 
-    bool isExecutor;
+    bool public isExecutor;
 
     Callee public callee;
 

@@ -89,6 +89,7 @@ type ValidAfter is uint48;
 type ValidUntil is uint48;
 
 function getValidationResult(ValidationData validationData) pure returns (address result) {
+    // solhint-disable-next-line no-inline-assembly
     assembly {
         result := validationData
     }
@@ -103,6 +104,7 @@ function parseValidationData(uint256 validationData)
     pure
     returns (ValidAfter validAfter, ValidUntil validUntil, address result)
 {
+    // solhint-disable-next-line no-inline-assembly
     assembly {
         result := validationData
         validUntil := and(shr(160, validationData), 0xffffffffffff)

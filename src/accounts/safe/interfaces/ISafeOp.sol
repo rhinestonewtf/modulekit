@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Types
 import { PackedUserOperation } from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 bytes32 constant SAFE_OP_TYPEHASH =

@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Utils
 import "../Vm.sol";
-import "./GasCalculations.sol";
 import "../Log.sol";
+
+// Dependencies
+import "./GasCalculations.sol";
 import { writeGasIdentifier } from "../Storage.sol";
 
 library GasParser {

@@ -23,7 +23,7 @@ import {
     ERC7739Data,
     Session,
     ISessionValidator
-} from "src/test/helpers/interfaces/ISmartSession.sol";
+} from "src/integrations/interfaces/ISmartSession.sol";
 import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 import { UserOpData, PackedUserOperation } from "src/test/RhinestoneModuleKit.sol";
 

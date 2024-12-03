@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
-import { IRegistry, IExternalResolver } from "./registry/interfaces/IRegistry.sol";
+// Interfaces
+import { IRegistry, IExternalResolver } from "./interfaces/IRegistry.sol";
+import { IExternalSchemaValidator } from "./interfaces/IExternalSchemaValidator.sol";
+
+// Types
 import {
     ResolverRecord,
     ModuleRecord,
@@ -11,9 +15,9 @@ import {
     ModuleType,
     SchemaUID,
     SchemaRecord
-} from "./registry/types/DataTypes.sol";
-import { IExternalSchemaValidator } from "./registry/interfaces/IExternalSchemaValidator.sol";
+} from "./types/DataTypes.sol";
 
+/// @dev Preset registry address
 address constant REGISTRY_ADDR = 0x000000000069E2a187AEFFb852bF3cCdC95151B2;
 
 contract RegistryDeployer {
@@ -30,7 +34,9 @@ contract RegistryDeployer {
 
     error InvalidResolver();
 
-    // <---- DEPLOYMENT ---->
+    /*//////////////////////////////////////////////////////////////
+                               DEPLOYMENT
+    //////////////////////////////////////////////////////////////*/
 
     function deployModule(
         bytes memory initCode,
@@ -81,7 +87,9 @@ contract RegistryDeployer {
         return registry.calcModuleAddress(salt, initCode);
     }
 
-    // <---- REGISTRATION ---->
+    /*//////////////////////////////////////////////////////////////
+                              REGISTRATION
+    //////////////////////////////////////////////////////////////*/
 
     function registerModule(
         address module,
@@ -103,7 +111,9 @@ contract RegistryDeployer {
         return registry.findModule(moduleAddress);
     }
 
-    // <---- ATTESTATIONS ---->
+    /*//////////////////////////////////////////////////////////////
+                              ATTESTATION
+    //////////////////////////////////////////////////////////////*/
 
     function mockAttestToModule(
         address module,
@@ -112,7 +122,8 @@ contract RegistryDeployer {
     )
         public
     {
-        require(isContract(mockAttester), "MockAttester is not deployed on this network");
+        // solhint-disable-next-line gas-custom-errors
+        require(isContract(mockAttester), "MockAttester not deployed");
 
         SchemaUID _schemaUID = findSchema();
         AttestationRequest memory request = AttestationRequest({
@@ -130,6 +141,7 @@ contract RegistryDeployer {
             )
         );
 
+        // solhint-disable-next-line gas-custom-errors
         require(success, "Mock attestation failed");
     }
 
@@ -140,7 +152,9 @@ contract RegistryDeployer {
             && attestation.revocationTime == 0;
     }
 
-    // <---- REGISTRY MANAGEMENT ---->
+    /*//////////////////////////////////////////////////////////////
+                               MANAGEMENT
+    //////////////////////////////////////////////////////////////*/
 
     function findResolver() public view returns (ResolverUID _resolverUID) {
         _resolverUID = resolverUID;
@@ -187,9 +201,13 @@ contract RegistryDeployer {
         schemaUID = _schemaUID;
     }
 
-    // <---- OTHER ---->
+    /*//////////////////////////////////////////////////////////////
+                                 OTHER
+    //////////////////////////////////////////////////////////////*/
+
     function isContract(address _addr) internal view returns (bool _isContract) {
         uint32 size;
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             size := extcodesize(_addr)
         }

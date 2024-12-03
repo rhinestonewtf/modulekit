@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Types
 import { AccountInstance } from "../RhinestoneModuleKit.sol";
-import { ValidatorLib, ValidationConfig } from "../../accounts/kernel/lib/ValidationTypeLib.sol";
 import { ValidationType, ValidationMode, ValidationId } from "../../accounts/kernel/types/Types.sol";
 import {
     VALIDATION_TYPE_PERMISSION,
@@ -15,29 +15,51 @@ import {
     MODULE_TYPE_VALIDATOR,
     KERNEL_WRAPPER_TYPE_HASH
 } from "../../accounts/kernel/types/Constants.sol";
-import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
-import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
-import { IERC7579Account } from "../../accounts/kernel/interfaces/IERC7579Account.sol";
-import { MockFallback } from "../../accounts/kernel/mock/MockFallback.sol";
-import { HelperBase } from "./HelperBase.sol";
-import { IKernel } from "../../accounts/kernel/interfaces/IKernel.sol";
-import { etch } from "../utils/Vm.sol";
-import { IValidator, IModule } from "../../accounts/common/interfaces/IERC7579Module.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
 import { CallType } from "../../accounts/common/lib/ModeLib.sol";
 import { Execution } from "../../accounts/erc7579/lib/ExecutionLib.sol";
-import { MockHookMultiPlexer } from "../../Mocks.sol";
-import { TrustedForwarder } from "../../Modules.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
-import { KernelFactory } from "../../accounts/kernel/KernelFactory.sol";
-import { EIP712 } from "solady/utils/EIP712.sol";
-import { KernelPrecompiles, ISetSelector } from "../../test/precompiles/KernelPrecompiles.sol";
 
+// Libraries
+import { ValidatorLib, ValidationConfig } from "../../accounts/kernel/lib/ValidationTypeLib.sol";
+
+// Deployments
+import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
+import { KernelPrecompiles, ISetSelector } from "../../deployment/precompiles/KernelPrecompiles.sol";
+
+// Interfaces
+import { IEntryPoint } from "@ERC4337/account-abstraction/contracts/interfaces/IEntryPoint.sol";
+import { IERC7579Account } from "../../accounts/kernel/interfaces/IERC7579Account.sol";
+import { IKernel } from "../../accounts/kernel/interfaces/IKernel.sol";
+import { IValidator, IModule } from "../../accounts/common/interfaces/IERC7579Module.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+
+// Mocks
+import { MockFallback } from "../../accounts/kernel/mock/MockFallback.sol";
+import { MockHookMultiPlexer } from "../../Mocks.sol";
+
+// Dependencies
+import { HelperBase } from "./HelperBase.sol";
+import { TrustedForwarder } from "../../Modules.sol";
+import { KernelFactory } from "../../accounts/kernel/KernelFactory.sol";
+
+// Utils
+import { etch } from "../utils/Vm.sol";
+
+// External Dependencies
+import { EIP712 } from "solady/utils/EIP712.sol";
+
+/// @notice Helper functions for the Kernel ERC7579 account implementation
 contract KernelHelpers is HelperBase, KernelPrecompiles {
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Gets userOp and userOpHash for an executing calldata on an account instance
+    /// @param instance AccountInstance the account instance to execute the userop for
+    /// @param callData bytes the calldata to execute
+    /// @param txValidator address the address of the validator
+    /// @return userOp PackedUserOperation the packed user operation
+    /// @return userOpHash bytes32 the hash of the user operation
     function execUserOp(
         AccountInstance memory instance,
         bytes memory callData,
@@ -79,6 +101,10 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
                                         NONCE
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Gets the nonce for an account instance
+    /// @param instance AccountInstance the account instance to get the nonce for
+    /// @param callData bytes the calldata to execute
+    /// @param txValidator address the address of the validator
     function getNonce(
         AccountInstance memory instance,
         bytes memory callData,
@@ -99,6 +125,12 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         nonce = encodeNonce(vType, false, instance.account, txValidator);
     }
 
+    /// @notice Encodes the nonce for an account instance in the Kernel format
+    /// @param vType ValidationType the validation type
+    /// @param enable bool whether to enable the validator
+    /// @param account address the address of the account
+    /// @param validator address the address of the validator
+    /// @return nonce uint256 the encoded nonce
     function encodeNonce(
         ValidationType vType,
         bool enable,
@@ -133,6 +165,15 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
                                     MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Configures a userop for an account instance to install or uninstall a module
+    /// @param instance AccountInstance the account instance to configure the userop for
+    /// @param moduleType uint256 the type of the module
+    /// @param module address the address of the module
+    /// @param initData bytes the data to pass to the module
+    /// @param isInstall bool whether to install or uninstall the module
+    /// @param txValidator address the address of the validator
+    /// @return userOp PackedUserOperation the packed user operation
+    /// @return userOpHash bytes32 the hash of the user operation
     function configModuleUserOp(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -199,6 +240,10 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         userOpHash = instance.aux.entrypoint.getUserOpHash(userOp);
     }
 
+    /// @notice Enables a validator for an account instance
+    /// @param instance AccountInstance the account instance to enable the validator for
+    /// @param callData bytes the calldata to execute
+    /// @param txValidator address the address of the validator
     function enableValidator(
         AccountInstance memory instance,
         bytes memory callData,
@@ -222,10 +267,13 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         }
     }
 
-    /**
-     * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L311-L321
-     */
+    /// @notice Gets the data to install a validator on an account instance
+    /// @dev
+    /// https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L311-L321
+    /// @param instance AccountInstance the account instance to install the validator on
+    /// implementation)
+    /// @param initData the data to pass to the validator
+    /// @return data the data to install the validator
     function getInstallValidatorData(
         AccountInstance memory instance,
         address, // module
@@ -242,10 +290,12 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         );
     }
 
-    /**
-     * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L324-L334
-     */
+    /// @notice Gets the data to install an executor on an account instance
+    /// @dev
+    /// https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L324-L334
+    /// @param instance AccountInstance the account instance to install the executor on
+    /// @param initData the data to pass to the executor
+    /// @return data the data to install the executor
     function getInstallExecutorData(
         AccountInstance memory instance,
         address, // module
@@ -262,10 +312,12 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         );
     }
 
-    /**
-     * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L336-L345
-     */
+    /// @notice Gets the data to install a fallback on an account instance
+    /// @dev
+    /// https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L336-L345
+    /// @param instance AccountInstance the account instance to install the fallback on
+    /// @param initData the data to pass to the fallback
+    /// @return data the data to install the fallback
     function getInstallFallbackData(
         AccountInstance memory instance,
         address, // module
@@ -286,10 +338,11 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         );
     }
 
-    /**
-     * @dev
-     * https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L402-L403
-     */
+    /// @notice Gets the data to uninstall a fallback on an account instance
+    /// @dev
+    /// https://github.com/zerodevapp/kernel/blob/a807c8ec354a77ebb7cdb73c5be9dd315cda0df2/../../Kernel.sol#L402-L403
+    /// @param initData the data to pass to the fallback
+    /// @return data the data to uninstall the fallback
     function getUninstallFallbackData(
         AccountInstance memory, // instance
         address, // module
@@ -305,6 +358,12 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         data = abi.encodePacked(selector, _initData);
     }
 
+    /// @notice Gets the data to install a module on an account instance
+    /// @param instance AccountInstance the account instance to install the module on
+    /// @param moduleType uint256 the type of the module
+    /// @param module address the address of the module to install
+    /// @param initData bytes the data to pass to the module
+    /// @return callData the data to install the module
     function getInstallModuleCallData(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -342,6 +401,12 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         }
     }
 
+    /// @notice Gets the data to uninstall a module on an account instance
+    /// @param instance AccountInstance the account instance to uninstall the module from
+    /// @param moduleType uint256 the type of the module
+    /// @param module address the address of the module to uninstall
+    /// @param initData bytes the data to pass to the module
+    /// @return callData the data to uninstall the module
     function getUninstallModuleCallData(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -378,6 +443,12 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         }
     }
 
+    /// @notice Checks if a module is installed on an account instance
+    /// @param instance AccountInstance the account instance to check the module on
+    /// @param moduleTypeId uint256 the type of the module
+    /// @param module address the address of the module to check
+    /// @param data bytes the data to pass to the module
+    /// @return bool whether the module is installed
     function isModuleInstalled(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -400,9 +471,16 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                SIGNATURE UTILS
+                                    SIGNATURE UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Checks if a signature is valid for an account instance
+    /// @param instance AccountInstance the account instance to check the signature on
+    /// @param validator address the address of the validator
+    /// @param hash bytes32 the hash of the data that is signed
+    /// @param signature bytes the signature to check
+    /// @return isValid bool whether the signature is valid, return true if isValidSignature return
+    /// EIP1271_MAGIC_VALUE
     function isValidSignature(
         AccountInstance memory instance,
         address validator,
@@ -421,6 +499,10 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         ) == EIP1271_MAGIC_VALUE;
     }
 
+    /// @notice Formats a ERC1271 hash for an account instance
+    /// @param instance AccountInstance the account instance to format the signature for
+    /// @param hash bytes32 the hash to format
+    /// @return bytes the formatted signature hash
     function formatERC1271Hash(
         AccountInstance memory instance,
         address, // validator
@@ -435,6 +517,10 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
         return IKernel(payable(instance.account))._toWrappedHash(hash);
     }
 
+    /// @notice Formats an ERC1271 signature for an account instance
+    /// @param validator address the address of the validator
+    /// @param signature bytes the signature to format
+    /// @return bytes the formatted signature
     function formatERC1271Signature(
         AccountInstance memory, // instance
         address validator,
@@ -449,10 +535,20 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
             abi.encodePacked(ValidatorLib.validatorToIdentifier(IValidator(validator)), signature);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            HOOK MULTIPLEXER
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Gets the hook multiplexer for an account instance
+    /// @param instance AccountInstance the account instance to get the hook multiplexer for
+    /// @return address the address of the hook multiplexer
     function getHookMultiPlexer(AccountInstance memory instance) public view returns (address) {
         return address(KernelFactory(instance.accountFactory).hookMultiPlexer());
     }
 
+    /// @notice Sets the hook multiplexer for an account instance
+    /// @param instance AccountInstance the account instance to set the hook multiplexer for
+    /// @param hookMultiPlexer address the address of the hook multiplexer
     function setHookMultiPlexer(
         AccountInstance memory instance,
         address hookMultiPlexer
@@ -468,6 +564,10 @@ contract KernelHelpers is HelperBase, KernelPrecompiles {
                                     INTERNAL
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Gets the exec hook for an account instance
+    /// @param instance AccountInstance the account instance to get the exec hook for
+    /// @param txValidator address the address of the validator
+    /// @return address the address of the exec hook
     function getExecHook(
         AccountInstance memory instance,
         address txValidator

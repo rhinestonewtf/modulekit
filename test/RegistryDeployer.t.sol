@@ -9,7 +9,7 @@ import {
     SchemaUID,
     ModuleRecord,
     ModuleType
-} from "src/deployment/RegistryDeployer.sol";
+} from "src/deployment/registry/RegistryDeployer.sol";
 import { MockValidator } from "src/Mocks.sol";
 
 contract RegistryDeployerTest is RegistryDeployer, BaseTest {

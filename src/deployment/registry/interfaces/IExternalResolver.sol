@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
-import { AttestationRecord, ModuleRecord } from "../types/DataTypes.sol";
+// Interfaces
 import { IERC165 } from "forge-std/interfaces/IERC165.sol";
+
+// Types
+import { AttestationRecord, ModuleRecord } from "../types/DataTypes.sol";
 
 /**
  * @title The interface of an optional schema resolver.

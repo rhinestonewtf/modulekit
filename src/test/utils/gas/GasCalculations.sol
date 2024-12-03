@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// External Dependencies
 import { UD60x18, ud, intoUint256 } from "@prb/math/UD60x18.sol";
 import { PRBMathCastingUint256 } from "@prb/math/casting/Uint256.sol";
 import { LibZip } from "solady/utils/LibZip.sol";
+
+// Utils
 import { parseJson, toString } from "../Vm.sol";
 
 /// @title GasCalculations

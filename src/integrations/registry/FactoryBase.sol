@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { IERC7484 } from "../../Interfaces.sol";
 
 abstract contract FactoryBase {
@@ -15,7 +16,7 @@ abstract contract FactoryBase {
         threshold = _threshold;
     }
 
-    function _checkRegistry(address module, uint256 moduleType) internal {
+    function _checkRegistry(address module, uint256 moduleType) internal view {
         REGISTRY.check(module, moduleType, trustedAttesters, threshold);
     }
 }

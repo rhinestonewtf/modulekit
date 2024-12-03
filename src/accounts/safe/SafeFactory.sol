@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { ISafe7579 } from "../../accounts/safe/interfaces/ISafe7579.sol";
+import {
+    ISafe7579Launchpad, ModuleInit
+} from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
+import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
+
+// External dependencies
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafeProxy.sol";
 import { SafeProxyFactory } from
     "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import {
-    ISafe7579Launchpad,
-    IERC7484,
-    ModuleInit
-} from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
-import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
-import { REGISTRY_ADDR } from "../../test/predeploy/Registry.sol";
+
+// Utils
+import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
+import { REGISTRY_ADDR } from "../../deployment/predeploy/Registry.sol";
 import { makeAddr } from "../../test/utils/Vm.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { IAccountFactory } from "../../accounts/interface/IAccountFactory.sol";
-import { Safe7579Precompiles } from "../../test/precompiles/Safe7579Precompiles.sol";
+
+// Precompiles
+import { Safe7579Precompiles } from "../../deployment/precompiles/Safe7579Precompiles.sol";
 
 contract SafeFactory is IAccountFactory, Safe7579Precompiles {
     // singletons

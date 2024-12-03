@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0 <0.9.0;
 
+// Interfaces
+import { IExternalSchemaValidator } from "./IExternalSchemaValidator.sol";
+import { IExternalResolver } from "./IExternalResolver.sol";
+import { IERC7484 } from "./IERC7484.sol";
+
+// Types
 import {
     AttestationDataRef,
     AttestationRecord,
     AttestationRequest,
-    ModuleType,
     ModuleRecord,
     ResolverUID,
     ResolverRecord,
@@ -13,9 +18,6 @@ import {
     SchemaUID,
     SchemaRecord
 } from "../types/DataTypes.sol";
-import { IExternalSchemaValidator } from "./IExternalSchemaValidator.sol";
-import { IExternalResolver } from "./IExternalResolver.sol";
-import { IERC7484 } from "./IERC7484.sol";
 
 /**
  * Interface definition of all features of the registry:

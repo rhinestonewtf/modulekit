@@ -1,17 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Helpers
 import {
     SWAPROUTER_ADDRESS,
     SWAPROUTER_DEFAULTFEE,
     FACTORY_ADDRESS
 } from "../helpers/MainnetAddresses.sol";
+
+// Interfaces
 import { ISwapRouter } from "../../interfaces/uniswap/v3/ISwapRouter.sol";
 import { IUniswapV3Factory } from "../../interfaces/uniswap/v3/IUniswapV3Factory.sol";
 import { IUniswapV3Pool } from "../../interfaces/uniswap/v3/IUniswapV3Pool.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
+
+// Dependencies
 import { ERC20Integration } from "../../ERC20.sol";
-import { Execution } from "../../../Accounts.sol";
+
+// Types
+import { Execution } from "../../../accounts/erc7579/lib/ExecutionLib.sol";
 
 /// @author zeroknots
 library UniswapV3Integration {

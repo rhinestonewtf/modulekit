@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+// Types
 import { Execution } from "../../common/interfaces/IERC7579Account.sol";
 
 /**
@@ -50,6 +51,7 @@ contract ExecutionHelper {
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
@@ -75,6 +77,7 @@ contract ExecutionHelper {
         returns (bool success, bytes memory result)
     {
         /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
@@ -95,6 +98,7 @@ contract ExecutionHelper {
         returns (bytes memory result)
     {
         /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)
@@ -120,6 +124,7 @@ contract ExecutionHelper {
         returns (bool success, bytes memory result)
     {
         /// @solidity memory-safe-assembly
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             result := mload(0x40)
             calldatacopy(result, callData.offset, callData.length)

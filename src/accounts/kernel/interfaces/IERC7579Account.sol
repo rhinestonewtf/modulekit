@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+/* solhint-disable no-unused-import */
+
+// Types
 import { CallType, ExecType, ExecMode } from "../lib/ExecLib.sol";
 import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 
+// Structs
 struct Execution {
     address target;
     uint256 value;

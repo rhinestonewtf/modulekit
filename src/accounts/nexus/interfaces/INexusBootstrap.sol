@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { IModule as IERC7579Module } from "../../../accounts/common/interfaces/IERC7579Module.sol";
 import { IERC7484 } from "../../../Interfaces.sol";
 
+// Structs
 struct BootstrapConfig {
     address module;
     bytes data;

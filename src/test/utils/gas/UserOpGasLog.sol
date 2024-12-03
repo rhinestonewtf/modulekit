@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Types
 import {
     PackedUserOperation,
     EntryPointSimulations,
     IEntryPointSimulations
 } from "src/external/ERC4337.sol";
+
+// Utils
 import "../Log.sol";
 
 contract UserOpGasLog {

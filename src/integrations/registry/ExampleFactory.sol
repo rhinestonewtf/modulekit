@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { IMSA } from "../../accounts/erc7579/interfaces/IMSA.sol";
-import { FactoryBase } from "./FactoryBase.sol";
 import { IERC7579Bootstrap } from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { IModule as IERC7579Module } from "../../accounts/common/interfaces/IERC7579Module.sol";
-import { ERC7579Precompiles } from "../../test/precompiles/ERC7579Precompiles.sol";
+
+// Dependencies
+import { FactoryBase } from "./FactoryBase.sol";
+
+// Precompiles
+import { ERC7579Precompiles } from "../../deployment/precompiles/ERC7579Precompiles.sol";
 
 contract ExampleFactory is FactoryBase, ERC7579Precompiles {
     address public immutable IMPLEMENTATION;
