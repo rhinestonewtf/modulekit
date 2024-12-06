@@ -340,10 +340,7 @@ contract SafeHelpers is HelperBase {
         returns (bytes32)
     {
         // Revert if validator is not 0x0 and the validator is installed
-        if (
-            validator != address(0x0)
-                && isModuleInstalled(instance, MODULE_TYPE_VALIDATOR, validator, "")
-        ) {
+        if (isModuleInstalled(instance, MODULE_TYPE_VALIDATOR, validator, "")) {
             revert("formatERC1271Hash: validator is installed");
         }
         bytes memory messageData = abi.encodePacked(
