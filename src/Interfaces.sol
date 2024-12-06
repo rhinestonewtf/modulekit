@@ -4,7 +4,7 @@ pragma solidity >=0.8.23 <0.9.0;
 /* solhint-disable no-unused-import */
 
 /*//////////////////////////////////////////////////////////////
-                             ERCs
+                           ERCs/EIPs
 //////////////////////////////////////////////////////////////*/
 
 import { IERC1271, EIP1271_MAGIC_VALUE } from "./module-bases/interfaces/IERC1271.sol";
@@ -14,6 +14,7 @@ import {
     IERC3156FlashLender,
     IERC3156FlashBorrower
 } from "./module-bases/interfaces/Flashloan.sol";
+import { IERC712 } from "./module-bases/interfaces/IERC712.sol";
 
 /*//////////////////////////////////////////////////////////////
                             MODULES
