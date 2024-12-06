@@ -330,7 +330,7 @@ contract SafeHelpers is HelperBase {
     /// @return bytes32 the formatted hash
     function formatERC1271Hash(
         AccountInstance memory instance,
-        address,
+        address validator,
         bytes32 hash
     )
         public
@@ -339,6 +339,13 @@ contract SafeHelpers is HelperBase {
         deployAccountForAction(instance)
         returns (bytes32)
     {
+        // Revert if validator is not 0x0 or the validator is installed
+        if (
+            validator != address(0x0)
+                && isModuleInstalled(instance, MODULE_TYPE_VALIDATOR, validator, "")
+        ) {
+            revert("formatERC1271Hash: validator is installed");
+        }
         bytes memory messageData = abi.encodePacked(
             bytes1(0x19),
             bytes1(0x01),
