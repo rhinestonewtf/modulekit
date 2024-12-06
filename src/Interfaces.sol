@@ -14,7 +14,7 @@ import {
     IERC3156FlashLender,
     IERC3156FlashBorrower
 } from "./module-bases/interfaces/Flashloan.sol";
-import { IEIP712 } from "./test/helpers/interfaces/IEIP712.sol";
+import { IERC712 } from "./module-bases/interfaces/IERC712.sol";
 
 /*//////////////////////////////////////////////////////////////
                             MODULES

@@ -23,7 +23,7 @@ import { ISafe7579Launchpad } from "../../accounts/safe/interfaces/ISafe7579Laun
 import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
 import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE, IEIP712 } from "../../Interfaces.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE, IERC712 } from "../../Interfaces.sol";
 
 // Utils
 import { startPrank, stopPrank } from "../utils/Vm.sol";
@@ -342,7 +342,7 @@ contract SafeHelpers is HelperBase {
         bytes memory messageData = abi.encodePacked(
             bytes1(0x19),
             bytes1(0x01),
-            IEIP712(instance.account).domainSeparator(),
+            IERC712(instance.account).domainSeparator(),
             keccak256(abi.encodePacked(SAFE_MSG_TYPEHASH, abi.encode(keccak256(abi.encode(hash)))))
         );
         return keccak256(messageData);
