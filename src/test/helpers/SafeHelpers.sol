@@ -339,7 +339,7 @@ contract SafeHelpers is HelperBase {
         deployAccountForAction(instance)
         returns (bytes32)
     {
-        // Revert if validator is not 0x0 and the validator is installed
+        // Revert if validator is installed
         if (isModuleInstalled(instance, MODULE_TYPE_VALIDATOR, validator, "")) {
             revert("formatERC1271Hash: validator is installed");
         }
