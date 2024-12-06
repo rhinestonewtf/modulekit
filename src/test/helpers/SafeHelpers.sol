@@ -23,13 +23,21 @@ import { ISafe7579Launchpad } from "../../accounts/safe/interfaces/ISafe7579Laun
 import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
 import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
-import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
+import { IERC1271, EIP1271_MAGIC_VALUE, IEIP712 } from "../../Interfaces.sol";
 
 // Utils
 import { startPrank, stopPrank } from "../utils/Vm.sol";
 
 /// @notice Helper functions for the Safe7579 implementation
 contract SafeHelpers is HelperBase {
+    /*//////////////////////////////////////////////////////////////////////////
+                                       CONSTANTS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    /// @notice The typehash for EIP712 Safe messages
+    bytes32 constant SAFE_MSG_TYPEHASH =
+        0x60b3cbf8b4a223d68d641b3b6ddf9a298e7f33710cf3d3a9d1146b5a6150fbca;
+
     /*//////////////////////////////////////////////////////////////////////////
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -314,6 +322,30 @@ contract SafeHelpers is HelperBase {
         isValid = IERC1271(instance.account).isValidSignature(
             hash, abi.encodePacked(validator, signature)
         ) == EIP1271_MAGIC_VALUE;
+    }
+
+    /// @notice Format a Safe compatible hash for an account instance
+    /// @param instance AccountInstance the account instance to format the hash for
+    /// @param hash bytes32 the hash to format
+    /// @return bytes32 the formatted hash
+    function formatERC1271Hash(
+        AccountInstance memory instance,
+        address,
+        bytes32 hash
+    )
+        public
+        virtual
+        override
+        deployAccountForAction(instance)
+        returns (bytes32)
+    {
+        bytes memory messageData = abi.encodePacked(
+            bytes1(0x19),
+            bytes1(0x01),
+            IEIP712(instance.account).domainSeparator(),
+            keccak256(abi.encodePacked(SAFE_MSG_TYPEHASH, abi.encode(keccak256(abi.encode(hash)))))
+        );
+        return keccak256(messageData);
     }
 
     /// @notice Format a ERC1271 signature for an account
