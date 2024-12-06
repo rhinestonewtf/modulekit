@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
 /* solhint-disable no-unused-vars */
 import { ERC7579StatelessValidatorBase } from "src/Modules.sol";

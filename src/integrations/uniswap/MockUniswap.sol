@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
-import "../interfaces/uniswap/v3/ISwapRouter.sol";
+// Interfaces
+import { ISwapRouter } from "../interfaces/uniswap/v3/ISwapRouter.sol";
 
 contract MockUniswap is ISwapRouter {
     function uniswapV3SwapCallback(

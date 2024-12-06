@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.23 <0.9.0;
 
 import "test/BaseTest.t.sol";
 import "src/ModuleKit.sol";
@@ -55,8 +55,7 @@ contract TestUniswap is BaseTest {
 
         uint256 priceRatio = UniswapV3Integration.sqrtPriceX96toPriceRatio(sqrtPriceX96);
 
-        uint256 price =
-            UniswapV3Integration.priceRatioToPrice(priceRatio, poolAddress, address(tokenA));
+        UniswapV3Integration.priceRatioToPrice(priceRatio, poolAddress, address(tokenA));
 
         bool swapToken0to1 = UniswapV3Integration.checkTokenOrder(address(tokenA), poolAddress);
 
@@ -67,8 +66,7 @@ contract TestUniswap is BaseTest {
             priceRatioLimit = (priceRatio * (1000 + slippage)) / 1000;
         }
 
-        uint256 priceLimit =
-            UniswapV3Integration.priceRatioToPrice(priceRatioLimit, poolAddress, address(tokenA));
+        UniswapV3Integration.priceRatioToPrice(priceRatioLimit, poolAddress, address(tokenA));
 
         uint160 sqrtPriceLimitX96 = UniswapV3Integration.priceRatioToSqrtPriceX96(priceRatioLimit);
 

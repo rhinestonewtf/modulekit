@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.23 <0.9.0;
 
-import { IMSA, ERC7579Bootstrap, IERC7579Module } from "../../external/ERC7579.sol";
+// Interfaces
+import { IMSA } from "../../accounts/erc7579/interfaces/IMSA.sol";
+import { IERC7579Bootstrap } from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import { IModule as IERC7579Module } from "../../accounts/common/interfaces/IERC7579Module.sol";
+
+// Dependencies
 import { FactoryBase } from "./FactoryBase.sol";
-import { IMSA } from "erc7579/interfaces/IMSA.sol";
-import { MSAProxy } from "erc7579/utils/MSAProxy.sol";
 
-contract ExampleFactory is FactoryBase {
+// Precompiles
+import { ERC7579Precompiles } from "../../deployment/precompiles/ERC7579Precompiles.sol";
+
+contract ExampleFactory is FactoryBase, ERC7579Precompiles {
     address public immutable IMPLEMENTATION;
     address public immutable BOOTSTRAP;
 
@@ -38,15 +44,11 @@ contract ExampleFactory is FactoryBase {
         bytes memory initData = abi.encode(
             BOOTSTRAP,
             abi.encodeCall(
-                ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
+                IERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
             )
         );
 
-        address account = address(
-            new MSAProxy{ salt: salt }(
-                IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData)
-            )
-        );
+        address account = deployMSAPRoxy(salt, IMPLEMENTATION, initData);
 
         return account;
     }
@@ -65,7 +67,7 @@ contract ExampleFactory is FactoryBase {
         bytes memory initData = abi.encode(
             BOOTSTRAP,
             abi.encodeCall(
-                ERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
+                IERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
             )
         );
 
@@ -76,7 +78,7 @@ contract ExampleFactory is FactoryBase {
                 salt,
                 keccak256(
                     abi.encodePacked(
-                        type(MSAProxy).creationCode,
+                        MSAPROXY_BYTECODE,
                         abi.encode(IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData))
                     )
                 )

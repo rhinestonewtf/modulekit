@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
+// Interfaces
 import { IERC4626 } from "forge-std/interfaces/IERC4626.sol";
-import { Execution } from "../Accounts.sol";
+
+// Types
+import { Execution } from "../accounts/erc7579/lib/ExecutionLib.sol";
 
 library ERC4626Integration {
     function deposit(

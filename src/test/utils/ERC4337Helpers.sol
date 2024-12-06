@@ -1,17 +1,23 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
+// Types
 import {
     PackedUserOperation,
     IEntryPoint,
     IEntryPointSimulations,
     IStakeManager
 } from "../../external/ERC4337.sol";
-import { ENTRYPOINT_ADDR } from "../predeploy/EntryPoint.sol";
+
+// Deployments
+import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
+
+// Utils
 import "./Vm.sol";
 import "./Log.sol";
+
+// Dependencies
 import "./gas/GasCalculations.sol";
-import { Simulator } from "erc4337-validation/Simulator.sol";
 import { GasParser } from "./gas/GasParser.sol";
 import {
     getSimulateUserOp,
@@ -26,6 +32,10 @@ import {
     InstalledModule
 } from "./Storage.sol";
 
+// External Dependencies
+import { Simulator } from "erc4337-validation/Simulator.sol";
+
+/// @notice A library that contains helper functions for ERC-4337 operations
 library ERC4337Helpers {
     using Simulator for PackedUserOperation;
 

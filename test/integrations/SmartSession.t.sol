@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.25;
+pragma solidity >=0.8.23 <0.9.0;
 
 // Constants
-import { MODULE_TYPE_VALIDATOR } from "src/external/ERC7579.sol";
+import { MODULE_TYPE_VALIDATOR } from "src/accounts/common/interfaces/IERC7579Module.sol";
 
 // Libraries
 import { ModuleKitHelpers, AccountInstance } from "src/ModuleKit.sol";
@@ -23,8 +23,8 @@ import {
     ERC7739Data,
     Session,
     ISessionValidator
-} from "src/test/helpers/interfaces/ISmartSession.sol";
-import { Execution } from "src/external/ERC7579.sol";
+} from "src/integrations/interfaces/ISmartSession.sol";
+import { Execution } from "src/accounts/erc7579/lib/ExecutionLib.sol";
 import { UserOpData, PackedUserOperation } from "src/test/RhinestoneModuleKit.sol";
 
 /// @dev Tests for smart session integration within the RhinestoneModuleKit

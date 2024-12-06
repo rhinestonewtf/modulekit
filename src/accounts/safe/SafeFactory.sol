@@ -1,29 +1,38 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
-import { Safe7579, ISafe7579 } from "safe7579/Safe7579.sol";
+// Interfaces
+import { ISafe7579 } from "../../accounts/safe/interfaces/ISafe7579.sol";
+import {
+    ISafe7579Launchpad, ModuleInit
+} from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
+import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
+
+// External dependencies
 import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
 import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafeProxy.sol";
 import { SafeProxyFactory } from
     "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
-import { Safe7579Launchpad, IERC7484, ModuleInit } from "safe7579/Safe7579Launchpad.sol";
-import { ENTRYPOINT_ADDR } from "../../test/predeploy/EntryPoint.sol";
-import { REGISTRY_ADDR } from "../../test/predeploy/Registry.sol";
+
+// Utils
+import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
+import { REGISTRY_ADDR } from "../../deployment/predeploy/Registry.sol";
 import { makeAddr } from "../../test/utils/Vm.sol";
 import { Solarray } from "solarray/Solarray.sol";
-import { IAccountFactory } from "../interface/IAccountFactory.sol";
 
-contract SafeFactory is IAccountFactory {
+// Precompiles
+import { Safe7579Precompiles } from "../../deployment/precompiles/Safe7579Precompiles.sol";
+
+contract SafeFactory is IAccountFactory, Safe7579Precompiles {
     // singletons
-    Safe7579 internal safe7579;
-    Safe7579Launchpad internal launchpad;
+    ISafe7579 internal safe7579;
+    ISafe7579Launchpad internal launchpad;
     Safe internal safeSingleton;
     SafeProxyFactory internal safeProxyFactory;
 
     function init() public override {
-        // Set up MSA and Factory
-        safe7579 = new Safe7579();
-        launchpad = new Safe7579Launchpad(ENTRYPOINT_ADDR, IERC7484(address(REGISTRY_ADDR)));
+        safe7579 = deploySafe7579();
+        launchpad = deploySafe7579Launchpad(ENTRYPOINT_ADDR, REGISTRY_ADDR);
         safeSingleton = new Safe();
         safeProxyFactory = new SafeProxyFactory();
     }
@@ -36,12 +45,12 @@ contract SafeFactory is IAccountFactory {
         override
         returns (address safe)
     {
-        Safe7579Launchpad.InitData memory initData =
-            abi.decode(initCode, (Safe7579Launchpad.InitData));
+        ISafe7579Launchpad.InitData memory initData =
+            abi.decode(initCode, (ISafe7579Launchpad.InitData));
         bytes32 initHash = launchpad.hash(initData);
 
         bytes memory factoryInitializer =
-            abi.encodeCall(Safe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
+            abi.encodeCall(ISafe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
 
         safe = address(
             safeProxyFactory.createProxyWithNonce(
@@ -59,12 +68,12 @@ contract SafeFactory is IAccountFactory {
         override
         returns (address)
     {
-        Safe7579Launchpad.InitData memory initData =
-            abi.decode(initCode, (Safe7579Launchpad.InitData));
+        ISafe7579Launchpad.InitData memory initData =
+            abi.decode(initCode, (ISafe7579Launchpad.InitData));
         bytes32 initHash = launchpad.hash(initData);
 
         bytes memory factoryInitializer =
-            abi.encodeCall(Safe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
+            abi.encodeCall(ISafe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
 
         return launchpad.predictSafeAddress({
             singleton: address(launchpad),
@@ -90,13 +99,13 @@ contract SafeFactory is IAccountFactory {
         ModuleInit[] memory fallbacks = new ModuleInit[](0);
         ModuleInit[] memory hooks = new ModuleInit[](0);
 
-        Safe7579Launchpad.InitData memory initDataSafe = Safe7579Launchpad.InitData({
+        ISafe7579Launchpad.InitData memory initDataSafe = ISafe7579Launchpad.InitData({
             singleton: address(safeSingleton),
             owners: Solarray.addresses(makeAddr("owner1")),
             threshold: 1,
             setupTo: address(launchpad),
             setupData: abi.encodeCall(
-                Safe7579Launchpad.initSafe7579,
+                ISafe7579Launchpad.initSafe7579,
                 (
                     address(safe7579),
                     executors,

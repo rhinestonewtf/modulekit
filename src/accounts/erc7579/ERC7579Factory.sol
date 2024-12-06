@@ -1,28 +1,29 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
-import "../../external/ERC7579.sol";
-import { IAccountFactory } from "../interface/IAccountFactory.sol";
-import { IMSA } from "erc7579/interfaces/IMSA.sol";
-import { MSAProxy } from "erc7579/utils/MSAProxy.sol";
+// Interfaces
+import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
+import { IMSA } from "./interfaces/IMSA.sol";
+import { IERC7579Account } from "../../accounts/common/interfaces/IERC7579Account.sol";
+import {
+    IERC7579Bootstrap,
+    BootstrapConfig as ERC7579BootstrapConfig
+} from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 
-contract ERC7579Factory is IAccountFactory {
-    ERC7579Account internal implementation;
-    ERC7579Bootstrap internal bootstrapDefault;
+// Precompiles
+import { ERC7579Precompiles } from "../../deployment/precompiles/ERC7579Precompiles.sol";
+
+contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
+    IERC7579Account internal implementation;
+    IERC7579Bootstrap internal bootstrapDefault;
 
     function init() public override {
-        implementation = new ERC7579Account();
-        bootstrapDefault = new ERC7579Bootstrap();
+        implementation = deployERC7579Account();
+        bootstrapDefault = deployERC7579Bootstrap();
     }
 
     function createAccount(bytes32 salt, bytes memory initCode) public override returns (address) {
-        address account = address(
-            new MSAProxy{ salt: salt }(
-                address(implementation), abi.encodeCall(IMSA.initializeAccount, initCode)
-            )
-        );
-
-        return account;
+        return deployMSAPRoxy(salt, address(implementation), initCode);
     }
 
     function getAddress(
@@ -41,7 +42,7 @@ contract ERC7579Factory is IAccountFactory {
                 salt,
                 keccak256(
                     abi.encodePacked(
-                        type(MSAProxy).creationCode,
+                        MSAPROXY_BYTECODE,
                         abi.encode(
                             address(implementation),
                             abi.encodeCall(IMSA.initializeAccount, initCode)
@@ -73,7 +74,7 @@ contract ERC7579Factory is IAccountFactory {
         ERC7579BootstrapConfig[] memory _fallBacks = new ERC7579BootstrapConfig[](0);
         _init = abi.encode(
             address(bootstrapDefault),
-            abi.encodeCall(ERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallBacks))
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallBacks))
         );
     }
 

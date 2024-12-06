@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity >=0.8.23 <0.9.0;
 
 interface INexusAccountFactory {
     /// @notice Creates a new Nexus account with the provided initialization data.

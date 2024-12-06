@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
+// Types
 import {
     AccountInstance,
     UserOpData,
@@ -12,9 +13,28 @@ import {
     CUSTOM
 } from "./RhinestoneModuleKit.sol";
 import { PackedUserOperation } from "../external/ERC4337.sol";
+import { MODULE_TYPE_HOOK } from "../accounts/common/interfaces/IERC7579Module.sol";
+import { Execution } from "../accounts/erc7579/lib/ExecutionLib.sol";
+import {
+    Session,
+    PermissionId,
+    ActionData,
+    PolicyData,
+    ERC7739Data,
+    ISessionValidator,
+    SmartSessionMode,
+    ISmartSession,
+    EnableSession,
+    ChainDigest
+} from "../integrations/interfaces/ISmartSession.sol";
+import { Solarray } from "solarray/Solarray.sol";
+
+// Helpers
 import { ERC4337Helpers } from "./utils/ERC4337Helpers.sol";
 import { HelperBase } from "./helpers/HelperBase.sol";
-import { Execution, MODULE_TYPE_HOOK } from "../external/ERC7579.sol";
+import { KernelHelpers } from "./helpers/KernelHelpers.sol";
+
+// Utils
 import {
     prank,
     VmSafe,
@@ -22,7 +42,7 @@ import {
     stopAndReturnStateDiff as vmStopAndReturnStateDiff,
     getMappingKeyAndParentOf,
     envOr
-} from "src/test/utils/Vm.sol";
+} from "./utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
     writeAccountType,
@@ -41,30 +61,23 @@ import {
     removeInstalledModule as removeInstalledModuleFromStorage,
     InstalledModule
 } from "./utils/Storage.sol";
-import {
-    Session,
-    PermissionId,
-    ActionData,
-    PolicyData,
-    ERC7739Data,
-    ISessionValidator,
-    SmartSessionMode,
-    ISmartSession,
-    EnableSession,
-    ChainDigest
-} from "src/test/helpers/interfaces/ISmartSession.sol";
-import { EncodeLib, HashLib } from "src/test/helpers/SmartSessionHelpers.sol";
-import { Solarray } from "solarray/Solarray.sol";
 import { recordLogs, VmSafe, getRecordedLogs } from "./utils/Vm.sol";
-import { KernelHelpers } from "./helpers/KernelHelpers.sol";
 
+// Libraries
+import { EncodeLib, HashLib } from "../test/helpers/SmartSessionHelpers.sol";
+
+/// @notice A library that contains helper functions for building, testing, deploying, and
+///         interacting with ERC7579 accounts and modules
 library ModuleKitHelpers {
     /*//////////////////////////////////////////////////////////////////////////
                                       ERRORS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Thrown when an invalid account type is provided, currently only DEFAULT, SAFE,
+    ///         KERNEL, CUSTOM, and NEXUS are supported account types
     error InvalidAccountType();
-    error InvalidContextLength();
+
+    /// @notice Thrown when the smart sessions module is not installed
     error SmartSessionNotInstalled();
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -79,11 +92,20 @@ library ModuleKitHelpers {
                                     EXECUTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Executes userOps on the entrypoint
+    /// @param userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function execUserOps(UserOpData memory userOpData) internal {
-        // send userOp to entrypoint
+        // Send userOp to entrypoint
         ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
     }
 
+    /// @notice Configures a userOp to execute a single operation
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param target The address of the contract to call
+    /// @param value The amount of ether to send
+    /// @param callData The data to send to the contract
+    /// @param txValidator The address of the transaction validator
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function getExecOps(
         AccountInstance memory instance,
         address target,
@@ -101,6 +123,11 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
+    /// @notice Configures a userOp to execute multiple operations
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param executions An array of Execution structs containing the target, value, and callData
+    /// @param txValidator The address of the transaction validator
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function getExecOps(
         AccountInstance memory instance,
         Execution[] memory executions,
@@ -115,6 +142,13 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
+    /// @notice Configures a userOp to execute a single operation, signs it with the default
+    ///         signature, and sends it to the entrypoint for execution
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param target The address of the contract to call
+    /// @param value The amount of ether to send
+    /// @param callData The data to send to the contract
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function exec(
         AccountInstance memory instance,
         address target,
@@ -124,15 +158,20 @@ library ModuleKitHelpers {
         internal
         returns (UserOpData memory userOpData)
     {
+        // Get userOpData
         userOpData =
             instance.getExecOps(target, value, callData, address(instance.defaultValidator));
-        // sign userOp with default signature
+        // Sign userOp with default signature
         userOpData = userOpData.signDefault();
         userOpData.entrypoint = instance.aux.entrypoint;
-        // send userOp to entrypoint
+        // Send userOp to entrypoint
         userOpData.execUserOps();
     }
 
+    /// @notice Executes a single operation on the entrypoint with value 0
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param target The address of the contract to call
+    /// @param callData The data to send to the contract
     function exec(
         AccountInstance memory instance,
         address target,
@@ -148,6 +187,7 @@ library ModuleKitHelpers {
                                  HOOKS
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice A hook used to initiate state diff recording before installing a module
     function preEnvHook() internal {
         if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
             // Start state diff recording
@@ -155,6 +195,8 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice A hook used to stop state diff recording and verify that storage was cleared after
+    ///         uninstalling a module
     function postEnvHook(AccountInstance memory instance, bytes memory data) internal {
         if (envOr("COMPLIANCE", false) || getStorageCompliance()) {
             address module = abi.decode(data, (address));
@@ -166,9 +208,17 @@ library ModuleKitHelpers {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                MODULE CONFIG
+                                    MODULE CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Installs a module on an account by generating a userOp and sending it to the
+    ///         entrypoint
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleTypeId The type of the module to install
+    /// @param module The address of the module to install
+    /// @param data Arbitrary data that may be required on the module during `onInstall`
+    ///         initialization
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function installModule(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -190,6 +240,14 @@ library ModuleKitHelpers {
         userOpData.execUserOps();
     }
 
+    /// @notice Uninstalls a module on an account by generating a userOp and sending it to the
+    ///         entrypoint
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleTypeId The type of the module to uninstall
+    /// @param module The address of the module to uninstall
+    /// @param data Arbitrary data that may be required on the module during `onUninstall`
+    ///         de-initialization
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function uninstallModule(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -212,6 +270,11 @@ library ModuleKitHelpers {
         postEnvHook(instance, abi.encode(module));
     }
 
+    /// @notice Checks if a module is installed on an account
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleTypeId The type of the module to check
+    /// @param module The address of the module to check
+    /// @return bool True if the module is installed, false otherwise
     function isModuleInstalled(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -224,6 +287,11 @@ library ModuleKitHelpers {
             && HelperBase(instance.accountHelper).isModuleInstalled(instance, moduleTypeId, module);
     }
 
+    /// @notice Checks if a module is installed on an account by using additional data
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleTypeId The type of the module to check
+    /// @param module The address of the module to check
+    /// @param data Arbitrary data that may be required
     function isModuleInstalled(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -238,6 +306,13 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Gets the data required to install a module
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleTypeId The type of the module to install
+    /// @param module The address of the module to install
+    /// @param data Arbitrary data that may be required on the module during `onInstall`
+    ///         initialization
+    /// @return bytes The data required to install the module
     function getInstallModuleData(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -253,6 +328,13 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Gets the data required to uninstall a module
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleTypeId The type of the module to uninstall
+    /// @param module The address of the module to uninstall
+    /// @param data Arbitrary data that may be required on the module during `onUninstall`
+    ///         de-initialization
+    /// @return bytes The data required to uninstall the module
     function getUninstallModuleData(
         AccountInstance memory instance,
         uint256 moduleTypeId,
@@ -268,6 +350,13 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Generates a userOp to install a module on an account
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param module The address of the module to install
+    /// @param initData Arbitrary data that may be required on the module during `onInstall`
+    ///         initialization
+    /// @param txValidator The address of the transaction validator
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function getInstallModuleOps(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -284,6 +373,13 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
+    /// @notice Generates a userOp to uninstall a module on an account
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param module The address of the module to uninstall
+    /// @param initData Arbitrary data that may be required on the module during `onUninstall`
+    ///         de-initialization
+    /// @param txValidator The address of the transaction validator
+    /// @return userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
     function getUninstallModuleOps(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -300,6 +396,10 @@ library ModuleKitHelpers {
         userOpData.entrypoint = instance.aux.entrypoint;
     }
 
+    /// @notice Gets all installed modules on an account
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @return InstalledModule[] An array of InstalledModule structs containing the module type and
+    ///         address
     function getInstalledModules(AccountInstance memory instance)
         internal
         view
@@ -308,6 +408,9 @@ library ModuleKitHelpers {
         return getInstalledModulesFromStorage(instance.account);
     }
 
+    /// @notice Writes an installed module struct data to storage
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param module InstalledModule struct containing the module type and address
     function writeInstalledModule(
         AccountInstance memory instance,
         InstalledModule memory module
@@ -317,6 +420,10 @@ library ModuleKitHelpers {
         writeInstalledModuleToStorage(module, instance.account);
     }
 
+    /// @notice Removes an installed module from storage
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param moduleType The type of the module to remove
+    /// @param moduleAddress The address of the module to remove
     function removeInstalledModule(
         AccountInstance memory instance,
         uint256 moduleType,
@@ -339,12 +446,13 @@ library ModuleKitHelpers {
         }
     }
 
-    /// Start recording the state diff
+    /// @notice Starts recording the state diff
     function startStateDiffRecording(AccountInstance memory) internal {
         vmStartStateDiffRecording();
     }
 
-    /// Stop recording the state diff and return the account accesses
+    /// @notice Stop recording the state diff and return the account accesses
+    /// @return VmSafe.AccountAccess[] An array of AccountAccess structs containing the account
     function stopAndReturnStateDiff(AccountInstance memory)
         internal
         returns (VmSafe.AccountAccess[] memory)
@@ -352,8 +460,10 @@ library ModuleKitHelpers {
         return vmStopAndReturnStateDiff();
     }
 
-    /// Verifies from an accountAccesses array that storage was correctly cleared after uninstalling
-    /// a module
+    /// @notice Verifies from an accountAccesses array that storage was correctly cleared after
+    ///         uninstalling a module, reverts if storage was not cleared correctly
+    /// @param accountAccesses An array of AccountAccess structs containing the account
+    /// @param module The address of the module to check
     function verifyModuleStorageWasCleared(
         AccountInstance memory,
         VmSafe.AccountAccess[] memory accountAccesses,
@@ -416,34 +526,40 @@ library ModuleKitHelpers {
                                 CONTROL FLOW
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Sets the expect revert flag to true
     function expect4337Revert(AccountInstance memory) internal {
         writeExpectRevert("");
     }
 
+    /// @notice Sets the expect revert flag to true for a given selector
+    /// @param selector The selector of the function that is expected to revert
     function expect4337Revert(AccountInstance memory, bytes4 selector) internal {
         writeExpectRevert(abi.encodePacked(selector));
     }
 
+    /// @notice Sets the expect revert flag to true for a given message
+    /// @param message The message that is expected to revert
     function expect4337Revert(AccountInstance memory, bytes memory message) internal {
         writeExpectRevert(message);
     }
 
-    /**
-     * @dev Logs the gas used by an ERC-4337 transaction
-     * @dev needs to be called before an exec4337 call
-     * @dev the id needs to be unique across your tests, otherwise the gas calculations will
-     * overwrite each other
-     *
-     * @param id Identifier for the gas calculation, which will be used as the filename
-     */
+    /// @notice Logs the gas used by an ERC-4337 transaction
+    /// @dev needs to be called before an exec4337 call
+    /// @dev the id needs to be unique across your tests, otherwise the gas calculations will
+    ///      overwrite each other
+    /// @param id Identifier for the gas calculation, which will be used as the filename
     function log4337Gas(AccountInstance memory, /* instance */ string memory id) internal {
         writeGasIdentifier(id);
     }
 
+    /// @notice Writes the simulate user op flag to storage
+    /// @param value The value to write to storage (true or false)
     function simulateUserOp(AccountInstance memory, bool value) internal {
         writeSimulateUserOp(value);
     }
 
+    /// @notice Writes the storage compliance flag to storage
+    /// @param value The value to write to storage (true or false)
     function storageCompliance(AccountInstance memory, bool value) internal {
         writeStorageCompliance(value);
     }
@@ -452,6 +568,9 @@ library ModuleKitHelpers {
                                 ACCOUNT UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Converts an AccountType enum to a string
+    /// @param _accountType The AccountType enum to convert
+    /// @return accountType The string representation of the AccountType
     function toString(AccountType _accountType) internal pure returns (string memory accountType) {
         if (_accountType == AccountType.DEFAULT) {
             return DEFAULT;
@@ -468,6 +587,9 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Converts a string to an AccountType enum
+    /// @param _accountType The string to convert
+    /// @return accountType The AccountType enum
     function toAccountType(string memory _accountType)
         internal
         pure
@@ -491,6 +613,8 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Deploys an account, writes installed modules to storage from recorded logs
+    /// @param instance AccountInstance struct containing the account and accountHelper
     function deployAccount(AccountInstance memory instance) internal {
         // Record logs to track installed modules
         recordLogs();
@@ -510,26 +634,38 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Sets the account type in storage
+    /// @param env The AccountType enum to set
     function setAccountType(AccountInstance memory, AccountType env) internal {
         setAccountType(env);
     }
 
+    /// @notice Sets the account type in storage
+    /// @param env The AccountType enum to set
     function setAccountType(AccountType env) internal {
         writeAccountType(env.toString());
     }
 
+    /// @notice Sets the account type in storage from a string
+    /// @param env The string to set
     function setAccountEnv(AccountInstance memory, string memory env) internal {
         setAccountEnv(env);
     }
 
+    /// @notice Sets the account type in storage from a string
+    /// @param env The string to set
     function setAccountEnv(string memory env) internal {
         _setAccountEnv(env);
     }
 
+    /// @notice Sets the account type in storage from an enum
+    /// @param env The AccountType enum to set
     function setAccountEnv(AccountType env) internal {
         _setAccountEnv(env.toString());
     }
 
+    /// @notice Gets the account type from storage
+    /// @return accountType The account type
     function getAccountType() internal view returns (AccountType accountType) {
         bytes32 accountTypeHash = getAccountTypeFromStorage();
         if (accountTypeHash == keccak256(abi.encodePacked(DEFAULT))) {
@@ -547,6 +683,7 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Gets the account type from storage for an AccountInstance
     function getAccountType(AccountInstance memory)
         internal
         view
@@ -555,6 +692,7 @@ library ModuleKitHelpers {
         return getAccountType();
     }
 
+    /// @notice Sets the account type in storage from a string
     function _setAccountEnv(string memory env) private {
         address factory = getFactory(env);
         address helper = getHelperFromStorage(env);
@@ -573,6 +711,7 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Gets the account environment from storage
     function getAccountEnv() internal view returns (AccountType env, address, address) {
         (bytes32 envHash, address factory, address helper) = getAccountEnvFromStorage();
         if (envHash == keccak256(abi.encodePacked(DEFAULT))) {
@@ -590,6 +729,7 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Gets the account environment from storage for an AccountInstance
     function getAccountEnv(AccountInstance memory)
         internal
         view
@@ -598,6 +738,9 @@ library ModuleKitHelpers {
         return getAccountEnv();
     }
 
+    /// @notice Gets the helper from storage for an AccountType
+    /// @param env The AccountType enum to get the helper for
+    /// @return address The address of the helper
     function getHelper(AccountType env) internal view returns (address) {
         if (env == AccountType.DEFAULT) {
             return getHelperFromStorage(DEFAULT);
@@ -614,6 +757,7 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @dev Used to deploy an account if it has not been deployed
     modifier withAccountDeployed(AccountInstance memory instance) {
         if (instance.account.code.length == 0) {
             deployAccount(instance);
@@ -625,6 +769,12 @@ library ModuleKitHelpers {
                                 SIGNATURE UTILS
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @notice Checks if a signature is valid by calling the accountHelper of the account instance
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param validator The address of the validator
+    /// @param hash The hash to validate
+    /// @param signature The signature to validate
+    /// @return bool True if the signature is valid, false otherwise
     function isValidSignature(
         AccountInstance memory instance,
         address validator,
@@ -639,6 +789,12 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Formats a hash for ERC-1271 validation by calling the accountHelper of the account
+    ///         instance
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param validator The address of the validator
+    /// @param hash The hash to format
+    /// @return bytes32 The formatted hash
     function formatERC1271Hash(
         AccountInstance memory instance,
         address validator,
@@ -650,6 +806,12 @@ library ModuleKitHelpers {
         return HelperBase(instance.accountHelper).formatERC1271Hash(instance, validator, hash);
     }
 
+    /// @notice Formats a signature for ERC-1271 validation by calling the accountHelper of the
+    ///         account instance
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param validator The address of the validator
+    /// @param signature The signature to format
+    /// @return bytes The formatted signature
     function formatERC1271Signature(
         AccountInstance memory instance,
         address validator,
@@ -663,11 +825,16 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Adds a default signature to a UserOpData struct
+    /// @param userOpData UserOpData struct with the default signature added
     function signDefault(UserOpData memory userOpData) internal pure returns (UserOpData memory) {
         userOpData.userOp.signature = "DEFAULT SIGNATURE";
         return userOpData;
     }
 
+    /// @notice Signs a hash with a default signature
+    /// @param hash The hash to sign
+    /// @return bytes The signature
     function ecdsaSignDefault(bytes32 hash) internal pure returns (bytes memory) {
         (uint8 v, bytes32 r, bytes32 s) = (27, hash, hash);
         return abi.encodePacked(r, s, v);
@@ -685,7 +852,9 @@ library ModuleKitHelpers {
         _;
     }
 
-    /// @dev Adds a session to the account
+    /// @notice Adds a session to the account with the default validator
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to add
     function addSession(
         AccountInstance memory instance,
         Session memory session
@@ -706,7 +875,13 @@ library ModuleKitHelpers {
         permissionIds = instance.smartSession.enableSessions(sessions)[0];
     }
 
-    /// @dev Adds a session to the account with the default validator
+    /// @notice Adds a session to the account with the default validator
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param salt The salt to use for the session
+    /// @param userOpPolicies The user operation policies to use for the session
+    /// @param erc7739Policy The ERC-7739 policy to use for the session
+    /// @param actionDatas The action datas to use for the session
+    /// @return permissionIds The permission id of the Session
     function addSession(
         AccountInstance memory instance,
         bytes32 salt,
@@ -736,6 +911,9 @@ library ModuleKitHelpers {
         return instance.addSession(session);
     }
 
+    /// @notice Removes a session from the account
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param permissionId The permission id of the session to remove
     function removeSession(
         AccountInstance memory instance,
         PermissionId permissionId
@@ -749,6 +927,10 @@ library ModuleKitHelpers {
         instance.smartSession.removeSession(permissionId);
     }
 
+    /// @notice Checks if a permission is enabled
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param permissionId The permission id to check
+    /// @return bool True if the permission is enabled, false otherwise
     function isPermissionEnabled(
         AccountInstance memory instance,
         PermissionId permissionId
@@ -762,6 +944,10 @@ library ModuleKitHelpers {
         return instance.smartSession.isPermissionEnabled(permissionId, instance.account);
     }
 
+    /// @notice Gets the permission id of a session
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to get the permission id of
+    /// @return permissionId The permission id of the session
     function getPermissionId(
         AccountInstance memory instance,
         Session memory session
@@ -777,6 +963,11 @@ library ModuleKitHelpers {
         return instance.smartSession.getPermissionId(session);
     }
 
+    /// @notice Gets the session digest
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to get the digest of
+    /// @param mode The SmartSessionMode to use
+    /// @return bytes32 The session digest
     function getSessionDigest(
         AccountInstance memory instance,
         Session memory session,
@@ -791,6 +982,10 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Gets the session nonce
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param permissionId The permission id of the session to get the nonce of
+    /// @return uint256 The session nonce
     function getSessionNonce(
         AccountInstance memory instance,
         PermissionId permissionId
@@ -802,7 +997,12 @@ library ModuleKitHelpers {
         return instance.smartSession.getNonce(permissionId, instance.account);
     }
 
-    /// @dev Encodes a signature for a user operation using the correct format
+    /// @notice Encodes a signature for a user operation using the correct format
+    /// @param instance AccountInstance struct
+    /// @param userOperation The user operation to encode the signature for
+    /// @param mode The SmartSessionMode to use
+    /// @param session The session to use
+    /// @return bytes The encoded signature
     function encodeSignature(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
@@ -822,7 +1022,15 @@ library ModuleKitHelpers {
         }
     }
 
-    /// @dev Encodes the signature for a user operation using the correct format
+    /// @notice Encodes the signature for a user operation using the correct format and passed
+    /// signing function and validator
+    /// @param instance AccountInstance struct
+    /// @param userOperation The user operation to encode the signature for
+    /// @param mode The SmartSessionMode to use
+    /// @param session The session to use
+    /// @param signFunction The signing function to use
+    /// @param validator The validator to use
+    /// @return bytes The encoded signature
     function encodeSignature(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
@@ -855,6 +1063,11 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Encodes the signature for a user operation using the USE mode
+    /// @param instance AccountInstance struct
+    /// @param userOperation The user operation to encode the signature for
+    /// @param session The session to use
+    /// @return bytes The encoded signature
     function encodeSignatureUseMode(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
@@ -872,6 +1085,13 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Encodes the signature for a user operation using the ENABLE mode
+    /// @param instance AccountInstance struct
+    /// @param userOperation The user operation to encode the signature for
+    /// @param session The session to use
+    /// @param signFunction The signing function to use
+    /// @param validator The validator to use
+    /// @return bytes The encoded signature
     function encodeSignatureEnableMode(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
@@ -887,6 +1107,13 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Encodes the signature for a user operation using the UNSAFE_ENABLE mode
+    /// @param instance AccountInstance struct
+    /// @param userOperation The user operation to encode the signature for
+    /// @param session The session to use
+    /// @param signFunction The signing function to use
+    /// @param validator The validator to use
+    /// @return bytes The encoded signature
     function encodeSignatureUnsafeEnableMode(
         AccountInstance memory instance,
         PackedUserOperation memory userOperation,
@@ -902,6 +1129,10 @@ library ModuleKitHelpers {
         );
     }
 
+    /// @notice Checks if a session is enabled
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to check
+    /// @return bool True if the session is enabled, false otherwise
     function isSessionEnabled(
         AccountInstance memory instance,
         Session memory session
@@ -943,6 +1174,12 @@ library ModuleKitHelpers {
         }
     }
 
+    /// @notice Uses a session to execute a user operation
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to use
+    /// @param target The target address of the user operation
+    /// @param value The value of the user operation
+    /// @param callData The call data of the user operation
     function useSession(
         AccountInstance memory instance,
         Session memory session,
@@ -981,6 +1218,10 @@ library ModuleKitHelpers {
         userOpData.execUserOps();
     }
 
+    /// @notice Uses a session to execute a batch of user operations
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to use
+    /// @param executions The executions to execute
     function useSession(
         AccountInstance memory instance,
         Session memory session,
@@ -1017,6 +1258,11 @@ library ModuleKitHelpers {
         userOpData.execUserOps();
     }
 
+    /// @notice Creates multi-chain enable data for a session
+    /// @param instance AccountInstance struct containing the account and accountHelper
+    /// @param session The session to enable
+    /// @param mode The SmartSessionMode to use
+    /// @return enableData The enable session data
     function makeMultiChainEnableData(
         AccountInstance memory instance,
         Session memory session,
@@ -1046,6 +1292,10 @@ library ModuleKitHelpers {
         });
     }
 
+    /// @dev Encodes hashes and chain ids to a ChainDigest array
+    /// @param chainIds The chain ids to encode
+    /// @param hashes The hashes to encode
+    /// @return ChainDigest[] The encoded ChainDigest array
     function encodeHashesAndChainIds(
         uint64[] memory chainIds,
         bytes32[] memory hashes

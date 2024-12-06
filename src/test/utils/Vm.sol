@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
 import { Vm, VmSafe } from "forge-std/Vm.sol";
 
@@ -90,11 +90,11 @@ function load(address account, bytes32 key) view returns (bytes32) {
 }
 
 function snapshot() returns (uint256) {
-    return Vm(VM_ADDR).snapshot();
+    return Vm(VM_ADDR).snapshotState();
 }
 
 function revertTo(uint256 id) returns (bool) {
-    return Vm(VM_ADDR).revertTo(id);
+    return Vm(VM_ADDR).revertToState(id);
 }
 
 function startStateDiffRecording() {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.23;
+pragma solidity >=0.8.23 <0.9.0;
 
 import "./BaseTest.t.sol";
 import {
@@ -9,7 +9,7 @@ import {
     SchemaUID,
     ModuleRecord,
     ModuleType
-} from "src/deployment/RegistryDeployer.sol";
+} from "src/deployment/registry/RegistryDeployer.sol";
 import { MockValidator } from "src/Mocks.sol";
 
 contract RegistryDeployerTest is RegistryDeployer, BaseTest {
