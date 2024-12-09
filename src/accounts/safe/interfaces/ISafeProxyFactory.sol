@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: LGPL-3.0-only
-pragma solidity >=0.7.0 <0.9.0;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.23 <0.9.0;
 
 interface ISafeProxyFactory {
     function proxyCreationCode() external pure returns (bytes memory);
