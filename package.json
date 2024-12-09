@@ -1,6 +1,6 @@
 {
   "name": "@rhinestone/modulekit",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "A development kit for building and testing smart account modules.",
   "license": "GPL-3.0",
   "author": {
@@ -37,11 +37,11 @@
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
-    "solarray": "github:sablier-labs/solarray"
+    "solarray": "github:sablier-labs/solarray",
+    "solhint": "^5.0.3"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9",
-    "solhint": "^5.0.3"
+    "@changesets/cli": "^2.27.9"
   },
   "files": [
     "src",
