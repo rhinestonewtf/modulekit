@@ -65,6 +65,22 @@ jobs:
           cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
           forge build
 
+        - name: Run via-ir test
+          run: |
+            mkdir test-via-ir
+            cd test-via-ir
+            pnpm init
+            pnpm install "../${{ env.package }}" --shamefully-hoist
+            mkdir -p src
+            echo 'import "modulekit/ModuleKit.sol";' > src/TestImport.sol
+            echo '[profile.default]
+            evm_version = "cancun"
+            src = "src"
+            out = "out"
+            libs = ["node_modules"]' > foundry.toml
+            cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
+            forge build --via-ir
+
       - name: Clean up
         run: |
           rm "${{ env.package }}"

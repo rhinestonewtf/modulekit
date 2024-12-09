@@ -20,6 +20,7 @@
     "lint:sol": "forge fmt --check && pnpm solhint \"{script,src,test}/**/*.sol\"",
     "test": "forge test",
     "test:lite": "FOUNDRY_PROFILE=lite forge test",
+    "test:via-ir": "forge test --via-ir",
     "test:optimized": "pnpm run build:optimized && FOUNDRY_PROFILE=test-optimized forge test",
     "test:accounts": "forge test && ACCOUNT_TYPE=SAFE forge test && ACCOUNT_TYPE=KERNEL forge test && ACCOUNT_TYPE=NEXUS forge test",
     "changeset": "changeset",
