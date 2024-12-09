@@ -37,7 +37,7 @@ contract MockHybridValidator is ERC7579HybridValidatorBase {
     }
 
     function isModuleType(uint256 typeID) external pure override returns (bool) {
-        return typeID == TYPE_VALIDATOR || typeID == 7;
+        return typeID == TYPE_VALIDATOR || typeID == TYPE_STATELESS_VALIDATOR;
     }
 
     function isInitialized(
