@@ -7,12 +7,7 @@ import {
     ISafe7579Launchpad, ModuleInit
 } from "../../accounts/safe/interfaces/ISafe7579Launchpad.sol";
 import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactory.sol";
-
-// External dependencies
-import { Safe } from "@safe-global/safe-contracts/contracts/Safe.sol";
-import { SafeProxy } from "@safe-global/safe-contracts/contracts/proxies/SafeProxy.sol";
-import { SafeProxyFactory } from
-    "@safe-global/safe-contracts/contracts/proxies/SafeProxyFactory.sol";
+import { ISafeProxyFactory } from "./interfaces/ISafeProxyFactory.sol";
 
 // Utils
 import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
@@ -27,14 +22,14 @@ contract SafeFactory is IAccountFactory, Safe7579Precompiles {
     // singletons
     ISafe7579 internal safe7579;
     ISafe7579Launchpad internal launchpad;
-    Safe internal safeSingleton;
-    SafeProxyFactory internal safeProxyFactory;
+    address internal safeSingleton;
+    ISafeProxyFactory internal safeProxyFactory;
 
     function init() public override {
         safe7579 = deploySafe7579();
         launchpad = deploySafe7579Launchpad(ENTRYPOINT_ADDR, REGISTRY_ADDR);
-        safeSingleton = new Safe();
-        safeProxyFactory = new SafeProxyFactory();
+        safeSingleton = deploySafeSingleton();
+        safeProxyFactory = deploySafeProxyFactory();
     }
 
     function createAccount(
@@ -78,7 +73,7 @@ contract SafeFactory is IAccountFactory, Safe7579Precompiles {
         return launchpad.predictSafeAddress({
             singleton: address(launchpad),
             safeProxyFactory: address(safeProxyFactory),
-            creationCode: type(SafeProxy).creationCode,
+            creationCode: SAFE_PROXY_BYTECODE,
             salt: salt,
             factoryInitializer: factoryInitializer
         });

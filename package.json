@@ -33,7 +33,6 @@
     "@prb/math": "^4.1.0",
     "@rhinestone/erc4337-validation": "^0.0.4",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
-    "@safe-global/safe-contracts": "^1.4.1",
     "ds-test": "github:dapphub/ds-test",
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "forge-std": "github:foundry-rs/forge-std",
