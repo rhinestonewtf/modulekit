@@ -123,8 +123,8 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     MockValidator public _defaultValidator;
     /// @notice The default stateless validator used for testing smart sessions
     MockStatelessValidator public _defaultSessionValidator;
-    /// @notice Whether the module kit has been initialized
-    bool public isInit;
+    /// @notice Whether the module kit has been initialized on a specific chain
+    mapping(uint256 chainId => bool initialized) public isInit;
 
     /*//////////////////////////////////////////////////////////////
                                   INIT
@@ -135,7 +135,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     function _initializeModuleKit(string memory _env) internal {
         // Init
         super.init();
-        isInit = true;
+        isInit[block.chainid] = true;
 
         // Factories
         writeFactory(address(new ERC7579Factory()), DEFAULT);
@@ -391,7 +391,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
 
     /// @dev Initialize the module kit with the provided environment if it has not been initialized
     modifier initializeModuleKit() {
-        if (!isInit) {
+        if (!isInit[block.chainid]) {
             string memory _env = envOr("ACCOUNT_TYPE", DEFAULT);
             _initializeModuleKit(_env);
         }
@@ -403,7 +403,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
     /// @param env The account type to set
     modifier usingAccountEnv(AccountType env) {
         // If the module kit is not initialized, initialize it
-        if (!isInit) {
+        if (!isInit[block.chainid]) {
             _initializeModuleKit(env.toString());
         } else {
             // Cache the current env to restore it after the function call
