@@ -555,7 +555,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     function testUsingAccountEnv_ModuleKitUninitialized() public {
-        isInit = false;
+        isInit[block.chainid] = false;
         _usingAccountEnv("DEFAULT");
     }
 
