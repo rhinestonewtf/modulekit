@@ -145,7 +145,7 @@ function readFile(string memory path) view returns (string memory) {
     return Vm(VM_ADDR).readFile(path);
 }
 
-function exists(string memory path) returns (bool) {
+function exists(string memory path) view returns (bool) {
     return Vm(VM_ADDR).exists(path);
 }
 
