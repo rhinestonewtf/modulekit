@@ -139,9 +139,9 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         );
 
         if (env == AccountType.SAFE) {
-            revertMessage = abi.encode(bytes4(0xacfdb444));
+            revertMessage = abi.encodePacked(bytes4(0xacfdb444));
         } else {
-            revertMessage = abi.encode(bytes4(0x0));
+            revertMessage = abi.encodePacked(bytes4(0x0));
         }
 
         _revertWhen__ValidationReverts(revertMessage);
