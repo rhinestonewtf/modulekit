@@ -182,7 +182,7 @@ library ERC4337Helpers {
             bytes4 actual = bytes4(actualReason);
             bytes4 expected = bytes4(revertMessage);
             if (actual == bytes4(0x65c8fd4d)) {
-                return parseFailedOpWithRevert(actualReason);
+                return parseFailedOpWithRevert(actualReason, revertMessage);
             } else if (actual != expected) {
                 revert InvalidRevertMessageBytes(revertMessage, actualReason);
             }
@@ -193,7 +193,13 @@ library ERC4337Helpers {
         }
     }
 
-    function parseFailedOpWithRevert(bytes memory actualReason) internal view {
+    function parseFailedOpWithRevert(
+        bytes memory actualReason,
+        bytes memory revertMessage
+    )
+        internal
+        pure
+    {
         bytes memory lastBytes = new bytes(32);
         uint256 start = actualReason.length >= 32 ? actualReason.length - 32 : 0;
 
@@ -207,8 +213,6 @@ library ERC4337Helpers {
         assembly {
             actual := mload(add(lastBytes, 0x20))
         }
-
-        bytes memory revertMessage = getExpectRevertMessage();
         bytes4 expected = bytes4(revertMessage);
         if (expected != actual) {
             revert InvalidRevertMessage(expected, actual);
