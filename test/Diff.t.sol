@@ -128,24 +128,20 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // No revert reason
         _revertWhen__ValidationReverts("");
 
-        // Revert selector
-        _revertWhen__ValidationReverts(abi.encodePacked(bytes4(0x65c8fd4d)));
-
         // Revert message
         bytes memory revertMessage;
 
         AccountType env = ModuleKitHelpers.getAccountType();
+
+        // Revert selector
+        _revertWhen__ValidationReverts(
+            abi.encodePacked(bytes4(env == AccountType.SAFE ? 0xacfdb444 : 0x0))
+        );
+
         if (env == AccountType.SAFE) {
-            revertMessage = abi.encodeWithSignature(
-                "FailedOpWithRevert(uint256,string,bytes)",
-                0,
-                "AA23 reverted",
-                abi.encode(bytes4(0xacfdb444))
-            );
+            revertMessage = abi.encode(bytes4(0xacfdb444));
         } else {
-            revertMessage = abi.encodeWithSignature(
-                "FailedOpWithRevert(uint256,string,bytes)", 0, "AA23 reverted", ""
-            );
+            revertMessage = abi.encode(bytes4(0x0));
         }
 
         _revertWhen__ValidationReverts(revertMessage);

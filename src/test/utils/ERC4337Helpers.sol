@@ -178,17 +178,44 @@ library ERC4337Helpers {
 
     function checkRevertMessage(bytes memory actualReason) internal view {
         bytes memory revertMessage = getExpectRevertMessage();
-
-        if (revertMessage.length == 4) {
-            bytes4 expected = bytes4(revertMessage);
+        if (actualReason.length >= 4) {
             bytes4 actual = bytes4(actualReason);
-            if (expected != actual) {
-                revert InvalidRevertMessage(expected, actual);
-            }
-        } else {
-            if (revertMessage.length != actualReason.length) {
+            bytes4 expected = bytes4(revertMessage);
+            if (actual == bytes4(0x65c8fd4d)) {
+                return parseFailedOpWithRevert(actualReason, revertMessage);
+            } else if (actual != expected) {
                 revert InvalidRevertMessageBytes(revertMessage, actualReason);
             }
+            return;
+        }
+        if (revertMessage.length != actualReason.length) {
+            revert InvalidRevertMessageBytes(revertMessage, actualReason);
+        }
+    }
+
+    function parseFailedOpWithRevert(
+        bytes memory actualReason,
+        bytes memory revertMessage
+    )
+        internal
+        pure
+    {
+        bytes memory lastBytes = new bytes(32);
+        uint256 start = actualReason.length >= 32 ? actualReason.length - 32 : 0;
+
+        assembly {
+            let srcPtr := add(add(actualReason, 0x20), start)
+            let destPtr := add(lastBytes, 0x20)
+            mstore(destPtr, mload(srcPtr))
+        }
+
+        bytes4 actual;
+        assembly {
+            actual := mload(add(lastBytes, 0x20))
+        }
+        bytes4 expected = bytes4(revertMessage);
+        if (expected != actual) {
+            revert InvalidRevertMessage(expected, actual);
         }
     }
 
