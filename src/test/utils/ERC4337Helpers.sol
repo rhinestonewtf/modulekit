@@ -208,14 +208,12 @@ library ERC4337Helpers {
             bytesOffset := mload(ptr)
         }
 
-        // First get the length of inner bytes
-        uint256 innerLength;
         bytes memory actual;
         assembly {
             let ptr := add(actualReason, 0x20) // to data start
             ptr := add(ptr, 0x04) // skip selector
             ptr := add(ptr, bytesOffset) // go to bytes position
-            innerLength := mload(ptr) // load length of inner bytes
+            let innerLength := mload(ptr) // load length of inner bytes
 
             // Allocate memory for actual bytes
             actual := mload(0x40)
