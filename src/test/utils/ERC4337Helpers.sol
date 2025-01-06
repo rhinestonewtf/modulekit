@@ -200,22 +200,48 @@ library ERC4337Helpers {
         internal
         pure
     {
-        bytes memory lastBytes = new bytes(32);
-        uint256 start = actualReason.length >= 32 ? actualReason.length - 32 : 0;
-
+        uint256 bytesOffset;
         assembly {
-            let srcPtr := add(add(actualReason, 0x20), start)
-            let destPtr := add(lastBytes, 0x20)
+            let ptr := add(actualReason, 0x20) // to data start
+            ptr := add(ptr, 0x04) // skip selector
+            ptr := add(ptr, 0x40) // skip two params
+            bytesOffset := mload(ptr)
+        }
+
+        // First get the length of inner bytes
+        uint256 innerLength;
+        bytes memory actual;
+        assembly {
+            let ptr := add(actualReason, 0x20) // to data start
+            ptr := add(ptr, 0x04) // skip selector
+            ptr := add(ptr, bytesOffset) // go to bytes position
+            innerLength := mload(ptr) // load length of inner bytes
+
+            // Allocate memory for actual bytes
+            actual := mload(0x40)
+            mstore(actual, innerLength) // store length
+
+            // Copy the data
+            let srcPtr := add(ptr, 0x20)
+            let destPtr := add(actual, 0x20)
             mstore(destPtr, mload(srcPtr))
+
+            // Update free memory pointer
+            mstore(0x40, add(add(actual, 0x20), innerLength))
         }
 
-        bytes4 actual;
-        assembly {
-            actual := mload(add(lastBytes, 0x20))
+        // If the length of the revert message is 4, just compare the selectors
+        if (revertMessage.length == 4) {
+            bytes4 expected = bytes4(revertMessage);
+            if (expected != bytes4(actual)) {
+                revert InvalidRevertMessage(expected, bytes4(actual));
+            }
         }
-        bytes4 expected = bytes4(revertMessage);
-        if (expected != actual) {
-            revert InvalidRevertMessage(expected, actual);
+        // Otherwise, compare the actual bytes
+        else {
+            if (keccak256(actual) != keccak256(revertMessage)) {
+                revert InvalidRevertMessageBytes(revertMessage, actual);
+            }
         }
     }
 
