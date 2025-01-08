@@ -6,7 +6,7 @@ import { PackedUserOperation } from
     "@ERC4337/account-abstraction/contracts/core/UserOperationLib.sol";
 
 interface IModule {
-    error AlreadyInitialized(address smartAccount);
+    error ModuleAlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
 
     /**

@@ -40,7 +40,7 @@ abstract contract SchedulingBase is ERC7579ExecutorBase {
     function _onInstall(bytes calldata packedSchedulingData) internal {
         address account = msg.sender;
         if (isInitialized(account)) {
-            revert AlreadyInitialized(account);
+            revert ModuleAlreadyInitialized(account);
         }
 
         _createExecution({ orderData: packedSchedulingData });
