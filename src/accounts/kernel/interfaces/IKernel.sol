@@ -5,7 +5,7 @@ pragma solidity >=0.8.23 <0.9.0;
 import { IERC7579Account } from "./IERC7579Account.sol";
 import { IAccount, ValidationData } from "./IAccount.sol";
 import { IAccountExecute } from "./IAccountExecute.sol";
-import { IHook } from "./IERC7579Modules.sol";
+import { IHook } from "./IERC7579Module.sol";
 
 // Types
 import { ValidationId, ValidationConfig } from "../lib/ValidationTypeLib.sol";
