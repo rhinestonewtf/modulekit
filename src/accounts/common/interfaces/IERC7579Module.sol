@@ -14,7 +14,7 @@ uint256 constant MODULE_TYPE_FALLBACK = 3;
 uint256 constant MODULE_TYPE_HOOK = 4;
 
 interface IModule {
-    error AlreadyInitialized(address smartAccount);
+    error ModuleAlreadyInitialized(address smartAccount);
     error NotInitialized(address smartAccount);
 
     /**
