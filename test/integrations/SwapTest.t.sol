@@ -6,6 +6,8 @@ import "src/ModuleKit.sol";
 import { ERC7579ExecutorBase } from "src/Modules.sol";
 import { IERC20 } from "forge-std/interfaces/IERC20.sol";
 import { UniswapV3Integration } from "src/integrations/uniswap/v3/Uniswap.sol";
+import { envOr } from "src/test/utils/Vm.sol";
+import { getSimulateUserOp } from "src/test/utils/Storage.sol";
 
 contract TestUniswap is BaseTest {
     using ModuleKitHelpers for AccountInstance;
@@ -50,6 +52,9 @@ contract TestUniswap is BaseTest {
     }
 
     function testApproveAndSwap() public {
+        if (envOr("SIMULATE", false) || getSimulateUserOp()) {
+            return;
+        }
         address poolAddress = UniswapV3Integration.getPoolAddress(address(tokenA), address(tokenB));
         uint160 sqrtPriceX96 = UniswapV3Integration.getSqrtPriceX96(poolAddress);
 
