@@ -8,6 +8,7 @@ import {
     IEntryPointSimulations,
     IStakeManager
 } from "../../external/ERC4337.sol";
+import { ExecutionData } from "../RhinestoneModuleKit.sol";
 
 // Deployments
 import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
@@ -45,7 +46,13 @@ library ERC4337Helpers {
     error InvalidRevertMessage(bytes4 expected, bytes4 reason);
     error InvalidRevertMessageBytes(bytes expected, bytes reason);
 
-    function exec4337(PackedUserOperation[] memory userOps, IEntryPoint onEntryPoint) internal {
+    function exec4337(
+        PackedUserOperation[] memory userOps,
+        IEntryPoint onEntryPoint
+    )
+        internal
+        returns (ExecutionData memory executionData)
+    {
         uint256 isExpectRevert = getExpectRevert();
 
         // ERC-4337 specs validation
@@ -72,6 +79,7 @@ library ERC4337Helpers {
 
         // Parse logs and determine if a revert happened
         VmSafe.Log[] memory logs = getRecordedLogs();
+        executionData = ExecutionData(logs);
         uint256 totalUserOpGas = 0;
         for (uint256 i; i < logs.length; i++) {
             // UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)
@@ -150,10 +158,16 @@ library ERC4337Helpers {
         }
     }
 
-    function exec4337(PackedUserOperation memory userOp, IEntryPoint onEntryPoint) internal {
+    function exec4337(
+        PackedUserOperation memory userOp,
+        IEntryPoint onEntryPoint
+    )
+        internal
+        returns (ExecutionData memory logs)
+    {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;
-        exec4337(userOps, onEntryPoint);
+        return exec4337(userOps, onEntryPoint);
     }
 
     function getUserOpRevertReason(

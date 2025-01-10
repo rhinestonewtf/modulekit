@@ -5,6 +5,7 @@ pragma solidity >=0.8.23 <0.9.0;
 import {
     AccountInstance,
     UserOpData,
+    ExecutionData,
     AccountType,
     DEFAULT,
     SAFE,
@@ -94,9 +95,10 @@ library ModuleKitHelpers {
 
     /// @notice Executes userOps on the entrypoint
     /// @param userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
-    function execUserOps(UserOpData memory userOpData) internal {
+    /// @return ExecutionData struct containing the logs from the execution
+    function execUserOps(UserOpData memory userOpData) internal returns (ExecutionData memory) {
         // Send userOp to entrypoint
-        ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
+        return ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
     }
 
     /// @notice Configures a userOp to execute a single operation

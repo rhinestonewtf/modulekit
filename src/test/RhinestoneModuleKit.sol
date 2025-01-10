@@ -106,6 +106,12 @@ struct UserOpData {
     IEntryPoint entrypoint;
 }
 
+/// @title ExecutionData
+/// @param logs Execution logs
+struct ExecutionData {
+    VmSafe.Log[] logs;
+}
+
 /// @title RhinestoneModuleKit
 /// @notice A development kit for building and testing smart account modules
 contract RhinestoneModuleKit is AuxiliaryFactory {
