@@ -8,7 +8,7 @@ import {
     IEntryPointSimulations,
     IStakeManager
 } from "../../external/ERC4337.sol";
-import { ExecutionData } from "../RhinestoneModuleKit.sol";
+import { ExecutionReturnData } from "../RhinestoneModuleKit.sol";
 
 // Deployments
 import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
@@ -51,7 +51,7 @@ library ERC4337Helpers {
         IEntryPoint onEntryPoint
     )
         internal
-        returns (ExecutionData memory executionData)
+        returns (ExecutionReturnData memory executionData)
     {
         uint256 isExpectRevert = getExpectRevert();
 
@@ -79,7 +79,7 @@ library ERC4337Helpers {
 
         // Parse logs and determine if a revert happened
         VmSafe.Log[] memory logs = getRecordedLogs();
-        executionData = ExecutionData(logs);
+        executionData = ExecutionReturnData(logs);
         uint256 totalUserOpGas = 0;
         for (uint256 i; i < logs.length; i++) {
             // UserOperationEvent(bytes32,address,address,uint256,bool,uint256,uint256)
@@ -163,7 +163,7 @@ library ERC4337Helpers {
         IEntryPoint onEntryPoint
     )
         internal
-        returns (ExecutionData memory logs)
+        returns (ExecutionReturnData memory logs)
     {
         PackedUserOperation[] memory userOps = new PackedUserOperation[](1);
         userOps[0] = userOp;

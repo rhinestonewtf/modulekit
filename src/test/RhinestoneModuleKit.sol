@@ -106,9 +106,9 @@ struct UserOpData {
     IEntryPoint entrypoint;
 }
 
-/// @title ExecutionData
+/// @title ExecutionReturnData
 /// @param logs Execution logs
-struct ExecutionData {
+struct ExecutionReturnData {
     VmSafe.Log[] logs;
 }
 

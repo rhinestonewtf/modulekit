@@ -4,7 +4,7 @@ pragma solidity >=0.8.23 <0.9.0;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
-import { ExecutionData } from "src/test/RhinestoneModuleKit.sol";
+import { ExecutionReturnData } from "src/test/RhinestoneModuleKit.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -102,7 +102,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // bytes memory signature = "";
 
         // Create userOperation
-        ExecutionData memory executionData = instance.getExecOps({
+        ExecutionReturnData memory executionData = instance.getExecOps({
             target: receiver,
             value: value,
             callData: callData,
