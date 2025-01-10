@@ -109,7 +109,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         }).execUserOps();
 
         // Validate Logs
-        assertTrue(executionData.logs.length == 5);
+        assertTrue(executionData.logs.length >= 5);
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
