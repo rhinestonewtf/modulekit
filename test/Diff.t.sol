@@ -4,6 +4,7 @@ pragma solidity >=0.8.23 <0.9.0;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
+import { ExecutionReturnData } from "src/test/RhinestoneModuleKit.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -52,6 +53,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         vm.deal(instance.account, 1000 ether);
+        instance.simulateUserOp(false);
     }
 
     function test_transfer() public {
@@ -100,12 +102,15 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // bytes memory signature = "";
 
         // Create userOperation
-        instance.getExecOps({
+        ExecutionReturnData memory executionData = instance.getExecOps({
             target: receiver,
             value: value,
             callData: callData,
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
+
+        // Validate Logs
+        assertTrue(executionData.logs.length >= 5);
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
