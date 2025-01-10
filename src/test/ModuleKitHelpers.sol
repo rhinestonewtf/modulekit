@@ -42,7 +42,8 @@ import {
     startStateDiffRecording as vmStartStateDiffRecording,
     stopAndReturnStateDiff as vmStopAndReturnStateDiff,
     getMappingKeyAndParentOf,
-    envOr
+    envOr,
+    setEnv
 } from "./utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
@@ -558,6 +559,8 @@ library ModuleKitHelpers {
     /// @param value The value to write to storage (true or false)
     function simulateUserOp(AccountInstance memory, bool value) internal {
         writeSimulateUserOp(value);
+        string memory strValue = value ? "true" : "false";
+        setEnv("SIMULATE", strValue);
     }
 
     /// @notice Writes the storage compliance flag to storage

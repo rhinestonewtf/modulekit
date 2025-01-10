@@ -53,6 +53,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         vm.deal(instance.account, 1000 ether);
+        instance.simulateUserOp(false);
     }
 
     function test_transfer() public {
