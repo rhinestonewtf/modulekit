@@ -9,6 +9,7 @@ import {
     BootstrapConfig as NexusBootstrapConfig
 } from "../nexus/interfaces/INexusBootstrap.sol";
 import { IERC7484 } from "../../Interfaces.sol";
+import { INexus } from "./interfaces/INexus.sol";
 
 // Constants
 import { ENTRYPOINT_ADDR } from "../../deployment/predeploy/EntryPoint.sol";
@@ -17,18 +18,16 @@ import { REGISTRY_ADDR } from "../../deployment/predeploy/Registry.sol";
 // Utils
 import { NexusPrecompiles } from "../../deployment/precompiles/NexusPrecompiles.sol";
 
-contract NexusFactory is IAccountFactory {
+contract NexusFactory is IAccountFactory, NexusPrecompiles {
     INexusAccountFactory internal factory;
     INexusBootstrap internal bootstrapDefault;
     address internal nexusImpl;
-    NexusPrecompiles internal precompiles;
 
     function init() public override {
-        precompiles = new NexusPrecompiles();
         // Deploy precompiled contracts
-        nexusImpl = precompiles.deployNexus(ENTRYPOINT_ADDR);
-        factory = precompiles.deployNexusAccountFactory(nexusImpl, address(this));
-        bootstrapDefault = precompiles.deployNexusBootstrap();
+        nexusImpl = deployNexus(ENTRYPOINT_ADDR);
+        factory = deployNexusAccountFactory(nexusImpl, address(this));
+        bootstrapDefault = deployNexusBootstrap();
     }
 
     function createAccount(
@@ -39,10 +38,7 @@ contract NexusFactory is IAccountFactory {
         override
         returns (address account)
     {
-        // Note: signature in nexus account factory is below
-        // function createAccount(bytes calldata initData, bytes32 salt) external payable override
-        // returns (address payable)
-        account = factory.createAccount(initCode, salt);
+        return deployNexusProxy(salt, nexusImpl, initCode);
     }
 
     function getAddress(
@@ -54,7 +50,23 @@ contract NexusFactory is IAccountFactory {
         override
         returns (address)
     {
-        return factory.computeAccountAddress(initCode, salt);
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                keccak256(
+                    abi.encodePacked(
+                        NEXUS_PROXY_BYTECODE,
+                        abi.encode(
+                            address(nexusImpl), abi.encodeCall(INexus.initializeAccount, initCode)
+                        )
+                    )
+                )
+            )
+        );
+
+        return address(uint160(uint256(hash)));
     }
 
     function getInitData(
