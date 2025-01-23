@@ -8,7 +8,9 @@ import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_HOOK,
-    MODULE_TYPE_FALLBACK
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
 } from "../../accounts/common/interfaces/IERC7579Module.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
 
@@ -197,7 +199,7 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /// @notice get callData to install executor on ERC7579 Account
+    /// @notice get callData to install executor on an ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to install the executor
     function getInstallExecutorData(
@@ -213,7 +215,7 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /// @notice get callData to uninstall executor on ERC7579 Account
+    /// @notice get callData to uninstall executor on an ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to uninstall the executor
     function getUninstallExecutorData(
@@ -229,7 +231,7 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /// @notice get callData to install hook on ERC7579 Account
+    /// @notice get callData to install hook on an ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to install the hook
     function getInstallHookData(
@@ -245,7 +247,7 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /// @notice get callData to uninstall hook on ERC7579 Account
+    /// @notice get callData to uninstall hook on an ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to uninstall the hook
     function getUninstallHookData(
@@ -261,7 +263,7 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /// @notice get callData to install fallback on ERC7579 Account
+    /// @notice get callData to install fallback on an ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to install the fallback
     function getInstallFallbackData(
@@ -277,7 +279,7 @@ abstract contract HelperBase {
         data = initData;
     }
 
-    /// @notice get callData to uninstall fallback on ERC7579 Account
+    /// @notice get callData to uninstall fallback on an ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to uninstall the fallback
     function getUninstallFallbackData(
@@ -287,6 +289,70 @@ abstract contract HelperBase {
     )
         public
         pure
+        virtual
+        returns (bytes memory data)
+    {
+        data = initData;
+    }
+
+    /// @notice get callData to install an ERC1271 prevalidation hook
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to install the prevalidation hook ERC1271
+    function getInstallPrevalidationHookERC1271Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (bytes memory data)
+    {
+        data = initData;
+    }
+
+    /// @notice get callData to install an ERC4337 prevalidation hook ERC4337
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to install the prevalidation hook ERC4337
+    function getInstallPrevalidationHookERC4337Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (bytes memory data)
+    {
+        data = initData;
+    }
+
+    /// @notice get callData to uninstall an ERC1271 prevalidation hook
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to uninstall the prevalidation hook ERC1271
+    function getUninstallPrevalidationHookERC1271Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (bytes memory data)
+    {
+        data = initData;
+    }
+
+    /// @notice get callData to uninstall an ERC4337 prevalidation hook
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to uninstall the prevalidation hook ERC4337
+    function getUninstallPrevalidationHookERC4337Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
         virtual
         returns (bytes memory data)
     {
@@ -362,6 +428,10 @@ abstract contract HelperBase {
             return getInstallHookData(instance, module, initData);
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
             return getInstallFallbackData(instance, module, initData);
+        } else if (moduleType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271) {
+            return getInstallPrevalidationHookERC1271Data(instance, module, initData);
+        } else if (moduleType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            return getInstallPrevalidationHookERC4337Data(instance, module, initData);
         } else {
             revert("Invalid module type");
         }
@@ -392,6 +462,10 @@ abstract contract HelperBase {
             return getUninstallHookData(instance, module, initData);
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
             return getUninstallFallbackData(instance, module, initData);
+        } else if (moduleType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271) {
+            return getUninstallPrevalidationHookERC1271Data(instance, module, initData);
+        } else if (moduleType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            return getUninstallPrevalidationHookERC4337Data(instance, module, initData);
         } else {
             revert("Invalid module type");
         }
