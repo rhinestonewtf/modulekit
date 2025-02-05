@@ -34,7 +34,6 @@ contract MockValidator is ERC7579ValidatorBase {
         override
         returns (bytes4)
     {
-        console.log("isValidSignatureWithSender msg.sender", msg.sender);
         return EIP1271_SUCCESS;
     }
 
