@@ -48,8 +48,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         mockTarget = new MockTarget();
 
         // Setup aux
-        token = new MockERC20();
-        token.initialize("Mock Token", "MTK", 18);
+        token = new MockERC20("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         vm.deal(instance.account, 1000 ether);
     }

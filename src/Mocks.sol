@@ -27,5 +27,5 @@ import { MockFallback } from "./module-bases/mocks/MockFallback.sol";
                             TOKENS
 //////////////////////////////////////////////////////////////*/
 
-import { MockERC20 } from "forge-std/mocks/MockERC20.sol";
-import { MockERC721 } from "forge-std/mocks/MockERC721.sol";
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
+import { MockERC721 } from "solmate/test/utils/mocks/MockERC721.sol";

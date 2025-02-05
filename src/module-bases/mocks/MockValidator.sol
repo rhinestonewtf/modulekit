@@ -4,6 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 /* solhint-disable no-unused-vars */
 import { ERC7579ValidatorBase } from "../ERC7579ValidatorBase.sol";
 import { PackedUserOperation } from "../../external/ERC4337.sol";
+import { console } from "forge-std/console.sol";
 
 contract MockValidator is ERC7579ValidatorBase {
     function onInstall(bytes calldata data) external virtual override { }
@@ -19,6 +20,7 @@ contract MockValidator is ERC7579ValidatorBase {
         override
         returns (ValidationData)
     {
+        console.log("validateUserOp msg.sender", msg.sender);
         return
             _packValidationData({ sigFailed: false, validUntil: type(uint48).max, validAfter: 0 });
     }
@@ -34,6 +36,7 @@ contract MockValidator is ERC7579ValidatorBase {
         override
         returns (bytes4)
     {
+        console.log("isValidSignatureWithSender msg.sender", msg.sender);
         return EIP1271_SUCCESS;
     }
 

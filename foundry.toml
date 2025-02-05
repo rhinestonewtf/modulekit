@@ -11,6 +11,8 @@ ignored_warnings_from = ["node_modules", "src/integrations"]
 gas_limit = "18446744073709551615"
 memory_limit = 2147483648
 verbosity = 3
+optimizer_runs = 200
+bytecode_hash = 'none'
 
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}" 
