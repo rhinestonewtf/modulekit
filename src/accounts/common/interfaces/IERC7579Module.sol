@@ -142,7 +142,6 @@ interface ISigner is IModule {
 
 interface IPreValidationHookERC1271 is IModule {
     function preValidationHookERC1271(
-        address account,
         address sender,
         bytes32 hash,
         bytes calldata data
@@ -154,7 +153,6 @@ interface IPreValidationHookERC1271 is IModule {
 
 interface IPreValidationHookERC4337 is IModule {
     function preValidationHookERC4337(
-        address account,
         PackedUserOperation calldata userOp,
         uint256 missingAccountFunds,
         bytes32 userOpHash
