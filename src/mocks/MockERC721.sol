@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.2 <0.9.0;
 
-import {IERC721Metadata, IERC721TokenReceiver} from "forge-std/interfaces/IERC721.sol";
+import { IERC721Metadata, IERC721TokenReceiver } from "forge-std/interfaces/IERC721.sol";
 
-/// @notice This is a mock contract of the ERC721 standard for testing purposes only, it SHOULD NOT be used in production.
-/// @dev Forked from: https://github.com/transmissions11/solmate/blob/0384dbaaa4fcb5715738a9254a7c0a4cb62cf458/src/tokens/ERC721.sol
+/// @notice This is a mock contract of the ERC721 standard for testing purposes only, it SHOULD NOT
+/// be used in production.
+/// @dev Forked from:
+/// https://github.com/transmissions11/solmate/blob/0384dbaaa4fcb5715738a9254a7c0a4cb62cf458/src/tokens/ERC721.sol
 contract MockERC721 is IERC721Metadata {
     /*//////////////////////////////////////////////////////////////
                          METADATA STORAGE/LOGIC
@@ -22,7 +24,7 @@ contract MockERC721 is IERC721Metadata {
         return _symbol;
     }
 
-    function tokenURI(uint256 id) public view virtual override returns (string memory) {}
+    function tokenURI(uint256 id) public view virtual override returns (string memory) { }
 
     /*//////////////////////////////////////////////////////////////
                       ERC721 BALANCE/OWNER STORAGE
@@ -54,7 +56,16 @@ contract MockERC721 is IERC721Metadata {
         return _getApproved[id];
     }
 
-    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
+    function isApprovedForAll(
+        address owner,
+        address operator
+    )
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
         return _isApprovedForAll[owner][operator];
     }
 
@@ -65,7 +76,8 @@ contract MockERC721 is IERC721Metadata {
     /// @dev A bool to track whether the contract has been initialized.
     bool private initialized;
 
-    /// @dev To hide constructor warnings across solc versions due to different constructor visibility requirements and
+    /// @dev To hide constructor warnings across solc versions due to different constructor
+    /// visibility requirements and
     /// syntaxes, we add an initialization function that can be called only once.
     function initialize(string memory name_, string memory symbol_) public {
         require(!initialized, "ALREADY_INITIALIZED");
@@ -102,7 +114,8 @@ contract MockERC721 is IERC721Metadata {
         require(to != address(0), "INVALID_RECIPIENT");
 
         require(
-            msg.sender == from || _isApprovedForAll[from][msg.sender] || msg.sender == _getApproved[id],
+            msg.sender == from || _isApprovedForAll[from][msg.sender]
+                || msg.sender == _getApproved[id],
             "NOT_AUTHORIZED"
         );
 
@@ -119,7 +132,16 @@ contract MockERC721 is IERC721Metadata {
         emit Transfer(from, to, id);
     }
 
-    function safeTransferFrom(address from, address to, uint256 id) public payable virtual override {
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id
+    )
+        public
+        payable
+        virtual
+        override
+    {
         transferFrom(from, to, id);
 
         require(
@@ -130,7 +152,12 @@ contract MockERC721 is IERC721Metadata {
         );
     }
 
-    function safeTransferFrom(address from, address to, uint256 id, bytes memory data)
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 id,
+        bytes memory data
+    )
         public
         payable
         virtual
