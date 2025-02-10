@@ -5,7 +5,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import { IERC7579Account, Execution } from "../../accounts/common/interfaces/IERC7579Account.sol";
 import { PackedUserOperation, UserOperationLib } from "../../external/ERC4337.sol";
 
-enum ACCOUNTEXECTYPE {
+enum ACCOUNT_EXEC_TYPE {
     EXEC_SINGLE,
     EXEC_BATCH,
     EXEC_SINGLE_FROM_EXECUTOR,
