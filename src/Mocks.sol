@@ -27,5 +27,5 @@ import { MockFallback } from "./module-bases/mocks/MockFallback.sol";
                             TOKENS
 //////////////////////////////////////////////////////////////*/
 
-import { MockERC20 } from "src/mocks/MockERC20.sol";
-import { MockERC721 } from "src/mocks/MockERC721.sol";
+import { MockERC20 } from "./mocks/MockERC20.sol";
+import { MockERC721 } from "./mocks/MockERC721.sol";
