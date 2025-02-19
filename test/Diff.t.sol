@@ -548,7 +548,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             string memory env = envs[i];
             if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("INVALID"))) {
                 vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
-                _usingAccountEnv(env);
+                this._usingAccountEnv(env);
             } else {
                 _usingAccountEnv(env);
             }
@@ -583,14 +583,18 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     function testSetAccountEnv_RevertsWhen_InvalidAccountType() public {
         vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
-        instance.setAccountEnv("INVALID");
+        this.callSetAccountENVInvalid();
     }
 
     /*//////////////////////////////////////////////////////////////
                                 HELPERS
     //////////////////////////////////////////////////////////////*/
 
-    function _usingAccountEnv(string memory env) internal usingAccountEnv(env.toAccountType()) {
+    function callSetAccountENVInvalid() public {
+        instance.setAccountEnv("INVALID");
+    }
+
+    function _usingAccountEnv(string memory env) public usingAccountEnv(env.toAccountType()) {
         AccountInstance memory newInstance = makeAccountInstance(keccak256(abi.encode(env)));
         assertTrue(newInstance.account.code.length == 0);
 
@@ -700,7 +704,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Expect revert
         vm.expectRevert();
         // Assert that the module storage was cleared
-        instance.verifyModuleStorageWasCleared(accountAccesses, module);
+        this.callVerifyStorageWasNotCleared(instance, module, accountAccesses);
     }
 
     function __revertWhen_verifyModuleStorageWasCleared_NotCleared() public {
@@ -828,5 +832,20 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             return;
         }
         _;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                HELPERS
+    //////////////////////////////////////////////////////////////*/
+
+    function callVerifyStorageWasNotCleared(
+        AccountInstance memory _instance,
+        address _module,
+        VmSafe.AccountAccess[] memory _accountAccesses
+    )
+        public
+        view
+    {
+        _instance.verifyModuleStorageWasCleared(_accountAccesses, _module);
     }
 }
