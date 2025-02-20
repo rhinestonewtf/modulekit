@@ -363,6 +363,13 @@ contract SafeHelpers is HelperBase {
             data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
         }
 
+        if (
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+        ) {
+            data = abi.encode(moduleTypeId, data);
+        }
+
         return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
     }
 
