@@ -147,6 +147,7 @@ interface IPreValidationHookERC1271 is IModule {
         bytes calldata data
     )
         external
+        view
         returns (bytes32 hookHash, bytes memory hookSignature);
 }
 
