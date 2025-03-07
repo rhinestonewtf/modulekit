@@ -8,7 +8,9 @@ import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
     MODULE_TYPE_HOOK,
-    MODULE_TYPE_FALLBACK
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
 } from "../../accounts/common/interfaces/IERC7579Module.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE } from "../../Interfaces.sol";
 
@@ -245,6 +247,22 @@ abstract contract HelperBase {
         data = initData;
     }
 
+    /// @notice get callData to install hook on ERC7579 Account
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to install the hook
+    function getInstallPreValHookData(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (bytes memory data)
+    {
+        data = initData;
+    }
+
     /// @notice get callData to uninstall hook on ERC7579 Account
     /// @param initData bytes the data to pass to the module
     /// @return data bytes the callData to uninstall the hook
@@ -362,6 +380,10 @@ abstract contract HelperBase {
             return getInstallHookData(instance, module, initData);
         } else if (moduleType == MODULE_TYPE_FALLBACK) {
             return getInstallFallbackData(instance, module, initData);
+        } else if (moduleType == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337) {
+            return getInstallPreValHookData(instance, module, initData);
+        } else if (moduleType == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271) {
+            return getInstallPreValHookData(instance, module, initData);
         } else {
             revert("Invalid module type");
         }
