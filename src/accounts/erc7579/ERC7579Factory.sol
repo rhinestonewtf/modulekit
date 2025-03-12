@@ -15,7 +15,7 @@ import { ERC7579Precompiles } from "../../deployment/precompiles/ERC7579Precompi
 
 contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
     IERC7579Account internal implementation;
-    IERC7579Bootstrap internal bootstrapDefault;
+    IERC7579Bootstrap public bootstrapDefault;
 
     function init() public override {
         implementation = deployERC7579Account();
@@ -77,6 +77,64 @@ contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
             abi.encodeCall(IERC7579Bootstrap.initMSA, (_validators, _executors, _hook, _fallBacks))
         );
     }
+
+    function createAccountWithModules(
+        bytes32 salt,
+        ERC7579BootstrapConfig[] calldata validators,
+        ERC7579BootstrapConfig[] calldata executors,
+        ERC7579BootstrapConfig calldata _fallback,
+        ERC7579BootstrapConfig[] calldata hooks
+    )
+        public
+        payable
+        virtual
+        returns (address)
+    {
+        bytes memory initData = abi.encode(
+            bootstrapDefault,
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (validators, executors, _fallback, hooks))
+        );
+
+        address account = deployMSAPRoxy(salt, address(implementation), initData);
+
+        return account;
+    }
+
+    function getInitData(
+        ERC7579BootstrapConfig[] memory _validators,
+        ERC7579BootstrapConfig[] memory _executors,
+        ERC7579BootstrapConfig memory hook,
+        ERC7579BootstrapConfig[] memory fallbacks
+    )
+        public
+        view
+        returns (bytes memory _init)
+    {
+        _init = abi.encode(
+            address(bootstrapDefault),
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (_validators, _executors, hook, fallbacks))
+        );
+    }
+
+    // function getInitCode(
+    //     bytes32 salt,
+    //     BootstrapConfig[] calldata validators,
+    //     BootstrapConfig[] calldata executors,
+    //     BootstrapConfig calldata _fallback,
+    //     BootstrapConfig[] calldata hooks
+    // )
+    //     public
+    //     view
+    //     virtual
+    //     returns (bytes memory initCode)
+    // {
+    //     initCode = abi.encodePacked(
+    //         address(this),
+    //         abi.encodeCall(
+    //             this.createAccountWithModules, (salt, validators, executors, _fallback, hooks)
+    //         )
+    //     );
+    // }
 
     function _getSalt(bytes32 _salt, bytes memory initCode) internal pure returns (bytes32 salt) {
         salt = keccak256(abi.encodePacked(_salt, initCode));

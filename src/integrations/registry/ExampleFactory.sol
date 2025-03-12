@@ -14,6 +14,7 @@ import { FactoryBase } from "./FactoryBase.sol";
 
 // Precompiles
 import { ERC7579Precompiles } from "../../deployment/precompiles/ERC7579Precompiles.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract ExampleFactory is FactoryBase, ERC7579Precompiles {
     address public immutable IMPLEMENTATION;
@@ -56,28 +57,6 @@ contract ExampleFactory is FactoryBase, ERC7579Precompiles {
         return account;
     }
 
-    function createAccountWithModules(
-        bytes32 salt,
-        BootstrapConfig[] calldata validators,
-        BootstrapConfig[] calldata executors,
-        BootstrapConfig calldata _fallback,
-        BootstrapConfig[] calldata hooks
-    )
-        public
-        payable
-        virtual
-        returns (address)
-    {
-        bytes memory initData = abi.encode(
-            BOOTSTRAP,
-            abi.encodeCall(IERC7579Bootstrap.initMSA, (validators, executors, _fallback, hooks))
-        );
-
-        address account = deployMSAPRoxy(salt, IMPLEMENTATION, initData);
-
-        return account;
-    }
-
     function getAddress(
         bytes32 salt,
         address validator,
@@ -113,6 +92,32 @@ contract ExampleFactory is FactoryBase, ERC7579Precompiles {
         return address(uint160(uint256(hash)));
     }
 
+    function getAddress(
+        bytes32 salt,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (address)
+    {
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                keccak256(
+                    abi.encodePacked(
+                        MSAPROXY_BYTECODE,
+                        abi.encode(IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData))
+                    )
+                )
+            )
+        );
+
+        return address(uint160(uint256(hash)));
+    }
+
     function getInitCode(
         bytes32 salt,
         address validator,
@@ -125,26 +130,6 @@ contract ExampleFactory is FactoryBase, ERC7579Precompiles {
     {
         initCode = abi.encodePacked(
             address(this), abi.encodeCall(this.createAccount, (salt, validator, validatorInitData))
-        );
-    }
-
-    function getInitCode(
-        bytes32 salt,
-        BootstrapConfig[] calldata validators,
-        BootstrapConfig[] calldata executors,
-        BootstrapConfig calldata _fallback,
-        BootstrapConfig[] calldata hooks
-    )
-        public
-        view
-        virtual
-        returns (bytes memory initCode)
-    {
-        initCode = abi.encodePacked(
-            address(this),
-            abi.encodeCall(
-                this.createAccountWithModules, (salt, validators, executors, _fallback, hooks)
-            )
         );
     }
 
