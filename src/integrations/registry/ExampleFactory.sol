@@ -3,7 +3,10 @@ pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
 import { IMSA } from "../../accounts/erc7579/interfaces/IMSA.sol";
-import { IERC7579Bootstrap } from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import {
+    IERC7579Bootstrap,
+    BootstrapConfig
+} from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { IModule as IERC7579Module } from "../../accounts/common/interfaces/IERC7579Module.sol";
 
 // Dependencies
@@ -46,6 +49,28 @@ contract ExampleFactory is FactoryBase, ERC7579Precompiles {
             abi.encodeCall(
                 IERC7579Bootstrap.singleInitMSA, (IERC7579Module(validator), validatorInitData)
             )
+        );
+
+        address account = deployMSAPRoxy(salt, IMPLEMENTATION, initData);
+
+        return account;
+    }
+
+    function createAccountWithModules(
+        bytes32 salt,
+        BootstrapConfig[] calldata validators,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata _fallback,
+        BootstrapConfig[] calldata hooks
+    )
+        public
+        payable
+        virtual
+        returns (address)
+    {
+        bytes memory initData = abi.encode(
+            BOOTSTRAP,
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (validators, executors, _fallback, hooks))
         );
 
         address account = deployMSAPRoxy(salt, IMPLEMENTATION, initData);
@@ -100,6 +125,26 @@ contract ExampleFactory is FactoryBase, ERC7579Precompiles {
     {
         initCode = abi.encodePacked(
             address(this), abi.encodeCall(this.createAccount, (salt, validator, validatorInitData))
+        );
+    }
+
+    function getInitCode(
+        bytes32 salt,
+        BootstrapConfig[] calldata validators,
+        BootstrapConfig[] calldata executors,
+        BootstrapConfig calldata _fallback,
+        BootstrapConfig[] calldata hooks
+    )
+        public
+        view
+        virtual
+        returns (bytes memory initCode)
+    {
+        initCode = abi.encodePacked(
+            address(this),
+            abi.encodeCall(
+                this.createAccountWithModules, (salt, validators, executors, _fallback, hooks)
+            )
         );
     }
 
