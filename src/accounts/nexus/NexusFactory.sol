@@ -88,4 +88,54 @@ contract NexusFactory is IAccountFactory, NexusPrecompiles {
             config, IERC7484(REGISTRY_ADDR), attesters, 1
         );
     }
+
+    function createAccountWithModules(
+        bytes32 salt,
+        NexusBootstrapConfig[] calldata validators,
+        NexusBootstrapConfig[] calldata executors,
+        NexusBootstrapConfig calldata hook,
+        NexusBootstrapConfig[] calldata fallbacks
+    )
+        public
+        payable
+        virtual
+        returns (address)
+    {
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x000000333034E9f539ce08819E12c1b8Cb29084d);
+
+        bytes memory initData = abi.encode(
+            bootstrapDefault,
+            abi.encodeCall(
+                INexusBootstrap.initNexus,
+                (validators, executors, hook, fallbacks, IERC7484(REGISTRY_ADDR), attesters, 1)
+            )
+        );
+
+        address account = deployNexusProxy(salt, nexusImpl, initData);
+
+        return account;
+    }
+
+    function getInitDataWithModules(
+        NexusBootstrapConfig[] memory validators,
+        NexusBootstrapConfig[] memory executors,
+        NexusBootstrapConfig memory hook,
+        NexusBootstrapConfig[] memory fallbacks
+    )
+        public
+        view
+        returns (bytes memory _init)
+    {
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x000000333034E9f539ce08819E12c1b8Cb29084d);
+
+        _init = abi.encode(
+            address(bootstrapDefault),
+            abi.encodeCall(
+                INexusBootstrap.initNexus,
+                (validators, executors, hook, fallbacks, IERC7484(REGISTRY_ADDR), attesters, 1)
+            )
+        );
+    }
 }

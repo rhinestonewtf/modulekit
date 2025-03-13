@@ -26,6 +26,44 @@ contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
         return deployMSAPRoxy(salt, address(implementation), initCode);
     }
 
+    function createAccountWithModules(
+        bytes32 salt,
+        ERC7579BootstrapConfig[] calldata validators,
+        ERC7579BootstrapConfig[] calldata executors,
+        ERC7579BootstrapConfig calldata _fallback,
+        ERC7579BootstrapConfig[] calldata hooks
+    )
+        public
+        payable
+        virtual
+        returns (address)
+    {
+        bytes memory initData = abi.encode(
+            bootstrapDefault,
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (validators, executors, _fallback, hooks))
+        );
+
+        address account = deployMSAPRoxy(salt, address(implementation), initData);
+
+        return account;
+    }
+
+    function getInitData(
+        ERC7579BootstrapConfig[] memory _validators,
+        ERC7579BootstrapConfig[] memory _executors,
+        ERC7579BootstrapConfig memory hook,
+        ERC7579BootstrapConfig[] memory fallbacks
+    )
+        public
+        view
+        returns (bytes memory _init)
+    {
+        _init = abi.encode(
+            address(bootstrapDefault),
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (_validators, _executors, hook, fallbacks))
+        );
+    }
+
     function getAddress(
         bytes32 salt,
         bytes memory initCode

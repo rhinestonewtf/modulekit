@@ -116,4 +116,66 @@ contract SafeFactory is IAccountFactory, Safe7579Precompiles {
         });
         _init = abi.encode(initDataSafe);
     }
+
+    function createAccountWithModules(
+        bytes32 salt,
+        ModuleInit[] calldata validators,
+        ModuleInit[] calldata executors,
+        ModuleInit[] calldata fallbacks,
+        ModuleInit[] calldata hooks
+    )
+        public
+        payable
+        virtual
+        returns (address safe)
+    {
+        ISafe7579Launchpad.InitData memory initDataSafe = abi.decode(
+            getInitDataWithModules(validators, executors, fallbacks, hooks),
+            (ISafe7579Launchpad.InitData)
+        );
+        bytes32 initHash = launchpad.hash(initDataSafe);
+
+        bytes memory factoryInitializer =
+            abi.encodeCall(ISafe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
+
+        safe = address(
+            safeProxyFactory.createProxyWithNonce(
+                address(launchpad), factoryInitializer, uint256(salt)
+            )
+        );
+    }
+
+    function getInitDataWithModules(
+        ModuleInit[] memory validators,
+        ModuleInit[] memory executors,
+        ModuleInit[] memory fallbacks,
+        ModuleInit[] memory hooks
+    )
+        public
+        view
+        returns (bytes memory _init)
+    {
+        ISafe7579Launchpad.InitData memory initDataSafe = ISafe7579Launchpad.InitData({
+            singleton: address(safeSingleton),
+            owners: Solarray.addresses(makeAddr("owner1")),
+            threshold: 1,
+            setupTo: address(launchpad),
+            setupData: abi.encodeCall(
+                ISafe7579Launchpad.initSafe7579,
+                (
+                    address(safe7579),
+                    executors,
+                    fallbacks,
+                    hooks,
+                    Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
+                    2
+                )
+            ),
+            safe7579: ISafe7579(safe7579),
+            validators: validators,
+            callData: ""
+        });
+
+        _init = abi.encode(initDataSafe);
+    }
 }
