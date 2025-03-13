@@ -135,12 +135,11 @@ contract SafeFactory is IAccountFactory, Safe7579Precompiles {
         );
         bytes32 initHash = launchpad.hash(initDataSafe);
 
-        bytes memory factoryInitializer =
-            abi.encodeCall(ISafe7579Launchpad.preValidationSetup, (initHash, address(0), ""));
-
-        safe = address(
+        return address(
             safeProxyFactory.createProxyWithNonce(
-                address(launchpad), factoryInitializer, uint256(salt)
+                address(launchpad),
+                abi.encodeCall(ISafe7579Launchpad.preValidationSetup, (initHash, address(0), "")),
+                uint256(salt)
             )
         );
     }
