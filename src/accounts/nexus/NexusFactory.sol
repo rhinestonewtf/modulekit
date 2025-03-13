@@ -117,16 +117,52 @@ contract NexusFactory is IAccountFactory, NexusPrecompiles {
         return account;
     }
 
-    function getInitDataWithModules(
-        NexusBootstrapConfig[] memory validators,
-        NexusBootstrapConfig[] memory executors,
-        NexusBootstrapConfig memory hook,
-        NexusBootstrapConfig[] memory fallbacks
+    function getInitData(
+        IAccountFactory.ModuleInitData[] memory _validators,
+        IAccountFactory.ModuleInitData[] memory _executors,
+        IAccountFactory.ModuleInitData memory _hook,
+        IAccountFactory.ModuleInitData[] memory _fallbacks
     )
         public
         view
+        override
         returns (bytes memory _init)
     {
+        NexusBootstrapConfig[] memory validators =
+            abi.decode(abi.encode(_validators), (NexusBootstrapConfig[]));
+        NexusBootstrapConfig[] memory executors =
+            abi.decode(abi.encode(_executors), (NexusBootstrapConfig[]));
+        NexusBootstrapConfig memory hook = abi.decode(abi.encode(_hook), (NexusBootstrapConfig));
+        NexusBootstrapConfig[] memory fallbacks =
+            abi.decode(abi.encode(_fallbacks), (NexusBootstrapConfig[]));
+
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x000000333034E9f539ce08819E12c1b8Cb29084d);
+
+        _init = abi.encode(
+            address(bootstrapDefault),
+            abi.encodeCall(
+                INexusBootstrap.initNexus,
+                (validators, executors, hook, fallbacks, IERC7484(REGISTRY_ADDR), attesters, 1)
+            )
+        );
+    }
+
+    function getInitData(bytes memory initData) public view returns (bytes memory _init) {
+        (
+            NexusBootstrapConfig[] memory validators,
+            NexusBootstrapConfig[] memory executors,
+            NexusBootstrapConfig memory hook,
+            NexusBootstrapConfig[] memory fallbacks
+        ) = abi.decode(
+            initData,
+            (
+                NexusBootstrapConfig[],
+                NexusBootstrapConfig[],
+                NexusBootstrapConfig,
+                NexusBootstrapConfig[]
+            )
+        );
         address[] memory attesters = new address[](1);
         attesters[0] = address(0x000000333034E9f539ce08819E12c1b8Cb29084d);
 

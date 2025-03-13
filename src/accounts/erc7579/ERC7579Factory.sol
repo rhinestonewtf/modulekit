@@ -48,19 +48,48 @@ contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
         return account;
     }
 
+    function getInitData(bytes memory initCode) public view returns (bytes memory _init) {
+        (
+            ERC7579BootstrapConfig[] memory _validators,
+            ERC7579BootstrapConfig[] memory _executors,
+            ERC7579BootstrapConfig memory hook,
+            ERC7579BootstrapConfig[] memory fallbacks
+        ) = abi.decode(
+            initCode,
+            (
+                ERC7579BootstrapConfig[],
+                ERC7579BootstrapConfig[],
+                ERC7579BootstrapConfig,
+                ERC7579BootstrapConfig[]
+            )
+        );
+        _init = abi.encode(
+            address(bootstrapDefault),
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (_validators, _executors, hook, fallbacks))
+        );
+    }
+
     function getInitData(
-        ERC7579BootstrapConfig[] memory _validators,
-        ERC7579BootstrapConfig[] memory _executors,
-        ERC7579BootstrapConfig memory hook,
-        ERC7579BootstrapConfig[] memory fallbacks
+        IAccountFactory.ModuleInitData[] memory _validators,
+        IAccountFactory.ModuleInitData[] memory _executors,
+        IAccountFactory.ModuleInitData memory _hook,
+        IAccountFactory.ModuleInitData[] memory _fallbacks
     )
         public
         view
         returns (bytes memory _init)
     {
+        ERC7579BootstrapConfig[] memory validators =
+            abi.decode(abi.encode(_validators), (ERC7579BootstrapConfig[]));
+        ERC7579BootstrapConfig[] memory executors =
+            abi.decode(abi.encode(_executors), (ERC7579BootstrapConfig[]));
+        ERC7579BootstrapConfig memory hook = abi.decode(abi.encode(_hook), (ERC7579BootstrapConfig));
+        ERC7579BootstrapConfig[] memory fallbacks =
+            abi.decode(abi.encode(_fallbacks), (ERC7579BootstrapConfig[]));
+
         _init = abi.encode(
             address(bootstrapDefault),
-            abi.encodeCall(IERC7579Bootstrap.initMSA, (_validators, _executors, hook, fallbacks))
+            abi.encodeCall(IERC7579Bootstrap.initMSA, (validators, executors, hook, fallbacks))
         );
     }
 

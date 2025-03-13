@@ -67,33 +67,92 @@ contract KernelFactory is IAccountFactory, KernelPrecompiles {
     }
 
     function getInitData(
-        ModuleBootstrapConfig[] memory _validators,
-        ModuleBootstrapConfig[] memory _executors,
-        ModuleBootstrapConfig memory hook,
-        ModuleBootstrapConfig[] memory fallbacks
+        IAccountFactory.ModuleInitData[] memory validators,
+        IAccountFactory.ModuleInitData[] memory executors,
+        IAccountFactory.ModuleInitData memory hook,
+        IAccountFactory.ModuleInitData[] memory fallbacks
     )
         public
         pure
+        override
         returns (bytes memory _init)
     {
+        address[] memory attesters = new address[](1);
+        attesters[0] = address(0x000000333034E9f539ce08819E12c1b8Cb29084d);
+
         ValidationId rootValidator =
-            ValidatorLib.validatorToIdentifier(IValidator(_validators[0].module));
+            ValidatorLib.validatorToIdentifier(IValidator(validators[0].module));
         // Encode the rest of the validators, executors and fallbacks are onInstall calls with the
         // appropriate address and initData
         bytes[] memory otherModules =
-            new bytes[](_validators.length - 1 + _executors.length + fallbacks.length);
+            new bytes[](validators.length - 1 + executors.length + fallbacks.length);
         uint256 index = 0;
-        for (uint256 i = 1; i < _validators.length; i++) {
+        for (uint256 i = 1; i < validators.length; i++) {
             otherModules[index] = abi.encodeCall(
                 IKernel.installModule,
-                (MODULE_TYPE_VALIDATOR, _validators[i].module, _validators[i].initData)
+                (MODULE_TYPE_VALIDATOR, validators[i].module, validators[i].data)
             );
             index++;
         }
-        for (uint256 i = 0; i < _executors.length; i++) {
+        for (uint256 i = 0; i < executors.length; i++) {
             otherModules[index] = abi.encodeCall(
                 IKernel.installModule,
-                (MODULE_TYPE_EXECUTOR, _executors[i].module, _executors[i].initData)
+                (MODULE_TYPE_EXECUTOR, executors[i].module, executors[i].data)
+            );
+            index++;
+        }
+        for (uint256 i = 0; i < fallbacks.length; i++) {
+            otherModules[index] = abi.encodeCall(
+                IKernel.installModule,
+                (MODULE_TYPE_FALLBACK, fallbacks[i].module, fallbacks[i].data)
+            );
+            index++;
+        }
+        _init = abi.encodeCall(
+            IKernel.initialize,
+            (
+                rootValidator,
+                IHook(address(hook.module)),
+                validators[0].data,
+                hook.data,
+                otherModules
+            )
+        );
+    }
+
+    function getInitData(bytes memory initData) public pure returns (bytes memory _init) {
+        (
+            ModuleBootstrapConfig[] memory validators,
+            ModuleBootstrapConfig[] memory executors,
+            ModuleBootstrapConfig memory hook,
+            ModuleBootstrapConfig[] memory fallbacks
+        ) = abi.decode(
+            initData,
+            (
+                ModuleBootstrapConfig[],
+                ModuleBootstrapConfig[],
+                ModuleBootstrapConfig,
+                ModuleBootstrapConfig[]
+            )
+        );
+        ValidationId rootValidator =
+            ValidatorLib.validatorToIdentifier(IValidator(validators[0].module));
+        // Encode the rest of the validators, executors and fallbacks are onInstall calls with the
+        // appropriate address and initData
+        bytes[] memory otherModules =
+            new bytes[](validators.length - 1 + executors.length + fallbacks.length);
+        uint256 index = 0;
+        for (uint256 i = 1; i < validators.length; i++) {
+            otherModules[index] = abi.encodeCall(
+                IKernel.installModule,
+                (MODULE_TYPE_VALIDATOR, validators[i].module, validators[i].initData)
+            );
+            index++;
+        }
+        for (uint256 i = 0; i < executors.length; i++) {
+            otherModules[index] = abi.encodeCall(
+                IKernel.installModule,
+                (MODULE_TYPE_EXECUTOR, executors[i].module, executors[i].initData)
             );
             index++;
         }
@@ -109,7 +168,7 @@ contract KernelFactory is IAccountFactory, KernelPrecompiles {
             (
                 rootValidator,
                 IHook(address(hook.module)),
-                _validators[0].initData,
+                validators[0].initData,
                 hook.initData,
                 otherModules
             )
