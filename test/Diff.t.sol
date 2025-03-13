@@ -21,6 +21,7 @@ import { MockK1Validator, VALIDATION_SUCCESS } from "test/mocks/MockK1Validator.
 import { MockK1ValidatorUncompliantUninstall } from
     "test/mocks/MockK1ValidatorUncompliantUninstall.sol";
 import { VmSafe } from "src/test/utils/Vm.sol";
+import { IAccountFactory } from "src/accounts/factory/interface/IAccountFactory.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -64,7 +65,47 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                exec
+                                     make instance
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function test_makeAccountInstance() public {
+        AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        assertTrue(newInstance.account.code.length == 0);
+        newInstance.deployAccount();
+        assertTrue(newInstance.account.code.length > 0);
+    }
+
+    function test_makeAccountInstance__RevertWhen__AccountExists() public {
+        AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        newInstance.deployAccount();
+        vm.expectRevert();
+        makeAccountInstance("newSalt");
+    }
+
+    function test_makeAccountInstance_withModules() public {
+        // Deploy executors, validators, hooks and fallbacks and setup ModuleInit data
+        IAccountFactory.ModuleInitData[] memory validators = new IAccountFactory.ModuleInitData[](1);
+        validators[0] = IAccountFactory.ModuleInitData({ module: address(validator), data: "" });
+        IAccountFactory.ModuleInitData[] memory executors = new IAccountFactory.ModuleInitData[](1);
+        executors[0] = IAccountFactory.ModuleInitData({ module: address(executor), data: "" });
+        IAccountFactory.ModuleInitData memory _hook =
+            IAccountFactory.ModuleInitData({ module: address(hook), data: "" });
+        IAccountFactory.ModuleInitData[] memory fallbacks = new IAccountFactory.ModuleInitData[](0);
+        // Create account instance
+        AccountInstance memory newInstance2 = makeAccountInstance({
+            salt: "newSalt2",
+            validators: validators,
+            executors: executors,
+            hook: _hook,
+            fallbacks: fallbacks
+        });
+        assertTrue(newInstance2.account.code.length == 0);
+        newInstance2.deployAccount();
+        assertTrue(newInstance2.account.code.length > 0);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                        exec
     //////////////////////////////////////////////////////////////////////////*/
 
     function testexec__Given__TwoInputs() public {

@@ -3,7 +3,10 @@ pragma solidity >=0.8.23 <0.9.0;
 
 // Interfaces
 import { IMSA } from "../../accounts/erc7579/interfaces/IMSA.sol";
-import { IERC7579Bootstrap } from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
+import {
+    IERC7579Bootstrap,
+    BootstrapConfig
+} from "../../accounts/erc7579/interfaces/IERC7579Bootstrap.sol";
 import { IModule as IERC7579Module } from "../../accounts/common/interfaces/IERC7579Module.sol";
 
 // Dependencies
@@ -71,6 +74,32 @@ contract ExampleFactory is FactoryBase, ERC7579Precompiles {
             )
         );
 
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                keccak256(
+                    abi.encodePacked(
+                        MSAPROXY_BYTECODE,
+                        abi.encode(IMPLEMENTATION, abi.encodeCall(IMSA.initializeAccount, initData))
+                    )
+                )
+            )
+        );
+
+        return address(uint160(uint256(hash)));
+    }
+
+    function getAddress(
+        bytes32 salt,
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        returns (address)
+    {
         bytes32 hash = keccak256(
             abi.encodePacked(
                 bytes1(0xff),

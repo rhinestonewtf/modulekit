@@ -116,4 +116,75 @@ contract SafeFactory is IAccountFactory, Safe7579Precompiles {
         });
         _init = abi.encode(initDataSafe);
     }
+
+    function getInitData(
+        IAccountFactory.ModuleInitData[] memory _validators,
+        IAccountFactory.ModuleInitData[] memory _executors,
+        IAccountFactory.ModuleInitData memory _hook,
+        IAccountFactory.ModuleInitData[] memory _fallbacks
+    )
+        public
+        view
+        returns (bytes memory _init)
+    {
+        ModuleInit[] memory validators = abi.decode(abi.encode(_validators), (ModuleInit[]));
+        ModuleInit[] memory executors = abi.decode(abi.encode(_executors), (ModuleInit[]));
+        ModuleInit memory hook = abi.decode(abi.encode(_hook), (ModuleInit));
+        ModuleInit[] memory hooks = new ModuleInit[](1);
+        hooks[0] = hook;
+        ModuleInit[] memory fallbacks = abi.decode(abi.encode(_fallbacks), (ModuleInit[]));
+
+        ISafe7579Launchpad.InitData memory initDataSafe = ISafe7579Launchpad.InitData({
+            singleton: address(safeSingleton),
+            owners: Solarray.addresses(makeAddr("owner1")),
+            threshold: 1,
+            setupTo: address(launchpad),
+            setupData: abi.encodeCall(
+                ISafe7579Launchpad.initSafe7579,
+                (
+                    address(safe7579),
+                    executors,
+                    fallbacks,
+                    hooks,
+                    Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
+                    2
+                )
+            ),
+            safe7579: ISafe7579(safe7579),
+            validators: validators,
+            callData: ""
+        });
+        _init = abi.encode(initDataSafe);
+    }
+
+    function getInitData(bytes memory initData) public view returns (bytes memory _init) {
+        (
+            ModuleInit[] memory validators,
+            ModuleInit[] memory executors,
+            ModuleInit[] memory hooks,
+            ModuleInit[] memory fallbacks
+        ) = abi.decode(initData, (ModuleInit[], ModuleInit[], ModuleInit[], ModuleInit[]));
+        ISafe7579Launchpad.InitData memory initDataSafe = ISafe7579Launchpad.InitData({
+            singleton: address(safeSingleton),
+            owners: Solarray.addresses(makeAddr("owner1")),
+            threshold: 1,
+            setupTo: address(launchpad),
+            setupData: abi.encodeCall(
+                ISafe7579Launchpad.initSafe7579,
+                (
+                    address(safe7579),
+                    executors,
+                    fallbacks,
+                    hooks,
+                    Solarray.addresses(makeAddr("attester1"), makeAddr("attester2")),
+                    2
+                )
+            ),
+            safe7579: ISafe7579(safe7579),
+            validators: validators,
+            callData: ""
+        });
+
+        _init = abi.encode(initDataSafe);
+    }
 }
