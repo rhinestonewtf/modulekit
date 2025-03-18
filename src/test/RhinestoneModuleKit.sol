@@ -288,8 +288,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         (AccountType env, address accountFactoryAddress, address accountHelper) =
             ModuleKitHelpers.getAccountEnv();
         IAccountFactory accountFactory = IAccountFactory(accountFactoryAddress);
-        bytes memory initData =
-            IAccountFactory(getFactory(DEFAULT)).getInitData(validators, executors, hook, fallbacks);
+        bytes memory initData = accountFactory.getInitData(validators, executors, hook, fallbacks);
         address account = accountFactory.getAddress(salt, initData);
         bytes memory initCode = abi.encodePacked(
             address(accountFactory), abi.encodeCall(accountFactory.createAccount, (salt, initData))
