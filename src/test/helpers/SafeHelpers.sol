@@ -8,7 +8,9 @@ import {
     MODULE_TYPE_HOOK,
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
-    MODULE_TYPE_FALLBACK
+    MODULE_TYPE_FALLBACK,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC1271,
+    MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
 } from "../../accounts/common/interfaces/IERC7579Module.sol";
 import { HookType } from "../../accounts/safe/types/DataTypes.sol";
 import { CALLTYPE_STATIC } from "../../accounts/common/lib/ModeLib.sol";
@@ -271,6 +273,74 @@ contract SafeHelpers is HelperBase {
         data = abi.encode(selector, _initData);
     }
 
+    /// @notice get callData to install an ERC1271 prevalidation hook
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to install the prevalidation hook ERC1271
+    function getInstallPrevalidationHookERC1271Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        data = abi.encode(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, initData);
+    }
+
+    /// @notice get callData to install an ERC4337 prevalidation hook ERC4337
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to install the prevalidation hook ERC4337
+    function getInstallPrevalidationHookERC4337Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        data = abi.encode(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, initData);
+    }
+
+    /// @notice get callData to  uninstall an ERC1271 prevalidation hook
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to uninstall the prevalidation hook ERC1271
+    function getUninstallPrevalidationHookERC1271Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        data = abi.encode(MODULE_TYPE_PREVALIDATION_HOOK_ERC1271, initData);
+    }
+
+    /// @notice get callData to uninstall an ERC4337 prevalidation hook
+    /// @param initData bytes the data to pass to the module
+    /// @return data bytes the callData to uninstall the prevalidation hook ERC4337
+    function getUninstallPrevalidationHookERC4337Data(
+        AccountInstance memory, // instance
+        address, // module
+        bytes memory initData
+    )
+        public
+        view
+        virtual
+        override
+        returns (bytes memory data)
+    {
+        data = abi.encode(MODULE_TYPE_PREVALIDATION_HOOK_ERC4337, initData);
+    }
+
     /// @notice Checks if a module is installed on an account instance
     /// @param instance AccountInstance the account instance to check
     /// @param moduleTypeId uint256 the type of the module
@@ -291,6 +361,13 @@ contract SafeHelpers is HelperBase {
     {
         if (moduleTypeId == MODULE_TYPE_HOOK) {
             data = abi.encode(HookType.GLOBAL, bytes4(0x0), data);
+        }
+
+        if (
+            moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC4337
+                || moduleTypeId == MODULE_TYPE_PREVALIDATION_HOOK_ERC1271
+        ) {
+            data = abi.encode(moduleTypeId, data);
         }
 
         return IERC7579Account(instance.account).isModuleInstalled(moduleTypeId, module, data);
