@@ -5,6 +5,7 @@ pragma solidity >=0.8.23 <0.9.0;
 import {
     AccountInstance,
     UserOpData,
+    ExecutionReturnData,
     AccountType,
     DEFAULT,
     SAFE,
@@ -41,7 +42,8 @@ import {
     startStateDiffRecording as vmStartStateDiffRecording,
     stopAndReturnStateDiff as vmStopAndReturnStateDiff,
     getMappingKeyAndParentOf,
-    envOr
+    envOr,
+    setEnv
 } from "./utils/Vm.sol";
 import {
     getAccountType as getAccountTypeFromStorage,
@@ -94,9 +96,13 @@ library ModuleKitHelpers {
 
     /// @notice Executes userOps on the entrypoint
     /// @param userOpData UserOpData struct containing the userOp, userOpHash, and entrypoint
-    function execUserOps(UserOpData memory userOpData) internal {
+    /// @return ExecutionReturnData struct containing the logs from the execution
+    function execUserOps(UserOpData memory userOpData)
+        internal
+        returns (ExecutionReturnData memory)
+    {
         // Send userOp to entrypoint
-        ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
+        return ERC4337Helpers.exec4337(userOpData.userOp, userOpData.entrypoint);
     }
 
     /// @notice Configures a userOp to execute a single operation
@@ -556,6 +562,8 @@ library ModuleKitHelpers {
     /// @param value The value to write to storage (true or false)
     function simulateUserOp(AccountInstance memory, bool value) internal {
         writeSimulateUserOp(value);
+        string memory strValue = value ? "true" : "false";
+        setEnv("SIMULATE", strValue);
     }
 
     /// @notice Writes the storage compliance flag to storage

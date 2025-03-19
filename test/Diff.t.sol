@@ -4,6 +4,7 @@ pragma solidity >=0.8.23 <0.9.0;
 import "src/ModuleKit.sol";
 import "./BaseTest.t.sol";
 import "src/Mocks.sol";
+import { ExecutionReturnData } from "src/test/RhinestoneModuleKit.sol";
 import {
     MODULE_TYPE_VALIDATOR,
     MODULE_TYPE_EXECUTOR,
@@ -52,6 +53,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         token.initialize("Mock Token", "MTK", 18);
         deal(address(token), instance.account, 100 ether);
         vm.deal(instance.account, 1000 ether);
+        instance.simulateUserOp(false);
     }
 
     function test_transfer() public {
@@ -100,12 +102,15 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // bytes memory signature = "";
 
         // Create userOperation
-        instance.getExecOps({
+        ExecutionReturnData memory executionData = instance.getExecOps({
             target: receiver,
             value: value,
             callData: callData,
             txValidator: address(instance.defaultValidator)
         }).execUserOps();
+
+        // Validate Logs
+        assertTrue(executionData.logs.length >= 5);
 
         // Validate userOperation
         assertEq(receiver.balance, value, "Receiver should have 10 gwei");
@@ -543,7 +548,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             string memory env = envs[i];
             if (keccak256(abi.encodePacked(env)) == keccak256(abi.encodePacked("INVALID"))) {
                 vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
-                _usingAccountEnv(env);
+                this._usingAccountEnv(env);
             } else {
                 _usingAccountEnv(env);
             }
@@ -578,14 +583,18 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
 
     function testSetAccountEnv_RevertsWhen_InvalidAccountType() public {
         vm.expectRevert(ModuleKitHelpers.InvalidAccountType.selector);
-        instance.setAccountEnv("INVALID");
+        this.callSetAccountENVInvalid();
     }
 
     /*//////////////////////////////////////////////////////////////
                                 HELPERS
     //////////////////////////////////////////////////////////////*/
 
-    function _usingAccountEnv(string memory env) internal usingAccountEnv(env.toAccountType()) {
+    function callSetAccountENVInvalid() public {
+        instance.setAccountEnv("INVALID");
+    }
+
+    function _usingAccountEnv(string memory env) public usingAccountEnv(env.toAccountType()) {
         AccountInstance memory newInstance = makeAccountInstance(keccak256(abi.encode(env)));
         assertTrue(newInstance.account.code.length == 0);
 
@@ -695,7 +704,7 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
         // Expect revert
         vm.expectRevert();
         // Assert that the module storage was cleared
-        instance.verifyModuleStorageWasCleared(accountAccesses, module);
+        this.callVerifyStorageWasNotCleared(instance, module, accountAccesses);
     }
 
     function __revertWhen_verifyModuleStorageWasCleared_NotCleared() public {
@@ -823,5 +832,20 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
             return;
         }
         _;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                HELPERS
+    //////////////////////////////////////////////////////////////*/
+
+    function callVerifyStorageWasNotCleared(
+        AccountInstance memory _instance,
+        address _module,
+        VmSafe.AccountAccess[] memory _accountAccesses
+    )
+        public
+        view
+    {
+        _instance.verifyModuleStorageWasCleared(_accountAccesses, _module);
     }
 }

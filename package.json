@@ -1,6 +1,6 @@
 {
   "name": "@rhinestone/modulekit",
-  "version": "0.5.6",
+  "version": "0.5.9",
   "description": "A development kit for building and testing smart account modules.",
   "license": "GPL-3.0",
   "author": {
@@ -31,17 +31,17 @@
     "@ERC4337/account-abstraction": "github:kopy-kat/account-abstraction#develop",
     "@ERC4337/account-abstraction-v0.6": "github:eth-infinitism/account-abstraction#v0.6.0",
     "@prb/math": "^4.1.0",
-    "@rhinestone/erc4337-validation": "^0.0.4",
+    "@rhinestone/erc4337-validation": "^0.0.5",
     "@rhinestone/sentinellist": "github:rhinestonewtf/sentinellist",
     "ds-test": "github:dapphub/ds-test",
     "excessively-safe-call": "github:nomad-xyz/ExcessivelySafeCall",
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^5.0.3"
+    "solhint": "^5.0.5"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.9"
+    "@changesets/cli": "^2.27.12"
   },
   "files": [
     "src",

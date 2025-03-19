@@ -40,6 +40,7 @@ contract TestUniswap is BaseTest {
         _fundAccountWithTokenA(amountIn);
         vm.deal(instance.account, 1 ether);
         assertTrue(instance.account.balance == 1 ether);
+        instance.simulateUserOp(false);
     }
 
     function _fundAccountWithTokenA(uint256 amount) internal {
