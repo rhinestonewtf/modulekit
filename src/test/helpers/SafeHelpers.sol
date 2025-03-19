@@ -25,6 +25,9 @@ import { IAccountFactory } from "../../accounts/factory/interface/IAccountFactor
 import { IAccountModulesPaginated } from "./interfaces/IAccountModulesPaginated.sol";
 import { IERC1271, EIP1271_MAGIC_VALUE, IERC712 } from "../../Interfaces.sol";
 
+// Libraries
+import { LibBytes } from "solady/utils/LibBytes.sol";
+
 // Utils
 import { startPrank, stopPrank } from "../utils/Vm.sol";
 
@@ -65,7 +68,7 @@ contract SafeHelpers is HelperBase {
         }
 
         if (initCode.length != 0) {
-            (initCode, callData) = _getInitCallData(instance.salt, txValidator, initCode, callData);
+            (initCode, callData) = _getInitCallData(instance.salt, initCode, callData);
         }
 
         userOp = PackedUserOperation({
@@ -135,7 +138,7 @@ contract SafeHelpers is HelperBase {
         }
 
         if (initCode.length != 0) {
-            (initCode, callData) = _getInitCallData(instance.salt, txValidator, initCode, callData);
+            (initCode, callData) = _getInitCallData(instance.salt, initCode, callData);
         }
 
         userOp = PackedUserOperation({
@@ -383,9 +386,8 @@ contract SafeHelpers is HelperBase {
             } else {
                 (bytes memory initCode, bytes memory callData) = _getInitCallData(
                     instance.salt,
-                    address(instance.defaultValidator),
                     instance.initCode,
-                    encode({ target: address(1), value: 1 wei, callData: "" })
+                    encode({ target: address(0), value: 0 wei, callData: "" })
                 );
                 assembly {
                     let factory := mload(add(initCode, 20))
@@ -428,16 +430,15 @@ contract SafeHelpers is HelperBase {
 
     /// @notice Gets the initCode and callData for a new account instance
     /// @param salt bytes32 the salt for the account instance
-    /// @param txValidator address the address of the validator
     /// @param originalInitCode bytes the original initCode for the account instance
     /// @param erc4337CallData bytes the callData for the ERC4337 call
     function _getInitCallData(
         bytes32 salt,
-        address txValidator,
         bytes memory originalInitCode,
         bytes memory erc4337CallData
     )
         public
+        pure
         returns (bytes memory initCode, bytes memory callData)
     {
         // TODO: refactor this to decode the initcode
@@ -445,9 +446,9 @@ contract SafeHelpers is HelperBase {
         assembly {
             factory := mload(add(originalInitCode, 20))
         }
-        ISafe7579Launchpad.InitData memory initData = abi.decode(
-            IAccountFactory(factory).getInitData(txValidator, ""), (ISafe7579Launchpad.InitData)
-        );
+        bytes memory initData2 = LibBytes.slice(originalInitCode, 120, originalInitCode.length);
+        ISafe7579Launchpad.InitData memory initData =
+            abi.decode(initData2, (ISafe7579Launchpad.InitData));
         initData.callData = erc4337CallData;
         initCode = abi.encodePacked(
             factory, abi.encodeCall(SafeFactory.createAccount, (salt, abi.encode(initData)))

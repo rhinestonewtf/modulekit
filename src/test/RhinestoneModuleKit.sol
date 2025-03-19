@@ -285,8 +285,7 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         initializeModuleKit
         returns (AccountInstance memory instance)
     {
-        (AccountType env, address accountFactoryAddress, address accountHelper) =
-            ModuleKitHelpers.getAccountEnv();
+        (, address accountFactoryAddress, address accountHelper) = ModuleKitHelpers.getAccountEnv();
         IAccountFactory accountFactory = IAccountFactory(accountFactoryAddress);
         bytes memory initData = accountFactory.getInitData(validators, executors, hook, fallbacks);
         address account = accountFactory.getAddress(salt, initData);
