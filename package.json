@@ -38,8 +38,7 @@
     "forge-std": "github:foundry-rs/forge-std",
     "solady": "github:vectorized/solady",
     "solarray": "github:sablier-labs/solarray",
-    "solhint": "^5.0.3",
-    "solmate": "^6.8.0"
+    "solhint": "^5.0.3"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.9"
