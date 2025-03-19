@@ -21,6 +21,7 @@ import { MockK1Validator, VALIDATION_SUCCESS } from "test/mocks/MockK1Validator.
 import { MockK1ValidatorUncompliantUninstall } from
     "test/mocks/MockK1ValidatorUncompliantUninstall.sol";
 import { VmSafe } from "src/test/utils/Vm.sol";
+import { IAccountFactory } from "src/accounts/factory/interface/IAccountFactory.sol";
 
 contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     using ModuleKitHelpers for *;
@@ -64,7 +65,65 @@ contract ERC7579DifferentialModuleKitLibTest is BaseTest {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                exec
+                                     make instance
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function test_makeAccountInstance() public {
+        AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        assertTrue(newInstance.account.code.length == 0);
+        newInstance.deployAccount();
+        assertTrue(newInstance.account.code.length > 0);
+    }
+
+    function test_makeAccountInstance_withModules() public {
+        AccountType env = ModuleKitHelpers.getAccountType();
+        // AccountInstance memory newInstance = makeAccountInstance("newSalt");
+        // assertTrue(newInstance.account.code.length == 0);
+        // newInstance.deployAccount();
+        // assertTrue(newInstance.account.code.length > 0);
+        // Deploy executors, validators, hooks and fallbacks and setup ModuleInit data
+        IAccountFactory.ModuleInitData[] memory validators = new IAccountFactory.ModuleInitData[](1);
+        validators[0] =
+            IAccountFactory.ModuleInitData({ module: address(validator), data: abi.encode(0x123) });
+        IAccountFactory.ModuleInitData[] memory executors = new IAccountFactory.ModuleInitData[](1);
+        executors[0] = IAccountFactory.ModuleInitData({
+            module: address(executor),
+            data: env == AccountType.KERNEL ? abi.encodePacked(bytes20(0)) : abi.encodePacked("")
+        });
+        IAccountFactory.ModuleInitData memory _hook = IAccountFactory.ModuleInitData({
+            module: address(hook),
+            data: env == AccountType.SAFE
+                ? abi.encode(bytes1(0), bytes4(0), abi.encode(0x123))
+                : abi.encode(0x123)
+        });
+        IAccountFactory.ModuleInitData[] memory fallbacks = new IAccountFactory.ModuleInitData[](1);
+        fallbacks[0] = IAccountFactory.ModuleInitData({
+            module: address(fallbackHandler),
+            data: env == AccountType.KERNEL
+                ? abi.encodePacked(
+                    bytes4(0),
+                    bytes20(0),
+                    abi.encode(abi.encodePacked(hex"00", "fallbackData"), abi.encodePacked(""))
+                )
+                : env == AccountType.SAFE || env == AccountType.NEXUS
+                    ? abi.encode(bytes4(0x12345678), bytes1(0), abi.encode(0x123))
+                    : abi.encode(0x123)
+        });
+        // Create account instance
+        AccountInstance memory newInstance2 = makeAccountInstance({
+            salt: "newSalt2",
+            validators: validators,
+            executors: executors,
+            hook: _hook,
+            fallbacks: fallbacks
+        });
+        assertTrue(newInstance2.account.code.length == 0);
+        newInstance2.deployAccount();
+        assertTrue(newInstance2.account.code.length > 0);
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                        exec
     //////////////////////////////////////////////////////////////////////////*/
 
     function testexec__Given__TwoInputs() public {

@@ -2,6 +2,11 @@
 pragma solidity >=0.8.23 <0.9.0;
 
 interface IAccountFactory {
+    struct ModuleInitData {
+        address module;
+        bytes data;
+    }
+
     function init() external;
 
     function createAccount(
@@ -19,4 +24,13 @@ interface IAccountFactory {
     )
         external
         returns (bytes memory init);
+
+    function getInitData(
+        IAccountFactory.ModuleInitData[] memory validators,
+        IAccountFactory.ModuleInitData[] memory executors,
+        IAccountFactory.ModuleInitData memory hook,
+        IAccountFactory.ModuleInitData[] memory fallbacks
+    )
+        external
+        returns (bytes memory _init);
 }

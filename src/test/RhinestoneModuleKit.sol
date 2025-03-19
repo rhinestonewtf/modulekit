@@ -266,6 +266,44 @@ contract RhinestoneModuleKit is AuxiliaryFactory {
         });
     }
 
+    /// @notice Create an account instance with the provided salt, account,executors, validators,
+    /// hook, and fallback arrays
+    /// @param salt The salt used to create the account
+    /// @param validators The array of ModuleInitData for validators
+    /// @param executors The array of ModuleInitData for executors
+    /// @param hook The ModuleInitData for the hook
+    /// @param fallbacks The array of ModuleInitData for fallbacks
+    /// @return instance The account instance
+    function makeAccountInstance(
+        bytes32 salt,
+        IAccountFactory.ModuleInitData[] memory validators,
+        IAccountFactory.ModuleInitData[] memory executors,
+        IAccountFactory.ModuleInitData memory hook,
+        IAccountFactory.ModuleInitData[] memory fallbacks
+    )
+        internal
+        initializeModuleKit
+        returns (AccountInstance memory instance)
+    {
+        (, address accountFactoryAddress, address accountHelper) = ModuleKitHelpers.getAccountEnv();
+        IAccountFactory accountFactory = IAccountFactory(accountFactoryAddress);
+        bytes memory initData = accountFactory.getInitData(validators, executors, hook, fallbacks);
+        address account = accountFactory.getAddress(salt, initData);
+        bytes memory initCode = abi.encodePacked(
+            address(accountFactory), abi.encodeCall(accountFactory.createAccount, (salt, initData))
+        );
+        label(address(account), toString(salt));
+        deal(account, 10 ether);
+        instance = makeAccountInstance({
+            salt: salt,
+            helper: accountHelper,
+            account: account,
+            initCode: initCode,
+            defaultValidator: address(validators[0].module),
+            defaultSessionValidator: address(executors[0].module)
+        });
+    }
+
     /// @notice Create an account instance with the provided salt, account, init code, and helper.
     ///         Funds the account with 10 ether.
     /// @param salt The salt used to create the account
