@@ -33,6 +33,7 @@ import { ERC7579ExecutorBase } from "./module-bases/ERC7579ExecutorBase.sol";
 // Hooks
 import { ERC7579HookBase } from "./module-bases/ERC7579HookBase.sol";
 import { ERC7579HookDestruct } from "./module-bases/ERC7579HookDestruct.sol";
+import { ERC7579HookDestructSingleHook } from "./module-bases/ERC7579HookDestructSingleHook.sol";
 
 // Fallbacks
 import { ERC7579FallbackBase } from "./module-bases/ERC7579FallbackBase.sol";
