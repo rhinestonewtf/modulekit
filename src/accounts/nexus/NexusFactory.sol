@@ -19,9 +19,9 @@ import { REGISTRY_ADDR } from "../../deployment/predeploy/Registry.sol";
 import { NexusPrecompiles } from "../../deployment/precompiles/NexusPrecompiles.sol";
 
 contract NexusFactory is IAccountFactory, NexusPrecompiles {
-    INexusAccountFactory internal factory;
-    INexusBootstrap internal bootstrapDefault;
-    address internal nexusImpl;
+    INexusAccountFactory public factory;
+    INexusBootstrap public bootstrapDefault;
+    address public nexusImpl;
 
     function init() public override {
         // Deploy precompiled contracts

@@ -14,8 +14,8 @@ import {
 import { ERC7579Precompiles } from "../../deployment/precompiles/ERC7579Precompiles.sol";
 
 contract ERC7579Factory is IAccountFactory, ERC7579Precompiles {
-    IERC7579Account internal implementation;
-    IERC7579Bootstrap internal bootstrapDefault;
+    IERC7579Account public implementation;
+    IERC7579Bootstrap public bootstrapDefault;
 
     function init() public override {
         implementation = deployERC7579Account();

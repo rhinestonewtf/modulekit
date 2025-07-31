@@ -20,10 +20,10 @@ import { Safe7579Precompiles } from "../../deployment/precompiles/Safe7579Precom
 
 contract SafeFactory is IAccountFactory, Safe7579Precompiles {
     // singletons
-    ISafe7579 internal safe7579;
-    ISafe7579Launchpad internal launchpad;
-    address internal safeSingleton;
-    ISafeProxyFactory internal safeProxyFactory;
+    ISafe7579 public safe7579;
+    ISafe7579Launchpad public launchpad;
+    address public safeSingleton;
+    ISafeProxyFactory public safeProxyFactory;
 
     function init() public override {
         safe7579 = deploySafe7579();

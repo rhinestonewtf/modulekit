@@ -24,8 +24,8 @@ struct ModuleBootstrapConfig {
 }
 
 contract KernelFactory is IAccountFactory, KernelPrecompiles {
-    IKernelAccountFactory internal factory;
-    IKernel internal kernelImpl;
+    IKernelAccountFactory public factory;
+    IKernel public kernelImpl;
     MockHookMultiPlexer public hookMultiPlexer;
 
     function init() public override {
