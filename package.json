@@ -5,7 +5,7 @@
   "license": "GPL-3.0",
   "author": {
     "name": "Rhinestone",
-    "url": "https://rhinestone.wtf"
+    "url": "https://www.rhinestone.dev"
   },
   "scripts": {
     "build": "forge build",
@@ -48,7 +48,7 @@
     "foundry.toml",
     "remappings.txt"
   ],
-  "homepage": "https://docs.rhinestone.wtf/modulekit",
+  "homepage": "https://erc7579.com/tooling/modulekit",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rhinestonewtf/modulekit.git"
