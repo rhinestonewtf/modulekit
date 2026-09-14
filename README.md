@@ -1,5 +1,7 @@
 # ModuleKit
 
+> **No longer maintained.** This repository is kept for reference. For new projects, use the [Rhinestone SDK](https://docs.rhinestone.dev).
+
 **A development kit for building and testing smart account modules**
 
 ModuleKit allows you to:
@@ -11,7 +13,7 @@ ModuleKit allows you to:
 - **Unit test** your modules using a dedicated helper library
 - **Integration test** your modules using different modular ERC-4337 accounts and a helper library that abstracts away the complexity
 
-In-depth documentation is available at [docs.rhinestone.wtf](https://docs.rhinestone.wtf/modulekit/).
+In-depth documentation is available at [erc7579.com](https://erc7579.com/tooling/modulekit).
 
 > The ModuleKit is in active development and is subject to breaking changes. If you spot a bug, please take out an issue and we will fix it as soon as we can.
 
@@ -44,7 +46,7 @@ cp node_modules/@rhinestone/modulekit/remappings.txt remappings.txt
 
 ### Usage
 
-The ModuleKit can be used to **build**, **test** and **deploy** smart account modules. The full documentation is available at [docs.rhinestone.wtf](https://docs.rhinestone.wtf/modulekit/), but the following aims to provide a quick overview.
+The ModuleKit can be used to **build**, **test** and **deploy** smart account modules. The full documentation is available at [erc7579.com](https://erc7579.com/tooling/modulekit), but the following aims to provide a quick overview.
 
 ### Building modules
 
@@ -63,7 +65,7 @@ We also provide more advanced bases like:
 
 ### Testing modules
 
-The ModuleKit provides an integration test suite for testing your modules across different modular accounts. To use the test suite, inherit from `RhinestoneModuleKit` and create an account instance using `makeAccountInstance(accountName)`. To learn more about using this instance, visit the documentation for our [integration test suite](https://docs.rhinestone.wtf/modulekit/test/integration).
+The ModuleKit provides an integration test suite for testing your modules across different modular accounts. To use the test suite, inherit from `RhinestoneModuleKit` and create an account instance using `makeAccountInstance(accountName)`. To learn more about using this instance, visit the documentation for our [integration test suite](https://erc7579.com/tooling/modulekit/guides/testing/using-accounts).
 
 You can then run the tests using the following commands:
 
